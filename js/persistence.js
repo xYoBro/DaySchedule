@@ -12,7 +12,7 @@ function saveUndoState() {
   if (!_undoPending) {
     _undoStack.push(Store.snapshot());
     if (_undoStack.length > UNDO_MAX) _undoStack.shift();
-    _redoStack = [];
+    if (_redoStack.length) _redoStack.length = 0;
     _undoPending = true;
   }
   clearTimeout(_undoSaveTimer);
