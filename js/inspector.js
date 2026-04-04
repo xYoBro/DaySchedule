@@ -411,14 +411,21 @@ function wireEventInspector(panel, dayId, eventId) {
   const groupSelect = panel.querySelector('#insp-evt-group');
   if (groupSelect) {
     groupSelect.addEventListener('change', () => {
+      const oldGroup = Store.getGroup(Store.getEvents(dayId).find(e => e.id === eventId).groupId);
       const newGroup = Store.getGroup(groupSelect.value);
-      const isMain = newGroup ? newGroup.scope === 'main' : true;
-      Store.updateEvent(dayId, eventId, { groupId: groupSelect.value, isMainEvent: isMain });
+      const oldScope = oldGroup ? oldGroup.scope : 'main';
+      const newScope = newGroup ? newGroup.scope : 'main';
+      const updates = { groupId: groupSelect.value };
+      // Only auto-set isMainEvent when crossing the scope boundary
+      if (oldScope !== newScope) {
+        updates.isMainEvent = newScope === 'main';
+      }
+      Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
       const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
       if (band) band.classList.add('selected');
       sessionSave();
-      renderInspector(); // re-render to show/hide highlight override
+      renderInspector();
     });
   }
 
