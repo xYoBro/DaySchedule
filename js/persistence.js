@@ -26,10 +26,14 @@ function redo() {
   toast('Redo');
 }
 
+let _sessionSaveTimer = null;
 function sessionSave() {
-  try {
-    sessionStorage.setItem('schedule_state', JSON.stringify(Store.getPersistedState()));
-  } catch (e) { /* ignore quota errors */ }
+  clearTimeout(_sessionSaveTimer);
+  _sessionSaveTimer = setTimeout(() => {
+    try {
+      sessionStorage.setItem('schedule_state', JSON.stringify(Store.getPersistedState()));
+    } catch (e) { /* ignore quota errors */ }
+  }, 500);
 }
 
 function sessionLoad() {
