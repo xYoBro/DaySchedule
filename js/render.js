@@ -141,7 +141,7 @@ function renderNotes(notes) {
   html += '<div class="notes-label">Notes</div>';
   html += '<ul class="notes-list">';
   notes.forEach(n => {
-    html += '<li>';
+    html += '<li data-note-id="' + esc(n.id) + '">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</li>';
   });
