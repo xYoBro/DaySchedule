@@ -73,7 +73,7 @@ function renderScheduleSetup(panel) {
   html += '<div class="insp-day-accordion">';
   days.forEach((day, i) => {
     const dateLabel = day.date ? formatDateDisplay(day.date) : 'No date set';
-    const shortDate = day.date ? formatDateShort(day.date) : 'New Day';
+    const shortDate = day.date ? formatDateShort(day.date) : 'Day ' + (i + 1);
     const timeRange = day.startTime + '–' + day.endTime;
     const isExpanded = day.id === (_expandedDayId || '');
     html += '<div class="insp-day-item" data-day-id="' + esc(day.id) + '">';
