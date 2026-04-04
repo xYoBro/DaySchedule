@@ -547,6 +547,30 @@ body {
   line-height: 1;
 }
 
+/* ── Inspector hint text ── */
+.insp-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #86868b;
+  line-height: 1.4;
+  margin: -4px 0 8px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #aeaeb2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.empty-state strong {
+  font-weight: 600;
+  color: #86868b;
+}
+
 /* ── Notes clickable in preview ── */
 .notes-list li { cursor: pointer; }
 .notes-list li:hover { background: rgba(37,88,168,0.04); border-radius: 3px; }
@@ -603,14 +627,19 @@ body {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #6e6e73;
+  color: #86868b;
   cursor: pointer;
   transition: all 0.15s;
+}
+.day-tab:not(.active):hover {
+  background: rgba(0,0,0,0.06);
+  color: #6e6e73;
 }
 .day-tab.active {
   background: white;
   color: #1d1d1f;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
 }
 
 /* ── Toast ── */

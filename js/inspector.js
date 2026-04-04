@@ -87,11 +87,12 @@ function renderScheduleSetup(panel) {
 
   // Audience Groups
   html += '<h3>Audience Groups</h3>';
+  html += '<p class="insp-hint">Main groups get schedule bands. Limited groups appear as concurrent when overlapping.</p>';
   groups.forEach(g => {
     html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
     html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
     html += '<input type="text" class="insp-group-name" value="' + esc(g.name) + '" placeholder="Group name">';
-    html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '">' + (g.scope === 'main' ? 'Main' : 'Limited') + '</button>';
+    html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Toggle between Main and Limited scope">' + (g.scope === 'main' ? 'Main' : 'Limited') + '</button>';
     html += '<button class="insp-group-remove">&times;</button>';
     html += '</div>';
   });

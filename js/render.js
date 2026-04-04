@@ -10,6 +10,12 @@ function renderDay(dayId) {
   let html = '';
   html += renderHeader(day);
   html += '<div class="schedule">';
+  if (mainBands.length === 0 && concurrent.length === 0) {
+    html += '<div class="empty-state">';
+    html += '<p>Click <strong>+ Event</strong> to add your first event.</p>';
+    html += '<p>Click <strong>+ Note</strong> to add scheduling notes.</p>';
+    html += '</div>';
+  }
   let prevTier = null;
   mainBands.forEach((band, i) => {
     if (band.tier === 'break' && prevTier && prevTier !== 'break') {
