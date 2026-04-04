@@ -3,6 +3,11 @@
    Print band layout (from approved mockup v20) + Screen editing UI
    ══════════════════════════════════════════════════════════════ */
 
+/* ── Variables ── */
+:root {
+  --app-accent: 37,88,168; /* #2558a8 as RGB for rgba() use */
+}
+
 /* ── Reset ── */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -467,7 +472,7 @@ body {
 .inspector select:focus {
   outline: none;
   border-color: #2558a8;
-  box-shadow: 0 0 0 3px rgba(37,88,168,0.12);
+  box-shadow: 0 0 0 3px rgba(var(--app-accent),0.12);
 }
 
 .inspector .field-row {
@@ -573,8 +578,8 @@ body {
 
 /* ── Notes clickable in preview ── */
 .notes-list li { cursor: pointer; }
-.notes-list li:hover { background: rgba(37,88,168,0.04); border-radius: 3px; }
-.notes-list li.selected { background: rgba(37,88,168,0.08); border-radius: 3px; }
+.notes-list li:hover { background: rgba(var(--app-accent),0.04); border-radius: 3px; }
+.notes-list li.selected { background: rgba(var(--app-accent),0.08); border-radius: 3px; }
 
 /* ── Toolbar ── */
 .toolbar {
