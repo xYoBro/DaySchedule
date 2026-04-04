@@ -4,10 +4,19 @@ let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
 
+let _undoSaveTimer = null;
+let _undoPending = false;
+
 function saveUndoState() {
-  _undoStack.push(Store.snapshot());
-  if (_undoStack.length > UNDO_MAX) _undoStack.shift();
-  _redoStack = [];
+  // Debounce: only capture one snapshot per burst of rapid edits
+  if (!_undoPending) {
+    _undoStack.push(Store.snapshot());
+    if (_undoStack.length > UNDO_MAX) _undoStack.shift();
+    _redoStack = [];
+    _undoPending = true;
+  }
+  clearTimeout(_undoSaveTimer);
+  _undoSaveTimer = setTimeout(() => { _undoPending = false; }, 800);
 }
 
 function undo() {
