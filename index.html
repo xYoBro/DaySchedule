@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Builder</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/constants.js"></script>
+</head>
+<body>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn btn-primary" id="addEventBtn">+ Add Event</button>
+      <button class="btn" id="addNoteBtn">+ Note</button>
+    </div>
+    <div class="toolbar-center">
+      <div class="day-tabs" id="dayTabs"></div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn" id="printBtn">Print / PDF</button>
+      <button class="btn" id="settingsBtn">Settings</button>
+      <button class="btn" id="saveBtn">Save</button>
+    </div>
+  </div>
+
+  <!-- Schedule Container -->
+  <div id="scheduleContainer" class="page"></div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal" id="settingsModalContent"></div>
+  </div>
+  <div class="modal-overlay" id="groupsModal">
+    <div class="modal" id="groupsModalContent"></div>
+  </div>
+
+  <!-- Scripts — load order matters -->
+  <script src="js/app-state.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/ui-core.js"></script>
+  <script src="js/schema.js"></script>
+  <script src="js/data-helpers.js"></script>
+  <script src="js/persistence.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/print.js"></script>
+  <script src="js/events.js"></script>
+  <script src="js/editing.js"></script>
+  <script src="js/groups.js"></script>
+  <script src="js/schedule-setup.js"></script>
+  <script src="data/scheduledata.js"></script>
+  <script src="js/init.js"></script>
+</body>
+</html>
