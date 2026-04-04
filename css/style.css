@@ -552,6 +552,56 @@ body {
   line-height: 1;
 }
 
+/* ── Day Accordion ── */
+.insp-day-accordion {
+  border: 1px solid #e0e0e4;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.insp-day-item { border-bottom: 1px solid #e8e8ed; }
+.insp-day-item:last-child { border-bottom: none; }
+
+.insp-day-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+.insp-day-header:hover { background: rgba(0,0,0,0.03); }
+.insp-day-header.expanded { background: rgba(0,0,0,0.02); }
+
+.insp-day-arrow {
+  font-size: 10px;
+  color: #86868b;
+  width: 12px;
+  flex-shrink: 0;
+}
+.insp-day-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.insp-day-summary strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+.insp-day-times {
+  font-size: 10px;
+  color: #86868b;
+  font-variant-numeric: tabular-nums;
+}
+.insp-day-body {
+  padding: 8px 10px 12px;
+  background: white;
+  border-top: 1px solid #e8e8ed;
+}
+
 /* ── Inspector hint text ── */
 .insp-hint {
   font-size: 11px;

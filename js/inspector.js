@@ -2,6 +2,7 @@
 
 let _selection = { type: null, dayId: null, entityId: null };
 let _deleteTimer = null;
+let _expandedDayId = null;
 
 // ── Selection ──────────────────────────────────────────────────────────────
 
@@ -66,24 +67,43 @@ function renderScheduleSetup(panel) {
   html += '<label>Updated Date</label>';
   html += '<input type="text" id="insp-updated" value="' + esc(footer.updated) + '">';
 
-  // Days
+  // Days — accordion
   html += '<h3>Days</h3>';
+  html += '<button class="btn" id="insp-add-day" style="width:100%;font-size:11px;margin-bottom:8px;">+ Add Day</button>';
+  html += '<div class="insp-day-accordion">';
   days.forEach((day, i) => {
-    html += '<div class="insp-day-item" data-day-id="' + esc(day.id) + '" style="padding:6px 0;border-bottom:1px solid #e8e8ed;">';
-    html += '<label>Date</label>';
-    html += '<input type="date" class="insp-day-date" value="' + esc(day.date) + '">';
-    html += '<div class="field-row">';
-    html += '<div><label>Start</label><input type="text" class="insp-day-start" value="' + esc(day.startTime) + '" placeholder="0700"></div>';
-    html += '<div><label>End</label><input type="text" class="insp-day-end" value="' + esc(day.endTime) + '" placeholder="1630"></div>';
+    const dateLabel = day.date ? formatDateDisplay(day.date) : 'No date set';
+    const shortDate = day.date ? formatDateShort(day.date) : 'New Day';
+    const timeRange = day.startTime + '–' + day.endTime;
+    const isExpanded = day.id === (_expandedDayId || '');
+    html += '<div class="insp-day-item" data-day-id="' + esc(day.id) + '">';
+    // Collapsed header — always visible
+    html += '<div class="insp-day-header' + (isExpanded ? ' expanded' : '') + '">';
+    html += '<span class="insp-day-arrow">' + (isExpanded ? '▾' : '▸') + '</span>';
+    html += '<span class="insp-day-summary">';
+    html += '<strong>' + esc(day.label || shortDate) + '</strong>';
+    html += '<span class="insp-day-times">' + esc(timeRange) + '</span>';
+    html += '</span>';
     html += '</div>';
-    html += '<label>Label</label>';
-    html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto">';
-    if (days.length > 1) {
-      html += '<button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:2px 8px;margin-top:4px;">Remove Day</button>';
+    // Expanded body — only shown when active
+    if (isExpanded) {
+      html += '<div class="insp-day-body">';
+      html += '<label>Date</label>';
+      html += '<input type="date" class="insp-day-date" value="' + esc(day.date) + '">';
+      html += '<div class="field-row">';
+      html += '<div><label>Start</label><input type="text" class="insp-day-start" value="' + esc(day.startTime) + '" placeholder="0700"></div>';
+      html += '<div><label>End</label><input type="text" class="insp-day-end" value="' + esc(day.endTime) + '" placeholder="1630"></div>';
+      html += '</div>';
+      html += '<label>Label</label>';
+      html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Day 1)">';
+      if (days.length > 1) {
+        html += '<button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;">Remove Day</button>';
+      }
+      html += '</div>';
     }
     html += '</div>';
   });
-  html += '<button class="btn" id="insp-add-day" style="margin-top:8px;font-size:11px;">+ Add Day</button>';
+  html += '</div>';
 
   // Audience Groups
   html += '<h3>Audience Groups</h3>';
@@ -147,19 +167,30 @@ function wireScheduleSetup(panel) {
   wireFooterField(panel, '#insp-poc', 'poc');
   wireFooterField(panel, '#insp-updated', 'updated');
 
-  // Day fields
-  panel.querySelectorAll('.insp-day-item').forEach(item => {
-    const dayId = item.getAttribute('data-day-id');
-    wireDayField(item, '.insp-day-date', dayId, 'date');
-    wireDayField(item, '.insp-day-start', dayId, 'startTime');
-    wireDayField(item, '.insp-day-end', dayId, 'endTime');
-    wireDayField(item, '.insp-day-label', dayId, 'label', true);
+  // Day accordion headers — toggle expand/collapse
+  panel.querySelectorAll('.insp-day-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const dayId = header.closest('.insp-day-item').getAttribute('data-day-id');
+      _expandedDayId = (_expandedDayId === dayId) ? null : dayId;
+      renderInspector();
+    });
+  });
 
-    const removeBtn = item.querySelector('.insp-day-remove');
+  // Day fields (only wired for the expanded day)
+  panel.querySelectorAll('.insp-day-body').forEach(body => {
+    const item = body.closest('.insp-day-item');
+    const dayId = item.getAttribute('data-day-id');
+    wireDayField(body, '.insp-day-date', dayId, 'date');
+    wireDayField(body, '.insp-day-start', dayId, 'startTime');
+    wireDayField(body, '.insp-day-end', dayId, 'endTime');
+    wireDayField(body, '.insp-day-label', dayId, 'label', true);
+
+    const removeBtn = body.querySelector('.insp-day-remove');
     if (removeBtn) {
       removeBtn.addEventListener('click', () => {
         saveUndoState();
         Store.removeDay(dayId);
+        _expandedDayId = null;
         const days = Store.getDays();
         if (days.length && !days.find(d => d.id === Store.getActiveDay())) {
           Store.setActiveDay(days[0].id);
@@ -178,6 +209,7 @@ function wireScheduleSetup(panel) {
       saveUndoState();
       const day = Store.addDay({ date: '', startTime: '0700', endTime: '1630' });
       if (!Store.getActiveDay()) Store.setActiveDay(day.id);
+      _expandedDayId = day.id;
       sessionSave();
       renderActiveDay();
       renderInspector();
@@ -267,6 +299,14 @@ function wireDayField(item, selector, dayId, field, nullable) {
     renderActiveDay();
     sessionSave();
   });
+}
+
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
 }
 
 // ── Face 2: Event Inspector ────────────────────────────────────────────────
