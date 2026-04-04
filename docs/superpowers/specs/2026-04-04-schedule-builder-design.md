@@ -122,7 +122,7 @@ Each event is a full-width horizontal band with three zones:
 
 Events with `limited` scope that overlap with main events appear in two places:
 
-1. **"Also happening" indicator** on the main event band they overlap with (right side of the band)
+1. **"Also happening" indicator** on every main event band they overlap with (right side of the band). A concurrent event spanning multiple main events shows the indicator on each overlapping band.
 2. **Concurrent row at bottom** — a horizontal row of cards below the schedule, showing all long-running concurrent events with time, title, location, POC, and audience badge
 
 If a limited-scope event fits entirely within a gap between main events (no overlap), it renders as a supporting band in the main column instead.
