@@ -35,6 +35,7 @@ const Store = {
     const day = Store.getDay(dayId);
     if (!day) return;
     Object.assign(day, updates);
+    if (updates.date != null) _days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   },
   removeDay(dayId) {
     _days = _days.filter(d => d.id !== dayId);

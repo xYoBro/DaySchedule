@@ -81,7 +81,7 @@ function renderScheduleSetup(panel) {
     html += '<div class="insp-day-header' + (isExpanded ? ' expanded' : '') + '">';
     html += '<span class="insp-day-arrow">' + (isExpanded ? '▾' : '▸') + '</span>';
     html += '<span class="insp-day-summary">';
-    html += '<strong>' + esc(day.label || shortDate) + '</strong>';
+    html += '<strong>' + esc(shortDate) + '</strong>';
     html += '<span class="insp-day-times">' + esc(timeRange) + '</span>';
     html += '</span>';
     html += '</div>';
@@ -298,6 +298,8 @@ function wireDayField(item, selector, dayId, field, nullable) {
     Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
     renderActiveDay();
     sessionSave();
+    // Re-render inspector when date changes (reorders accordion)
+    if (field === 'date') renderInspector();
   });
 }
 
@@ -491,7 +493,7 @@ function renderDayTabs() {
   const activeDay = Store.getActiveDay();
   let html = '';
   days.forEach((day, i) => {
-    const label = day.label || ('Day ' + (i + 1));
+    const label = day.label || (day.date ? formatDateShort(day.date) : 'Day ' + (i + 1));
     const active = day.id === activeDay ? ' active' : '';
     html += '<button class="day-tab' + active + '" data-day-id="' + esc(day.id) + '">' + esc(label) + '</button>';
   });
