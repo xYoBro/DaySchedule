@@ -351,11 +351,21 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '<label>POC</label>';
   html += '<input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '">';
 
-  // Checkboxes
-  html += '<div style="margin-top:10px;display:flex;gap:16px;">';
-  html += '<label style="display:flex;align-items:center;gap:4px;text-transform:none;font-size:12px;color:#1d1d1f;font-weight:500;letter-spacing:0;"><input type="checkbox" id="insp-evt-main"' + (evt.isMainEvent ? ' checked' : '') + '> Main Event</label>';
-  html += '<label style="display:flex;align-items:center;gap:4px;text-transform:none;font-size:12px;color:#1d1d1f;font-weight:500;letter-spacing:0;"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + '> Break</label>';
+  // Break toggle
+  html += '<div class="insp-toggle-section">';
+  html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + '> This is a break</label>';
+  html += '<p class="insp-hint">Breaks (lunch, travel) appear muted on the schedule.</p>';
   html += '</div>';
+
+  // Highlight override — only show if group scope is limited
+  const evtGroup = Store.getGroup(evt.groupId);
+  const groupIsMain = evtGroup && evtGroup.scope === 'main';
+  if (!groupIsMain && !evt.isBreak) {
+    html += '<div class="insp-toggle-section">';
+    html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-main"' + (evt.isMainEvent ? ' checked' : '') + '> Highlight this event</label>';
+    html += '<p class="insp-hint">Shows this event as a primary band even though its group is limited attendance.</p>';
+    html += '</div>';
+  }
 
   // Delete
   html += '<button class="delete-btn" id="insp-evt-delete">Delete Event</button>';
@@ -386,12 +396,31 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit('#insp-evt-title', 'title');
   autoCommit('#insp-evt-start', 'startTime', true);
   autoCommit('#insp-evt-end', 'endTime', true);
-  autoCommit('#insp-evt-group', 'groupId', true);
   autoCommit('#insp-evt-desc', 'description');
   autoCommit('#insp-evt-loc', 'location');
   autoCommit('#insp-evt-poc', 'poc');
-  autoCommit('#insp-evt-main', 'isMainEvent', true);
   autoCommit('#insp-evt-break', 'isBreak', true);
+
+  // Highlight override (only present for limited-scope groups)
+  const mainCheckbox = panel.querySelector('#insp-evt-main');
+  if (mainCheckbox) {
+    autoCommit('#insp-evt-main', 'isMainEvent', true);
+  }
+
+  // Group change — auto-derive isMainEvent from group scope and re-render inspector
+  const groupSelect = panel.querySelector('#insp-evt-group');
+  if (groupSelect) {
+    groupSelect.addEventListener('change', () => {
+      const newGroup = Store.getGroup(groupSelect.value);
+      const isMain = newGroup ? newGroup.scope === 'main' : true;
+      Store.updateEvent(dayId, eventId, { groupId: groupSelect.value, isMainEvent: isMain });
+      renderActiveDay();
+      const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
+      if (band) band.classList.add('selected');
+      sessionSave();
+      renderInspector(); // re-render to show/hide highlight override
+    });
+  }
 
   wireDeleteButton(panel.querySelector('#insp-evt-delete'), () => {
     saveUndoState();
