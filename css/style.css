@@ -839,11 +839,156 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
+   SETTINGS MODAL
+   ══════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.modal-overlay.active {
+  display: flex;
+}
+.modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+  padding: 24px;
+  max-width: 480px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.modal h2 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.2px;
+}
+.modal .field-row {
+  display: flex;
+  gap: 8px;
+}
+.modal .field-row > * { flex: 1; }
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e8e8ed;
+}
+
+/* ── Settings modal tabs ── */
+.modal-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e8e8ed;
+  margin-bottom: 16px;
+}
+.modal-tab {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #86868b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.modal-tab.active {
+  color: #1d1d1f;
+  font-weight: 600;
+  border-bottom-color: #2558a8;
+}
+
+/* ── Settings modal form fields ── */
+.settings-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #6e6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 3px;
+  margin-top: 12px;
+}
+.settings-label:first-child { margin-top: 0; }
+.settings-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  background: white;
+  color: #1d1d1f;
+}
+.settings-input:focus {
+  outline: none;
+  border-color: #2558a8;
+  box-shadow: 0 0 0 3px rgba(var(--app-accent),0.12);
+}
+
+/* Group items in modal reuse inspector group styles */
+.modal .insp-group-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px solid #e8e8ed;
+}
+.modal .insp-group-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.1);
+  cursor: pointer;
+  padding: 0;
+}
+.modal .insp-group-name {
+  flex: 1;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid #e0e0e4;
+  border-radius: 4px;
+  font-family: inherit;
+}
+.modal .insp-group-scope {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #d2d2d7;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  font-family: inherit;
+}
+.modal .insp-group-scope.main { background: #2558a8; color: white; border-color: #2558a8; }
+.modal .insp-group-remove {
+  font-size: 14px;
+  color: #ff3b30;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  line-height: 1;
+}
+
+/* ══════════════════════════════════════════════════════════════
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
 @media print {
   body { background: white; padding: 0; }
-  .toolbar, .inspector, .toast { display: none !important; }
+  .toolbar, .inspector, .toast, .modal-overlay { display: none !important; }
   .app-body { height: auto; overflow: visible; }
   .preview-area { padding: 0; }
   .page {

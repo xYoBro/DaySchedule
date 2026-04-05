@@ -3,6 +3,7 @@
 let _selection = { type: null, dayId: null, entityId: null };
 let _deleteTimer = null;
 let _expandedDayId = null;
+let _settingsTab = 'general';
 
 // ── Selection ──────────────────────────────────────────────────────────────
 
@@ -40,39 +41,13 @@ function renderInspector() {
 // ── Face 1: Schedule Setup ─────────────────────────────────────────────────
 
 function renderScheduleSetup(panel) {
-  const title = Store.getTitle();
-  const footer = Store.getFooter();
   const days = Store.getDays();
-  const groups = Store.getGroups();
 
-  let html = '<h3>Schedule Setup</h3>';
-
-  // Title
-  html += '<label>Title</label>';
-  html += '<input type="text" id="insp-title" value="' + esc(title) + '">';
-
-  // Logo
-  html += '<label>Logo</label>';
-  html += '<input type="file" id="insp-logo" accept="image/*" style="font-size:12px;">';
-  if (Store.getLogo()) {
-    html += '<div style="margin-top:4px;"><img src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
-    html += '<button class="btn" id="insp-logo-remove" style="font-size:10px;padding:2px 8px;">Remove</button></div>';
-  }
-
-  // Footer
-  html += '<label>Contact / Header Line</label>';
-  html += '<input type="text" id="insp-contact" value="' + esc(footer.contact) + '">';
-  html += '<label>Schedule POC</label>';
-  html += '<input type="text" id="insp-poc" value="' + esc(footer.poc) + '">';
-  html += '<label>Updated Date</label>';
-  html += '<input type="text" id="insp-updated" value="' + esc(footer.updated) + '">';
+  let html = '<h3>Days</h3>';
 
   // Days — accordion
-  html += '<h3>Days</h3>';
-  html += '<button class="btn" id="insp-add-day" style="width:100%;font-size:11px;margin-bottom:8px;">+ Add Day</button>';
   html += '<div class="insp-day-accordion">';
   days.forEach((day, i) => {
-    const dateLabel = day.date ? formatDateDisplay(day.date) : 'No date set';
     const shortDate = day.date ? formatDateShort(day.date) : 'Day ' + (i + 1);
     const timeRange = day.startTime + '–' + day.endTime;
     const isExpanded = day.id === (_expandedDayId || '');
@@ -105,69 +80,13 @@ function renderScheduleSetup(panel) {
   });
   html += '</div>';
 
-  // Audience Groups
-  html += '<h3>Audience Groups</h3>';
-  html += '<p class="insp-hint">Main groups get schedule bands. Limited groups appear as concurrent when overlapping.</p>';
-  groups.forEach(g => {
-    html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
-    html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
-    html += '<input type="text" class="insp-group-name" value="' + esc(g.name) + '" placeholder="Group name">';
-    html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Toggle between Main and Limited scope">' + (g.scope === 'main' ? 'Main' : 'Limited') + '</button>';
-    html += '<button class="insp-group-remove">&times;</button>';
-    html += '</div>';
-  });
-  html += '<button class="btn" id="insp-add-group" style="margin-top:6px;font-size:11px;">+ Add Group</button>';
-
-  // Save data file
-  html += '<h3>Data</h3>';
-  html += '<button class="btn" id="insp-save" style="width:100%;">Save to File</button>';
+  html += '<p class="insp-hint" style="margin-top:12px;">Click an event or note on the schedule to edit it here.</p>';
 
   panel.innerHTML = html;
   wireScheduleSetup(panel);
 }
 
 function wireScheduleSetup(panel) {
-  // Title
-  const titleInput = panel.querySelector('#insp-title');
-  titleInput.addEventListener('input', () => {
-    saveUndoState();
-    Store.setTitle(titleInput.value.trim());
-    syncToolbarTitle();
-    renderActiveDay();
-    sessionSave();
-  });
-
-  // Logo upload
-  const logoInput = panel.querySelector('#insp-logo');
-  logoInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      saveUndoState();
-      Store.setLogo(ev.target.result);
-      renderActiveDay();
-      renderInspector();
-      sessionSave();
-    };
-    reader.readAsDataURL(file);
-  });
-  const logoRemove = panel.querySelector('#insp-logo-remove');
-  if (logoRemove) {
-    logoRemove.addEventListener('click', () => {
-      saveUndoState();
-      Store.setLogo(null);
-      renderActiveDay();
-      renderInspector();
-      sessionSave();
-    });
-  }
-
-  // Footer fields
-  wireFooterField(panel, '#insp-contact', 'contact');
-  wireFooterField(panel, '#insp-poc', 'poc');
-  wireFooterField(panel, '#insp-updated', 'updated');
-
   // Day accordion headers — toggle expand/collapse
   panel.querySelectorAll('.insp-day-header').forEach(header => {
     header.addEventListener('click', () => {
@@ -202,30 +121,136 @@ function wireScheduleSetup(panel) {
       });
     }
   });
+}
 
-  // Add Day
-  const addDayBtn = panel.querySelector('#insp-add-day');
-  if (addDayBtn) {
-    addDayBtn.addEventListener('click', () => {
+// ── Settings Modal ────────────────────────────────────────────────────────
+
+function openSettingsModal() {
+  const modal = document.getElementById('settingsModalContent');
+  renderSettingsModal(modal);
+  document.getElementById('settingsModal').classList.add('active');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settingsModal').classList.remove('active');
+  renderActiveDay();
+  renderInspector();
+}
+
+function renderSettingsModal(modal) {
+  const title = Store.getTitle();
+  const footer = Store.getFooter();
+  const groups = Store.getGroups();
+
+  let html = '<h2>Schedule Settings</h2>';
+
+  // Tabs
+  html += '<div class="modal-tabs">';
+  html += '<button class="modal-tab' + (_settingsTab === 'general' ? ' active' : '') + '" data-tab="general">General</button>';
+  html += '<button class="modal-tab' + (_settingsTab === 'groups' ? ' active' : '') + '" data-tab="groups">Audience Groups</button>';
+  html += '</div>';
+
+  // General tab
+  html += '<div class="settings-tab-content" id="settingsTabGeneral"' + (_settingsTab !== 'general' ? ' style="display:none;"' : '') + '>';
+  html += '<label class="settings-label">Schedule Title</label>';
+  html += '<input type="text" class="settings-input" id="settings-title" value="' + esc(title) + '">';
+  html += '<label class="settings-label">Logo</label>';
+  html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
+  if (Store.getLogo()) {
+    html += '<div style="margin-top:4px;display:flex;align-items:center;gap:8px;"><img src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
+    html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove</button></div>';
+  }
+  html += '<label class="settings-label">Contact / Header Line</label>';
+  html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
+  html += '<div class="field-row">';
+  html += '<div><label class="settings-label">Schedule POC</label><input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '"></div>';
+  html += '<div><label class="settings-label">Updated Date</label><input type="text" class="settings-input" id="settings-updated" value="' + esc(footer.updated) + '"></div>';
+  html += '</div>';
+  html += '</div>';
+
+  // Groups tab
+  html += '<div class="settings-tab-content" id="settingsTabGroups"' + (_settingsTab !== 'groups' ? ' style="display:none;"' : '') + '>';
+  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Main groups get schedule bands. Limited groups appear as concurrent when overlapping.</p>';
+  groups.forEach(g => {
+    html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
+    html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
+    html += '<input type="text" class="insp-group-name" value="' + esc(g.name) + '" placeholder="Group name">';
+    html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Toggle between Main and Limited scope">' + (g.scope === 'main' ? 'Main' : 'Limited') + '</button>';
+    html += '<button class="insp-group-remove">&times;</button>';
+    html += '</div>';
+  });
+  html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Group</button>';
+  html += '</div>';
+
+  // Data section + Done
+  html += '<div class="modal-actions">';
+  html += '<button class="btn" id="settings-save-file">Save to File</button>';
+  html += '<button class="btn btn-primary" id="settings-done">Done</button>';
+  html += '</div>';
+
+  modal.innerHTML = html;
+  wireSettingsModal(modal);
+}
+
+function wireSettingsModal(modal) {
+  // Tab switching
+  modal.querySelectorAll('.modal-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      _settingsTab = tab.getAttribute('data-tab');
+      renderSettingsModal(modal);
+    });
+  });
+
+  // General tab fields — auto-commit on change
+  const titleInput = modal.querySelector('#settings-title');
+  if (titleInput) {
+    titleInput.addEventListener('input', () => {
       saveUndoState();
-      const day = Store.addDay({ date: '', startTime: '0700', endTime: '1630' });
-      if (!Store.getActiveDay()) Store.setActiveDay(day.id);
-      _expandedDayId = day.id;
+      Store.setTitle(titleInput.value.trim());
+      syncToolbarTitle();
       sessionSave();
-      renderActiveDay();
-      renderInspector();
     });
   }
 
+  // Logo upload
+  const logoInput = modal.querySelector('#settings-logo');
+  if (logoInput) {
+    logoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        saveUndoState();
+        Store.setLogo(ev.target.result);
+        sessionSave();
+        renderSettingsModal(modal);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  const logoRemove = modal.querySelector('#settings-logo-remove');
+  if (logoRemove) {
+    logoRemove.addEventListener('click', () => {
+      saveUndoState();
+      Store.setLogo(null);
+      sessionSave();
+      renderSettingsModal(modal);
+    });
+  }
+
+  // Footer fields
+  wireSettingsFooterField(modal, '#settings-contact', 'contact');
+  wireSettingsFooterField(modal, '#settings-poc', 'poc');
+  wireSettingsFooterField(modal, '#settings-updated', 'updated');
+
   // Group fields
-  panel.querySelectorAll('.insp-group-item').forEach(item => {
+  modal.querySelectorAll('.insp-group-item').forEach(item => {
     const groupId = item.getAttribute('data-group-id');
 
     const colorInput = item.querySelector('.insp-group-color');
     colorInput.addEventListener('change', () => {
       saveUndoState();
       Store.updateGroup(groupId, { color: colorInput.value });
-      renderActiveDay();
       sessionSave();
     });
 
@@ -233,7 +258,6 @@ function wireScheduleSetup(panel) {
     nameInput.addEventListener('input', () => {
       saveUndoState();
       Store.updateGroup(groupId, { name: nameInput.value.trim() });
-      renderActiveDay();
       sessionSave();
     });
 
@@ -245,7 +269,6 @@ function wireScheduleSetup(panel) {
       Store.updateGroup(groupId, { scope: newScope });
       scopeBtn.classList.toggle('main', !isMain);
       scopeBtn.textContent = isMain ? 'Limited' : 'Main';
-      renderActiveDay();
       sessionSave();
     });
 
@@ -254,28 +277,42 @@ function wireScheduleSetup(panel) {
       saveUndoState();
       Store.removeGroup(groupId);
       sessionSave();
-      renderActiveDay();
-      renderInspector();
+      renderSettingsModal(modal);
     });
   });
 
   // Add Group
-  const addGroupBtn = panel.querySelector('#insp-add-group');
+  const addGroupBtn = modal.querySelector('#settings-add-group');
   if (addGroupBtn) {
     addGroupBtn.addEventListener('click', () => {
       saveUndoState();
       Store.addGroup({ name: 'New Group' });
       sessionSave();
-      renderActiveDay();
-      renderInspector();
+      renderSettingsModal(modal);
     });
   }
 
   // Save data file
-  const saveBtn = panel.querySelector('#insp-save');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => saveDataFile());
+  const saveFileBtn = modal.querySelector('#settings-save-file');
+  if (saveFileBtn) {
+    saveFileBtn.addEventListener('click', () => saveDataFile());
   }
+
+  // Done button
+  const doneBtn = modal.querySelector('#settings-done');
+  if (doneBtn) {
+    doneBtn.addEventListener('click', () => closeSettingsModal());
+  }
+}
+
+function wireSettingsFooterField(modal, selector, key) {
+  const input = modal.querySelector(selector);
+  if (!input) return;
+  input.addEventListener('input', () => {
+    saveUndoState();
+    Store.setFooter({ [key]: input.value.trim() });
+    sessionSave();
+  });
 }
 
 function wireFooterField(panel, selector, key) {
@@ -570,15 +607,29 @@ function wireToolbar() {
   if (addBtn) addBtn.onclick = () => {
     const dayId = Store.getActiveDay();
     if (dayId) openAddEvent(dayId);
-    else toast('Add a day first in Schedule Setup');
+    else toast('Add a day first');
   };
 
   const addNoteBtn = document.getElementById('addNoteBtn');
   if (addNoteBtn) addNoteBtn.onclick = () => {
     const dayId = Store.getActiveDay();
     if (dayId) openAddNote(dayId);
-    else toast('Add a day first in Schedule Setup');
+    else toast('Add a day first');
   };
+
+  const addDayBtn = document.getElementById('addDayBtn');
+  if (addDayBtn) addDayBtn.onclick = () => {
+    saveUndoState();
+    const day = Store.addDay({ date: '', startTime: '0700', endTime: '1630' });
+    if (!Store.getActiveDay()) Store.setActiveDay(day.id);
+    _expandedDayId = day.id;
+    sessionSave();
+    renderActiveDay();
+    selectEntity(null); // show days face with new day expanded
+  };
+
+  const settingsBtn = document.getElementById('settingsBtn');
+  if (settingsBtn) settingsBtn.onclick = () => openSettingsModal();
 
   const printBtn = document.getElementById('printBtn');
   if (printBtn) printBtn.onclick = () => printActiveDay();
@@ -593,6 +644,24 @@ function wireToolbar() {
       sessionSave();
     });
   }
+
+  // Settings modal — close on backdrop click
+  const settingsOverlay = document.getElementById('settingsModal');
+  if (settingsOverlay) {
+    settingsOverlay.addEventListener('click', (e) => {
+      if (e.target === settingsOverlay) closeSettingsModal();
+    });
+  }
+
+  // Escape key closes settings modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const overlay = document.getElementById('settingsModal');
+      if (overlay && overlay.classList.contains('active')) {
+        closeSettingsModal();
+      }
+    }
+  });
 
   // Initial inspector render
   renderInspector();

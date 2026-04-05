@@ -20,6 +20,9 @@
     <div class="toolbar-right">
       <button class="btn btn-primary" id="addEventBtn">+ Event</button>
       <button class="btn" id="addNoteBtn">+ Note</button>
+      <button class="btn" id="addDayBtn">+ Day</button>
+      <div class="tb-sep"></div>
+      <button class="btn" id="settingsBtn">Settings</button>
       <button class="btn" id="printBtn">Print</button>
     </div>
   </div>
@@ -36,6 +39,11 @@
 
   <!-- Toast -->
   <div id="toast" class="toast"></div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal" id="settingsModalContent"></div>
+  </div>
 
   <!-- Scripts -->
   <script src="js/app-state.js"></script>
