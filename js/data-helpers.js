@@ -22,7 +22,7 @@ function classifyEvents(events, groups) {
   function isEffectiveMain(evt) {
     if (evt.isBreak) return true; // breaks always go in main track
     const group = groupMap[evt.groupId];
-    if (!group) return !!evt.isMainEvent; // no group — respect manual flag (defaults false)
+    if (!group) return false; // no group — never main
     if (group.scope === 'main') return true; // main-scope group — always main
     return !!evt.isMainEvent; // limited-scope — only if manually highlighted
   }
