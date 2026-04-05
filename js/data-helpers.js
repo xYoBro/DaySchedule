@@ -61,16 +61,24 @@ function classifyEvents(events, groups) {
     return mainEvents.filter(m => m.id !== evt.id && !m.isBreak && eventsOverlap(m, evt));
   }
 
+  // Track which concurrent events have been placed so each appears only once,
+  // on the first main band it overlaps with (i.e. the band active when it starts).
+  const placedConcurrent = new Set();
+
   const mainBands = allBandEvents.map(evt => {
     const effMain = isEffectiveMain(evt);
     const overlappingMain = effMain && !evt.isBreak ? getOverlappingMain(evt) : [];
+    let bandConcurrent = [];
+    if (effMain && !evt.isBreak) {
+      bandConcurrent = getOverlappingConcurrent(evt, concurrent)
+        .filter(c => !placedConcurrent.has(c.id));
+      bandConcurrent.forEach(c => placedConcurrent.add(c.id));
+    }
     return {
       event: evt,
       tier: evt.isBreak ? 'break' : effMain ? 'main' : 'supporting',
       group: groupMap[evt.groupId] || null,
-      concurrent: effMain && !evt.isBreak
-        ? getOverlappingConcurrent(evt, concurrent)
-        : [],
+      concurrent: bandConcurrent,
       overlappingMain, // other main events that share time with this one
     };
   });

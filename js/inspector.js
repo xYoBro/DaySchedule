@@ -476,6 +476,7 @@ function wireEventInspector(panel, dayId, eventId) {
       if (band) band.classList.add('selected');
       sessionSave();
       renderInspector();
+      checkTimeConflict(dayId, eventId);
     });
   }
 
@@ -699,7 +700,10 @@ function openAddEvent(dayId) {
   });
   sessionSave();
   renderActiveDay();
-  if (evt) selectEntity('event', dayId, evt.id);
+  if (evt) {
+    selectEntity('event', dayId, evt.id);
+    checkTimeConflict(dayId, evt.id);
+  }
 }
 
 function openAddNote(dayId) {
@@ -751,6 +755,25 @@ function snapToQuarter(timeStr) {
   return String(h).padStart(2, '0') + String(m).padStart(2, '0');
 }
 
+function checkTimeConflict(dayId, eventId) {
+  const evt = Store.getEvents(dayId).find(e => e.id === eventId);
+  if (!evt || evt.isBreak) return;
+  const group = Store.getGroup(evt.groupId);
+  const isMain = group && group.scope === 'main';
+  if (!isMain) return;
+  const others = Store.getEvents(dayId).filter(e =>
+    e.id !== eventId && !e.isBreak && (() => {
+      const g = Store.getGroup(e.groupId);
+      return g && g.scope === 'main';
+    })()
+  );
+  const conflicts = others.filter(o => eventsOverlap(evt, o));
+  if (conflicts.length > 0) {
+    const names = conflicts.map(c => c.title).join(', ');
+    toast('Schedule conflict: overlaps with ' + names);
+  }
+}
+
 function wireTimeInput(panel, selector, field, dayId, eventId) {
   const input = panel.querySelector(selector);
   if (!input) return;
@@ -763,6 +786,7 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
     const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
     if (band) band.classList.add('selected');
     sessionSave();
+    checkTimeConflict(dayId, eventId);
   });
   // Also commit on Enter key
   input.addEventListener('keydown', (e) => {

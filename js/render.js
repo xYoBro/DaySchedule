@@ -117,6 +117,7 @@ function renderBand(band) {
       html += '<div class="cc-title">' + esc(c.title) + '</div>';
       html += '<div class="cc-detail">' + esc(c.startTime + '\u2013' + c.endTime);
       if (c.location) html += ' \u00b7 ' + esc(c.location);
+      if (c.poc) html += ' \u00b7 POC: ' + esc(c.poc);
       html += '</div>';
       if (cGroup) html += '<div class="cc-badge">' + esc(cGroup.name) + '</div>';
       html += '</div>';
