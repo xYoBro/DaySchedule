@@ -101,16 +101,19 @@ function renderBand(band) {
   }
   html += '</div>';
 
-  // "Also happening" — condensed single-line format
+  // "Also happening" — clickable concurrent indicators
   if (concList && concList.length > 0) {
-    html += '<div class="band-conc">';
-    const names = concList.map(c => '<strong>' + esc(c.title) + '</strong>');
-    if (names.length <= 2) {
-      html += '<div class="cc-summary">Also: ' + names.join(', ') + '</div>';
-    } else {
-      html += '<div class="cc-summary">Also: ' + names[0] + ' +' + (names.length - 1) + ' more</div>';
-    }
-    html += '</div>';
+    concList.forEach(c => {
+      const cGroup = Store.getGroup(c.groupId);
+      html += '<div class="band-conc" data-event-id="' + esc(c.id) + '">';
+      html += '<div class="cc-label">Also happening</div>';
+      html += '<div class="cc-title">' + esc(c.title) + '</div>';
+      html += '<div class="cc-detail">' + esc(c.startTime + '\u2013' + c.endTime);
+      if (c.location) html += ' \u00b7 ' + esc(c.location);
+      html += '</div>';
+      if (cGroup) html += '<div class="cc-badge">' + esc(cGroup.name) + '</div>';
+      html += '</div>';
+    });
   }
 
   html += '</div>';

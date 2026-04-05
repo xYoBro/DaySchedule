@@ -1,4 +1,12 @@
 document.addEventListener('click', e => {
+  // Click on "Also happening" concurrent indicator -> select that concurrent event
+  const concIndicator = e.target.closest('.band-conc[data-event-id]');
+  if (concIndicator && !e.target.closest('.inspector')) {
+    const dayId = Store.getActiveDay();
+    if (dayId) selectEntity('event', dayId, concIndicator.getAttribute('data-event-id'));
+    return;
+  }
+
   // Click on event band -> select in inspector
   const band = e.target.closest('.band[data-event-id]');
   if (band && !e.target.closest('.inspector')) {
