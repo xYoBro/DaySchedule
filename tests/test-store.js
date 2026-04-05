@@ -43,10 +43,37 @@ describe('Store — schedule state', () => {
   it('snapshot and restore for undo', () => {
     Store.reset();
     Store.setTitle('Test');
+    const day = Store.addDay({ date: '2026-03-15', startTime: '0700', endTime: '1630' });
+    Store.setActiveDay(day.id);
     const snap = Store.snapshot();
     Store.setTitle('Changed');
+    Store.addDay({ date: '2026-03-16', startTime: '0700', endTime: '1630' });
+    Store.setActiveDay('missing-day');
     assert.equal(Store.getTitle(), 'Changed');
     Store.restore(snap);
     assert.equal(Store.getTitle(), 'Test');
+    assert.equal(Store.getActiveDay(), day.id);
+    assert.equal(Store.getDays().length, 1);
+  });
+
+  it('normalizes persisted days and restores a valid active day', () => {
+    Store.reset();
+    Store.setActiveDay('stale-day');
+    Store.loadPersistedState({
+      title: 'Loaded',
+      days: [{ id: 'day_1', date: '2026-03-15', startTime: '700', endTime: '1630' }],
+      groups: [{ id: 'grp_ops', name: 'Ops' }],
+      footer: { contact: 'Wing HQ' },
+    });
+    const day = Store.getDay('day_1');
+    const group = Store.getGroup('grp_ops');
+    assert.equal(Store.getTitle(), 'Loaded');
+    assert.equal(Store.getActiveDay(), 'day_1');
+    assert.equal(day.startTime, '0700');
+    assert.deepEqual(day.events, []);
+    assert.deepEqual(day.notes, []);
+    assert.equal(group.scope, 'limited');
+    assert.equal(group.color, DEFAULT_COLOR_PALETTE[0]);
+    assert.deepEqual(Store.getFooter(), { contact: 'Wing HQ', poc: '', updated: '' });
   });
 });

@@ -24,6 +24,8 @@ function undo() {
   _redoStack.push(Store.snapshot());
   Store.restore(_undoStack.pop());
   renderActiveDay();
+  if (typeof renderInspector === 'function') renderInspector();
+  sessionSave();
   toast('Undo');
 }
 
@@ -32,6 +34,8 @@ function redo() {
   _undoStack.push(Store.snapshot());
   Store.restore(_redoStack.pop());
   renderActiveDay();
+  if (typeof renderInspector === 'function') renderInspector();
+  sessionSave();
   toast('Redo');
 }
 

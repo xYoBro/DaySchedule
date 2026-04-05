@@ -5,6 +5,11 @@ let _logo = null;
 let _activeDay = null;
 let _footer = { contact: '', poc: '', updated: '' };
 
+function getValidActiveDay(candidate) {
+  if (!_days.length) return null;
+  return _days.some(day => day.id === candidate) ? candidate : _days[0].id;
+}
+
 const Store = {
   getTitle()    { return _title; },
   setTitle(v)   { _title = v; },
@@ -127,7 +132,7 @@ const Store = {
 
   snapshot() {
     return JSON.parse(JSON.stringify({
-      title: _title, days: _days, groups: _groups, logo: _logo, footer: _footer,
+      title: _title, days: _days, groups: _groups, logo: _logo, footer: _footer, activeDay: _activeDay,
     }));
   },
   restore(snap) {
@@ -136,6 +141,7 @@ const Store = {
     _groups = snap.groups || JSON.parse(JSON.stringify(DEFAULT_GROUPS));
     _logo = snap.logo || null;
     _footer = snap.footer || { contact: '', poc: '', updated: '' };
+    _activeDay = getValidActiveDay(snap.activeDay);
   },
 
   reset() {
@@ -151,10 +157,18 @@ const Store = {
     return { title: _title, days: _days, groups: _groups, logo: _logo, footer: _footer };
   },
   loadPersistedState(state) {
+    if (!state || typeof state !== 'object') return;
     if (state.title != null) _title = state.title;
-    if (state.days) _days = state.days;
-    if (state.groups) _groups = state.groups;
+    if (Array.isArray(state.days)) _days = state.days.map(normalizeDay).filter(Boolean);
+    if (Array.isArray(state.groups)) _groups = state.groups.map(normalizeGroup).filter(Boolean);
     if (state.logo !== undefined) _logo = state.logo;
-    if (state.footer) _footer = state.footer;
+    if (state.footer && typeof state.footer === 'object') {
+      _footer = {
+        contact: state.footer.contact || '',
+        poc: state.footer.poc || '',
+        updated: state.footer.updated || '',
+      };
+    }
+    _activeDay = getValidActiveDay(state.activeDay != null ? state.activeDay : _activeDay);
   },
 };

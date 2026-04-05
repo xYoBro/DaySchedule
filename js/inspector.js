@@ -128,11 +128,11 @@ function wireScheduleSetup(panel) {
 function openSettingsModal() {
   const modal = document.getElementById('settingsModalContent');
   renderSettingsModal(modal);
-  document.getElementById('settingsModal').classList.add('active');
+  openModal('settingsModal');
 }
 
 function closeSettingsModal() {
-  document.getElementById('settingsModal').classList.remove('active');
+  closeModal('settingsModal');
   renderActiveDay();
   renderInspector();
 }
@@ -459,6 +459,7 @@ function wireEventInspector(panel, dayId, eventId) {
   const groupSelect = panel.querySelector('#insp-evt-group');
   if (groupSelect) {
     groupSelect.addEventListener('change', () => {
+      saveUndoState();
       const oldGroup = Store.getGroup(Store.getEvents(dayId).find(e => e.id === eventId).groupId);
       const newGroup = Store.getGroup(groupSelect.value);
       const oldScope = oldGroup ? oldGroup.scope : 'limited';
@@ -570,8 +571,21 @@ function clearDeleteTimer() {
 // ── Rendering helpers ──────────────────────────────────────────────────────
 
 function renderActiveDay() {
-  const dayId = Store.getActiveDay();
-  if (dayId) renderDay(dayId);
+  const days = Store.getDays();
+  let dayId = Store.getActiveDay();
+  if (dayId && !days.find(day => day.id === dayId)) {
+    dayId = null;
+  }
+  if (!dayId && days.length) {
+    dayId = days[0].id;
+    Store.setActiveDay(dayId);
+  }
+  if (dayId) {
+    renderDay(dayId);
+  } else {
+    const container = document.getElementById('scheduleContainer');
+    if (container) container.innerHTML = '';
+  }
   renderDayTabs();
 }
 
@@ -743,12 +757,13 @@ function snapToQuarter(timeStr) {
   const cleaned = timeStr.replace(/[^0-9]/g, '').padStart(4, '0').slice(0, 4);
   let h = parseInt(cleaned.slice(0, 2), 10);
   let m = parseInt(cleaned.slice(2, 4), 10);
-  if (isNaN(h) || h > 23) h = 0;
-  if (isNaN(m) || m > 59) m = 0;
-  // Round to nearest 15
-  m = Math.round(m / 15) * 15;
-  if (m === 60) { m = 0; h = Math.min(h + 1, 23); }
-  return String(h).padStart(2, '0') + String(m).padStart(2, '0');
+  if (isNaN(h) || h < 0) h = 0;
+  if (isNaN(m) || m < 0) m = 0;
+  h = Math.min(h, 23);
+  m = Math.min(m, 59);
+  const totalMinutes = (h * 60) + m;
+  const snappedMinutes = Math.min(Math.round(totalMinutes / TIME_INCREMENT) * TIME_INCREMENT, 24 * 60);
+  return String(Math.floor(snappedMinutes / 60)).padStart(2, '0') + String(snappedMinutes % 60).padStart(2, '0');
 }
 
 function wireTimeInput(panel, selector, field, dayId, eventId) {

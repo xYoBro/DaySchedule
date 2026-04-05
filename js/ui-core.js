@@ -37,5 +37,11 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   const active = document.querySelector('.modal-overlay.active');
-  if (active) { e.preventDefault(); closeModal(active.id); }
+  if (!active) return;
+  e.preventDefault();
+  if (active.id === 'settingsModal' && typeof closeSettingsModal === 'function') {
+    closeSettingsModal();
+    return;
+  }
+  closeModal(active.id);
 });
