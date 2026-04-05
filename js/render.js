@@ -68,14 +68,16 @@ function renderHeader(day) {
 }
 
 function renderBand(band) {
-  const { event: evt, tier, group, concurrent: concList } = band;
+  const { event: evt, tier, group, concurrent: concList, overlappingMain } = band;
   const dur = computeDuration(evt);
   const durStr = formatDuration(dur);
+  const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
 
   const tierClass = tier === 'main' ? 'main' : tier === 'break' ? 'brk' : 'sup';
+  const overlapClass = hasMainOverlap ? ' band-overlap' : '';
   const accentStyle = tier === 'main' && group ? ' style="--accent:' + esc(group.color) + ';"' : '';
 
-  let html = '<div class="band ' + tierClass + '"' + accentStyle + ' data-event-id="' + esc(evt.id) + '">';
+  let html = '<div class="band ' + tierClass + overlapClass + '"' + accentStyle + ' data-event-id="' + esc(evt.id) + '">';
 
   // Time block
   html += '<div class="band-time">';
@@ -98,6 +100,11 @@ function renderBand(band) {
   }
   if (group && tier !== 'break') {
     html += '<div><span class="band-tag">' + esc(group.name) + '</span></div>';
+  }
+  // Overlap notice for main-on-main conflicts
+  if (hasMainOverlap) {
+    const overlapNames = overlappingMain.map(m => esc(m.title)).join(', ');
+    html += '<div class="band-overlap-notice">Overlaps with ' + overlapNames + '</div>';
   }
   html += '</div>';
 

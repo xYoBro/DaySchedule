@@ -546,6 +546,22 @@ body {
   outline-offset: -2px;
 }
 
+/* ── Main-on-main overlap indicator ── */
+.band.band-overlap {
+  border-left: 3px solid #ff9500 !important;
+  margin-left: 6px;
+}
+.band.band-overlap .band-time {
+  border-right-color: #ff9500 !important;
+}
+.band-overlap-notice {
+  font-size: 7.5px;
+  font-weight: 500;
+  color: #ff9500;
+  margin-top: 3px;
+  letter-spacing: 0.1px;
+}
+
 /* ── Group management in inspector ── */
 .insp-group-item {
   display: flex;
@@ -661,6 +677,19 @@ body {
 }
 .insp-toggle-section .insp-hint {
   margin: 4px 0 0 22px;
+}
+
+/* ── Inspector overlap warning ── */
+.insp-overlap-warn {
+  font-size: 11px;
+  font-weight: 500;
+  color: #ff9500;
+  background: rgba(255,149,0,0.06);
+  border: 1px solid rgba(255,149,0,0.2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  line-height: 1.4;
 }
 
 /* ── Inspector hint text ── */

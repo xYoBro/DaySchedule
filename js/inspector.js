@@ -323,6 +323,15 @@ function renderEventInspector(panel, dayId, eventId) {
 
   let html = '<div class="insp-header"><h3 style="margin:0;">Event Properties</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
 
+  // Check for main-on-main overlaps
+  const allEvents = Store.getEvents(dayId);
+  const { mainBands } = classifyEvents(allEvents, groups);
+  const thisBand = mainBands.find(b => b.event.id === eventId);
+  if (thisBand && thisBand.overlappingMain && thisBand.overlappingMain.length > 0) {
+    const names = thisBand.overlappingMain.map(m => esc(m.title)).join(', ');
+    html += '<div class="insp-overlap-warn">Overlaps with ' + names + '</div>';
+  }
+
   // Title
   html += '<label>Title</label>';
   html += '<input type="text" id="insp-evt-title" value="' + esc(evt.title) + '">';

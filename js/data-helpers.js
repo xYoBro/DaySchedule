@@ -56,8 +56,14 @@ function classifyEvents(events, groups) {
   const allBandEvents = [...mainEvents, ...supporting]
     .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
+  // Detect main-on-main overlaps
+  function getOverlappingMain(evt) {
+    return mainEvents.filter(m => m.id !== evt.id && !m.isBreak && eventsOverlap(m, evt));
+  }
+
   const mainBands = allBandEvents.map(evt => {
     const effMain = isEffectiveMain(evt);
+    const overlappingMain = effMain && !evt.isBreak ? getOverlappingMain(evt) : [];
     return {
       event: evt,
       tier: evt.isBreak ? 'break' : effMain ? 'main' : 'supporting',
@@ -65,6 +71,7 @@ function classifyEvents(events, groups) {
       concurrent: effMain && !evt.isBreak
         ? getOverlappingConcurrent(evt, concurrent)
         : [],
+      overlappingMain, // other main events that share time with this one
     };
   });
 
