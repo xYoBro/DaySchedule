@@ -132,6 +132,7 @@ function wireScheduleSetup(panel) {
   titleInput.addEventListener('input', () => {
     saveUndoState();
     Store.setTitle(titleInput.value.trim());
+    syncToolbarTitle();
     renderActiveDay();
     sessionSave();
   });
@@ -320,7 +321,7 @@ function renderEventInspector(panel, dayId, eventId) {
   const groups = Store.getGroups();
   const timeOptions = buildTimeOptions();
 
-  let html = '<h3>Event Properties</h3>';
+  let html = '<div class="insp-header"><h3 style="margin:0;">Event Properties</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
 
   // Title
   html += '<label>Title</label>';
@@ -367,8 +368,8 @@ function renderEventInspector(panel, dayId, eventId) {
     html += '</div>';
   }
 
-  // Delete
-  html += '<button class="delete-btn" id="insp-evt-delete">Delete Event</button>';
+  // Delete — in sticky zone
+  html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-evt-delete">Delete Event</button></div>';
 
   panel.innerHTML = html;
   wireEventInspector(panel, dayId, eventId);
@@ -392,6 +393,10 @@ function wireEventInspector(panel, dayId, eventId) {
       sessionSave();
     });
   }
+
+  // Close button — back to schedule setup
+  const closeBtn = panel.querySelector('#insp-close');
+  if (closeBtn) closeBtn.addEventListener('click', () => selectEntity(null));
 
   autoCommit('#insp-evt-title', 'title');
   autoCommit('#insp-evt-start', 'startTime', true);
@@ -444,7 +449,7 @@ function renderNoteInspector(panel, dayId, noteId) {
   const note = Store.getNotes(dayId).find(n => n.id === noteId);
   if (!note) { renderScheduleSetup(panel); return; }
 
-  let html = '<h3>Note</h3>';
+  let html = '<div class="insp-header"><h3 style="margin:0;">Note</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
 
   html += '<label>Category</label>';
   html += '<input type="text" id="insp-note-cat" value="' + esc(note.category) + '" placeholder="e.g., Medical, TDY">';
@@ -452,13 +457,16 @@ function renderNoteInspector(panel, dayId, noteId) {
   html += '<label>Text</label>';
   html += '<textarea id="insp-note-text">' + esc(note.text) + '</textarea>';
 
-  html += '<button class="delete-btn" id="insp-note-delete">Delete Note</button>';
+  html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-note-delete">Delete Note</button></div>';
 
   panel.innerHTML = html;
   wireNoteInspector(panel, dayId, noteId);
 }
 
 function wireNoteInspector(panel, dayId, noteId) {
+  const closeBtn = panel.querySelector('#insp-close');
+  if (closeBtn) closeBtn.addEventListener('click', () => selectEntity(null));
+
   const catInput = panel.querySelector('#insp-note-cat');
   catInput.addEventListener('input', () => {
     saveUndoState();
@@ -564,8 +572,24 @@ function wireToolbar() {
   const printBtn = document.getElementById('printBtn');
   if (printBtn) printBtn.onclick = () => printActiveDay();
 
+  // Toolbar title — editable inline, syncs with Store
+  const tbTitle = document.getElementById('tbTitle');
+  if (tbTitle) {
+    tbTitle.value = Store.getTitle();
+    tbTitle.addEventListener('input', () => {
+      Store.setTitle(tbTitle.value.trim());
+      renderActiveDay();
+      sessionSave();
+    });
+  }
+
   // Initial inspector render
   renderInspector();
+}
+
+function syncToolbarTitle() {
+  const tbTitle = document.getElementById('tbTitle');
+  if (tbTitle) tbTitle.value = Store.getTitle();
 }
 
 // ── Add event / note ───────────────────────────────────────────────────────

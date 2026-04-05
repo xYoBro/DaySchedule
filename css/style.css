@@ -162,6 +162,10 @@ body {
   color: #48484a;
   line-height: 1.45;
   margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .band-loc {
   font-size: 8px;
@@ -184,41 +188,21 @@ body {
 
 /* Concurrent indicator — small right-side tag */
 .band-conc {
-  width: auto;
   flex-shrink: 0;
-  padding: 8px 8px 8px 10px;
+  padding: 6px 10px;
   border-left: 1px solid #f0f0f2;
   max-width: 180px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: center;
 }
-.band-conc .cc-label {
-  font-size: 6.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #aeaeb2;
-  margin-bottom: 2px;
-}
-.band-conc .cc-title {
-  font-size: 9px;
-  font-weight: 600;
-  color: #1d1d1f;
-  line-height: 1.2;
-}
-.band-conc .cc-detail {
-  font-size: 7px;
+.cc-summary {
+  font-size: 8px;
   color: #86868b;
-  margin-top: 1px;
+  line-height: 1.3;
 }
-.band-conc .cc-badge {
-  font-size: 6px;
-  font-weight: 700;
-  color: #aeaeb2;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  margin-top: 2px;
+.cc-summary strong {
+  color: #48484a;
+  font-weight: 600;
 }
 
 /* ── MAIN event band — emphasized ── */
@@ -430,6 +414,32 @@ body {
   overflow-y: auto;
   padding: 16px;
   font-size: 13px;
+  display: flex;
+  flex-direction: column;
+}
+.insp-body { flex: 1; overflow-y: auto; }
+.insp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.insp-close {
+  font-size: 18px;
+  color: #86868b;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1;
+}
+.insp-close:hover { background: rgba(0,0,0,0.06); color: #1d1d1f; }
+.insp-delete-zone {
+  padding: 10px 0 0;
+  border-top: 1px solid #e0e0e4;
+  margin-top: 12px;
+  flex-shrink: 0;
 }
 
 .inspector h3 {
@@ -670,6 +680,28 @@ body {
   z-index: 100;
 }
 .toolbar-left, .toolbar-right { display: flex; gap: 8px; align-items: center; }
+.tb-title {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1d1d1f;
+  letter-spacing: -0.2px;
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 4px;
+  outline: none;
+  min-width: 100px;
+  max-width: 200px;
+}
+.tb-title:hover { background: rgba(0,0,0,0.04); }
+.tb-title:focus { background: white; box-shadow: 0 0 0 2px rgba(var(--app-accent),0.3); }
+.tb-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
 
 /* ── Buttons ── */
 .btn {
