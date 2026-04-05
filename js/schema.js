@@ -18,7 +18,7 @@ function normalizeEvent(raw) {
     poc:         (raw.poc || '').trim(),
     groupId:     raw.groupId || '',
     isBreak:     !!raw.isBreak,
-    isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : true,
+    isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
   };
 }
 

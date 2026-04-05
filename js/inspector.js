@@ -421,8 +421,10 @@ function wireEventInspector(panel, dayId, eventId) {
       const oldScope = oldGroup ? oldGroup.scope : 'limited';
       const newScope = newGroup ? newGroup.scope : 'limited';
       const updates = { groupId: groupSelect.value };
-      // Only auto-set isMainEvent when crossing the scope boundary
-      if (oldScope !== newScope) {
+      // Reset isMainEvent when: crossing scope boundary, or clearing the group
+      if (!newGroup) {
+        updates.isMainEvent = false; // no group = never main
+      } else if (oldScope !== newScope) {
         updates.isMainEvent = newScope === 'main';
       }
       Store.updateEvent(dayId, eventId, updates);

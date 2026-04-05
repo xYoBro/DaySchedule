@@ -2,6 +2,7 @@ function computeDuration(event) {
   return timeToMinutes(event.endTime) - timeToMinutes(event.startTime);
 }
 
+// Touch-exclusive: adjacent events (0800-0900, 0900-1000) do NOT overlap.
 function eventsOverlap(a, b) {
   const aStart = timeToMinutes(a.startTime), aEnd = timeToMinutes(a.endTime);
   const bStart = timeToMinutes(b.startTime), bEnd = timeToMinutes(b.endTime);
