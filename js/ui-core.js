@@ -29,11 +29,11 @@ function toast(msg) {
 }
 
 function closeDropdowns() {
-  document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.tb-overflow').forEach(d => d.classList.remove('open'));
 }
 
 document.addEventListener('click', e => {
-  if (!e.target.closest('.dropdown')) closeDropdowns();
+  if (!e.target.closest('.tb-overflow')) closeDropdowns();
 });
 
 document.addEventListener('keydown', e => {

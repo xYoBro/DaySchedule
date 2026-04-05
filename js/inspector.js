@@ -657,9 +657,7 @@ function wireToolbar() {
       e.stopPropagation();
       overflowMenu.classList.toggle('open');
     };
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#overflowMenu')) overflowMenu.classList.remove('open');
-    });
+    // Click-outside-to-close handled by closeDropdowns() in ui-core.js
   }
 
   const settingsBtn = document.getElementById('settingsBtn');
