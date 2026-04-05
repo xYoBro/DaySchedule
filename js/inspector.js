@@ -612,11 +612,32 @@ function openAddEvent(dayId) {
 }
 
 function openAddNote(dayId) {
+  // Check if adding a note would overflow the page
+  if (wouldOverflowPage()) {
+    toast('Cannot add note — page is full. Remove content or shorten descriptions first.');
+    return;
+  }
   saveUndoState();
   const note = Store.addNote(dayId, { category: '', text: '(enter note text)' });
   sessionSave();
   renderActiveDay();
-  if (note) selectEntity('note', dayId, note.id);
+  // Check again after render — if it overflowed, undo immediately
+  if (wouldOverflowPage()) {
+    Store.removeNote(dayId, note.id);
+    sessionSave();
+    renderActiveDay();
+    toast('Cannot add note — page is full. Remove content or shorten descriptions first.');
+    return;
+  }
+  selectEntity('note', dayId, note.id);
+}
+
+function wouldOverflowPage() {
+  const page = document.querySelector('.page');
+  if (!page) return false;
+  // US Letter portrait: 11in = 1056px at 96dpi, minus margins (~0.4in top+bottom = ~38px)
+  const maxHeight = 10.2 * 96; // ~979px usable
+  return page.scrollHeight > maxHeight;
 }
 
 // ── Time options builder ───────────────────────────────────────────────────
