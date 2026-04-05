@@ -109,7 +109,7 @@ function renderBand(band) {
   html += '</div>';
 
   // "Also happening" — clickable concurrent indicators
-  if (concList && concList.length > 0) {
+  if (concList.length > 0) {
     concList.forEach(c => {
       const cGroup = Store.getGroup(c.groupId);
       html += '<div class="band-conc" data-event-id="' + esc(c.id) + '">';

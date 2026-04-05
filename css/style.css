@@ -42,8 +42,8 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding-bottom: 10px;
-  margin-bottom: 8px;
+  padding-bottom: var(--hdr-pad-b, 10px);
+  margin-bottom: var(--hdr-margin-b, 8px);
   border-bottom: 2px solid #1d1d1f;
 }
 .hdr-text { flex: 1; }
@@ -106,13 +106,15 @@ body {
   gap: 0;
   border-bottom: 1px solid #f0f0f2;
 }
+/* Print scaling: these custom properties are set by applyPrintScalingToPage() in print.js
+   when content exceeds one printed page. Default values match the design spec. */
 .band:last-of-type { border-bottom: none; }
 
 /* Time block — strong left anchor */
 .band-time {
   width: 76px;
   flex-shrink: 0;
-  padding: 10px 12px 10px 6px;
+  padding: var(--band-main-pad-v, 10px) 12px var(--band-main-pad-v, 10px) 6px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -120,7 +122,7 @@ body {
   border-right: 2.5px solid #1d1d1f;
 }
 .band-time .t-start {
-  font-size: 14px;
+  font-size: var(--band-time-start-fs, 14px);
   font-weight: 700;
   color: #1d1d1f;
   font-variant-numeric: tabular-nums;
@@ -128,7 +130,7 @@ body {
   line-height: 1;
 }
 .band-time .t-end {
-  font-size: 9px;
+  font-size: var(--band-time-end-fs, 9px);
   font-weight: 500;
   color: #86868b;
   font-variant-numeric: tabular-nums;
@@ -136,7 +138,7 @@ body {
   line-height: 1;
 }
 .band-time .t-dur {
-  font-size: 7px;
+  font-size: var(--band-time-dur-fs, 7px);
   font-weight: 500;
   color: #aeaeb2;
   margin-top: 3px;
@@ -147,18 +149,18 @@ body {
 /* Content area */
 .band-content {
   flex: 1;
-  padding: 10px 14px 10px 16px;
+  padding: var(--band-main-pad-v, 10px) var(--band-main-pad-h, 14px) var(--band-main-pad-v, 10px) var(--band-main-pad-h, 16px);
   min-width: 0;
 }
 .band-title {
-  font-size: 12.5px;
+  font-size: var(--band-title-fs, 12.5px);
   font-weight: 600;
   color: #1d1d1f;
   letter-spacing: -0.1px;
   line-height: 1.2;
 }
 .band-desc {
-  font-size: 9px;
+  font-size: var(--band-desc-fs, 9px);
   color: #48484a;
   line-height: 1.45;
   margin-top: 2px;
@@ -168,7 +170,7 @@ body {
   overflow: hidden;
 }
 .band-loc {
-  font-size: 8px;
+  font-size: var(--band-meta-fs, 8px);
   color: #86868b;
   margin-top: 3px;
   letter-spacing: 0.1px;
@@ -177,7 +179,7 @@ body {
 /* Audience tag */
 .band-tag {
   display: inline-block;
-  font-size: 7px;
+  font-size: var(--band-tag-fs, 7px);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -238,7 +240,7 @@ body {
   border-right-width: 3px;
 }
 .band.main .band-title {
-  font-size: 13.5px;
+  font-size: var(--band-title-fs, 13.5px);
   font-weight: 700;
 }
 .band.main .band-tag {
@@ -252,7 +254,7 @@ body {
 }
 .band.sup .band-time {
   border-right-color: #d2d2d7;
-  padding: 8px 12px 8px 6px;
+  padding: var(--band-sup-pad-v, 8px) var(--band-sup-pad-h, 12px) var(--band-sup-pad-v, 8px) 6px;
 }
 .band.sup .band-time .t-start {
   font-size: 11px;
@@ -264,7 +266,7 @@ body {
   color: #aeaeb2;
 }
 .band.sup .band-content {
-  padding: 6px 12px 6px 14px;
+  padding: var(--band-sup-pad-v, 6px) var(--band-sup-pad-h, 12px) var(--band-sup-pad-v, 6px) var(--band-sup-pad-h, 14px);
 }
 .band.sup .band-title {
   font-size: 11px;
@@ -318,8 +320,8 @@ body {
    For events that span long periods
    ══════════════════════════════════════════════════════════════ */
 .conc-section {
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: var(--section-gap, 10px);
+  padding-top: var(--section-gap, 10px);
   border-top: 1px solid #e8e8ed;
 }
 .conc-section-label {
@@ -344,20 +346,20 @@ body {
 }
 .conc-item:hover { background: rgba(var(--app-accent),0.04); }
 .conc-item .ci-time {
-  font-size: 8.5px;
+  font-size: var(--conc-time-fs, 8.5px);
   font-weight: 600;
   color: #6e6e73;
   font-variant-numeric: tabular-nums;
 }
 .conc-item .ci-title {
-  font-size: 10px;
+  font-size: var(--conc-title-fs, 10px);
   font-weight: 600;
   color: #1d1d1f;
   line-height: 1.25;
   margin-top: 1px;
 }
 .conc-item .ci-detail {
-  font-size: 7.5px;
+  font-size: var(--conc-detail-fs, 7.5px);
   color: #86868b;
   margin-top: 1px;
 }
@@ -374,8 +376,8 @@ body {
    NOTES
    ══════════════════════════════════════════════════════════════ */
 .notes {
-  margin-top: 16px;
-  padding-top: 8px;
+  margin-top: var(--section-gap, 16px);
+  padding-top: var(--section-gap, 8px);
   border-top: 1.5px solid #1d1d1f;
 }
 .notes-label {
@@ -388,9 +390,9 @@ body {
 }
 .notes-list { list-style: none; columns: 2; column-gap: 18px; }
 .notes-list li {
-  font-size: 7.5px;
+  font-size: var(--notes-fs, 7.5px);
   color: #1d1d1f;
-  line-height: 1.5;
+  line-height: var(--notes-line-h, 1.5);
   padding: 1px 0;
   break-inside: avoid;
 }
@@ -398,7 +400,7 @@ body {
 
 /* ── Footer ── */
 .footer {
-  margin-top: 5px;
+  margin-top: var(--footer-gap, 5px);
   padding-top: 3px;
   border-top: 0.5px solid #e8e8ed;
   text-align: center;
@@ -553,11 +555,11 @@ body {
 
 /* ── Main-on-main overlap indicator ── */
 .band.band-overlap {
-  border-left: 3px solid #ff3b30 !important;
+  border-left: 3px solid #ff3b30;
   margin-left: 6px;
 }
 .band.band-overlap .band-time {
-  border-right-color: #ff3b30 !important;
+  border-right-color: #ff3b30;
 }
 .band-overlap-notice {
   font-size: 7.5px;
@@ -1035,14 +1037,17 @@ body {
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
 @media print {
-  body { background: white; padding: 0; }
+  html, body { background: white; margin: 0; padding: 0; height: auto; min-height: 0; }
   .toolbar, .inspector, .toast, .modal-overlay { display: none !important; }
-  .app-body { height: auto; overflow: visible; }
-  .preview-area { padding: 0; }
+  .app-body { display: block; height: auto; overflow: visible; }
+  .preview-area { display: block; padding: 0; overflow: visible; }
   .page {
+    display: block;
+    width: auto;
+    max-width: none;
+    min-height: auto;
     box-shadow: none;
     border-radius: 0;
-    min-height: auto;
     padding: 0.2in 0.25in 0.18in;
   }
   .print-page { page-break-after: always; }

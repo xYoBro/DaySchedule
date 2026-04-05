@@ -28,11 +28,17 @@ const LAYOUT_TARGETS = {
   },
   notes: {
     fs:        [7.5, 6],
-    lineH:     [1.5, 1.3],
+    lineH:     [1.5, 1.2],
   },
   conc: {
     titleFs: [10, 8],
     timeFs:  [8.5, 7],
     detailFs:[7.5, 6],
+  },
+  spacing: {
+    hdrPadB:    [10, 4],
+    hdrMarginB: [8, 3],
+    sectionGap: [10, 3],
+    footerGap:  [5, 2],
   },
 };

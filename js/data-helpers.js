@@ -1,5 +1,6 @@
 function computeDuration(event) {
-  return timeToMinutes(event.endTime) - timeToMinutes(event.startTime);
+  const dur = timeToMinutes(event.endTime) - timeToMinutes(event.startTime);
+  return dur >= 0 ? dur : 0;
 }
 
 // Touch-exclusive: adjacent events (0800-0900, 0900-1000) do NOT overlap.
@@ -54,24 +55,40 @@ function classifyEvents(events, groups) {
   });
 
   const allBandEvents = [...mainEvents, ...supporting]
-    .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+    .sort((a, b) => {
+      const dt = timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+      return dt !== 0 ? dt : a.id.localeCompare(b.id); // tiebreaker for deterministic order
+    });
 
   // Detect main-on-main overlaps
   function getOverlappingMain(evt) {
     return mainEvents.filter(m => m.id !== evt.id && !m.isBreak && eventsOverlap(m, evt));
   }
 
+  // Track which concurrent events have already been assigned to a band.
+  // Each concurrent indicator shows only on the first overlapping main band.
+  const assignedConcurrent = new Set();
+
   const mainBands = allBandEvents.map(evt => {
     const effMain = isEffectiveMain(evt);
     const overlappingMain = effMain && !evt.isBreak ? getOverlappingMain(evt) : [];
+
+    let bandConcurrent = [];
+    if (effMain && !evt.isBreak) {
+      bandConcurrent = getOverlappingConcurrent(evt, concurrent)
+        .filter(c => {
+          if (assignedConcurrent.has(c.id)) return false;
+          assignedConcurrent.add(c.id);
+          return true;
+        });
+    }
+
     return {
       event: evt,
       tier: evt.isBreak ? 'break' : effMain ? 'main' : 'supporting',
       group: groupMap[evt.groupId] || null,
-      concurrent: effMain && !evt.isBreak
-        ? getOverlappingConcurrent(evt, concurrent)
-        : [],
-      overlappingMain, // other main events that share time with this one
+      concurrent: bandConcurrent,
+      overlappingMain,
     };
   });
 

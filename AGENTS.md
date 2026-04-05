@@ -1,4 +1,4 @@
-# Project CLAUDE.md
+# Project AGENTS.md
 
 ## Tech Stack
 - HTML5, CSS3, vanilla JavaScript (no frameworks)
@@ -51,7 +51,7 @@
 ```
 /
 ├── index.html              ← app shell
-├── CLAUDE.md
+├── AGENTS.md
 ├── css/
 │   └── style.css           ← all styles (screen + print)
 ├── js/

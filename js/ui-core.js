@@ -5,6 +5,8 @@ function openModal(id) {
   const modal = document.getElementById(id);
   modal.classList.add('active');
   const focusable = modal.querySelector('input:not([type="hidden"]), select, textarea, button, [tabindex]:not([tabindex="-1"])');
+  // 50ms delay: modal transitions from display:none to display:flex;
+  // focus() fails if called before the browser completes the layout shift.
   if (focusable) setTimeout(() => focusable.focus(), 50);
 }
 

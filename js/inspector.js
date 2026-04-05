@@ -216,6 +216,11 @@ function wireSettingsModal(modal) {
     logoInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      if (file.size > 512000) {
+        toast('Logo too large — please use an image under 500 KB.');
+        logoInput.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (ev) => {
         saveUndoState();
@@ -223,6 +228,7 @@ function wireSettingsModal(modal) {
         sessionSave();
         renderSettingsModal(modal);
       };
+      reader.onerror = () => toast('Could not read image file. Try a different file.');
       reader.readAsDataURL(file);
     });
   }
@@ -313,30 +319,34 @@ function wireSettingsFooterField(modal, selector, key) {
   });
 }
 
-function wireFooterField(panel, selector, key) {
-  const input = panel.querySelector(selector);
-  if (!input) return;
-  input.addEventListener('input', () => {
-    saveUndoState();
-    Store.setFooter({ [key]: input.value.trim() });
-    renderActiveDay();
-    sessionSave();
-  });
-}
-
 function wireDayField(item, selector, dayId, field, nullable) {
   const input = item.querySelector(selector);
   if (!input) return;
-  const eventType = input.type === 'date' ? 'change' : 'input';
-  input.addEventListener(eventType, () => {
-    saveUndoState();
-    const val = input.value.trim();
-    Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
-    renderActiveDay();
-    sessionSave();
-    // Re-render inspector when date changes (reorders accordion)
-    if (field === 'date') renderInspector();
-  });
+  const isTimeField = field === 'startTime' || field === 'endTime';
+  if (isTimeField) {
+    // Time fields use blur + Enter, same as event time inputs
+    input.addEventListener('blur', () => {
+      saveUndoState();
+      const snapped = snapToQuarter(input.value);
+      input.value = snapped;
+      Store.updateDay(dayId, { [field]: snapped });
+      renderActiveDay();
+      sessionSave();
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    });
+  } else {
+    const eventType = input.type === 'date' ? 'change' : 'input';
+    input.addEventListener(eventType, () => {
+      saveUndoState();
+      const val = input.value.trim();
+      Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
+      renderActiveDay();
+      sessionSave();
+      if (field === 'date') renderInspector();
+    });
+  }
 }
 
 function formatDateShort(dateStr) {
@@ -666,6 +676,7 @@ function wireToolbar() {
   if (tbTitle) {
     tbTitle.value = Store.getTitle();
     tbTitle.addEventListener('input', () => {
+      saveUndoState();
       Store.setTitle(tbTitle.value.trim());
       renderActiveDay();
       sessionSave();
@@ -680,15 +691,7 @@ function wireToolbar() {
     });
   }
 
-  // Escape key closes settings modal
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const overlay = document.getElementById('settingsModal');
-      if (overlay && overlay.classList.contains('active')) {
-        closeSettingsModal();
-      }
-    }
-  });
+  // Escape key handled by ui-core.js (calls closeSettingsModal if modal is active)
 
   // Initial inspector render
   renderInspector();
