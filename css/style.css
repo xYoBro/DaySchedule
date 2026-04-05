@@ -490,6 +490,11 @@ body {
   margin-top: 10px;
 }
 
+.inspector .time-input {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  letter-spacing: 1px;
+}
 .inspector input[type="text"],
 .inspector input[type="date"],
 .inspector textarea,

@@ -354,7 +354,6 @@ function renderEventInspector(panel, dayId, eventId) {
   if (!evt) { renderScheduleSetup(panel); return; }
 
   const groups = Store.getGroups();
-  const timeOptions = buildTimeOptions();
 
   let html = '<div class="insp-header"><h3 style="margin:0;">Event Properties</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
 
@@ -371,10 +370,10 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '<label>Title</label>';
   html += '<input type="text" id="insp-evt-title" value="' + esc(evt.title) + '">';
 
-  // Times
+  // Times — text inputs with snap-to-15 validation
   html += '<div class="field-row">';
-  html += '<div><label>Start</label><select id="insp-evt-start">' + timeOptions.replace('value="' + evt.startTime + '"', 'value="' + evt.startTime + '" selected') + '</select></div>';
-  html += '<div><label>End</label><select id="insp-evt-end">' + timeOptions.replace('value="' + evt.endTime + '"', 'value="' + evt.endTime + '" selected') + '</select></div>';
+  html += '<div><label>Start</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="4" class="time-input"></div>';
+  html += '<div><label>End</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="4" class="time-input"></div>';
   html += '</div>';
 
   // Group
@@ -443,8 +442,8 @@ function wireEventInspector(panel, dayId, eventId) {
   if (closeBtn) closeBtn.addEventListener('click', () => selectEntity(null));
 
   autoCommit('#insp-evt-title', 'title');
-  autoCommit('#insp-evt-start', 'startTime', true);
-  autoCommit('#insp-evt-end', 'endTime', true);
+  wireTimeInput(panel, '#insp-evt-start', 'startTime', dayId, eventId);
+  wireTimeInput(panel, '#insp-evt-end', 'endTime', dayId, eventId);
   autoCommit('#insp-evt-desc', 'description');
   autoCommit('#insp-evt-loc', 'location');
   autoCommit('#insp-evt-poc', 'poc');
@@ -737,13 +736,36 @@ function wouldOverflowPage() {
   return contentHeight > maxHeight;
 }
 
-// ── Time options builder ───────────────────────────────────────────────────
+// ── Time input helpers ─────────────────────────────────────────────────────
 
-function buildTimeOptions() {
-  let html = '';
-  for (let m = 0; m < 24 * 60; m += TIME_INCREMENT) {
-    const t = minutesToTime(m);
-    html += '<option value="' + t + '">' + t + '</option>';
-  }
-  return html;
+// Snap minutes to nearest 15-minute increment
+function snapToQuarter(timeStr) {
+  const cleaned = timeStr.replace(/[^0-9]/g, '').padStart(4, '0').slice(0, 4);
+  let h = parseInt(cleaned.slice(0, 2), 10);
+  let m = parseInt(cleaned.slice(2, 4), 10);
+  if (isNaN(h) || h > 23) h = 0;
+  if (isNaN(m) || m > 59) m = 0;
+  // Round to nearest 15
+  m = Math.round(m / 15) * 15;
+  if (m === 60) { m = 0; h = Math.min(h + 1, 23); }
+  return String(h).padStart(2, '0') + String(m).padStart(2, '0');
+}
+
+function wireTimeInput(panel, selector, field, dayId, eventId) {
+  const input = panel.querySelector(selector);
+  if (!input) return;
+  input.addEventListener('blur', () => {
+    const snapped = snapToQuarter(input.value);
+    input.value = snapped;
+    saveUndoState();
+    Store.updateEvent(dayId, eventId, { [field]: snapped });
+    renderActiveDay();
+    const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
+    if (band) band.classList.add('selected');
+    sessionSave();
+  });
+  // Also commit on Enter key
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+  });
 }
