@@ -628,11 +628,27 @@ function wireToolbar() {
     selectEntity(null); // show days face with new day expanded
   };
 
+  // Overflow menu toggle
+  const overflowBtn = document.getElementById('overflowBtn');
+  const overflowMenu = document.getElementById('overflowMenu');
+  if (overflowBtn && overflowMenu) {
+    overflowBtn.onclick = (e) => {
+      e.stopPropagation();
+      overflowMenu.classList.toggle('open');
+    };
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#overflowMenu')) overflowMenu.classList.remove('open');
+    });
+  }
+
   const settingsBtn = document.getElementById('settingsBtn');
-  if (settingsBtn) settingsBtn.onclick = () => openSettingsModal();
+  if (settingsBtn) settingsBtn.onclick = () => { overflowMenu.classList.remove('open'); openSettingsModal(); };
+
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) saveBtn.onclick = () => { overflowMenu.classList.remove('open'); saveDataFile(); };
 
   const printBtn = document.getElementById('printBtn');
-  if (printBtn) printBtn.onclick = () => printActiveDay();
+  if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); printActiveDay(); };
 
   // Toolbar title — editable inline, syncs with Store
   const tbTitle = document.getElementById('tbTitle');

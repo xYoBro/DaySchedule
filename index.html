@@ -22,8 +22,14 @@
       <button class="btn" id="addNoteBtn">+ Note</button>
       <button class="btn" id="addDayBtn">+ Day</button>
       <div class="tb-sep"></div>
-      <button class="btn" id="settingsBtn">Settings</button>
-      <button class="btn" id="printBtn">Print</button>
+      <div class="tb-overflow" id="overflowMenu">
+        <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions">&#x2026;</button>
+        <div class="tb-overflow-dropdown" id="overflowDropdown">
+          <button class="tb-overflow-item" id="settingsBtn">Settings</button>
+          <button class="tb-overflow-item" id="saveBtn">Save to File</button>
+          <button class="tb-overflow-item" id="printBtn">Print</button>
+        </div>
+      </div>
     </div>
   </div>
 

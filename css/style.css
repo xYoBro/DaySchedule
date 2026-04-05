@@ -766,6 +766,49 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Overflow Menu ── */
+.tb-overflow {
+  position: relative;
+}
+.tb-overflow-btn {
+  font-size: 16px;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  line-height: 1;
+}
+.tb-overflow-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  min-width: 160px;
+  padding: 4px 0;
+  z-index: 150;
+}
+.tb-overflow.open .tb-overflow-dropdown {
+  display: block;
+}
+.tb-overflow-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #1d1d1f;
+  cursor: pointer;
+}
+.tb-overflow-item:hover {
+  background: #f0f0f2;
+}
+
 /* ── Buttons ── */
 .btn {
   font-family: inherit;
