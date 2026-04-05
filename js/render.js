@@ -164,8 +164,10 @@ function renderNotes(notes) {
 
 function renderFooter() {
   const f = Store.getFooter();
-  const parts = [f.contact, f.poc ? 'Schedule POC: ' + f.poc : '', f.updated ? 'Updated: ' + f.updated : ''].filter(Boolean);
-  if (!parts.length) return '';
+  const now = new Date();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const printDate = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+  const parts = [f.contact, f.poc ? 'Schedule POC: ' + f.poc : '', 'Printed: ' + printDate].filter(Boolean);
   return '<div class="footer">' + esc(parts.join(' \u00b7 ')) + '</div>';
 }
 

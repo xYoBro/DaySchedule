@@ -162,10 +162,8 @@ function renderSettingsModal(modal) {
   }
   html += '<label class="settings-label">Contact / Header Line</label>';
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
-  html += '<div class="field-row">';
-  html += '<div><label class="settings-label">Schedule POC</label><input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '"></div>';
-  html += '<div><label class="settings-label">Updated Date</label><input type="text" class="settings-input" id="settings-updated" value="' + esc(footer.updated) + '"></div>';
-  html += '</div>';
+  html += '<label class="settings-label">Schedule POC</label>';
+  html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
   html += '</div>';
 
   // Groups tab
@@ -241,7 +239,7 @@ function wireSettingsModal(modal) {
   // Footer fields
   wireSettingsFooterField(modal, '#settings-contact', 'contact');
   wireSettingsFooterField(modal, '#settings-poc', 'poc');
-  wireSettingsFooterField(modal, '#settings-updated', 'updated');
+  // 'updated' field removed — auto-set at print time
 
   // Group fields
   modal.querySelectorAll('.insp-group-item').forEach(item => {
