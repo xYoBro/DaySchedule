@@ -418,8 +418,8 @@ function wireEventInspector(panel, dayId, eventId) {
     groupSelect.addEventListener('change', () => {
       const oldGroup = Store.getGroup(Store.getEvents(dayId).find(e => e.id === eventId).groupId);
       const newGroup = Store.getGroup(groupSelect.value);
-      const oldScope = oldGroup ? oldGroup.scope : 'main';
-      const newScope = newGroup ? newGroup.scope : 'main';
+      const oldScope = oldGroup ? oldGroup.scope : 'limited';
+      const newScope = newGroup ? newGroup.scope : 'limited';
       const updates = { groupId: groupSelect.value };
       // Only auto-set isMainEvent when crossing the scope boundary
       if (oldScope !== newScope) {

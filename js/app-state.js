@@ -62,7 +62,7 @@ const Store = {
       poc: e.poc || '',
       groupId: e.groupId || '',
       isBreak: e.isBreak || false,
-      isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === 'main' : true),
+      isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === 'main' : false),
     };
     day.events.push(event);
     day.events.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
