@@ -729,9 +729,14 @@ function openAddNote(dayId) {
 function wouldOverflowPage() {
   const page = document.querySelector('.page');
   if (!page) return false;
-  // US Letter portrait: 11in = 1056px at 96dpi, minus margins (~0.4in top+bottom = ~38px)
-  const maxHeight = 10.2 * 96; // ~979px usable
-  return page.scrollHeight > maxHeight;
+  // Measure actual content height by summing children — ignores min-height on .page
+  let contentHeight = 0;
+  for (const child of page.children) {
+    contentHeight += child.offsetHeight;
+  }
+  // US Letter portrait usable area: 11in minus ~0.4in padding = ~10.6in
+  const maxHeight = 10.6 * 96;
+  return contentHeight > maxHeight;
 }
 
 // ── Time options builder ───────────────────────────────────────────────────
