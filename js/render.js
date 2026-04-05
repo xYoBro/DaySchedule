@@ -126,7 +126,7 @@ function renderConcurrentRow(concurrent, groups) {
   html += '<div class="conc-row">';
   concurrent.forEach(c => {
     const g = groupMap[c.groupId];
-    html += '<div class="conc-item">';
+    html += '<div class="conc-item" data-event-id="' + esc(c.id) + '">';
     html += '<div class="ci-time">' + esc(c.startTime + ' \u2013 ' + c.endTime) + '</div>';
     html += '<div class="ci-title">' + esc(c.title) + '</div>';
     const parts = [c.location, c.poc].filter(Boolean);

@@ -7,6 +7,14 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // Click on concurrent event item -> select in inspector
+  const concItem = e.target.closest('.conc-item[data-event-id]');
+  if (concItem && !e.target.closest('.inspector')) {
+    const dayId = Store.getActiveDay();
+    if (dayId) selectEntity('event', dayId, concItem.getAttribute('data-event-id'));
+    return;
+  }
+
   // Click on note -> select in inspector
   const noteEl = e.target.closest('.notes-list li[data-note-id]');
   if (noteEl && !e.target.closest('.inspector')) {
@@ -16,7 +24,7 @@ document.addEventListener('click', e => {
   }
 
   // Click on empty page area -> deselect (show schedule setup)
-  if (e.target.closest('.preview-area') && !e.target.closest('.band') && !e.target.closest('.notes-list li') && !e.target.closest('.conc-section')) {
+  if (e.target.closest('.preview-area') && !e.target.closest('.band') && !e.target.closest('.notes-list li') && !e.target.closest('.conc-item')) {
     selectEntity(null);
     return;
   }

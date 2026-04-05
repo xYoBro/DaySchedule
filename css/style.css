@@ -315,7 +315,11 @@ body {
   flex: 1;
   padding: 6px 0 6px 10px;
   border-left: 2px solid #d2d2d7;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s;
 }
+.conc-item:hover { background: rgba(var(--app-accent),0.04); }
 .conc-item .ci-time {
   font-size: 8.5px;
   font-weight: 600;
