@@ -611,7 +611,7 @@ function openAddEvent(dayId) {
 
 function openAddNote(dayId) {
   saveUndoState();
-  const note = Store.addNote(dayId, { category: '', text: 'New note' });
+  const note = Store.addNote(dayId, { category: '', text: '(enter note text)' });
   sessionSave();
   renderActiveDay();
   if (note) selectEntity('note', dayId, note.id);
