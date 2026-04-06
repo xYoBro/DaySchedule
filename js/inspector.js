@@ -403,9 +403,9 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '</select>';
 
   // Attendees
-  html += '<label>Attendees</label>';
+  html += '<label>Who (by name)</label>';
   html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda">';
-  html += '<p class="insp-hint">Use only for specific individuals. Groups (All Personnel, Flight Chiefs) are handled by the Group field above. Names here appear on the band; in tight spaces they truncate with a numbered footnote in Notes.</p>';
+  html += '<p class="insp-hint">Specific individuals. Shows as "WHO:" on the band, or "+ names" when a group is already assigned. In tight spaces, names truncate with a footnote in Notes.</p>';
 
   // Description
   html += '<label>Description</label>';
