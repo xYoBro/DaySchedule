@@ -175,16 +175,15 @@ function renderConcurrentRow(concurrent, groups) {
     if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</span></div>';
     if (c.attendees) {
       const prefix = g ? '+ ' : 'WHO: ';
-      if (c.attendees.length > 40) {
-        // Long text — add or reuse footnote
-        let daggerNum = _daggerFootnotes.findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
-        if (daggerNum === -1) {
-          _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
-          daggerNum = _daggerFootnotes.length;
-        } else {
-          daggerNum = daggerNum + 1;
-        }
-        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
+      // Check if a footnote already exists from the inline band card
+      const existingIdx = _daggerFootnotes.findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
+      if (existingIdx !== -1) {
+        // Reuse the existing footnote reference
+        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + (existingIdx + 1) + '</sup></div>';
+      } else if (c.attendees.length > 25) {
+        // Long text — create new footnote
+        _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + _daggerFootnotes.length + '</sup></div>';
       } else {
         html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
       }
