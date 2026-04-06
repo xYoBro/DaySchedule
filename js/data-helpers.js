@@ -62,14 +62,14 @@ function classifyEvents(events, groups) {
   }
 
   // Track which concurrent events have been placed so each appears only once,
-  // on the first main band it overlaps with (i.e. the band active when it starts).
+  // on the first band it overlaps with (the band active when it starts).
   const placedConcurrent = new Set();
 
   const mainBands = allBandEvents.map(evt => {
     const effMain = isEffectiveMain(evt);
     const overlappingMain = effMain && !evt.isBreak ? getOverlappingMain(evt) : [];
     let bandConcurrent = [];
-    if (effMain && !evt.isBreak) {
+    if (!evt.isBreak) {
       bandConcurrent = getOverlappingConcurrent(evt, concurrent)
         .filter(c => !placedConcurrent.has(c.id));
       bandConcurrent.forEach(c => placedConcurrent.add(c.id));

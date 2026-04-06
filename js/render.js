@@ -1,3 +1,7 @@
+// Collects dagger footnotes for attendees that are truncated in tight spaces.
+// Populated during renderBand/renderConcurrentRow, consumed by renderDay.
+let _daggerFootnotes = [];
+
 function renderDay(dayId) {
   const day = Store.getDay(dayId);
   if (!day) return;
@@ -6,6 +10,8 @@ function renderDay(dayId) {
   const notes = Store.getNotes(dayId);
   const container = document.getElementById('scheduleContainer');
   if (!container) return;
+
+  _daggerFootnotes = [];
 
   let html = '';
   html += renderHeader(day);
@@ -36,7 +42,7 @@ function renderDay(dayId) {
     html += renderConcurrentRow(concurrent, groups);
   }
 
-  if (notes.length > 0) {
+  if (notes.length > 0 || _daggerFootnotes.length > 0) {
     html += renderNotes(notes);
   }
 
@@ -99,7 +105,10 @@ function renderBand(band) {
     html += '<div class="band-loc">' + esc(locParts.join(' \u00b7 ')) + '</div>';
   }
   if (group && tier !== 'break') {
-    html += '<div><span class="band-tag">' + esc(group.name) + '</span></div>';
+    html += '<div><span class="band-tag" style="background:' + esc(group.color) + ';color:white;">' + esc(group.name) + '</span></div>';
+  }
+  if (evt.attendees && tier !== 'break') {
+    html += '<div class="band-attendees">Attendees: ' + esc(evt.attendees) + '</div>';
   }
   // Overlap notice for main-on-main conflicts
   if (hasMainOverlap) {
@@ -108,21 +117,28 @@ function renderBand(band) {
   }
   html += '</div>';
 
-  // "Also happening" — clickable concurrent indicators
+  // Fixed-width concurrent slot — always rendered for alignment
+  html += '<div class="band-conc-slot">';
   if (concList && concList.length > 0) {
     concList.forEach(c => {
       const cGroup = Store.getGroup(c.groupId);
       html += '<div class="band-conc" data-event-id="' + esc(c.id) + '">';
-      html += '<div class="cc-label">Also happening</div>';
+      html += '<div class="cc-label">Also at ' + esc(c.startTime) + '</div>';
       html += '<div class="cc-title">' + esc(c.title) + '</div>';
       html += '<div class="cc-detail">' + esc(c.startTime + '\u2013' + c.endTime);
       if (c.location) html += ' \u00b7 ' + esc(c.location);
-      if (c.poc) html += ' \u00b7 POC: ' + esc(c.poc);
       html += '</div>';
-      if (cGroup) html += '<div class="cc-badge">' + esc(cGroup.name) + '</div>';
+      if (c.poc) html += '<div class="cc-detail">POC: ' + esc(c.poc) + '</div>';
+      if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:white;">' + esc(cGroup.name) + '</span></div>';
+      if (c.attendees) {
+        _daggerFootnotes.push({ title: c.title, time: c.startTime + '\u2013' + c.endTime, attendees: c.attendees });
+        const daggerNum = _daggerFootnotes.length;
+        html += '<div class="cc-attendees">' + esc(c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
+      }
       html += '</div>';
     });
   }
+  html += '</div>';
 
   html += '</div>';
   return html;
@@ -133,7 +149,7 @@ function renderConcurrentRow(concurrent, groups) {
   groups.forEach(g => { groupMap[g.id] = g; });
 
   let html = '<div class="conc-section">';
-  html += '<div class="conc-section-label">Long-Running Concurrent Events</div>';
+  html += '<div class="conc-section-label">Also Happening</div>';
   html += '<div class="conc-row">';
   concurrent.forEach(c => {
     const g = groupMap[c.groupId];
@@ -143,7 +159,12 @@ function renderConcurrentRow(concurrent, groups) {
     const parts = [c.location, c.poc].filter(Boolean);
     if (parts.length) html += '<div class="ci-detail">' + esc(parts.join(' \u00b7 ')) + '</div>';
     if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
-    if (g) html += '<div class="ci-badge">' + esc(g.name) + '</div>';
+    if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</span></div>';
+    if (c.attendees) {
+      _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+      const daggerNum = _daggerFootnotes.length;
+      html += '<div class="cc-attendees">' + esc(c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
+    }
     html += '</div>';
   });
   html += '</div></div>';
@@ -158,6 +179,12 @@ function renderNotes(notes) {
     html += '<li data-note-id="' + esc(n.id) + '">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</li>';
+  });
+  if (_daggerFootnotes.length > 0) {
+    html += '<li class="notes-separator"></li>';
+  }
+  _daggerFootnotes.forEach((fn, i) => {
+    html += '<li class="dagger-note"><sup>' + (i + 1) + '</sup> <strong>' + esc(fn.title) + ' (' + esc(fn.time) + ') \u2014</strong> ' + esc(fn.attendees) + '</li>';
   });
   html += '</ul></div>';
   return html;

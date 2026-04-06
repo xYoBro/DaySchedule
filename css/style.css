@@ -118,7 +118,7 @@ body {
 .band-time {
   width: 76px;
   flex-shrink: 0;
-  padding: 10px 12px 10px 6px;
+  padding: var(--band-main-pad-v, 10px) 12px var(--band-main-pad-v, 10px) 6px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -126,7 +126,7 @@ body {
   border-right: 2.5px solid #1d1d1f;
 }
 .band-time .t-start {
-  font-size: 14px;
+  font-size: var(--band-time-start-fs, 14px);
   font-weight: 700;
   color: #1d1d1f;
   font-variant-numeric: tabular-nums;
@@ -134,7 +134,7 @@ body {
   line-height: 1;
 }
 .band-time .t-end {
-  font-size: 9px;
+  font-size: var(--band-time-end-fs, 9px);
   font-weight: 500;
   color: #86868b;
   font-variant-numeric: tabular-nums;
@@ -142,7 +142,7 @@ body {
   line-height: 1;
 }
 .band-time .t-dur {
-  font-size: 7px;
+  font-size: var(--band-time-dur-fs, 7px);
   font-weight: 500;
   color: #aeaeb2;
   margin-top: 3px;
@@ -153,18 +153,18 @@ body {
 /* Content area */
 .band-content {
   flex: 1;
-  padding: 10px 14px 10px 16px;
+  padding: var(--band-main-pad-v, 10px) var(--band-main-pad-h, 14px) var(--band-main-pad-v, 10px) var(--band-main-pad-h, 16px);
   min-width: 0;
 }
 .band-title {
-  font-size: 12.5px;
+  font-size: var(--band-title-fs, 12.5px);
   font-weight: 600;
   color: #1d1d1f;
   letter-spacing: -0.1px;
   line-height: 1.2;
 }
 .band-desc {
-  font-size: 9px;
+  font-size: var(--band-desc-fs, 9px);
   color: #48484a;
   line-height: 1.45;
   margin-top: 2px;
@@ -174,7 +174,7 @@ body {
   overflow: hidden;
 }
 .band-loc {
-  font-size: 8px;
+  font-size: var(--band-meta-fs, 8px);
   color: #86868b;
   margin-top: 3px;
   letter-spacing: 0.1px;
@@ -183,7 +183,7 @@ body {
 /* Audience tag */
 .band-tag {
   display: inline-block;
-  font-size: 7px;
+  font-size: var(--band-tag-fs, 7px);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -192,22 +192,30 @@ body {
   margin-top: 4px;
 }
 
-/* Concurrent indicator — small right-side tag */
-.band-conc {
+/* Fixed-width concurrent slot — always reserves space for alignment */
+.band-conc-slot {
+  width: 180px;
   flex-shrink: 0;
-  padding: 8px 8px 8px 10px;
-  border-left: 1px solid #f0f0f2;
-  max-width: 180px;
   display: flex;
   flex-direction: column;
+  gap: 4px;
   justify-content: center;
+  border-left: 1px solid #f0f0f2;
+}
+.band-conc-slot:empty {
+  border-left-color: transparent;
+}
+
+/* Concurrent indicator card inside the slot */
+.band-conc {
+  padding: 6px 8px 6px 10px;
   cursor: pointer;
   border-radius: 4px;
   transition: background 0.15s;
 }
 .band-conc:hover { background: rgba(var(--app-accent),0.04); }
 .band-conc .cc-label {
-  font-size: 6.5px;
+  font-size: var(--band-meta-fs, 6.5px);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -215,13 +223,13 @@ body {
   margin-bottom: 2px;
 }
 .band-conc .cc-title {
-  font-size: 9px;
+  font-size: var(--band-desc-fs, 9px);
   font-weight: 600;
   color: #1d1d1f;
   line-height: 1.2;
 }
 .band-conc .cc-detail {
-  font-size: 7px;
+  font-size: var(--band-meta-fs, 7px);
   color: #86868b;
   margin-top: 1px;
 }
@@ -234,6 +242,44 @@ body {
   margin-top: 2px;
 }
 
+/* Attendees — full display on bands, truncated in tight spaces */
+.band-attendees {
+  font-size: var(--band-meta-fs, 8px);
+  color: #48484a;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+.cc-attendees {
+  font-size: var(--band-meta-fs, 7px);
+  color: #48484a;
+  margin-top: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+.cc-attendees sup {
+  font-size: 5px;
+  color: #86868b;
+  vertical-align: super;
+}
+.notes-separator {
+  border-top: 0.5px solid #e8e8ed;
+  margin: 4px 0 2px;
+  list-style: none;
+}
+.dagger-note {
+  padding-left: 8px;
+  border-left: 2px solid #e8e8ed;
+  color: #48484a;
+}
+.dagger-note sup {
+  font-size: 6px;
+  color: #86868b;
+  vertical-align: super;
+  margin-right: 1px;
+}
+
 /* ── MAIN event band — emphasized ── */
 .band.main {
   background: #eef0f3;
@@ -244,7 +290,7 @@ body {
   border-right-width: 3px;
 }
 .band.main .band-title {
-  font-size: 13.5px;
+  font-size: var(--band-title-fs, 13.5px);
   font-weight: 700;
 }
 .band.main .band-tag {
@@ -258,10 +304,10 @@ body {
 }
 .band.sup .band-time {
   border-right-color: #d2d2d7;
-  padding: 8px 12px 8px 6px;
+  padding: var(--band-sup-pad-v, 8px) 12px var(--band-sup-pad-v, 8px) 6px;
 }
 .band.sup .band-time .t-start {
-  font-size: 11px;
+  font-size: var(--band-time-start-fs, 11px);
   font-weight: 600;
   color: #6e6e73;
 }
@@ -270,12 +316,12 @@ body {
   color: #aeaeb2;
 }
 .band.sup .band-content {
-  padding: 6px 12px 6px 14px;
+  padding: var(--band-sup-pad-v, 6px) 12px var(--band-sup-pad-v, 6px) 14px;
 }
 .band.sup .band-title {
-  font-size: 11px;
+  font-size: var(--band-title-fs, 11px);
   font-weight: 500;
-  color: #3a3a3c;
+  color: #6e6e73;
 }
 .band.sup .band-tag {
   background: rgba(0,0,0,0.05);
@@ -312,6 +358,7 @@ body {
   text-transform: uppercase;
   color: #aeaeb2;
 }
+.band.brk .band-conc-slot { width: 0; border: none; }
 
 /* ── Section divider between morning/afternoon ── */
 .section-break {
@@ -326,14 +373,14 @@ body {
 .conc-section {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #e8e8ed;
+  border-top: 1.5px solid #1d1d1f;
 }
 .conc-section-label {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #aeaeb2;
+  color: #86868b;
   margin-bottom: 4px;
 }
 .conc-row {
@@ -350,20 +397,20 @@ body {
 }
 .conc-item:hover { background: rgba(var(--app-accent),0.04); }
 .conc-item .ci-time {
-  font-size: 8.5px;
+  font-size: var(--conc-time-fs, 8.5px);
   font-weight: 600;
   color: #6e6e73;
   font-variant-numeric: tabular-nums;
 }
 .conc-item .ci-title {
-  font-size: 10px;
+  font-size: var(--conc-title-fs, 10px);
   font-weight: 600;
   color: #1d1d1f;
   line-height: 1.25;
   margin-top: 1px;
 }
 .conc-item .ci-detail {
-  font-size: 7.5px;
+  font-size: var(--conc-detail-fs, 7.5px);
   color: #86868b;
   margin-top: 1px;
 }
@@ -394,7 +441,7 @@ body {
 }
 .notes-list { list-style: none; columns: 2; column-gap: 18px; }
 .notes-list li {
-  font-size: 7.5px;
+  font-size: var(--notes-fs, 7.5px);
   color: #1d1d1f;
   line-height: 1.5;
   padding: 1px 0;
@@ -1043,8 +1090,8 @@ body {
 @media print {
   body { background: white; padding: 0; }
   .toolbar, .inspector, .toast, .modal-overlay { display: none !important; }
-  .app-body { height: auto; overflow: visible; }
-  .preview-area { padding: 0; }
+  .app-body { height: auto; overflow: visible; display: block; }
+  .preview-area { padding: 0; display: block; }
   .page {
     box-shadow: none;
     border-radius: 0;

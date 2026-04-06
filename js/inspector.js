@@ -385,6 +385,11 @@ function renderEventInspector(panel, dayId, eventId) {
   });
   html += '</select>';
 
+  // Attendees
+  html += '<label>Attendees</label>';
+  html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda">';
+  html += '<p class="insp-hint">Use only for specific individuals. Groups (All Personnel, Flight Chiefs) are handled by the Group field above. Names here appear on the band; in tight spaces they truncate with a numbered footnote in Notes.</p>';
+
   // Description
   html += '<label>Description</label>';
   html += '<textarea id="insp-evt-desc">' + esc(evt.description) + '</textarea>';
@@ -444,6 +449,7 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit('#insp-evt-title', 'title');
   wireTimeInput(panel, '#insp-evt-start', 'startTime', dayId, eventId);
   wireTimeInput(panel, '#insp-evt-end', 'endTime', dayId, eventId);
+  autoCommit('#insp-evt-attendees', 'attendees');
   autoCommit('#insp-evt-desc', 'description');
   autoCommit('#insp-evt-loc', 'location');
   autoCommit('#insp-evt-poc', 'poc');

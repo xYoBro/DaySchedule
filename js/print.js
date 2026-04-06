@@ -18,6 +18,7 @@ function printAllDays() {
     const groups = Store.getGroups();
     const { mainBands, concurrent } = classifyEvents(day.events, groups);
     const notes = Store.getNotes(day.id);
+    _daggerFootnotes = [];
     html += '<div class="page print-page">';
     html += renderHeader(day);
     html += '<div class="schedule">';
@@ -33,37 +34,149 @@ function printAllDays() {
     });
     html += '</div>';
     if (concurrent.length > 0) html += renderConcurrentRow(concurrent, groups);
-    if (notes.length > 0) html += renderNotes(notes);
+    if (notes.length > 0 || _daggerFootnotes.length > 0) html += renderNotes(notes);
     html += renderFooter();
     html += '</div>';
   });
   container.innerHTML = html;
   setTimeout(() => {
-    document.querySelectorAll('.print-page').forEach(applyPrintScalingToPage);
+    applyPrintScaling();
     window.print();
     const activeDay = Store.getActiveDay();
     if (activeDay) renderDay(activeDay);
   }, 200);
 }
 
+// ── Print Scaling ──────────────────────────────────────────────────────────
+// Two-pass approach, cross-browser (Safari + Chrome + Firefox):
+//   Pass 1: Compress CSS custom properties (font sizes, padding).
+//   Pass 2: Apply `zoom` on .page to shrink layout dimensions.
+//           zoom affects actual layout (unlike transform:scale), so the
+//           print engine sees the smaller box and won't page-break.
+
 function applyPrintScaling() {
-  const page = document.querySelector('.page');
-  if (page) applyPrintScalingToPage(page);
+  const pages = document.querySelectorAll('.print-page');
+  if (pages.length) {
+    pages.forEach(p => applyPrintScalingToPage(p));
+  } else {
+    const page = document.querySelector('.page');
+    if (page) applyPrintScalingToPage(page);
+  }
 }
 
 function applyPrintScalingToPage(page) {
-  const maxH = 10.2 * 96;
-  const contentH = page.scrollHeight;
+  // Usable print area: 11in page - 0.3in @page margins - 0.38in padding
+  const maxH = 10.32 * 96;
+
+  // Reset any previous scaling
+  removePrintScaling(page);
+
+  // Force accurate measurement: override any @media print constraints
+  // that could clamp scrollHeight (Safari returns clamped values)
+  const origMinH = page.style.minHeight;
+  const origMaxH = page.style.maxHeight;
+  const origOverflow = page.style.overflow;
+  page.style.minHeight = '0';
+  page.style.maxHeight = 'none';
+  page.style.overflow = 'visible';
+
+  let contentH = page.scrollHeight;
+
+  if (contentH <= maxH) {
+    page.style.minHeight = origMinH;
+    page.style.maxHeight = origMaxH;
+    page.style.overflow = origOverflow;
+    return;
+  }
+
+  // Three-stage bottom-up compression: compress lowest-priority content first,
+  // only touching primary band content as a last resort.
+  const lerp = (range, f) => range[1] + (range[0] - range[1]) * f;
+  const T = LAYOUT_TARGETS;
+  const overflow = contentH - maxH;
+
+  // Stage 1: Notes, footer, concurrent detail (first 15% of overflow budget)
+  // These are lowest hierarchy — most compressible without info loss.
+  const s1Need = overflow;
+  const s1Factor = Math.max(0, Math.min(1, 1 - (s1Need / (maxH * 0.15))));
+  page.style.setProperty('--notes-fs', lerp(T.notes.fs, s1Factor) + 'px');
+  page.style.setProperty('--conc-detail-fs', lerp(T.conc.detailFs, s1Factor) + 'px');
+  page.style.setProperty('--conc-time-fs', lerp(T.conc.timeFs, s1Factor) + 'px');
+  page.style.setProperty('--conc-title-fs', lerp(T.conc.titleFs, s1Factor) + 'px');
+
+  contentH = page.scrollHeight;
+  if (contentH <= maxH) {
+    page.style.minHeight = origMinH;
+    page.style.maxHeight = origMaxH;
+    page.style.overflow = origOverflow;
+    return;
+  }
+
+  // Stage 2: Supporting band padding, meta/description fonts, tags
+  const s2Need = contentH - maxH;
+  const s2Factor = Math.max(0, Math.min(1, 1 - (s2Need / (maxH * 0.25))));
+  page.style.setProperty('--band-sup-pad-v', lerp(T.band.supPadV, s2Factor) + 'px');
+  page.style.setProperty('--band-desc-fs', lerp(T.band.descFs, s2Factor) + 'px');
+  page.style.setProperty('--band-meta-fs', lerp(T.band.metaFs, s2Factor) + 'px');
+  page.style.setProperty('--band-tag-fs', lerp(T.band.tagFs, s2Factor) + 'px');
+  page.style.setProperty('--band-time-end-fs', lerp(T.band.timeEndFs, s2Factor) + 'px');
+  page.style.setProperty('--band-time-dur-fs', lerp(T.band.timeDurFs, s2Factor) + 'px');
+
+  contentH = page.scrollHeight;
+  if (contentH <= maxH) {
+    page.style.minHeight = origMinH;
+    page.style.maxHeight = origMaxH;
+    page.style.overflow = origOverflow;
+    return;
+  }
+
+  // Stage 3: Primary band content — only as a last resort
+  const s3Need = contentH - maxH;
+  const s3Factor = Math.max(0, Math.min(1, 1 - (s3Need / (maxH * 0.25))));
+  page.style.setProperty('--band-main-pad-v', lerp(T.band.mainPadV, s3Factor) + 'px');
+  page.style.setProperty('--band-main-pad-h', lerp(T.band.mainPadH, s3Factor) + 'px');
+  page.style.setProperty('--band-title-fs', lerp(T.band.titleFs, s3Factor) + 'px');
+  page.style.setProperty('--band-time-start-fs', lerp(T.band.timeStartFs, s3Factor) + 'px');
+
+  // Re-measure after all CSS var compression
+  contentH = page.scrollHeight;
+
+  // Restore inline overrides
+  page.style.minHeight = origMinH;
+  page.style.maxHeight = origMaxH;
+  page.style.overflow = origOverflow;
+
   if (contentH <= maxH) return;
 
-  const ratio = Math.max(0.6, maxH / contentH);
-  const lerp = (range, t) => range[0] + (range[1] - range[0]) * (1 - t);
-  const T = LAYOUT_TARGETS;
-
-  page.style.setProperty('--band-main-pad-v', lerp(T.band.mainPadV, ratio) + 'px');
-  page.style.setProperty('--band-main-pad-h', lerp(T.band.mainPadH, ratio) + 'px');
-  page.style.setProperty('--band-title-fs', lerp(T.band.titleFs, ratio) + 'px');
-  page.style.setProperty('--band-desc-fs', lerp(T.band.descFs, ratio) + 'px');
-  page.style.setProperty('--band-meta-fs', lerp(T.band.metaFs, ratio) + 'px');
-  page.style.setProperty('--notes-fs', lerp(T.notes.fs, ratio) + 'px');
+  // Pass 2: zoom shrinks layout dimensions (works in Safari + Chrome)
+  // This is the final fallback after all staged compression.
+  const scale = maxH / contentH;
+  page.style.zoom = scale;
+  page.dataset.printScaled = '1';
 }
+
+function removePrintScaling(page) {
+  const props = [
+    '--band-main-pad-v','--band-main-pad-h','--band-sup-pad-v',
+    '--band-title-fs','--band-desc-fs','--band-meta-fs','--band-tag-fs',
+    '--band-time-start-fs','--band-time-end-fs','--band-time-dur-fs',
+    '--conc-title-fs','--conc-time-fs','--conc-detail-fs','--notes-fs',
+  ];
+  props.forEach(p => page.style.removeProperty(p));
+
+  if (page.dataset.printScaled) {
+    page.style.removeProperty('zoom');
+    delete page.dataset.printScaled;
+  }
+}
+
+// Auto-scale on any print trigger (Cmd+P, browser menu, etc.)
+window.addEventListener('beforeprint', () => {
+  applyPrintScaling();
+});
+
+// Clean up scaling after print so screen view is unaffected
+window.addEventListener('afterprint', () => {
+  const activeDay = Store.getActiveDay();
+  if (activeDay) renderDay(activeDay);
+});

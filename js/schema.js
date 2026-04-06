@@ -17,6 +17,7 @@ function normalizeEvent(raw) {
     location:    (raw.location || '').trim(),
     poc:         (raw.poc || '').trim(),
     groupId:     raw.groupId || '',
+    attendees:   (raw.attendees || '').trim(),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
   };
