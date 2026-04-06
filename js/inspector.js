@@ -733,37 +733,11 @@ function openAddEvent(dayId) {
 }
 
 function openAddNote(dayId) {
-  // Check if adding a note would overflow the page
-  if (wouldOverflowPage()) {
-    toast('Cannot add note — page is full. Remove content or shorten descriptions first.');
-    return;
-  }
   saveUndoState();
   const note = Store.addNote(dayId, { category: '', text: '(enter note text)' });
   sessionSave();
   renderActiveDay();
-  // Check again after render — if it overflowed, undo immediately
-  if (wouldOverflowPage()) {
-    Store.removeNote(dayId, note.id);
-    sessionSave();
-    renderActiveDay();
-    toast('Cannot add note — page is full. Remove content or shorten descriptions first.');
-    return;
-  }
   selectEntity('note', dayId, note.id);
-}
-
-function wouldOverflowPage() {
-  const page = document.querySelector('.page');
-  if (!page) return false;
-  // Measure actual content height by summing children — ignores min-height on .page
-  let contentHeight = 0;
-  for (const child of page.children) {
-    contentHeight += child.offsetHeight;
-  }
-  // US Letter portrait usable area: 11in minus ~0.4in padding = ~10.6in
-  const maxHeight = 10.6 * 96;
-  return contentHeight > maxHeight;
 }
 
 // ── Time input helpers ─────────────────────────────────────────────────────
