@@ -1104,7 +1104,9 @@ body {
   .page {
     box-shadow: none;
     border-radius: 0;
-    min-height: auto;
+    min-height: 0 !important;
+    max-height: 10.7in;
+    overflow: hidden;
     padding: 0.2in 0.25in 0.18in;
   }
   .footer { margin-top: 5px; }
