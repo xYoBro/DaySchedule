@@ -48,6 +48,10 @@ function renderDay(dayId) {
 
   html += renderFooter();
   container.innerHTML = html;
+
+  // Apply print scaling to preview so the screen view matches what will
+  // actually print — prevents content appearing to spill past the page edge.
+  applyPrintScaling();
 }
 
 function renderHeader(day) {
