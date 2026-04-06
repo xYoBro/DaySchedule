@@ -450,7 +450,7 @@ body {
   line-height: var(--notes-lh, 1.5);
   padding: 1px 0;
 }
-.notes-list li strong { font-weight: 600; color: #48484a; }
+.notes-list li strong { font-weight: 700; color: #48484a; }
 .dagger-list {
   list-style: none;
   margin-top: 4px;
