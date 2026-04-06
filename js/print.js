@@ -3,7 +3,7 @@ function printActiveDay() {
   if (!dayId) { toast('No day selected.'); return; }
   renderDay(dayId);
   setTimeout(() => {
-    applyPrintScaling();
+    applyPrintScaling(true);
     window.print();
   }, 200);
 }
@@ -40,7 +40,7 @@ function printAllDays() {
   });
   container.innerHTML = html;
   setTimeout(() => {
-    applyPrintScaling();
+    applyPrintScaling(true);
     window.print();
     const activeDay = Store.getActiveDay();
     if (activeDay) renderDay(activeDay);
@@ -54,17 +54,17 @@ function printAllDays() {
 // the print engine sees the zoomed dimensions for pagination. transform:scale
 // is purely visual and does not change layout height, causing page overflow.
 
-function applyPrintScaling() {
+function applyPrintScaling(forPrint) {
   const pages = document.querySelectorAll('.print-page');
   if (pages.length) {
-    pages.forEach(p => applyPrintScalingToPage(p));
+    pages.forEach(p => applyPrintScalingToPage(p, forPrint));
   } else {
     const page = document.querySelector('.page');
-    if (page) applyPrintScalingToPage(page);
+    if (page) applyPrintScalingToPage(page, forPrint);
   }
 }
 
-function applyPrintScalingToPage(page) {
+function applyPrintScalingToPage(page, forPrint) {
   // Usable print area: 11in page - 0.3in @page margins - 0.38in padding.
   // Subtract 48px safety margin to account for browser rendering differences
   // between screen measurement and actual print layout (browser chrome,
@@ -74,15 +74,14 @@ function applyPrintScalingToPage(page) {
   // Reset any previous scaling
   removePrintScaling(page);
 
-  // Force print-width measurement: the screen preview may be narrower,
-  // causing extra text wrapping and inflated scrollHeight. Temporarily
-  // set the page to print width for accurate measurement.
-  // Print page box = 8.5in letter - 0.3in @page margins = 8.2in.
+  // For print: force print-width measurement (8.2in) since screen preview
+  // may be narrower. For screen preview: measure at actual rendered width
+  // so scaling matches what the user sees.
   const origWidth = page.style.width;
   const origMinH = page.style.minHeight;
   const origMaxH = page.style.maxHeight;
   const origOverflow = page.style.overflow;
-  page.style.width = '8.2in';
+  if (forPrint) page.style.width = '8.2in';
   page.style.minHeight = '0';
   page.style.maxHeight = 'none';
   page.style.overflow = 'visible';
@@ -199,7 +198,7 @@ function removePrintScaling(page) {
 
 // Auto-scale on any print trigger (Cmd+P, browser menu, etc.)
 window.addEventListener('beforeprint', () => {
-  applyPrintScaling();
+  applyPrintScaling(true);
 });
 
 // Clean up scaling after print so screen view is unaffected
