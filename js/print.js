@@ -48,11 +48,9 @@ function printAllDays() {
 }
 
 // ── Print Scaling ──────────────────────────────────────────────────────────
-// Two-pass approach, cross-browser (Safari + Chrome + Firefox):
-//   Pass 1: Compress CSS custom properties (font sizes, padding).
-//   Pass 2: Apply `zoom` on .page to shrink layout dimensions.
-//           zoom affects actual layout (unlike transform:scale), so the
-//           print engine sees the smaller box and won't page-break.
+// Three-stage bottom-up CSS compression, then transform:scale fallback.
+// Measures at print width (8in) for accurate overflow detection.
+// Uses transform:scale instead of zoom for Safari print compatibility.
 
 function applyPrintScaling() {
   const pages = document.querySelectorAll('.print-page');
@@ -71,11 +69,14 @@ function applyPrintScalingToPage(page) {
   // Reset any previous scaling
   removePrintScaling(page);
 
-  // Force accurate measurement: override any @media print constraints
-  // that could clamp scrollHeight (Safari returns clamped values)
+  // Force print-width measurement: the screen preview may be narrower,
+  // causing extra text wrapping and inflated scrollHeight. Temporarily
+  // set the page to print width for accurate measurement.
+  const origWidth = page.style.width;
   const origMinH = page.style.minHeight;
   const origMaxH = page.style.maxHeight;
   const origOverflow = page.style.overflow;
+  page.style.width = '8in';
   page.style.minHeight = '0';
   page.style.maxHeight = 'none';
   page.style.overflow = 'visible';
@@ -83,6 +84,7 @@ function applyPrintScalingToPage(page) {
   let contentH = page.scrollHeight;
 
   if (contentH <= maxH) {
+    page.style.width = origWidth;
     page.style.minHeight = origMinH;
     page.style.maxHeight = origMaxH;
     page.style.overflow = origOverflow;
@@ -93,11 +95,9 @@ function applyPrintScalingToPage(page) {
   // only touching primary band content as a last resort.
   const lerp = (range, f) => range[1] + (range[0] - range[1]) * f;
   const T = LAYOUT_TARGETS;
-  const overflow = contentH - maxH;
 
-  // Stage 1: Notes, footer, concurrent detail (first 15% of overflow budget)
-  // These are lowest hierarchy — most compressible without info loss.
-  const s1Need = overflow;
+  // Stage 1: Notes, footer, concurrent detail fonts
+  const s1Need = contentH - maxH;
   const s1Factor = Math.max(0, Math.min(1, 1 - (s1Need / (maxH * 0.15))));
   page.style.setProperty('--notes-fs', lerp(T.notes.fs, s1Factor) + 'px');
   page.style.setProperty('--conc-detail-fs', lerp(T.conc.detailFs, s1Factor) + 'px');
@@ -106,6 +106,7 @@ function applyPrintScalingToPage(page) {
 
   contentH = page.scrollHeight;
   if (contentH <= maxH) {
+    page.style.width = origWidth;
     page.style.minHeight = origMinH;
     page.style.maxHeight = origMaxH;
     page.style.overflow = origOverflow;
@@ -124,6 +125,7 @@ function applyPrintScalingToPage(page) {
 
   contentH = page.scrollHeight;
   if (contentH <= maxH) {
+    page.style.width = origWidth;
     page.style.minHeight = origMinH;
     page.style.maxHeight = origMaxH;
     page.style.overflow = origOverflow;
@@ -141,17 +143,22 @@ function applyPrintScalingToPage(page) {
   // Re-measure after all CSS var compression
   contentH = page.scrollHeight;
 
-  // Restore inline overrides
+  // Restore width
+  page.style.width = origWidth;
   page.style.minHeight = origMinH;
   page.style.maxHeight = origMaxH;
   page.style.overflow = origOverflow;
 
   if (contentH <= maxH) return;
 
-  // Pass 2: zoom shrinks layout dimensions (works in Safari + Chrome)
-  // This is the final fallback after all staged compression.
+  // Final fallback: transform:scale to shrink the layout.
+  // Uses transform instead of zoom for Safari print compatibility —
+  // Safari doesn't honor zoom for page-break calculations.
   const scale = maxH / contentH;
-  page.style.zoom = scale;
+  page.style.transformOrigin = 'top left';
+  page.style.transform = 'scale(' + scale + ')';
+  // Set explicit height so the print engine sees a box that fits one page
+  page.style.height = maxH + 'px';
   page.dataset.printScaled = '1';
 }
 
@@ -165,7 +172,9 @@ function removePrintScaling(page) {
   props.forEach(p => page.style.removeProperty(p));
 
   if (page.dataset.printScaled) {
-    page.style.removeProperty('zoom');
+    page.style.removeProperty('transform');
+    page.style.removeProperty('transformOrigin');
+    page.style.removeProperty('height');
     delete page.dataset.printScaled;
   }
 }
