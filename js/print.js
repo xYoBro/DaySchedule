@@ -172,8 +172,11 @@ function applyPrintScalingToPage(page) {
   // Final fallback: zoom shrinks actual layout dimensions.
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
+  // Also force min-height:0 so the stylesheet's 11in floor doesn't
+  // reassert at the zoomed size (11in * 0.95 = 10.45in can still overflow).
   const scale = maxH / contentH;
   page.style.zoom = scale;
+  page.style.minHeight = '0';
   page.dataset.printScaled = '1';
 }
 
@@ -188,6 +191,7 @@ function removePrintScaling(page) {
 
   if (page.dataset.printScaled) {
     page.style.removeProperty('zoom');
+    page.style.removeProperty('min-height');
     delete page.dataset.printScaled;
   }
 }
