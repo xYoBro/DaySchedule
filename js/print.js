@@ -65,11 +65,12 @@ function applyPrintScaling(forPrint) {
 }
 
 function applyPrintScalingToPage(page, forPrint) {
-  // Usable print area: 11in page - 0.3in @page margins - 0.38in padding.
-  // Subtract 48px safety margin to account for browser rendering differences
-  // between screen measurement and actual print layout (browser chrome,
-  // sub-pixel rounding, footer margin, etc.).
-  const maxH = (10.32 * 96) - 48;
+  // For print: usable area = 11in - 0.3in @page margins - 0.38in padding,
+  // minus 48px safety margin for browser rendering differences.
+  // For screen: the .page card is 11in minus its own padding (0.38in).
+  const maxH = forPrint
+    ? (10.32 * 96) - 48   // print: ~943px
+    : (11 - 0.38) * 96;   // screen: ~1020px (the visible white card)
 
   // Reset any previous scaling
   removePrintScaling(page);
