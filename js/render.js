@@ -136,9 +136,16 @@ function renderBand(band) {
       if (c.poc) html += '<div class="cc-detail">POC: ' + esc(c.poc) + '</div>';
       if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:white;">' + esc(cGroup.name) + '</span></div>';
       if (c.attendees) {
-        _daggerFootnotes.push({ title: c.title, time: c.startTime + '\u2013' + c.endTime, attendees: c.attendees });
-        const daggerNum = _daggerFootnotes.length;
-        html += '<div class="cc-attendees">' + esc(c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
+        const prefix = cGroup ? '+ ' : 'WHO: ';
+        if (c.attendees.length > 25) {
+          // Long text will truncate in the 180px slot — add footnote
+          _daggerFootnotes.push({ title: c.title, time: c.startTime + '\u2013' + c.endTime, attendees: c.attendees });
+          const daggerNum = _daggerFootnotes.length;
+          html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
+        } else {
+          // Short enough to display in full — no footnote needed
+          html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
+        }
       }
       html += '</div>';
     });
@@ -167,15 +174,20 @@ function renderConcurrentRow(concurrent, groups) {
     if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
     if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</span></div>';
     if (c.attendees) {
-      // Reuse existing footnote if this event was already referenced in a band card
-      let daggerNum = _daggerFootnotes.findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
-      if (daggerNum === -1) {
-        _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
-        daggerNum = _daggerFootnotes.length;
+      const prefix = g ? '+ ' : 'WHO: ';
+      if (c.attendees.length > 40) {
+        // Long text — add or reuse footnote
+        let daggerNum = _daggerFootnotes.findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
+        if (daggerNum === -1) {
+          _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+          daggerNum = _daggerFootnotes.length;
+        } else {
+          daggerNum = daggerNum + 1;
+        }
+        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
       } else {
-        daggerNum = daggerNum + 1; // convert 0-indexed to 1-indexed
+        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
       }
-      html += '<div class="cc-attendees">' + esc(c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
     }
     html += '</div>';
   });
