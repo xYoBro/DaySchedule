@@ -186,13 +186,15 @@ function renderNotes(notes) {
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</li>';
   });
+  html += '</ul>';
   if (_daggerFootnotes.length > 0) {
-    html += '<li class="notes-separator"></li>';
+    html += '<ul class="dagger-list">';
+    _daggerFootnotes.forEach((fn, i) => {
+      html += '<li class="dagger-note"><sup>' + (i + 1) + '</sup> <strong>' + esc(fn.title) + ' (' + esc(fn.time) + ') \u2014</strong> ' + esc(fn.attendees) + '</li>';
+    });
+    html += '</ul>';
   }
-  _daggerFootnotes.forEach((fn, i) => {
-    html += '<li class="dagger-note"><sup>' + (i + 1) + '</sup> <strong>' + esc(fn.title) + ' (' + esc(fn.time) + ') \u2014</strong> ' + esc(fn.attendees) + '</li>';
-  });
-  html += '</ul></div>';
+  html += '</div>';
   return html;
 }
 

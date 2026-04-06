@@ -263,11 +263,6 @@ body {
   color: #86868b;
   vertical-align: super;
 }
-.notes-separator {
-  border-top: 0.5px solid #e8e8ed;
-  margin: 4px 0 2px;
-  list-style: none;
-}
 .dagger-note {
   padding-left: 8px;
   border-left: 2px solid #e8e8ed;
@@ -440,15 +435,25 @@ body {
   color: #86868b;
   margin-bottom: 4px;
 }
-.notes-list { list-style: none; columns: 2; column-gap: 18px; column-fill: balance; }
+.notes-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px 18px;
+}
 .notes-list li {
   font-size: var(--notes-fs, 7.5px);
   color: #1d1d1f;
   line-height: 1.5;
   padding: 1px 0;
-  break-inside: avoid;
 }
 .notes-list li strong { font-weight: 600; color: #48484a; }
+.dagger-list {
+  list-style: none;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 0.5px solid #e8e8ed;
+}
 
 /* ── Footer ── */
 .footer {
