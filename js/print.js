@@ -71,7 +71,7 @@ function applyPrintScalingToPage(page, forPrint) {
   // scrollHeight includes padding (border-box), so no subtraction needed.
   const maxH = forPrint
     ? (10.32 * 96) - 48   // print: ~943px
-    : 11 * 96;             // screen: 1056px (the page card boundary)
+    : (11 * 96) - 10;      // screen: 1046px (page card minus small buffer)
 
   // Reset any previous scaling
   removePrintScaling(page);
