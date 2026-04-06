@@ -112,10 +112,12 @@ function applyPrintScalingToPage(page) {
   const s1Need = contentH - maxH;
   const s1Factor = Math.max(0, Math.min(1, 1 - (s1Need / (maxH * 0.15))));
   page.style.setProperty('--notes-fs', lerp(T.notes.fs, s1Factor) + 'px');
+  page.style.setProperty('--notes-lh', lerp(T.notes.lineH, s1Factor));
   page.style.setProperty('--conc-detail-fs', lerp(T.conc.detailFs, s1Factor) + 'px');
   page.style.setProperty('--conc-time-fs', lerp(T.conc.timeFs, s1Factor) + 'px');
   page.style.setProperty('--conc-title-fs', lerp(T.conc.titleFs, s1Factor) + 'px');
 
+  void page.offsetHeight; // force reflow so scrollHeight reads updated layout
   contentH = page.scrollHeight;
   if (contentH <= maxH) {
     page.style.width = origWidth;
@@ -136,6 +138,7 @@ function applyPrintScalingToPage(page) {
   page.style.setProperty('--band-time-end-fs', lerp(T.band.timeEndFs, s2Factor) + 'px');
   page.style.setProperty('--band-time-dur-fs', lerp(T.band.timeDurFs, s2Factor) + 'px');
 
+  void page.offsetHeight; // force reflow so scrollHeight reads updated layout
   contentH = page.scrollHeight;
   if (contentH <= maxH) {
     page.style.width = origWidth;
@@ -179,7 +182,7 @@ function removePrintScaling(page) {
     '--band-main-pad-v','--band-main-pad-h','--band-sup-pad-v',
     '--band-title-fs','--band-desc-fs','--band-meta-fs','--band-tag-fs',
     '--band-time-start-fs','--band-time-end-fs','--band-time-dur-fs',
-    '--conc-title-fs','--conc-time-fs','--conc-detail-fs','--notes-fs',
+    '--conc-title-fs','--conc-time-fs','--conc-detail-fs','--notes-fs','--notes-lh',
   ];
   props.forEach(p => page.style.removeProperty(p));
 

@@ -444,7 +444,7 @@ body {
 .notes-list li {
   font-size: var(--notes-fs, 7.5px);
   color: #1d1d1f;
-  line-height: 1.5;
+  line-height: var(--notes-lh, 1.5);
   padding: 1px 0;
 }
 .notes-list li strong { font-weight: 600; color: #48484a; }
@@ -454,7 +454,7 @@ body {
   padding-top: 4px;
   border-top: 0.5px solid #e8e8ed;
   font-size: var(--notes-fs, 7.5px);
-  line-height: 1.5;
+  line-height: var(--notes-lh, 1.5);
   color: #1d1d1f;
 }
 
@@ -1105,8 +1105,6 @@ body {
     box-shadow: none;
     border-radius: 0;
     min-height: 0 !important;
-    max-height: 10.7in;
-    overflow: hidden;
     padding: 0.2in 0.25in 0.18in;
   }
   .footer { margin-top: 5px; }
