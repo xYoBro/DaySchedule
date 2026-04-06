@@ -267,11 +267,13 @@ body {
   border-top: 0.5px solid #e8e8ed;
   margin: 4px 0 2px;
   list-style: none;
+  column-span: all;
 }
 .dagger-note {
   padding-left: 8px;
   border-left: 2px solid #e8e8ed;
   color: #48484a;
+  word-break: break-all;
 }
 .dagger-note sup {
   font-size: 6px;

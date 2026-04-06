@@ -161,8 +161,14 @@ function renderConcurrentRow(concurrent, groups) {
     if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
     if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</span></div>';
     if (c.attendees) {
-      _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
-      const daggerNum = _daggerFootnotes.length;
+      // Reuse existing footnote if this event was already referenced in a band card
+      let daggerNum = _daggerFootnotes.findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
+      if (daggerNum === -1) {
+        _daggerFootnotes.push({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+        daggerNum = _daggerFootnotes.length;
+      } else {
+        daggerNum = daggerNum + 1; // convert 0-indexed to 1-indexed
+      }
       html += '<div class="cc-attendees">' + esc(c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
     }
     html += '</div>';
