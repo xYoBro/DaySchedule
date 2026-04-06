@@ -172,18 +172,19 @@ function applyPrintScalingToPage(page, forPrint) {
   if (contentH <= maxH) return;
 
   // Final fallback: zoom shrinks actual layout dimensions.
-  // Only apply zoom for print — on screen, CSS compression is sufficient
-  // and the page card should maintain its portrait paper shape.
-  if (!forPrint) return;
-
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
-  // Also force min-height:0 so the stylesheet's 11in floor doesn't
-  // reassert at the zoomed size (11in * 0.95 = 10.45in can still overflow).
   const scale = maxH / contentH;
   page.style.zoom = scale;
-  page.style.minHeight = '0';
   page.dataset.printScaled = '1';
+
+  if (forPrint) {
+    // For print: force min-height:0 so the stylesheet's 11in floor doesn't
+    // reassert at the zoomed size (11in * 0.95 = 10.45in can still overflow).
+    page.style.minHeight = '0';
+  }
+  // For screen: leave min-height:11in so the card keeps its portrait shape.
+  // The zoomed content fits inside the 11in card naturally.
 }
 
 function removePrintScaling(page) {
