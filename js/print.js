@@ -9,9 +9,17 @@ function printActiveDay() {
 }
 
 function printAllDays() {
-  const container = document.getElementById('scheduleContainer');
   const days = Store.getDays();
   if (!days.length) { toast('No days to print.'); return; }
+
+  // Build all day pages into a hidden container so the screen preview
+  // isn't disrupted. Only the print media query shows these pages.
+  let printContainer = document.getElementById('printContainer');
+  if (!printContainer) {
+    printContainer = document.createElement('div');
+    printContainer.id = 'printContainer';
+    document.body.appendChild(printContainer);
+  }
 
   let html = '';
   days.forEach(day => {
@@ -38,12 +46,19 @@ function printAllDays() {
     html += renderFooter();
     html += '</div>';
   });
-  container.innerHTML = html;
+  printContainer.innerHTML = html;
+
+  // Hide the screen preview during print, show the print pages instead
+  const previewArea = document.querySelector('.preview-area');
+
   setTimeout(() => {
     applyPrintScaling(true);
+    if (previewArea) previewArea.style.display = 'none';
+    printContainer.style.display = 'block';
     window.print();
-    const activeDay = Store.getActiveDay();
-    if (activeDay) renderDay(activeDay);
+    // Restore screen view after print
+    printContainer.style.display = 'none';
+    if (previewArea) previewArea.style.display = '';
   }, 200);
 }
 

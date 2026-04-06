@@ -1096,6 +1096,9 @@ body {
   line-height: 1;
 }
 
+/* ── Print container — hidden on screen, visible in print ── */
+#printContainer { display: none; }
+
 /* ══════════════════════════════════════════════════════════════
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
@@ -1104,6 +1107,7 @@ body {
   .toolbar, .inspector, .toast, .modal-overlay { display: none !important; }
   .app-body { height: auto; overflow: visible; display: block; }
   .preview-area { padding: 0; display: block; }
+  #printContainer { display: block !important; }
   .page {
     box-shadow: none;
     border-radius: 0;
