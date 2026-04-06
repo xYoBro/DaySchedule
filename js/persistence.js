@@ -99,3 +99,47 @@ async function saveDataFile() {
     _saveInProgress = false;
   }
 }
+
+function importDataFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.js,.json';
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        let text = reader.result.trim();
+        let state;
+        if (file.name.endsWith('.json')) {
+          state = JSON.parse(text);
+        } else {
+          // Strip the JS wrapper: "const SAVED_STATE = {...};"
+          const match = text.match(/=\s*([\s\S]*?)\s*;?\s*$/);
+          if (!match) throw new Error('Could not parse file — expected SAVED_STATE assignment.');
+          state = JSON.parse(match[1]);
+        }
+        if (!state.days || !Array.isArray(state.days)) {
+          throw new Error('Invalid schedule file — no days array found.');
+        }
+        // Normalize all data through schema validators
+        if (state.days) state.days = state.days.map(normalizeDay);
+        if (state.groups) state.groups = state.groups.map(normalizeGroup);
+
+        saveUndoState();
+        Store.loadPersistedState(state);
+        _fileHandle = null; // reset so next save prompts for location
+        if (state.days.length) Store.setActiveDay(state.days[0].id);
+        sessionSave();
+        renderActiveDay();
+        syncToolbarTitle();
+        toast('Imported ' + file.name + ' (' + state.days.length + ' days)');
+      } catch (err) {
+        toast('Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+  input.click();
+}

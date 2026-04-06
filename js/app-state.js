@@ -138,6 +138,19 @@ const Store = {
     _footer = snap.footer || { contact: '', poc: '', updated: '' };
   },
 
+  duplicateDay(sourceDayId) {
+    const src = Store.getDay(sourceDayId);
+    if (!src) return null;
+    const clone = JSON.parse(JSON.stringify(src));
+    clone.id = generateId('day');
+    clone.events.forEach(e => { e.id = generateId('evt'); });
+    clone.notes.forEach(n => { n.id = generateId('note'); });
+    clone.label = (clone.label || 'Day') + ' (Copy)';
+    _days.push(clone);
+    _days.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    return clone;
+  },
+
   reset() {
     _title = '';
     _days = [];

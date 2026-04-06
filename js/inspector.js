@@ -71,8 +71,9 @@ function renderScheduleSetup(panel) {
       html += '</div>';
       html += '<label>Label</label>';
       html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Day 1)">';
+      html += '<button class="btn insp-day-duplicate" style="font-size:10px;padding:3px 8px;margin-top:6px;">Duplicate Day</button>';
       if (days.length > 1) {
-        html += '<button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;">Remove Day</button>';
+        html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;">Remove Day</button>';
       }
       html += '</div>';
     }
@@ -104,6 +105,22 @@ function wireScheduleSetup(panel) {
     wireDayField(body, '.insp-day-start', dayId, 'startTime');
     wireDayField(body, '.insp-day-end', dayId, 'endTime');
     wireDayField(body, '.insp-day-label', dayId, 'label', true);
+
+    const dupBtn = body.querySelector('.insp-day-duplicate');
+    if (dupBtn) {
+      dupBtn.addEventListener('click', () => {
+        saveUndoState();
+        const clone = Store.duplicateDay(dayId);
+        if (clone) {
+          Store.setActiveDay(clone.id);
+          _expandedDayId = clone.id;
+          sessionSave();
+          renderActiveDay();
+          renderInspector();
+          toast('Duplicated day');
+        }
+      });
+    }
 
     const removeBtn = body.querySelector('.insp-day-remove');
     if (removeBtn) {
@@ -650,6 +667,9 @@ function wireToolbar() {
 
   const saveBtn = document.getElementById('saveBtn');
   if (saveBtn) saveBtn.onclick = () => { overflowMenu.classList.remove('open'); saveDataFile(); };
+
+  const importBtn = document.getElementById('importBtn');
+  if (importBtn) importBtn.onclick = () => { overflowMenu.classList.remove('open'); importDataFile(); };
 
   const printBtn = document.getElementById('printBtn');
   if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); printActiveDay(); };
