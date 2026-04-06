@@ -451,8 +451,8 @@ body {
 
 /* ── Footer ── */
 .footer {
-  margin-top: 5px;
-  padding-top: 3px;
+  margin-top: auto;
+  padding-top: 5px;
   border-top: 0.5px solid #e8e8ed;
   text-align: center;
   font-size: 7px;
@@ -1098,6 +1098,7 @@ body {
     min-height: auto;
     padding: 0.2in 0.25in 0.18in;
   }
+  .footer { margin-top: 5px; }
   .print-page { page-break-after: always; }
   .print-page:last-child { page-break-after: auto; }
   @page { size: letter portrait; margin: 0.15in; }

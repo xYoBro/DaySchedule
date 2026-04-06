@@ -48,9 +48,11 @@ function printAllDays() {
 }
 
 // ── Print Scaling ──────────────────────────────────────────────────────────
-// Three-stage bottom-up CSS compression, then transform:scale fallback.
-// Measures at print width (8in) for accurate overflow detection.
-// Uses transform:scale instead of zoom for Safari print compatibility.
+// Three-stage bottom-up CSS compression, then zoom fallback.
+// Measures at print width (8.2in) for accurate overflow detection.
+// Uses zoom (not transform:scale) because zoom affects actual layout flow —
+// the print engine sees the zoomed dimensions for pagination. transform:scale
+// is purely visual and does not change layout height, causing page overflow.
 
 function applyPrintScaling() {
   const pages = document.querySelectorAll('.print-page');
@@ -72,11 +74,12 @@ function applyPrintScalingToPage(page) {
   // Force print-width measurement: the screen preview may be narrower,
   // causing extra text wrapping and inflated scrollHeight. Temporarily
   // set the page to print width for accurate measurement.
+  // Print page box = 8.5in letter - 0.3in @page margins = 8.2in.
   const origWidth = page.style.width;
   const origMinH = page.style.minHeight;
   const origMaxH = page.style.maxHeight;
   const origOverflow = page.style.overflow;
-  page.style.width = '8in';
+  page.style.width = '8.2in';
   page.style.minHeight = '0';
   page.style.maxHeight = 'none';
   page.style.overflow = 'visible';
@@ -151,14 +154,11 @@ function applyPrintScalingToPage(page) {
 
   if (contentH <= maxH) return;
 
-  // Final fallback: transform:scale to shrink the layout.
-  // Uses transform instead of zoom for Safari print compatibility —
-  // Safari doesn't honor zoom for page-break calculations.
+  // Final fallback: zoom shrinks actual layout dimensions.
+  // zoom affects layout flow (unlike transform:scale which is visual-only),
+  // so the print engine sees the zoomed box size for pagination.
   const scale = maxH / contentH;
-  page.style.transformOrigin = 'top left';
-  page.style.transform = 'scale(' + scale + ')';
-  // Set explicit height so the print engine sees a box that fits one page
-  page.style.height = maxH + 'px';
+  page.style.zoom = scale;
   page.dataset.printScaled = '1';
 }
 
@@ -172,9 +172,7 @@ function removePrintScaling(page) {
   props.forEach(p => page.style.removeProperty(p));
 
   if (page.dataset.printScaled) {
-    page.style.removeProperty('transform');
-    page.style.removeProperty('transformOrigin');
-    page.style.removeProperty('height');
+    page.style.removeProperty('zoom');
     delete page.dataset.printScaled;
   }
 }
