@@ -87,11 +87,12 @@ function applyPrintScalingToPage(page, forPrint) {
   page.style.maxHeight = 'none';
   page.style.overflow = 'visible';
 
-  // Force footer to print-mode margin during measurement — screen mode uses
-  // margin-top:auto which absorbs flex space and masks true content height
+  // For print: force footer to 5px margin during measurement — screen mode
+  // uses margin-top:auto which absorbs flex space and masks true content height.
+  // For screen preview: leave auto margin alone so footer stays at page bottom.
   const footer = page.querySelector('.footer');
   const origFooterMargin = footer ? footer.style.marginTop : '';
-  if (footer) footer.style.marginTop = '5px';
+  if (forPrint && footer) footer.style.marginTop = '5px';
 
   let contentH = page.scrollHeight;
 
@@ -171,6 +172,10 @@ function applyPrintScalingToPage(page, forPrint) {
   if (contentH <= maxH) return;
 
   // Final fallback: zoom shrinks actual layout dimensions.
+  // Only apply zoom for print — on screen, CSS compression is sufficient
+  // and the page card should maintain its portrait paper shape.
+  if (!forPrint) return;
+
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
   // Also force min-height:0 so the stylesheet's 11in floor doesn't
