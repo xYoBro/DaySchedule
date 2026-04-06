@@ -45,7 +45,11 @@ body {
   padding-bottom: 10px;
   margin-bottom: 8px;
   border-bottom: 2px solid #1d1d1f;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
 }
+.hdr:hover { background: rgba(var(--app-accent), 0.03); }
 .hdr-text { flex: 1; }
 .hdr-title {
   font-size: 20px;

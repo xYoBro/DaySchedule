@@ -23,6 +23,13 @@ document.addEventListener('click', e => {
     return;
   }
 
+  // Click on header -> open settings modal (logo, title, contact, groups)
+  const hdr = e.target.closest('.hdr');
+  if (hdr && !e.target.closest('.inspector')) {
+    openSettingsModal();
+    return;
+  }
+
   // Click on note -> select in inspector
   const noteEl = e.target.closest('.notes-list li[data-note-id]');
   if (noteEl && !e.target.closest('.inspector')) {
