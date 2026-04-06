@@ -45,8 +45,15 @@ document.addEventListener('click', e => {
   }
 });
 
-// Keyboard shortcuts for undo/redo
+// Keyboard shortcuts
 document.addEventListener('keydown', e => {
+  // Cmd/Ctrl+P — print all days
+  if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+    e.preventDefault();
+    printAllDays();
+    return;
+  }
+  // Undo/Redo
   if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     e.preventDefault();

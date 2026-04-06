@@ -672,7 +672,7 @@ function wireToolbar() {
   if (importBtn) importBtn.onclick = () => { overflowMenu.classList.remove('open'); importDataFile(); };
 
   const printBtn = document.getElementById('printBtn');
-  if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); printActiveDay(); };
+  if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); printAllDays(); };
 
   // Toolbar title — editable inline, syncs with Store
   const tbTitle = document.getElementById('tbTitle');
