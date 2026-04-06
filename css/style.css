@@ -267,7 +267,6 @@ body {
   border-top: 0.5px solid #e8e8ed;
   margin: 4px 0 2px;
   list-style: none;
-  column-span: all;
 }
 .dagger-note {
   padding-left: 8px;
@@ -441,7 +440,7 @@ body {
   color: #86868b;
   margin-bottom: 4px;
 }
-.notes-list { list-style: none; columns: 2; column-gap: 18px; }
+.notes-list { list-style: none; columns: 2; column-gap: 18px; column-fill: balance; }
 .notes-list li {
   font-size: var(--notes-fs, 7.5px);
   color: #1d1d1f;
