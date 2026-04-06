@@ -112,7 +112,7 @@ function renderBand(band) {
     html += '<div><span class="band-tag" style="background:' + esc(group.color) + ';color:white;">' + esc(group.name) + '</span></div>';
   }
   if (evt.attendees && tier !== 'break') {
-    html += '<div class="band-attendees">Attendees: ' + esc(evt.attendees) + '</div>';
+    html += '<div class="band-attendees">WHO: ' + esc(evt.attendees) + '</div>';
   }
   // Overlap notice for main-on-main conflicts
   if (hasMainOverlap) {
