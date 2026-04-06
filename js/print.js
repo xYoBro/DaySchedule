@@ -65,8 +65,10 @@ function applyPrintScaling() {
 }
 
 function applyPrintScalingToPage(page) {
-  // Usable print area: 11in page - 0.3in @page margins - 0.38in padding
-  const maxH = 10.32 * 96;
+  // Usable print area: 11in page - 0.3in @page margins - 0.38in padding.
+  // Subtract 20px safety margin to account for browser rendering differences
+  // between screen measurement and actual print layout.
+  const maxH = (10.32 * 96) - 20;
 
   // Reset any previous scaling
   removePrintScaling(page);
@@ -84,6 +86,12 @@ function applyPrintScalingToPage(page) {
   page.style.maxHeight = 'none';
   page.style.overflow = 'visible';
 
+  // Force footer to print-mode margin during measurement — screen mode uses
+  // margin-top:auto which absorbs flex space and masks true content height
+  const footer = page.querySelector('.footer');
+  const origFooterMargin = footer ? footer.style.marginTop : '';
+  if (footer) footer.style.marginTop = '5px';
+
   let contentH = page.scrollHeight;
 
   if (contentH <= maxH) {
@@ -91,6 +99,7 @@ function applyPrintScalingToPage(page) {
     page.style.minHeight = origMinH;
     page.style.maxHeight = origMaxH;
     page.style.overflow = origOverflow;
+    if (footer) footer.style.marginTop = origFooterMargin;
     return;
   }
 
@@ -113,6 +122,7 @@ function applyPrintScalingToPage(page) {
     page.style.minHeight = origMinH;
     page.style.maxHeight = origMaxH;
     page.style.overflow = origOverflow;
+    if (footer) footer.style.marginTop = origFooterMargin;
     return;
   }
 
@@ -132,6 +142,7 @@ function applyPrintScalingToPage(page) {
     page.style.minHeight = origMinH;
     page.style.maxHeight = origMaxH;
     page.style.overflow = origOverflow;
+    if (footer) footer.style.marginTop = origFooterMargin;
     return;
   }
 
@@ -146,11 +157,12 @@ function applyPrintScalingToPage(page) {
   // Re-measure after all CSS var compression
   contentH = page.scrollHeight;
 
-  // Restore width
+  // Restore measurement overrides
   page.style.width = origWidth;
   page.style.minHeight = origMinH;
   page.style.maxHeight = origMaxH;
   page.style.overflow = origOverflow;
+  if (footer) footer.style.marginTop = origFooterMargin;
 
   if (contentH <= maxH) return;
 
