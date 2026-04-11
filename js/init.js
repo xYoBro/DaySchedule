@@ -1,25 +1,88 @@
-/* ── init.js ── Application bootstrap & sample data ────────────────────────── */
+/* ── init.js ── Application bootstrap ──────────────────────────────────────── */
 
-(function init() {
-  // 1. Try saved state
+(async function init() {
+  wireToolbar();
+  wireLibrary();
+
+  // Check FSAPI support
+  if (!hasFSAPI()) {
+    const banner = document.getElementById('libraryFallbackBanner');
+    if (banner) banner.style.display = 'block';
+    // No directory access — try legacy load paths
+    await legacyBoot();
+    return;
+  }
+
+  // Try restoring saved directory handle
+  let handle = null;
+  try {
+    handle = await restoreDirectoryHandle();
+  } catch (e) {
+    console.warn('Failed to restore directory handle:', e);
+  }
+
+  if (handle) {
+    // Check for SAVED_STATE migration
+    if (typeof SAVED_STATE !== 'undefined' && SAVED_STATE && SAVED_STATE.title) {
+      await migrateSavedState(SAVED_STATE);
+    }
+    showLibrary();
+    return;
+  }
+
+  // No handle — check if we have legacy data to migrate
+  if (typeof SAVED_STATE !== 'undefined' && SAVED_STATE && SAVED_STATE.title) {
+    // Load into Store so user can see their data while we prompt for folder
+    Store.loadPersistedState(SAVED_STATE);
+    const days = Store.getDays();
+    if (days.length) Store.setActiveDay(days[0].id);
+  } else if (sessionLoad()) {
+    const days = Store.getDays();
+    if (days.length && !Store.getActiveDay()) Store.setActiveDay(days[0].id);
+  }
+
+  // Show library with connect prompt
+  const prompt = document.getElementById('libraryConnectPrompt');
+  if (prompt) prompt.style.display = 'block';
+  showLibrary();
+})();
+
+async function migrateSavedState(savedState) {
+  // Check if already migrated (a file with this title exists)
+  const files = await listScheduleFiles();
+  const slug = scheduleNameToSlug(savedState.title || 'Imported Schedule');
+  const fileName = slug + '.json';
+  const alreadyExists = files.some(f => f.fileName === fileName);
+  if (alreadyExists) return;
+
+  const userName = getUserName() || 'Migration';
+  const fileData = buildScheduleFile(
+    savedState.title || 'Imported Schedule',
+    savedState,
+    [],
+    userName
+  );
+
+  await writeScheduleFile(fileName, fileData);
+  toast('Migrated "' + (savedState.title || 'schedule') + '" to library');
+}
+
+async function legacyBoot() {
+  // FSAPI not available — fall back to old behavior
   if (typeof SAVED_STATE !== 'undefined' && SAVED_STATE && SAVED_STATE.title) {
     Store.loadPersistedState(SAVED_STATE);
-  }
-  // 2. Try session storage
-  else if (!sessionLoad()) {
-    // 3. Load sample data
+  } else if (!sessionLoad()) {
     loadSampleData();
   }
 
-  // Set active day
   const days = Store.getDays();
   if (days.length && !Store.getActiveDay()) {
     Store.setActiveDay(days[0].id);
   }
 
-  wireToolbar();
+  // wireToolbar() already called in init — just render
   renderActiveDay();
-})();
+}
 
 function loadSampleData() {
   Store.setTitle('April RSD');
@@ -37,126 +100,14 @@ function loadSampleData() {
 
   const d = day.id;
 
-  // Main events
-  Store.addEvent(d, {
-    title: 'Formation',
-    startTime: '0700', endTime: '0730',
-    description: 'Accountability formation. Flight chiefs take roll and report to First Sergeant.',
-    location: 'Bldg 200 Apron', poc: 'First Sergeant',
-    groupId: 'grp_all', isMainEvent: true,
-  });
+  Store.addEvent(d, { title: 'Formation', startTime: '0700', endTime: '0730', description: 'Accountability formation.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
+  Store.addEvent(d, { title: "Commander's Call", startTime: '0730', endTime: '0830', description: 'Wing CC addresses unit status.', location: 'Auditorium', poc: 'Wing Commander', groupId: 'grp_all', isMainEvent: true });
+  Store.addEvent(d, { title: 'Safety Briefing', startTime: '0830', endTime: '0900', location: 'Auditorium', poc: 'Safety Office', groupId: 'grp_all' });
+  Store.addEvent(d, { title: 'AFSC-Specific Training', startTime: '0900', endTime: '1100', description: 'Complete outstanding CBTs and certifications.', location: 'Respective Work Areas', poc: 'Flight Chiefs', groupId: 'grp_flight', isMainEvent: true });
+  Store.addEvent(d, { title: 'Lunch', startTime: '1100', endTime: '1200', groupId: 'grp_all', isMainEvent: true, isBreak: true });
+  Store.addEvent(d, { title: 'Ancillary / CBT Completion', startTime: '1200', endTime: '1400', description: 'Complete overdue ancillary training.', location: 'Computer Labs', poc: 'UTM', groupId: 'grp_all', isMainEvent: true });
+  Store.addEvent(d, { title: 'End of Day Formation', startTime: '1600', endTime: '1630', description: 'Final accountability.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
 
-  Store.addEvent(d, {
-    title: "Commander's Call",
-    startTime: '0730', endTime: '0830',
-    description: 'Wing CC addresses unit status, upcoming deployments, quarterly awards presentation.',
-    location: 'Auditorium', poc: 'Wing Commander',
-    groupId: 'grp_all', isMainEvent: true,
-  });
-
-  Store.addEvent(d, {
-    title: 'Safety Briefing',
-    startTime: '0830', endTime: '0900',
-    description: '',
-    location: 'Auditorium', poc: 'Safety Office',
-    groupId: 'grp_all', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'AFSC-Specific Training',
-    startTime: '0900', endTime: '1100',
-    description: 'Complete all outstanding CBTs and hands-on task certifications. Bring CAC reader. See your flight chief for the task priority list.',
-    location: 'Respective Work Areas', poc: 'Flight Chiefs',
-    groupId: 'grp_flight', isMainEvent: true,
-  });
-
-  Store.addEvent(d, {
-    title: 'Lunch',
-    startTime: '1100', endTime: '1200',
-    description: '',
-    location: '', poc: '',
-    groupId: 'grp_all', isMainEvent: true, isBreak: true,
-  });
-
-  Store.addEvent(d, {
-    title: 'Ancillary / CBT Completion',
-    startTime: '1200', endTime: '1400',
-    description: 'Complete all overdue ancillary training items. Computer labs open. See UTM for login issues.',
-    location: 'Computer Labs / Work Areas', poc: 'UTM',
-    groupId: 'grp_all', isMainEvent: true,
-  });
-
-  Store.addEvent(d, {
-    title: 'Outprocessing',
-    startTime: '1400', endTime: '1430',
-    description: '',
-    location: 'CSS Office', poc: 'CSS',
-    groupId: 'grp_all', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'Flight Debrief',
-    startTime: '1430', endTime: '1500',
-    description: '',
-    location: 'Respective Areas', poc: 'Flight CCs',
-    groupId: 'grp_flight', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'Readiness Standup',
-    startTime: '1500', endTime: '1600',
-    description: 'Review weekend readiness metrics, open action items, next UTA planning inputs.',
-    location: 'Conf Rm A', poc: 'CCF',
-    groupId: 'grp_snco', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'End of Day Formation',
-    startTime: '1600', endTime: '1630',
-    description: 'Final accountability. Sunday schedule announcements. Dismissed upon flight chief release.',
-    location: 'Bldg 200 Apron', poc: 'First Sergeant',
-    groupId: 'grp_all', isMainEvent: true,
-  });
-
-  // Concurrent events (limited scope, overlap with main events)
-  Store.addEvent(d, {
-    title: 'PT Testing',
-    startTime: '0600', endTime: '0800',
-    description: '',
-    location: 'Fitness Center / Track', poc: 'UFPM',
-    groupId: 'grp_chiefs', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'E-7 Promotion Board',
-    startTime: '0800', endTime: '1100',
-    description: 'Board convenes for E-7 promotion evaluation. Service dress required.',
-    location: 'Bldg 100, Conf Rm A', poc: 'CCC',
-    groupId: 'grp_chiefs', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'TCCC Training',
-    startTime: '1200', endTime: '1630',
-    description: 'Tactical Combat Casualty Care recertification.',
-    location: 'Bldg 250, Med Sim Lab', poc: 'Medical Group',
-    groupId: 'grp_chiefs', isMainEvent: false,
-  });
-
-  Store.addEvent(d, {
-    title: 'IG Inspection Prep',
-    startTime: '1230', endTime: '1500',
-    description: 'Self-assessment review and document staging.',
-    location: 'Bldg 100, Various', poc: 'Wing IG',
-    groupId: 'grp_chiefs', isMainEvent: false,
-  });
-
-  // Notes
-  Store.addNote(d, { category: 'Medical', text: 'A1C Snuffy (0900\u20131030, Bldg 460), MSgt Doe (1300\u20131400, VA Clinic), SrA Peters (1400\u20131500)' });
-  Store.addNote(d, { category: 'TDY', text: 'TSgt Martinez returns NCOA Sunday \u2014 Day 2 only. SSgt Kim arrives 1000.' });
-  Store.addNote(d, { category: 'Facility', text: 'Bldg 300 HVAC down. Events relocated to Bldg 200 overflow.' });
   Store.addNote(d, { category: 'Uniform', text: 'ABUs authorized for PT testing participants. UOD all others.' });
-  Store.addNote(d, { category: 'Visitors', text: 'State HQ delegation arriving 1300. Escort required \u2014 CSS.' });
-  Store.addNote(d, { category: 'Vehicle', text: 'GOV #4372 reserved medical transport 0830\u20131200. Keys at CSS.' });
-  Store.addNote(d, { category: 'Dining', text: 'DFAC open 1100\u20131230. Pizza authorized for flights through lunch.' });
+  Store.addNote(d, { category: 'Dining', text: 'DFAC open 1100\u20131230.' });
 }
