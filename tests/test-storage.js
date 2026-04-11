@@ -33,7 +33,7 @@ describe('Storage — buildScheduleFile', () => {
   });
 });
 
-describe('Storage — parseScheduleFile', () => {
+describe('Storage — parseScheduleMeta', () => {
   it('extracts metadata without full data load', () => {
     const file = {
       name: 'May Drill',

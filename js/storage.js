@@ -188,8 +188,13 @@ async function writeScheduleFile(fileName, data) {
   try {
     const fileHandle = await _dirHandle.getFileHandle(fileName, { create: true });
     const writable = await fileHandle.createWritable();
-    await writable.write(JSON.stringify(data, null, 2));
-    await writable.close();
+    try {
+      await writable.write(JSON.stringify(data, null, 2));
+      await writable.close();
+    } catch (writeErr) {
+      try { await writable.abort(); } catch (abortErr) { /* ignore abort errors */ }
+      throw writeErr;
+    }
     return true;
   } catch (e) {
     console.warn('Failed to write schedule:', fileName, e);
@@ -214,8 +219,11 @@ async function renameScheduleFile(oldName, newName) {
   if (!data) return false;
   const wrote = await writeScheduleFile(newName, data);
   if (!wrote) return false;
-  await deleteScheduleFile(oldName);
-  return true;
+  const deleted = await deleteScheduleFile(oldName);
+  if (!deleted) {
+    console.warn('Rename partial failure: new file written but old file remains:', oldName);
+  }
+  return deleted;
 }
 
 // ── Auto-save engine ───────────────────────────────────────────────────────
@@ -383,10 +391,11 @@ async function createVersion(versionName) {
   const fileData = await readScheduleFile(_currentFileName);
   if (!fileData) return false;
 
+  const now = new Date().toISOString();
   const version = {
     name: versionName,
     savedBy: getUserName(),
-    savedAt: new Date().toISOString(),
+    savedAt: now,
     data: JSON.parse(JSON.stringify(fileData.current)),
   };
   if (!fileData.versions) fileData.versions = [];
@@ -394,7 +403,7 @@ async function createVersion(versionName) {
 
   fileData.current = Store.getPersistedState();
   fileData.lastSavedBy = getUserName();
-  fileData.lastSavedAt = new Date().toISOString();
+  fileData.lastSavedAt = now;
 
   const ok = await writeScheduleFile(_currentFileName, fileData);
   if (ok) {
@@ -410,6 +419,9 @@ async function restoreVersion(versionIndex) {
   const fileData = await readScheduleFile(_currentFileName);
   if (!fileData || !fileData.versions || !fileData.versions[versionIndex]) return false;
 
+  // Save reference before mutating the array
+  const target = fileData.versions[versionIndex];
+
   const backup = {
     name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
     savedBy: getUserName(),
@@ -418,9 +430,7 @@ async function restoreVersion(versionIndex) {
   };
   fileData.versions.unshift(backup);
 
-  const targetIndex = versionIndex + 1;
-  const version = fileData.versions[targetIndex];
-  fileData.current = JSON.parse(JSON.stringify(version.data));
+  fileData.current = JSON.parse(JSON.stringify(target.data));
   fileData.lastSavedBy = getUserName();
   fileData.lastSavedAt = new Date().toISOString();
 
