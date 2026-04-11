@@ -302,13 +302,31 @@ function getLastSavedAt() {
 
 // ── Save indicator ─────────────────────────────────────────────────────────
 
+let _savedFadeTimer = null;
+
 function updateSaveIndicator(state) {
-  const dot = document.getElementById('saveIndicator');
-  if (!dot) return;
-  dot.className = 'save-dot';
-  if (state === 'dirty') dot.classList.add('save-dirty');
-  else if (state === 'saving') dot.classList.add('save-saving');
-  else if (state === 'disconnected') dot.classList.add('save-disconnected');
+  const el = document.getElementById('saveIndicator');
+  if (!el) return;
+  clearTimeout(_savedFadeTimer);
+  el.className = 'save-status';
+
+  if (state === 'dirty') {
+    el.textContent = 'Unsaved';
+    el.classList.add('save-dirty');
+  } else if (state === 'saving') {
+    el.textContent = 'Saving\u2026';
+    el.classList.add('save-saving');
+  } else if (state === 'disconnected') {
+    el.textContent = 'Not connected';
+    el.classList.add('save-disconnected');
+  } else {
+    el.textContent = 'Saved';
+    el.classList.add('save-saved');
+    // Fade out after 3 seconds so it doesn't clutter when everything is fine
+    _savedFadeTimer = setTimeout(() => {
+      el.classList.add('save-faded');
+    }, 3000);
+  }
 }
 
 // ── Stale-data warning ─────────────────────────────────────────────────────

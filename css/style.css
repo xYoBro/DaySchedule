@@ -1239,17 +1239,37 @@ body {
 .library-context-item:hover { background: #f0f0f5; }
 .library-context-item.danger { color: #ff3b30; }
 .library-context-item.danger:hover { background: #fff5f5; }
-.save-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: none;
+/* Save status text */
+.save-status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
   flex-shrink: 0;
+  transition: opacity 0.3s ease-out;
+  white-space: nowrap;
 }
-.save-dot.save-dirty { display: block; background: #e8a849; }
-.save-dot.save-saving { display: block; background: #5b8def; animation: save-pulse 1s ease-in-out infinite; }
-.save-dot.save-disconnected { display: block; background: #ff3b30; cursor: pointer; }
-@keyframes save-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.save-status:empty { display: none; }
+.save-status.save-saved {
+  color: #48484a;
+}
+.save-status.save-saved.save-faded {
+  opacity: 0.35;
+}
+.save-status.save-dirty {
+  color: #8d6e00;
+  background: #fff8e1;
+}
+.save-status.save-saving {
+  color: #2558a8;
+  animation: save-pulse 1s ease-in-out infinite;
+}
+.save-status.save-disconnected {
+  color: #ff3b30;
+  background: #fff5f5;
+  cursor: pointer;
+}
+@keyframes save-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .tb-back {
   background: none;
   border: none;
