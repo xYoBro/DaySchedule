@@ -63,14 +63,12 @@ async function refreshLibraryList() {
 
 async function openSchedule(fileName) {
   const data = await readScheduleFile(fileName);
-  if (!data) { toast('Failed to open schedule.'); return; }
+  if (!data || !data.current) { toast('Failed to open schedule — file may be corrupt.'); return; }
 
   if (!hasUserName()) await promptUserName();
 
   Store.reset();
-  if (data.current) {
-    Store.loadPersistedState(data.current);
-  }
+  Store.loadPersistedState(data.current);
   const days = Store.getDays();
   if (days.length) Store.setActiveDay(days[0].id);
 
@@ -108,18 +106,29 @@ async function duplicateSchedule(fileName) {
   const data = await readScheduleFile(fileName);
   if (!data) { toast('Failed to read schedule.'); return; }
 
-  const newName = (data.name || 'Schedule') + ' (Copy)';
-  const newSlug = scheduleNameToSlug(newName);
-  const newFileName = newSlug + '.json';
-  const userName = getUserName();
+  const baseName = (data.name || 'Schedule') + ' (Copy)';
+  let newName = baseName;
+  let newFileName = scheduleNameToSlug(newName) + '.json';
 
+  // Avoid filename collisions
+  const existing = await listScheduleFiles();
+  const existingNames = new Set(existing.map(f => f.fileName));
+  let counter = 2;
+  while (existingNames.has(newFileName)) {
+    newName = baseName + ' ' + counter;
+    newFileName = scheduleNameToSlug(newName) + '.json';
+    counter++;
+  }
+
+  const userName = getUserName();
   const newData = buildScheduleFile(newName, data.current, [], userName);
   newData.current.title = newName;
 
   const ok = await writeScheduleFile(newFileName, newData);
   if (!ok) { toast('Failed to duplicate.'); return; }
 
-  refreshLibraryList();
+  // Open the copy immediately per spec
+  openSchedule(newFileName);
   toast('Duplicated as ' + newName);
 }
 
@@ -133,9 +142,9 @@ async function deleteSchedule(fileName) {
   }
 }
 
-function returnToLibrary() {
-  if (_dirty && hasDirectoryAccess()) {
-    saveCurrentSchedule();
+async function returnToLibrary() {
+  if (isDirty() && hasDirectoryAccess()) {
+    await saveCurrentSchedule();
   }
   setCurrentFile(null, null);
   Store.reset();

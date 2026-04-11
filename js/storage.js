@@ -292,6 +292,14 @@ function getCurrentFileName() {
   return _currentFileName;
 }
 
+function isDirty() {
+  return _dirty;
+}
+
+function getLastSavedAt() {
+  return _lastKnownSavedAt;
+}
+
 // ── Save indicator ─────────────────────────────────────────────────────────
 
 function updateSaveIndicator(state) {

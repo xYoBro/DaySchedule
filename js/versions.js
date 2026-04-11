@@ -23,7 +23,8 @@ async function renderVersionPanel(modal) {
   html += '<div class="version-working">';
   html += '<div class="version-working-label">Working Copy</div>';
   html += '<div class="version-working-title">Current edits</div>';
-  const lastSaved = _lastKnownSavedAt ? formatTimeAgo(_lastKnownSavedAt) : 'not yet saved';
+  const lastSavedAt = getLastSavedAt();
+  const lastSaved = lastSavedAt ? formatTimeAgo(lastSavedAt) : 'not yet saved';
   html += '<div class="version-working-meta">Auto-saved ' + esc(lastSaved) + '</div>';
   html += '</div>';
 
@@ -120,7 +121,7 @@ function wireVersionPanel(modal) {
       const index = parseInt(item.getAttribute('data-version-index'), 10);
       const ok = await restoreVersion(index);
       if (ok) {
-        toast('Version restored');
+        toast('Version restored — current state backed up');
         closeVersionPanel();
       } else {
         toast('Failed to restore version.');
