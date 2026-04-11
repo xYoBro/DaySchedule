@@ -1,3 +1,19 @@
+/* ── constants.js ── Contract ───────────────────────────────────────────────
+ *
+ * EXPORTS (all const):
+ *   DEFAULT_GROUPS        — Array<{id, name, scope, color}>  Default audience groups
+ *   DEFAULT_COLOR_PALETTE — Array<string>                    Hex colors for new groups
+ *   TIME_INCREMENT        — number (15)                      Minutes per time snap unit
+ *   LAYOUT_TARGETS        — Object                           Print scaling min/max ranges
+ *
+ * REQUIRES: nothing (first script to load)
+ *
+ * CONSUMED BY:
+ *   app-state.js  — DEFAULT_GROUPS for Store reset, DEFAULT_COLOR_PALETTE for new groups
+ *   print.js      — LAYOUT_TARGETS for adaptive print scaling
+ *   inspector.js  — TIME_INCREMENT (indirectly via snapToQuarter)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 const DEFAULT_GROUPS = [
   { id: 'grp_all',     name: 'All Personnel', scope: 'main',    color: '#2558a8' },
   { id: 'grp_flight',  name: 'By Flight',     scope: 'main',    color: '#b06a10' },

@@ -1,3 +1,29 @@
+/* ── persistence.js ── Contract ────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   saveUndoState()    — push current Store snapshot to undo stack (debounced 800ms)
+ *   undo()             — pop undo stack, push to redo, render
+ *   redo()             — pop redo stack, push to undo, render
+ *   sessionSave()      — debounced write to sessionStorage (500ms) + triggers markDirty()
+ *   sessionLoad()      → boolean — loads from sessionStorage if available
+ *   saveDataFile()     → Promise<boolean> — legacy FSAPI single-file save or download fallback
+ *   importDataFile()   — opens file picker, parses JS/JSON, loads into Store
+ *
+ * REQUIRES:
+ *   app-state.js — Store.snapshot(), Store.restore(), Store.getPersistedState(),
+ *                  Store.loadPersistedState(), Store.setActiveDay()
+ *   ui-core.js   — toast()
+ *   inspector.js — renderActiveDay(), syncToolbarTitle() (called from undo/redo/import)
+ *   storage.js   — markDirty() (called from sessionSave, checked with typeof guard)
+ *   schema.js    — normalizeDay(), normalizeGroup() (called from importDataFile)
+ *
+ * CONSUMED BY:
+ *   inspector.js — saveUndoState() before every mutation, sessionSave() after every mutation
+ *   events.js    — undo(), redo() on keyboard shortcuts
+ *   storage.js   — sessionSave() called from saveCurrentSchedule on success
+ *   init.js      — sessionLoad() during boot
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 let _fileHandle = null;
 let _saveInProgress = false;
 let _undoStack = [];

@@ -1,3 +1,20 @@
+/* ── data-helpers.js ── Contract ───────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   computeDuration(event)                      → minutes (number)
+ *   eventsOverlap(a, b)                         → boolean (touch-exclusive)
+ *   getOverlappingConcurrent(mainEvt, concs)    → Array<event>
+ *   classifyEvents(events, groups)              → {mainBands[], concurrent[]}
+ *
+ * REQUIRES:
+ *   utils.js — timeToMinutes()
+ *
+ * CONSUMED BY:
+ *   render.js    — computeDuration, classifyEvents
+ *   print.js     — classifyEvents
+ *   inspector.js — classifyEvents, eventsOverlap (via checkTimeConflict)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 function computeDuration(event) {
   return timeToMinutes(event.endTime) - timeToMinutes(event.startTime);
 }

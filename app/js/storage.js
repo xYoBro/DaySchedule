@@ -1,3 +1,77 @@
+/* ── storage.js ── Contract ────────────────────────────────────────────────
+ *
+ * EXPORTS — Pure functions:
+ *   scheduleNameToSlug(name) → string          — "May Drill" → "may-drill"
+ *   buildScheduleFile(name, state, versions, savedBy) → ScheduleFile object
+ *   parseScheduleMeta(fileData) → {name, dayCount, eventCount, noteCount, versionCount, lastSavedBy, lastSavedAt, createdAt}
+ *
+ * EXPORTS — Directory access:
+ *   promptForDirectory()      → Promise<handle|null>  — opens picker, verifies folder, persists handle
+ *   restoreDirectoryHandle()  → Promise<handle|null>  — loads from IndexedDB, checks permission
+ *   getDirectoryHandle()      → handle|null
+ *   hasDirectoryAccess()      → boolean
+ *   hasFSAPI()                → boolean               — true if showDirectoryPicker exists
+ *
+ * EXPORTS — File I/O:
+ *   listScheduleFiles()                → Promise<Array<meta>>  — scans data/ for .json files
+ *   readScheduleFile(fileName)         → Promise<object|null>
+ *   writeScheduleFile(fileName, data)  → Promise<boolean>      — aborts writable on error
+ *   deleteScheduleFile(fileName)       → Promise<boolean>
+ *   renameScheduleFile(old, new)       → Promise<boolean>      — warns on partial failure
+ *
+ * EXPORTS — Auto-save:
+ *   markDirty()               — sets dirty flag, starts 2s debounce timer
+ *   forceSave()               — clears debounce, saves immediately, toasts on success
+ *   saveCurrentSchedule()     → Promise<boolean>  — reads file, detects stale data, writes
+ *   setCurrentFile(name, ts)  — sets active file name and baseline timestamp
+ *   getCurrentFileName()      → string|null
+ *   isDirty()                 → boolean
+ *   getLastSavedAt()          → string|null (ISO timestamp)
+ *
+ * EXPORTS — Save indicator:
+ *   updateSaveIndicator(state) — state: 'dirty'|'saving'|'saved'|'disconnected'
+ *
+ * EXPORTS — User identity:
+ *   getUserName()     → string
+ *   setUserName(name)
+ *   hasUserName()     → boolean
+ *   promptUserName()  → Promise<string>  — shows modal, stores in localStorage
+ *
+ * EXPORTS — Versions:
+ *   createVersion(name)          → Promise<boolean>
+ *   restoreVersion(versionIndex) → Promise<boolean>  — auto-backs up current first
+ *   getVersions()                → Promise<Array<{index, name, savedBy, savedAt}>>
+ *
+ * REQUIRES:
+ *   app-state.js   — Store.getPersistedState(), Store.loadPersistedState()
+ *   ui-core.js     — toast()
+ *   utils.js       — esc()
+ *   inspector.js   — renderActiveDay(), syncToolbarTitle() (called async from stale/restore)
+ *   persistence.js — sessionSave() (called from saveCurrentSchedule on success)
+ *
+ * DOM ELEMENTS:
+ *   #saveIndicator      — save status text span
+ *   #staleWarningModal  — stale-data warning modal overlay
+ *   #userNameModal      — user name prompt modal overlay
+ *   #syncConfirmModal   — sync confirmation modal overlay
+ *
+ * CONSUMED BY:
+ *   persistence.js — markDirty() (from sessionSave)
+ *   library.js     — hasDirectoryAccess, listScheduleFiles, readScheduleFile, writeScheduleFile,
+ *                    deleteScheduleFile, scheduleNameToSlug, buildScheduleFile, setCurrentFile,
+ *                    saveCurrentSchedule, isDirty, promptForDirectory, hasUserName, promptUserName,
+ *                    getUserName
+ *   versions.js    — getVersions, createVersion, restoreVersion, getLastSavedAt
+ *   inspector.js   — getCurrentFileName, hasDirectoryAccess, scheduleNameToSlug,
+ *                    renameScheduleFile, setCurrentFile, getLastSavedAt
+ *   events.js      — forceSave()
+ *   init.js        — hasFSAPI, restoreDirectoryHandle, listScheduleFiles, scheduleNameToSlug,
+ *                    buildScheduleFile, writeScheduleFile, getUserName
+ *
+ * SIDE EFFECTS:
+ *   Registers global click listener on #saveIndicator for reconnect
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 /* ── storage.js ── Directory handle persistence, file I/O, schedule envelope ── */
 
 const STORAGE_DB_NAME = 'DayScheduleDB';

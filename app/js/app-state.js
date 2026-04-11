@@ -1,3 +1,29 @@
+/* ── app-state.js ── Contract ──────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   Store — singleton object, the single source of truth for all app state
+ *     .getTitle() / .setTitle(v)
+ *     .getLogo() / .setLogo(v)
+ *     .getFooter() / .setFooter(partial)
+ *     .getDays() / .addDay(d) / .getDay(id) / .updateDay(id, updates) / .removeDay(id)
+ *     .getActiveDay() / .setActiveDay(id)
+ *     .getEvents(dayId) / .addEvent(dayId, e) / .updateEvent(dayId, id, updates) / .removeEvent(dayId, id)
+ *     .getGroups() / .getGroup(id) / .addGroup(g) / .updateGroup(id, updates) / .removeGroup(id)
+ *     .getNotes(dayId) / .addNote(dayId, n) / .updateNote(dayId, id, updates) / .removeNote(dayId, id)
+ *     .snapshot() → deep clone of full state
+ *     .restore(snap) — replaces full state from snapshot
+ *     .duplicateDay(dayId) → cloned day with new IDs
+ *     .reset() — clears all state to defaults
+ *     .getPersistedState() → {title, days, groups, logo, footer}
+ *     .loadPersistedState(state) — loads from persisted shape
+ *
+ * REQUIRES:
+ *   constants.js — DEFAULT_GROUPS, DEFAULT_COLOR_PALETTE
+ *   utils.js     — generateId(), timeToMinutes()
+ *
+ * CONSUMED BY: every file in the app reads/writes through Store
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 let _title = '';
 let _days = [];
 let _groups = JSON.parse(JSON.stringify(DEFAULT_GROUPS));

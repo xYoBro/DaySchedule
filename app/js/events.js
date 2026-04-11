@@ -1,3 +1,29 @@
+/* ── events.js ── Contract ─────────────────────────────────────────────────
+ *
+ * EXPORTS: none (all side effects — registers global event listeners)
+ *
+ * REQUIRES:
+ *   app-state.js  — Store.getActiveDay()
+ *   inspector.js  — selectEntity(), openSettingsModal()
+ *   print.js      — printAllDays()
+ *   persistence.js — undo(), redo()
+ *   storage.js    — forceSave()
+ *
+ * SIDE EFFECTS:
+ *   Registers global click listener for:
+ *     - .band-conc[data-event-id] → select concurrent event
+ *     - .band[data-event-id] → select event
+ *     - .conc-item[data-event-id] → select concurrent event
+ *     - .hdr → open settings modal
+ *     - .notes-list li[data-note-id] → select note
+ *     - .preview-area (empty area) → deselect
+ *   Registers global keydown listener for:
+ *     - Ctrl/Cmd+P → printAllDays()
+ *     - Ctrl/Cmd+S → forceSave()
+ *     - Ctrl/Cmd+Z → undo()
+ *     - Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y → redo()
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 document.addEventListener('click', e => {
   // Click on "Also happening" concurrent indicator -> select that concurrent event
   const concIndicator = e.target.closest('.band-conc[data-event-id]');

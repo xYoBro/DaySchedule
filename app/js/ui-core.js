@@ -1,3 +1,29 @@
+/* ── ui-core.js ── Contract ────────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   openModal(id)       — shows modal overlay by DOM id, focuses first input
+ *   closeModal(id)      — hides modal, restores focus
+ *   toast(msg)          — shows 2.2s notification toast
+ *   closeDropdowns()    — closes all .dropdown elements
+ *
+ * REQUIRES: nothing (only DOM)
+ *
+ * DOM ELEMENTS:
+ *   #toast — toast notification container
+ *   .modal-overlay — any modal with this class can be opened/closed
+ *
+ * CONSUMED BY:
+ *   storage.js   — toast()
+ *   library.js   — toast()
+ *   versions.js  — toast()
+ *   inspector.js — toast(), openModal(), closeModal()
+ *   persistence.js — toast()
+ *
+ * SIDE EFFECTS:
+ *   Registers global click listener to close dropdowns
+ *   Registers global keydown listener for Escape → close active modal
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 let _previousFocus = null;
 
 function openModal(id) {

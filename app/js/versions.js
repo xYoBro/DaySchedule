@@ -1,3 +1,26 @@
+/* ── versions.js ── Contract ───────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   openVersionPanel()   — async — reads versions from file, renders modal
+ *   closeVersionPanel()  — hides version modal
+ *
+ * REQUIRES:
+ *   storage.js  — getVersions(), createVersion(), restoreVersion(), getLastSavedAt()
+ *   library.js  — formatTimeAgo()
+ *   utils.js    — esc()
+ *   ui-core.js  — toast()
+ *
+ * DOM ELEMENTS:
+ *   #versionModal — modal overlay containing version panel
+ *
+ * CONSUMED BY:
+ *   inspector.js — openVersionPanel() (from Versions toolbar button)
+ *
+ * SIDE EFFECTS:
+ *   Registers global click listener to close version modal on backdrop
+ *   Registers global keydown listener for Escape → close version modal
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 /* ── versions.js ── Version panel UI ───────────────────────────────────────── */
 
 let _versionSaveMode = false;

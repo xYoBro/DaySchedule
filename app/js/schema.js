@@ -1,3 +1,20 @@
+/* ── schema.js ── Contract ─────────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   normalizeTime(t)    — "730" → "0730", "07:30" → "0730"
+ *   normalizeEvent(raw) → {id, title, startTime, endTime, ...} | null
+ *   normalizeGroup(raw) → {id, name, scope, color} | null
+ *   normalizeNote(raw)  → {id, category, text} | null
+ *   normalizeDay(raw)   → {id, date, label, startTime, endTime, events[], notes[]} | null
+ *
+ * REQUIRES:
+ *   utils.js     — generateId()
+ *   constants.js — DEFAULT_COLOR_PALETTE
+ *
+ * CONSUMED BY:
+ *   persistence.js — normalizeDay, normalizeGroup (on import)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 function normalizeTime(t) {
   return String(t || '').replace(':', '').padStart(4, '0');
 }

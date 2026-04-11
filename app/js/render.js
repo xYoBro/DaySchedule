@@ -1,3 +1,31 @@
+/* ── render.js ── Contract ─────────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   renderDay(dayId)              — renders full schedule page for a day into #scheduleContainer
+ *   renderHeader(day)             → HTML string — header with title, date, logo
+ *   renderBand(band)              → HTML string — single event band
+ *   renderConcurrentRow(conc, groups) → HTML string — "Also Happening" section
+ *   renderNotes(notes)            → HTML string — notes + dagger footnotes
+ *   renderFooter()                → HTML string — footer with contact, POC, print date
+ *   formatDateDisplay(dateStr)    → string — "Wednesday, 15 March 2026"
+ *
+ * REQUIRES:
+ *   app-state.js    — Store.getDay(), Store.getDays(), Store.getGroups(), Store.getGroup(),
+ *                     Store.getNotes(), Store.getTitle(), Store.getLogo(), Store.getFooter()
+ *   utils.js        — esc(), formatDuration(), timeToMinutes()
+ *   data-helpers.js — classifyEvents(), computeDuration()
+ *   print.js        — applyPrintScaling()
+ *
+ * DOM ELEMENTS:
+ *   #scheduleContainer — the page div where schedule HTML is injected
+ *
+ * CONSUMED BY:
+ *   inspector.js  — renderDay() via renderActiveDay()
+ *   print.js      — renderHeader(), renderBand(), renderConcurrentRow(), renderNotes(), renderFooter()
+ *   library.js    — (indirectly via renderActiveDay)
+ *   storage.js    — (indirectly via renderActiveDay)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 // Collects dagger footnotes for attendees that are truncated in tight spaces.
 // Populated during renderBand/renderConcurrentRow, consumed by renderDay.
 let _daggerFootnotes = [];

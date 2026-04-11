@@ -1,3 +1,58 @@
+/* ── library.js ── Contract ────────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   showLibrary()                — shows library view, hides toolbar + editor, refreshes list
+ *   hideLibrary()                — hides library view, shows toolbar + editor
+ *   refreshLibraryList()         — async — scans data/ and renders schedule list
+ *   openSchedule(fileName)       — async — reads file, loads into Store, switches to editor
+ *   createNewSchedule(name)      — async — creates file, loads empty schedule into editor
+ *   duplicateSchedule(fileName)  — async — copies file with collision avoidance, opens copy
+ *   deleteSchedule(fileName)     — async — deletes file, refreshes list
+ *   returnToLibrary()            — async — saves if dirty, resets Store, shows library
+ *   wireLibrary()                — wires connect button, new schedule flow, help button
+ *   formatTimeAgo(isoStr)        → string — "3h ago", "Apr 5", etc.
+ *   openHelpModal()              — shows help modal
+ *   closeHelpModal()             — hides help modal
+ *
+ * REQUIRES:
+ *   storage.js    — hasDirectoryAccess, listScheduleFiles, readScheduleFile, writeScheduleFile,
+ *                   deleteScheduleFile, scheduleNameToSlug, buildScheduleFile, setCurrentFile,
+ *                   saveCurrentSchedule, isDirty, promptForDirectory, hasUserName, promptUserName,
+ *                   getUserName
+ *   app-state.js  — Store.reset(), Store.loadPersistedState(), Store.getDays(),
+ *                   Store.setActiveDay(), Store.setTitle(), Store.getPersistedState()
+ *   utils.js      — esc()
+ *   ui-core.js    — toast()
+ *   inspector.js  — syncToolbarTitle(), renderActiveDay(), renderInspector()
+ *
+ * DOM ELEMENTS:
+ *   #libraryView         — library view container
+ *   #libraryList         — schedule list container
+ *   #libraryConnectPrompt — connect folder prompt
+ *   #libraryConnectBtn   — choose folder button
+ *   #libraryNewBtn       — new schedule button
+ *   #libraryNewInline    — inline name input container
+ *   #libraryNewName      — name input field
+ *   #libraryNewConfirm   — create button
+ *   #libraryNewCancel    — cancel button
+ *   #libraryHelpBtn      — help button in library header
+ *   #helpModal           — help modal overlay
+ *   #helpCloseBtn        — help modal close button
+ *   .toolbar             — editor toolbar (hidden when library active)
+ *   .app-body            — editor body (hidden when library active)
+ *
+ * CONSUMED BY:
+ *   init.js      — wireLibrary(), showLibrary()
+ *   inspector.js — returnToLibrary() (from back button)
+ *   storage.js   — (none — library calls storage, not the reverse)
+ *
+ * SIDE EFFECTS:
+ *   Registers global click listener to close context menu
+ *   Registers global click listener to close help modal on backdrop
+ *   Registers global keydown listener for Escape → close help modal
+ *   Creates #libraryContextMenu element dynamically on first right-click
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 /* ── library.js ── Schedule library home screen ────────────────────────────── */
 
 let _contextMenuTarget = null;

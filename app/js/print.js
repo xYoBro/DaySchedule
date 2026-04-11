@@ -1,3 +1,31 @@
+/* ── print.js ── Contract ──────────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   printActiveDay()              — prints the currently active day
+ *   printAllDays()                — builds all days into hidden container, prints
+ *   applyPrintScaling(forPrint)   — 3-stage adaptive CSS compression + zoom fallback
+ *   applyPrintScalingToPage(page, forPrint) — scales a single .page element
+ *   removePrintScaling(page)      — removes all scaling CSS vars and zoom
+ *
+ * REQUIRES:
+ *   app-state.js    — Store.getActiveDay(), Store.getDays(), Store.getGroups(), Store.getNotes()
+ *   ui-core.js      — toast()
+ *   render.js       — renderDay(), renderHeader(), renderBand(), renderConcurrentRow(),
+ *                     renderNotes(), renderFooter()
+ *   data-helpers.js — classifyEvents()
+ *   constants.js    — LAYOUT_TARGETS
+ *
+ * CONSUMED BY:
+ *   render.js    — applyPrintScaling() (called after renderDay)
+ *   events.js    — printAllDays() (Ctrl+P)
+ *   inspector.js — printAllDays() (toolbar button)
+ *
+ * SIDE EFFECTS:
+ *   Registers beforeprint listener → applyPrintScaling(true)
+ *   Registers afterprint listener → re-renders active day
+ *   Creates/reuses #printContainer element on document.body
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 function printActiveDay() {
   const dayId = Store.getActiveDay();
   if (!dayId) { toast('No day selected.'); return; }

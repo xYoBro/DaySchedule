@@ -1,3 +1,55 @@
+/* ── inspector.js ── Contract ──────────────────────────────────────────────
+ *
+ * EXPORTS:
+ *   selectEntity(type, dayId, entityId) — sets selection, renders inspector, highlights element
+ *   renderInspector()        — dispatches to event/note/schedule-setup inspector face
+ *   renderActiveDay()        — renders active day + day tabs (main render entry point)
+ *   renderDayTabs()          — renders day tab buttons in toolbar
+ *   wireToolbar()            — wires all toolbar buttons, title input, overflow menu
+ *   syncToolbarTitle()       — syncs toolbar title input with Store.getTitle()
+ *   openSettingsModal()      — opens settings modal (general + groups tabs)
+ *   closeSettingsModal()     — closes settings modal, re-renders
+ *   openAddEvent(dayId)      — creates new event, selects it
+ *   openAddNote(dayId)       — creates new note, selects it
+ *   snapToQuarter(timeStr)   → string — snaps to nearest 15-min increment
+ *   formatDateShort(dateStr) → string — "Sat, 15 Mar"
+ *
+ * REQUIRES:
+ *   app-state.js    — Store (all read/write methods)
+ *   utils.js        — esc(), timeToMinutes(), generateId()
+ *   ui-core.js      — toast()
+ *   data-helpers.js — classifyEvents(), eventsOverlap()
+ *   persistence.js  — saveUndoState(), sessionSave()
+ *   render.js       — renderDay()
+ *   storage.js      — getCurrentFileName(), hasDirectoryAccess(), scheduleNameToSlug(),
+ *                     renameScheduleFile(), setCurrentFile(), getLastSavedAt()
+ *   library.js      — returnToLibrary(), openHelpModal()
+ *   versions.js     — openVersionPanel()
+ *   print.js        — printAllDays()
+ *
+ * DOM ELEMENTS:
+ *   #inspectorPanel    — right-side inspector panel
+ *   #tbTitle           — toolbar title input
+ *   #tbBack            — back to library button
+ *   #addEventBtn       — add event button
+ *   #addNoteBtn        — add note button
+ *   #addDayBtn         — add day button
+ *   #versionsBtn       — versions panel button
+ *   #helpBtn           — help button (overflow)
+ *   #overflowMenu      — overflow menu container
+ *   #settingsBtn       — settings button (overflow)
+ *   #printBtn          — print button (overflow)
+ *   #settingsModal     — settings modal overlay
+ *   #dayTabs           — day tab container
+ *
+ * CONSUMED BY:
+ *   events.js    — selectEntity(), openSettingsModal()
+ *   library.js   — renderActiveDay(), renderInspector(), syncToolbarTitle()
+ *   storage.js   — renderActiveDay(), syncToolbarTitle()
+ *   persistence.js — renderActiveDay()
+ *   init.js      — wireToolbar(), renderActiveDay()
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 /* ── inspector.js ── Unified inspector panel (replaces editing.js, groups.js, schedule-setup.js) */
 
 let _selection = { type: null, dayId: null, entityId: null };
