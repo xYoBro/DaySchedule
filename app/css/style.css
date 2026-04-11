@@ -1174,6 +1174,19 @@ body {
   font-size: 11px;
 }
 .library-connect-hint { font-size: 10px; color: #aeaeb2; margin-top: 12px; }
+.library-connect-local {
+  font-size: 11px;
+  color: #86868b;
+  margin-top: 10px;
+  line-height: 1.5;
+  text-align: left;
+}
+.library-connect-local code {
+  background: #f0f0f2;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+}
 .library-connect-warn {
   font-size: 11px;
   color: #8d6e00;
