@@ -50,40 +50,44 @@
 ## Project Structure
 ```
 /
-├── index.html              ← app shell
-├── CLAUDE.md
-├── css/
-│   └── style.css           ← all styles (screen + print)
-├── js/
-│   ├── constants.js        ← default groups, color palette, layout targets
-│   ├── app-state.js        ← Store object + global state
-│   ├── utils.js            ← generateId, esc, timeToMinutes, formatDuration
-│   ├── ui-core.js          ← modal, toast, dropdown primitives
-│   ├── schema.js           ← normalizeEvent, normalizeGroup, normalizeNote, normalizeDay
-│   ├── data-helpers.js     ← eventsOverlap, classifyEvents, computeDuration
-│   ├── persistence.js      ← session storage, undo/redo
-│   ├── storage.js          ← FSAPI directory access, IndexedDB handle, auto-save, versions
-│   ├── library.js          ← schedule library home screen, CRUD, context menu
-│   ├── versions.js         ← version panel UI
-│   ├── render.js           ← renderDay(), band HTML generation, concurrent row
-│   ├── print.js            ← print layout engine, adaptive scaling
-│   ├── events.js           ← click handlers, keyboard shortcuts
-│   ├── inspector.js        ← inspector panel, settings modal, toolbar wiring
-│   └── init.js             ← boot flow, migration, sample data (loads last)
-├── data/
-│   └── scheduledata.js     ← externalized state (SAVED_STATE)
-├── tests/
-│   ├── runner.html         ← open in browser to run all tests
-│   ├── test-runner.js      ← minimal assertion library
-│   ├── test-utils.js       ← utility function tests
-│   ├── test-schema.js      ← schema normalization tests
-│   ├── test-data-helpers.js ← overlap detection, classification tests
-│   ├── test-store.js       ← Store state management tests
-│   └── test-storage.js     ← storage layer tests
-└── docs/
-    └── superpowers/
-        ├── specs/           ← design specifications
-        └── plans/           ← implementation plans
+├── app/                        ← the live application
+│   ├── index.html              ← app shell
+│   ├── css/
+│   │   └── style.css           ← all styles (screen + print)
+│   ├── js/
+│   │   ├── constants.js        ← default groups, color palette, layout targets
+│   │   ├── app-state.js        ← Store object + global state
+│   │   ├── utils.js            ← generateId, esc, timeToMinutes, formatDuration
+│   │   ├── ui-core.js          ← modal, toast, dropdown primitives
+│   │   ├── schema.js           ← normalizeEvent, normalizeGroup, normalizeNote, normalizeDay
+│   │   ├── data-helpers.js     ← eventsOverlap, classifyEvents, computeDuration
+│   │   ├── persistence.js      ← session storage, undo/redo
+│   │   ├── storage.js          ← FSAPI directory access, IndexedDB handle, auto-save, versions
+│   │   ├── library.js          ← schedule library home screen, CRUD, context menu
+│   │   ├── versions.js         ← version panel UI
+│   │   ├── render.js           ← renderDay(), band HTML generation, concurrent row
+│   │   ├── print.js            ← print layout engine, adaptive scaling
+│   │   ├── events.js           ← click handlers, keyboard shortcuts
+│   │   ├── inspector.js        ← inspector panel, settings modal, toolbar wiring
+│   │   └── init.js             ← boot flow, migration, sample data (loads last)
+│   └── data/
+│       └── scheduledata.js     ← externalized state (SAVED_STATE)
+└── support/                    ← docs, tests, distribution copies
+    ├── CLAUDE.md
+    ├── LICENSE
+    ├── RSD Schedule/           ← distribution copy
+    ├── tests/
+    │   ├── runner.html         ← open in browser to run all tests
+    │   ├── test-runner.js      ← minimal assertion library
+    │   ├── test-utils.js       ← utility function tests
+    │   ├── test-schema.js      ← schema normalization tests
+    │   ├── test-data-helpers.js ← overlap detection, classification tests
+    │   ├── test-store.js       ← Store state management tests
+    │   └── test-storage.js     ← storage layer tests
+    └── docs/
+        └── superpowers/
+            ├── specs/           ← design specifications
+            └── plans/           ← implementation plans
 ```
 
 ### Script Load Order
