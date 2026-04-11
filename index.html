@@ -8,6 +8,32 @@
   <script src="js/constants.js"></script>
 </head>
 <body>
+  <!-- Library View -->
+  <div class="library-view" id="libraryView">
+    <div class="library-header">
+      <div class="library-brand">Schedule Builder</div>
+    </div>
+    <div class="library-body">
+      <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
+        <div class="library-connect-icon">&#x1F4C1;</div>
+        <div class="library-connect-title">Connect your data folder</div>
+        <div class="library-connect-desc">Pick the <code>data</code> folder inside your DaySchedule directory. This lets the app save directly — no downloads, no file pickers.</div>
+        <button class="btn btn-primary" id="libraryConnectBtn">Choose Folder</button>
+        <div class="library-connect-hint">You'll only need to do this once.</div>
+      </div>
+      <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
+        Auto-save requires Chrome or Edge. You're in manual mode — use the Save button to download your data.
+      </div>
+      <button class="btn btn-primary library-new-btn" id="libraryNewBtn">+ New Schedule</button>
+      <div class="library-new-inline" id="libraryNewInline" style="display:none;">
+        <input type="text" id="libraryNewName" placeholder="Schedule name (e.g., June Drill)" class="library-new-input">
+        <button class="btn btn-primary" id="libraryNewConfirm">Create</button>
+        <button class="btn" id="libraryNewCancel">Cancel</button>
+      </div>
+      <div class="library-list" id="libraryList"></div>
+    </div>
+  </div>
+
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
@@ -47,6 +73,21 @@
   <!-- Toast -->
   <div id="toast" class="toast"></div>
 
+  <!-- Stale Data Warning Modal -->
+  <div class="modal-overlay" id="staleWarningModal">
+    <div class="modal"></div>
+  </div>
+
+  <!-- User Name Modal -->
+  <div class="modal-overlay" id="userNameModal">
+    <div class="modal"></div>
+  </div>
+
+  <!-- Version Panel Modal -->
+  <div class="modal-overlay" id="versionModal">
+    <div class="modal"></div>
+  </div>
+
   <!-- Settings Modal -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal" id="settingsModalContent"></div>
@@ -59,6 +100,8 @@
   <script src="js/schema.js"></script>
   <script src="js/data-helpers.js"></script>
   <script src="js/persistence.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/library.js"></script>
   <script src="js/render.js"></script>
   <script src="js/print.js"></script>
   <script src="js/events.js"></script>

@@ -1100,6 +1100,168 @@ body {
 #printContainer { display: none; }
 
 /* ══════════════════════════════════════════════════════════════
+   LIBRARY — Schedule list home screen
+   ══════════════════════════════════════════════════════════════ */
+.library-view {
+  display: none;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f5f5f7;
+}
+.library-view.active {
+  display: flex;
+}
+.library-header {
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #e5e5ea;
+}
+.library-brand {
+  font-size: 13px;
+  font-weight: 700;
+  color: #86868b;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.library-body {
+  max-width: 600px;
+  width: 100%;
+  margin: 32px auto;
+  padding: 0 24px;
+}
+.library-connect {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.library-connect-icon { font-size: 32px; margin-bottom: 12px; }
+.library-connect-title { font-size: 15px; font-weight: 600; color: #1d1d1f; margin-bottom: 8px; }
+.library-connect-desc { font-size: 12px; color: #86868b; line-height: 1.6; margin-bottom: 20px; }
+.library-connect-desc code { background: #f0f0f2; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+.library-connect-hint { font-size: 10px; color: #aeaeb2; margin-top: 12px; }
+.library-fallback {
+  background: #fff8e1;
+  color: #8d6e00;
+  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.library-new-btn { width: 100%; margin-bottom: 16px; }
+.library-new-inline {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.library-new-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  outline: none;
+}
+.library-new-input:focus { border-color: rgba(var(--app-accent), 0.5); box-shadow: 0 0 0 2px rgba(var(--app-accent), 0.15); }
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.library-item {
+  background: white;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.library-item:hover { background: #f0f0f5; }
+.library-item-info { flex: 1; min-width: 0; }
+.library-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.library-item-meta {
+  font-size: 11px;
+  color: #86868b;
+  margin-top: 2px;
+}
+.library-item-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.library-item-badge.draft { background: #f0f0f5; color: #86868b; }
+.library-item-badge.final { background: #e8f5e9; color: #2e7d32; }
+.library-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #aeaeb2;
+  font-size: 14px;
+}
+.library-context {
+  position: fixed;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 4px;
+  z-index: 1000;
+  min-width: 140px;
+  display: none;
+}
+.library-context.active { display: block; }
+.library-context-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #1d1d1f;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+}
+.library-context-item:hover { background: #f0f0f5; }
+.library-context-item.danger { color: #ff3b30; }
+.library-context-item.danger:hover { background: #fff5f5; }
+.save-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: none;
+  flex-shrink: 0;
+}
+.save-dot.save-dirty { display: block; background: #e8a849; }
+.save-dot.save-saving { display: block; background: #5b8def; animation: save-pulse 1s ease-in-out infinite; }
+.save-dot.save-disconnected { display: block; background: #ff3b30; cursor: pointer; }
+@keyframes save-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.tb-back {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: rgba(var(--app-accent), 1);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.tb-back:hover { background: rgba(var(--app-accent), 0.08); }
+
+/* ══════════════════════════════════════════════════════════════
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
 @media print {
