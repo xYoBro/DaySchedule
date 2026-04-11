@@ -1138,10 +1138,52 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 .library-connect-icon { font-size: 32px; margin-bottom: 12px; }
-.library-connect-title { font-size: 15px; font-weight: 600; color: #1d1d1f; margin-bottom: 8px; }
-.library-connect-desc { font-size: 12px; color: #86868b; line-height: 1.6; margin-bottom: 20px; }
-.library-connect-desc code { background: #f0f0f2; padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+.library-connect-title { font-size: 15px; font-weight: 600; color: #1d1d1f; margin-bottom: 16px; }
+.library-connect-steps {
+  text-align: left;
+  margin-bottom: 20px;
+}
+.library-connect-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+.library-connect-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(var(--app-accent), 1);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.library-connect-step-text {
+  font-size: 12px;
+  color: #48484a;
+  line-height: 1.5;
+}
+.library-connect-step-text code {
+  background: #f0f0f2;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+}
 .library-connect-hint { font-size: 10px; color: #aeaeb2; margin-top: 12px; }
+.library-connect-warn {
+  font-size: 11px;
+  color: #8d6e00;
+  background: #fff8e1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  line-height: 1.5;
+  text-align: left;
+}
 .library-fallback {
   background: #fff8e1;
   color: #8d6e00;
@@ -1282,6 +1324,39 @@ body {
 .tb-back:hover { background: rgba(var(--app-accent), 0.08); }
 
 /* ══════════════════════════════════════════════════════════════
+   SYNC CONFIRMATION
+   ══════════════════════════════════════════════════════════════ */
+.sync-confirm-modal { max-width: 440px; }
+.sync-confirm-desc {
+  font-size: 13px;
+  color: #48484a;
+  line-height: 1.6;
+  margin: 12px 0 16px;
+}
+.sync-confirm-check {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.sync-confirm-item {
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+.sync-confirm-good {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 3px solid #4caf50;
+}
+.sync-confirm-bad {
+  background: #fff5f5;
+  color: #c62828;
+  border-left: 3px solid #ef5350;
+}
+
+/* ══════════════════════════════════════════════════════════════
    HELP PANEL
    ══════════════════════════════════════════════════════════════ */
 .library-header {
@@ -1342,6 +1417,24 @@ body {
   padding: 1px 5px;
   border-radius: 3px;
   font-size: 11px;
+}
+.help-item-desc kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  color: #48484a;
+  background: #f0f0f2;
+  border: 1px solid #d2d2d7;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 #d2d2d7;
+}
+.help-item-warn {
+  background: #fff8e1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border-left: 3px solid #e8a849;
 }
 .help-shortcuts {
   display: flex;

@@ -116,6 +116,10 @@ async function promptForDirectory() {
       toast("That doesn't look like the data folder — it should be the 'data' folder inside DaySchedule.");
       return null;
     }
+    // Confirm the user understands this must be the synced folder
+    const confirmed = await showSyncConfirmation();
+    if (!confirmed) return null;
+
     _dirHandle = handle;
     await saveDirectoryHandle(handle);
     return handle;
@@ -124,6 +128,27 @@ async function promptForDirectory() {
     console.warn('Directory picker failed:', e);
     return null;
   }
+}
+
+function showSyncConfirmation() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('syncConfirmModal');
+    if (!overlay) { resolve(true); return; }
+    overlay.classList.add('active');
+
+    const confirmBtn = overlay.querySelector('#syncConfirmYes');
+    const cancelBtn = overlay.querySelector('#syncConfirmNo');
+
+    const cleanup = (result) => {
+      overlay.classList.remove('active');
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(result);
+    };
+
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+  });
 }
 
 async function restoreDirectoryHandle() {

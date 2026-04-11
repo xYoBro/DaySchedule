@@ -18,9 +18,23 @@
       <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
         <div class="library-connect-icon">&#x1F4C1;</div>
         <div class="library-connect-title">Connect your data folder</div>
-        <div class="library-connect-desc">Pick the <code>data</code> folder inside your DaySchedule directory. This lets the app save directly — no downloads, no file pickers.</div>
-        <button class="btn btn-primary" id="libraryConnectBtn">Choose Folder</button>
-        <div class="library-connect-hint">You'll only need to do this once.</div>
+        <div class="library-connect-steps">
+          <div class="library-connect-step">
+            <div class="library-connect-step-num">1</div>
+            <div class="library-connect-step-text">In Teams, go to the channel with DaySchedule and click <strong>Sync</strong> (not Download). This creates a live-synced folder on your computer.</div>
+          </div>
+          <div class="library-connect-step">
+            <div class="library-connect-step-num">2</div>
+            <div class="library-connect-step-text">Open <strong>index.html</strong> from the synced folder (usually under OneDrive in File Explorer).</div>
+          </div>
+          <div class="library-connect-step">
+            <div class="library-connect-step-num">3</div>
+            <div class="library-connect-step-text">Click the button below and pick the <code>data</code> folder inside <code>app</code>. This is where schedules are saved.</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="libraryConnectBtn">Choose Data Folder</button>
+        <div class="library-connect-hint">You'll only need to do this once per browser.</div>
+        <div class="library-connect-warn">Do not use a downloaded copy. Changes made outside the synced folder will not be shared with your team.</div>
       </div>
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
         Auto-save requires Chrome or Edge. You're in manual mode — use the Save button to download your data.
@@ -99,14 +113,18 @@
       </div>
 
       <div class="help-section">
-        <div class="help-section-title">Saving</div>
+        <div class="help-section-title">Saving &amp; Teams</div>
         <div class="help-item">
           <div class="help-item-label">Auto-save</div>
-          <div class="help-item-desc">Every change is automatically saved 2 seconds after you stop editing. Watch for <strong>Saved</strong> in the toolbar.</div>
+          <div class="help-item-desc">Every change is automatically saved 2 seconds after you stop editing. Watch for <strong>Saved</strong> in the toolbar. You can also press <kbd>Ctrl</kbd>+<kbd>S</kbd> to save immediately.</div>
         </div>
         <div class="help-item">
-          <div class="help-item-label">First-time setup</div>
-          <div class="help-item-desc">The app needs permission to save. When prompted, pick the <code>data</code> folder inside your DaySchedule directory. You only do this once per browser.</div>
+          <div class="help-item-label">Teams setup (important)</div>
+          <div class="help-item-desc">You must <strong>Sync</strong> the Teams folder &mdash; not Download it. In your Teams channel, click <strong>Files</strong> &rarr; <strong>Sync</strong>. This creates a live folder on your computer (usually under OneDrive). Open <code>index.html</code> from there. When the app asks for the data folder, pick it from the same synced location. Changes will automatically sync to everyone on the team.</div>
+        </div>
+        <div class="help-item help-item-warn">
+          <div class="help-item-label">What happens if I use a downloaded copy?</div>
+          <div class="help-item-desc">Your changes stay on your computer only. Nobody else will see them, and you won't see anyone else's changes. If someone else is working from the synced version, your work could be lost. Always use the synced folder.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Versions</div>
@@ -143,6 +161,22 @@
 
       <div class="modal-actions">
         <button class="btn" id="helpCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync Confirmation Modal -->
+  <div class="modal-overlay" id="syncConfirmModal">
+    <div class="modal sync-confirm-modal">
+      <h2>Confirm: Is this the synced folder?</h2>
+      <p class="sync-confirm-desc">The folder you just picked must be inside your <strong>Teams-synced</strong> location (OneDrive). If you're working from a downloaded copy, your changes won't be shared with the team.</p>
+      <div class="sync-confirm-check">
+        <div class="sync-confirm-item sync-confirm-good">I opened this page from the Teams/OneDrive synced folder</div>
+        <div class="sync-confirm-item sync-confirm-bad">I downloaded this folder to my Desktop or Downloads</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="syncConfirmNo">Go back</button>
+        <button class="btn btn-primary" id="syncConfirmYes">Yes, this is the synced folder</button>
       </div>
     </div>
   </div>
