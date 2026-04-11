@@ -43,6 +43,8 @@ function sessionSave() {
       sessionStorage.setItem('schedule_state', JSON.stringify(Store.getPersistedState()));
     } catch (e) { /* ignore quota errors */ }
   }, 500);
+  // Trigger auto-save if connected
+  if (typeof markDirty === 'function') markDirty();
 }
 
 function sessionLoad() {

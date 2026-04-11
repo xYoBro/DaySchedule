@@ -665,14 +665,16 @@ function wireToolbar() {
   const settingsBtn = document.getElementById('settingsBtn');
   if (settingsBtn) settingsBtn.onclick = () => { overflowMenu.classList.remove('open'); openSettingsModal(); };
 
-  const saveBtn = document.getElementById('saveBtn');
-  if (saveBtn) saveBtn.onclick = () => { overflowMenu.classList.remove('open'); saveDataFile(); };
-
-  const importBtn = document.getElementById('importBtn');
-  if (importBtn) importBtn.onclick = () => { overflowMenu.classList.remove('open'); importDataFile(); };
-
   const printBtn = document.getElementById('printBtn');
   if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); printAllDays(); };
+
+  // Back to library
+  const backBtn = document.getElementById('tbBack');
+  if (backBtn) backBtn.onclick = () => returnToLibrary();
+
+  // Versions panel
+  const versionsBtn = document.getElementById('versionsBtn');
+  if (versionsBtn) versionsBtn.onclick = () => openVersionPanel();
 
   // Toolbar title — editable inline, syncs with Store
   const tbTitle = document.getElementById('tbTitle');

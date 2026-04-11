@@ -37,9 +37,12 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
+      <button class="tb-back" id="tbBack" title="Back to library">&larr;</button>
+      <div class="tb-sep"></div>
       <div class="tb-brand">Schedule Builder</div>
       <div class="tb-sep"></div>
       <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title">
+      <div class="save-dot" id="saveIndicator"></div>
       <div class="tb-sep"></div>
       <div class="day-tabs" id="dayTabs"></div>
     </div>
@@ -48,12 +51,11 @@
       <button class="btn" id="addNoteBtn">+ Note</button>
       <button class="btn" id="addDayBtn">+ Day</button>
       <div class="tb-sep"></div>
+      <button class="btn" id="versionsBtn">Versions</button>
       <div class="tb-overflow" id="overflowMenu">
         <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions">&#x2026;</button>
         <div class="tb-overflow-dropdown" id="overflowDropdown">
           <button class="tb-overflow-item" id="settingsBtn">Settings</button>
-          <button class="tb-overflow-item" id="saveBtn">Save to File</button>
-          <button class="tb-overflow-item" id="importBtn">Import File</button>
           <button class="tb-overflow-item" id="printBtn">Print</button>
         </div>
       </div>

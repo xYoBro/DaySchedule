@@ -53,6 +53,12 @@ document.addEventListener('keydown', e => {
     printAllDays();
     return;
   }
+  // Cmd/Ctrl+S — save immediately
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+    e.preventDefault();
+    forceSave();
+    return;
+  }
   // Undo/Redo
   if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
