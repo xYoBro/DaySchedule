@@ -255,4 +255,36 @@ function wireLibrary() {
       newBtn.style.display = '';
     };
   }
+
+  // Help button in library header
+  const libraryHelpBtn = document.getElementById('libraryHelpBtn');
+  if (libraryHelpBtn) libraryHelpBtn.onclick = () => openHelpModal();
 }
+
+// ── Help modal ─────────────────────────────────────────────────────────────
+
+function openHelpModal() {
+  const overlay = document.getElementById('helpModal');
+  if (!overlay) return;
+  overlay.classList.add('active');
+
+  const closeBtn = overlay.querySelector('#helpCloseBtn');
+  if (closeBtn) closeBtn.onclick = () => closeHelpModal();
+}
+
+function closeHelpModal() {
+  const overlay = document.getElementById('helpModal');
+  if (overlay) overlay.classList.remove('active');
+}
+
+document.addEventListener('click', e => {
+  const overlay = document.getElementById('helpModal');
+  if (overlay && e.target === overlay) closeHelpModal();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const overlay = document.getElementById('helpModal');
+    if (overlay && overlay.classList.contains('active')) closeHelpModal();
+  }
+});

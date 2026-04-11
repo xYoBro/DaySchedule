@@ -676,6 +676,10 @@ function wireToolbar() {
   const versionsBtn = document.getElementById('versionsBtn');
   if (versionsBtn) versionsBtn.onclick = () => openVersionPanel();
 
+  // Help button in overflow
+  const helpBtn = document.getElementById('helpBtn');
+  if (helpBtn) helpBtn.onclick = () => { overflowMenu.classList.remove('open'); openHelpModal(); };
+
   // Toolbar title — editable inline, syncs with Store
   const tbTitle = document.getElementById('tbTitle');
   if (tbTitle) {

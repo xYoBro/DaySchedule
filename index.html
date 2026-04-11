@@ -12,6 +12,7 @@
   <div class="library-view" id="libraryView">
     <div class="library-header">
       <div class="library-brand">Schedule Builder</div>
+      <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">?</button>
     </div>
     <div class="library-body">
       <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
@@ -57,6 +58,7 @@
         <div class="tb-overflow-dropdown" id="overflowDropdown">
           <button class="tb-overflow-item" id="settingsBtn">Settings</button>
           <button class="tb-overflow-item" id="printBtn">Print</button>
+          <button class="tb-overflow-item" id="helpBtn">Help</button>
         </div>
       </div>
     </div>
@@ -74,6 +76,76 @@
 
   <!-- Toast -->
   <div id="toast" class="toast"></div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal help-modal">
+      <h2>Schedule Builder</h2>
+
+      <div class="help-section">
+        <div class="help-section-title">Getting Started</div>
+        <div class="help-item">
+          <div class="help-item-label">Create a schedule</div>
+          <div class="help-item-desc">From the library, tap <strong>+ New Schedule</strong>, give it a name, and start adding days and events.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Edit events</div>
+          <div class="help-item-desc">Click any event on the schedule to open its properties in the inspector panel on the right.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Click the header</div>
+          <div class="help-item-desc">Click the schedule header (title/logo area) to open Settings &mdash; change the title, logo, contact info, and audience groups.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">Saving</div>
+        <div class="help-item">
+          <div class="help-item-label">Auto-save</div>
+          <div class="help-item-desc">Every change is automatically saved 2 seconds after you stop editing. Watch for <strong>Saved</strong> in the toolbar.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">First-time setup</div>
+          <div class="help-item-desc">The app needs permission to save. When prompted, pick the <code>data</code> folder inside your DaySchedule directory. You only do this once per browser.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Versions</div>
+          <div class="help-item-desc">Use the <strong>Versions</strong> button to save named snapshots (e.g., &ldquo;Draft for Review&rdquo;). You can always restore a previous version &mdash; the current state is auto-backed up first.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">Keyboard Shortcuts</div>
+        <div class="help-shortcuts">
+          <div class="help-shortcut"><kbd>Ctrl</kbd> + <kbd>S</kbd><span>Save now</span></div>
+          <div class="help-shortcut"><kbd>Ctrl</kbd> + <kbd>P</kbd><span>Print all days</span></div>
+          <div class="help-shortcut"><kbd>Ctrl</kbd> + <kbd>Z</kbd><span>Undo</span></div>
+          <div class="help-shortcut"><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd><span>Redo</span></div>
+          <div class="help-shortcut"><kbd>Esc</kbd><span>Close panels</span></div>
+        </div>
+      </div>
+
+      <div class="help-section">
+        <div class="help-section-title">Tips</div>
+        <div class="help-item">
+          <div class="help-item-label">Duplicate a schedule</div>
+          <div class="help-item-desc">Right-click a schedule in the library to duplicate it. Great for starting next month from this month&rsquo;s template.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Audience groups</div>
+          <div class="help-item-desc"><strong>Main</strong> groups get full-width bands on the schedule. <strong>Limited</strong> groups appear as concurrent side notes when they overlap with main events.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Use Chrome or Edge</div>
+          <div class="help-item-desc">Auto-save only works in Chrome and Edge. Other browsers fall back to manual download.</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="helpCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Stale Data Warning Modal -->
   <div class="modal-overlay" id="staleWarningModal">

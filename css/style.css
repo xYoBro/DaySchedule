@@ -1282,6 +1282,97 @@ body {
 .tb-back:hover { background: rgba(var(--app-accent), 0.08); }
 
 /* ══════════════════════════════════════════════════════════════
+   HELP PANEL
+   ══════════════════════════════════════════════════════════════ */
+.library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.library-help-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #d2d2d7;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #86868b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.library-help-btn:hover { background: #f0f0f5; color: #48484a; }
+
+.help-modal {
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.help-section {
+  margin-bottom: 20px;
+}
+.help-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #86868b;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f0f0f2;
+}
+.help-item {
+  padding: 6px 0;
+}
+.help-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+.help-item-desc {
+  font-size: 12px;
+  color: #48484a;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.help-item-desc code {
+  background: #f0f0f2;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+.help-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.help-shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+.help-shortcut span {
+  font-size: 12px;
+  color: #48484a;
+}
+.help-shortcut kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 600;
+  color: #48484a;
+  background: #f0f0f2;
+  border: 1px solid #d2d2d7;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 #d2d2d7;
+  margin-right: 2px;
+}
+
+/* ══════════════════════════════════════════════════════════════
    VERSION PANEL
    ══════════════════════════════════════════════════════════════ */
 .version-working {
