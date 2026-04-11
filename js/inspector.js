@@ -684,6 +684,17 @@ function wireToolbar() {
       Store.setTitle(tbTitle.value.trim());
       renderActiveDay();
       sessionSave();
+      // Update filename if we have directory access
+      const oldFile = getCurrentFileName();
+      if (oldFile && hasDirectoryAccess()) {
+        const newSlug = scheduleNameToSlug(tbTitle.value.trim());
+        const newFile = newSlug + '.json';
+        if (newFile !== oldFile) {
+          renameScheduleFile(oldFile, newFile).then(ok => {
+            if (ok) setCurrentFile(newFile, _lastKnownSavedAt);
+          });
+        }
+      }
     });
   }
 

@@ -457,3 +457,16 @@ async function getVersions() {
     savedAt: v.savedAt,
   }));
 }
+
+// ── Reconnect indicator ────────────────────────────────────────────────────
+
+document.addEventListener('click', e => {
+  if (e.target.id === 'saveIndicator' && e.target.classList.contains('save-disconnected')) {
+    promptForDirectory().then(handle => {
+      if (handle) {
+        updateSaveIndicator('saved');
+        toast('Reconnected');
+      }
+    });
+  }
+});

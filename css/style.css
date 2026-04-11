@@ -1336,7 +1336,7 @@ body {
    ══════════════════════════════════════════════════════════════ */
 @media print {
   body { background: white; padding: 0; }
-  .toolbar, .inspector, .toast, .modal-overlay { display: none !important; }
+  .toolbar, .inspector, .toast, .modal-overlay, .library-view, .library-context { display: none !important; }
   .app-body { height: auto; overflow: visible; display: block; }
   .preview-area { padding: 0; display: block; }
   #printContainer { display: block !important; }
