@@ -1262,6 +1262,76 @@ body {
 .tb-back:hover { background: rgba(var(--app-accent), 0.08); }
 
 /* ══════════════════════════════════════════════════════════════
+   VERSION PANEL
+   ══════════════════════════════════════════════════════════════ */
+.version-working {
+  background: #f0f0f5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  border-left: 4px solid rgba(var(--app-accent), 1);
+  margin-bottom: 16px;
+}
+.version-working-label { font-size: 10px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.version-working-title { font-size: 13px; font-weight: 600; color: #1d1d1f; }
+.version-working-meta { font-size: 11px; color: #86868b; margin-top: 2px; }
+
+.version-save-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(var(--app-accent), 1);
+  background: none;
+  border: 1.5px solid rgba(var(--app-accent), 1);
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+.version-save-btn:hover { background: rgba(var(--app-accent), 0.05); }
+.version-save-hint { font-size: 10px; color: #aeaeb2; text-align: center; margin-bottom: 16px; }
+
+.version-list-label { font-size: 10px; color: #86868b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.version-item {
+  background: #f0f0f5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+.version-item-name { font-size: 12px; font-weight: 600; color: #1d1d1f; }
+.version-item-meta { font-size: 10px; color: #86868b; margin-top: 2px; }
+.version-restore-btn {
+  font-size: 10px;
+  color: rgba(var(--app-accent), 1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-weight: 600;
+}
+.version-restore-btn:hover { text-decoration: underline; }
+.version-empty { font-size: 13px; color: #aeaeb2; text-align: center; padding: 24px; }
+
+.version-save-inline {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.version-save-input {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  outline: none;
+}
+.version-save-input:focus { border-color: rgba(var(--app-accent), 0.5); box-shadow: 0 0 0 2px rgba(var(--app-accent), 0.15); }
+
+/* ══════════════════════════════════════════════════════════════
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
 @media print {
