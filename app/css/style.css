@@ -1648,7 +1648,7 @@ body {
   letter-spacing: 0.3px;
   text-align: center;
 }
-.grid-banner { background: var(--sch-text); }
+.grid-banner { background: var(--sch-border); }
 .grid-banner-content {
   background: var(--sch-surface);
   padding: 5px 8px;
@@ -1656,6 +1656,12 @@ body {
   font-size: 10px;
   text-align: center;
   grid-column: 2 / -1;
+}
+.grid-banner-desc {
+  font-size: 8px;
+  font-weight: 400;
+  color: var(--sch-text-muted);
+  margin-top: 1px;
 }
 .grid-banner-break .grid-banner-content {
   color: var(--sch-text-muted);
@@ -1666,11 +1672,12 @@ body {
   color: var(--sch-text-muted);
   font-style: italic;
 }
-.grid-row { background: var(--sch-border); }
+.grid-row { background: var(--sch-surface); }
 .grid-cell {
   background: var(--sch-bg);
   padding: 4px 6px;
   cursor: pointer;
+  border-bottom: 1px solid var(--sch-border);
 }
 .grid-cell:hover { background: var(--sch-surface); }
 .grid-cell.selected { background: rgba(var(--app-accent), 0.08); }
@@ -1686,6 +1693,7 @@ body {
 }
 .grid-cell-cont {
   background: var(--sch-surface);
+  border-bottom: 1px solid var(--sch-border);
 }
 .grid-cell-empty {
   background: var(--sch-surface);

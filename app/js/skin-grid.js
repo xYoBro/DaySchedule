@@ -71,7 +71,9 @@ function renderDayBody_grid(dayId) {
       html += '<div class="grid-time-col">' + esc(shared.startTime) + '</div>';
       html += '<div class="grid-banner-content">';
       html += '<strong>' + esc(shared.title) + '</strong>';
-      if (shared.location) html += ' &mdash; ' + esc(shared.location);
+      const bannerMeta = [shared.location, shared.poc ? 'POC: ' + shared.poc : ''].filter(Boolean);
+      if (bannerMeta.length) html += ' &mdash; ' + esc(bannerMeta.join(' \u00b7 '));
+      if (shared.description) html += '<div class="grid-banner-desc">' + esc(shared.description) + '</div>';
       html += '</div>';
       html += '</div>';
       continue;
