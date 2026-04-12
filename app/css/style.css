@@ -1618,6 +1618,72 @@ body {
 .library-theme-toggle:hover { background: var(--chrome-border); }
 
 /* ══════════════════════════════════════════════════════════════
+   SKIN: GRID
+   ══════════════════════════════════════════════════════════════ */
+.grid-schedule {
+  display: flex;
+  flex-direction: column;
+  font-size: 9px;
+}
+.grid-header, .grid-row, .grid-banner {
+  display: grid;
+  grid-template-columns: 48px repeat(var(--grid-cols, 4), 1fr);
+  gap: 1px;
+  background: var(--sch-border);
+}
+.grid-header { background: var(--sch-text); }
+.grid-time-col {
+  background: var(--sch-surface);
+  padding: 4px 6px;
+  font-weight: 600;
+  color: var(--sch-text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.grid-group-col {
+  padding: 5px 6px;
+  font-weight: 700;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+.grid-banner { background: var(--sch-text); }
+.grid-banner-content {
+  background: var(--sch-surface);
+  padding: 5px 8px;
+  color: var(--sch-text);
+  font-size: 10px;
+  text-align: center;
+  grid-column: 2 / -1;
+}
+.grid-row { background: var(--sch-border); }
+.grid-cell {
+  background: var(--sch-bg);
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.grid-cell:hover { background: var(--sch-surface); }
+.grid-cell.selected { background: rgba(var(--app-accent), 0.08); }
+.grid-cell-title {
+  font-weight: 600;
+  color: var(--sch-text);
+  font-size: 9px;
+}
+.grid-cell-meta {
+  color: var(--sch-text-muted);
+  font-size: 7.5px;
+  margin-top: 1px;
+}
+.grid-cell-cont {
+  background: var(--sch-surface);
+  opacity: 0.5;
+}
+.grid-cell-empty {
+  background: var(--sch-bg);
+}
+
+/* ══════════════════════════════════════════════════════════════
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
 @media print {
