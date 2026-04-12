@@ -24,6 +24,7 @@
  *   utils.js      — esc()
  *   ui-core.js    — toast()
  *   inspector.js  — syncToolbarTitle(), renderActiveDay(), renderInspector()
+ *   themes.js     — applyEditorTheme(), getEditorTheme()
  *
  * DOM ELEMENTS:
  *   #libraryView         — library view container
@@ -317,6 +318,17 @@ function wireLibrary() {
   // Help button in library header
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) libraryHelpBtn.onclick = () => openHelpModal();
+
+  const themeToggle = document.getElementById('editorThemeToggle');
+  if (themeToggle) {
+    themeToggle.textContent = getEditorTheme() === 'dark' ? '\u2600' : '\u263E';
+    themeToggle.onclick = () => {
+      const current = getEditorTheme();
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyEditorTheme(next);
+      themeToggle.textContent = next === 'dark' ? '\u2600' : '\u263E';
+    };
+  }
 }
 
 // ── Help modal ─────────────────────────────────────────────────────────────

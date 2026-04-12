@@ -9,6 +9,7 @@
  * REQUIRES:
  *   inspector.js  — wireToolbar(), renderActiveDay()
  *   library.js    — wireLibrary(), showLibrary()
+ *   themes.js     — applyEditorTheme(), getEditorTheme()
  *   storage.js    — hasFSAPI(), restoreDirectoryHandle(), listScheduleFiles(),
  *                   scheduleNameToSlug(), buildScheduleFile(), writeScheduleFile(), getUserName()
  *   persistence.js — sessionLoad()
@@ -31,6 +32,7 @@
 (async function init() {
   wireToolbar();
   wireLibrary();
+  applyEditorTheme(getEditorTheme());
 
   // Check FSAPI support
   if (!hasFSAPI()) {
