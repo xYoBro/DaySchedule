@@ -142,8 +142,10 @@ function loadSampleData() {
   Store.addEvent(d, { title: 'All-Hands Cyber Awareness', startTime: '1500', endTime: '1530', description: 'Annual cyber awareness training — mandatory for all.', location: 'Auditorium', poc: 'Comm Sq', groupId: 'grp_all', isMainEvent: true });
   Store.addEvent(d, { title: 'End of Day Formation', startTime: '1600', endTime: '1630', description: 'Final accountability. Sunday schedule. Dismissed by flight.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
 
-  // === By Flight (main scope) ===
+  // === By Flight (main scope — anchor events that limited groups run concurrent with) ===
   Store.addEvent(d, { title: 'Flight PT Test', startTime: '0600', endTime: '0700', description: 'Diagnostic PT test — run, push-ups, sit-ups.', location: 'Fitness Center / Track', poc: 'UFPM', groupId: 'grp_flight', isMainEvent: true });
+  Store.addEvent(d, { title: 'AFSC-Specific Training', startTime: '0830', endTime: '1100', description: 'Report to respective work areas. Complete task certifications and hands-on training per flight chief task list.', location: 'Respective Work Areas', poc: 'Flight Chiefs', groupId: 'grp_flight', isMainEvent: true });
+  Store.addEvent(d, { title: 'Ancillary / CBT Completion', startTime: '1200', endTime: '1500', description: 'Complete all overdue ancillary training items. Computer labs open. See UTM for login issues.', location: 'Computer Labs / Work Areas', poc: 'UTM', groupId: 'grp_flight', isMainEvent: true });
 
   // === SNCOs — limited scope ===
   Store.addEvent(d, { title: 'CBRN Training', startTime: '0830', endTime: '1000', description: 'MOPP gear donning/doffing, decon procedures. Bring canteen and wet weather gear.', location: 'Bldg 250 Chem Lab', poc: 'TSgt Rivera', groupId: 'grp_snco' });
