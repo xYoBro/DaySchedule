@@ -457,3 +457,61 @@ describe('Integration — Schedule File Envelope', () => {
     assert(file.createdAt <= after, 'should be before test end');
   });
 });
+
+describe('Integration — Theme System', () => {
+  it('getScheduleTheme returns defaults for undefined', () => {
+    const theme = getScheduleTheme(undefined);
+    assert.equal(theme.skin, 'bands');
+    assert.equal(theme.palette, 'classic');
+    assert.equal(theme.customColors, null);
+  });
+
+  it('getScheduleTheme preserves provided values', () => {
+    const theme = getScheduleTheme({ skin: 'grid', palette: 'ocp', customColors: { accent: '#ff0000' } });
+    assert.equal(theme.skin, 'grid');
+    assert.equal(theme.palette, 'ocp');
+    assert.equal(theme.customColors.accent, '#ff0000');
+  });
+
+  it('applyPalette sets CSS variables on root', () => {
+    applyPalette('darkops', null);
+    const root = document.documentElement;
+    assert.equal(root.style.getPropertyValue('--sch-bg'), '#1a1a2e');
+    assert.equal(root.style.getPropertyValue('--sch-accent'), '#5b8def');
+    // Reset
+    applyPalette('classic', null);
+  });
+
+  it('applyPalette applies custom color overrides', () => {
+    applyPalette('classic', { accent: '#ff0000' });
+    const root = document.documentElement;
+    assert.equal(root.style.getPropertyValue('--sch-accent'), '#ff0000');
+    assert.equal(root.style.getPropertyValue('--sch-bg'), '#ffffff');
+    applyPalette('classic', null);
+  });
+
+  it('editor theme persists to localStorage', () => {
+    applyEditorTheme('dark');
+    assert.equal(getEditorTheme(), 'dark');
+    assert.equal(document.body.getAttribute('data-editor-theme'), 'dark');
+    applyEditorTheme('light');
+    assert.equal(getEditorTheme(), 'light');
+  });
+
+  it('SKIN_NAMES has all 4 skins', () => {
+    assert.equal(SKIN_NAMES.length, 4);
+    assert(SKIN_NAMES.includes('bands'));
+    assert(SKIN_NAMES.includes('grid'));
+    assert(SKIN_NAMES.includes('cards'));
+    assert(SKIN_NAMES.includes('phases'));
+  });
+
+  it('all palettes have required color keys', () => {
+    const keys = ['bg', 'text', 'textSecondary', 'textMuted', 'accent', 'accentSecondary', 'accentTertiary', 'border', 'surface'];
+    PALETTE_NAMES.forEach(name => {
+      keys.forEach(key => {
+        assert(PALETTES[name][key] !== undefined, name + ' missing ' + key);
+      });
+    });
+  });
+});

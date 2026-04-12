@@ -63,10 +63,14 @@
 │   │   ├── data-helpers.js     ← eventsOverlap, classifyEvents, computeDuration
 │   │   ├── persistence.js      ← session storage, undo/redo
 │   │   ├── storage.js          ← FSAPI directory access, IndexedDB handle, auto-save, versions
+│   │   ├── themes.js           ← palette definitions, CSS var application, editor chrome toggle
+│   │   ├── skin-band.js        ← band skin: horizontal time bands + concurrent
+│   │   ├── skin-grid.js        ← grid skin: time × groups matrix
+│   │   ├── skin-cards.js       ← cards skin: group detail panels
+│   │   ├── skin-phases.js      ← phases skin: phase-based field exercises
 │   │   ├── library.js          ← schedule library home screen, CRUD, context menu
 │   │   ├── versions.js         ← version panel UI
-│   │   ├── render.js           ← renderDay() dispatcher, shared renderers (header, notes, footer), dagger footnote state
-│   │   ├── skin-band.js        ← band skin: renderDayBody_band(), renderBand(), renderConcurrentRow()
+│   │   ├── render.js           ← renderDay() dispatcher, shared renderers, dagger footnote state
 │   │   ├── print.js            ← print layout engine, adaptive scaling
 │   │   ├── events.js           ← click handlers, keyboard shortcuts
 │   │   ├── inspector.js        ← inspector panel, settings modal, toolbar wiring
@@ -84,7 +88,11 @@
     │   ├── test-schema.js      ← schema normalization tests
     │   ├── test-data-helpers.js ← overlap detection, classification tests
     │   ├── test-store.js       ← Store state management tests
-    │   └── test-storage.js     ← storage layer tests
+    │   ├── test-storage.js     ← storage layer tests
+    │   ├── test-themes.js     ← theme system tests
+    │   ├── runner-integration.html ← async integration test runner
+    │   ├── test-runner-async.js    ← async-aware test framework
+    │   └── test-integration.js     ← integration tests (save/load/version/theme)
     └── docs/
         └── superpowers/
             ├── specs/           ← design specifications
@@ -95,12 +103,14 @@
 Scripts load via `<script>` tags in index.html. Order matters — dependencies must load first:
 1. **Foundation:** constants.js → app-state.js (Store) → utils.js → ui-core.js
 2. **Data layer:** schema.js → data-helpers.js → persistence.js → storage.js
-3. **UI layer:** themes.js → skin-band.js → library.js → versions.js
-4. **Rendering:** render.js → print.js
-5. **Interaction:** events.js → inspector.js
-6. **Data + Init:** data/scheduledata.js → init.js (must be last)
+3. **Theme layer:** themes.js
+4. **Skin renderers:** skin-band.js → skin-grid.js → skin-cards.js → skin-phases.js
+5. **UI layer:** library.js → versions.js
+6. **Core rendering:** render.js → print.js
+7. **Interaction:** events.js → inspector.js
+8. **Data + Init:** data/scheduledata.js → init.js (must be last)
 
-Note: skin-band.js and render.js have a mutual runtime dependency (skin-band calls render's dagger footnote functions; render dispatches to skin-band's renderDayBody_band). Both files load before any rendering occurs, so neither requires the other to be parsed first.
+Note: skin files and render.js have a mutual runtime dependency (skins call render's dagger footnote functions; render dispatches to skin renderDayBody functions). All load before any rendering occurs.
 
 ### State Management
 All app state flows through the `Store` object in `app-state.js`. The Store holds the schedule's days, events, groups, notes, and UI state (active day, selected event, undo/redo stacks). Backward-compatible `window` property aliases allow existing code to read/write globals — these proxy to Store internals via `Object.defineProperty`.
