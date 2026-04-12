@@ -414,6 +414,7 @@ function wireSettingsModal(modal) {
       sessionSave();
       renderSettingsModal(modal);
       renderActiveDay();
+      toast('Layout: ' + (SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin));
     });
   });
 
@@ -429,6 +430,7 @@ function wireSettingsModal(modal) {
       sessionSave();
       renderSettingsModal(modal);
       renderActiveDay();
+      toast('Colors: ' + (PALETTE_LABELS[palette] || palette));
     });
   });
 
