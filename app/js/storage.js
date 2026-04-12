@@ -361,10 +361,21 @@ async function saveCurrentSchedule() {
   fileData.lastSavedAt = now;
   if (existing) fileData.name = state.title || fileData.name;
 
+  // Sync theme from in-memory state (set by Appearance tab)
+  const memFileData = getCurrentScheduleFileData();
+  if (memFileData && memFileData.theme) {
+    fileData.theme = memFileData.theme;
+  }
+
   const ok = await writeScheduleFile(_currentFileName, fileData);
   if (ok) {
     _dirty = false;
     _lastKnownSavedAt = now;
+    // Keep in-memory reference in sync with what was written
+    if (memFileData) {
+      memFileData.lastSavedAt = now;
+      memFileData.lastSavedBy = userName;
+    }
     updateSaveIndicator('saved');
     sessionSave();
   } else {
