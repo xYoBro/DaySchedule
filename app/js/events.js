@@ -25,6 +25,8 @@
  * ──────────────────────────────────────────────────────────────────────────── */
 
 document.addEventListener('click', e => {
+  console.log('[CLICK DEBUG] target:', e.target.tagName, e.target.className, 'closest .band:', !!e.target.closest('.band[data-event-id]'), 'activeDay:', Store.getActiveDay());
+
   // Click on "Also happening" concurrent indicator -> select that concurrent event
   const concIndicator = e.target.closest('.band-conc[data-event-id]');
   if (concIndicator && !e.target.closest('.inspector')) {
@@ -37,6 +39,7 @@ document.addEventListener('click', e => {
   const band = e.target.closest('.band[data-event-id]');
   if (band && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
+    console.log('[CLICK DEBUG] band found:', band.getAttribute('data-event-id'), 'dayId:', dayId);
     if (dayId) selectEntity('event', dayId, band.getAttribute('data-event-id'));
     return;
   }
