@@ -423,13 +423,17 @@ function wireSettingsModal(modal) {
     opt.addEventListener('click', function() {
       const palette = opt.getAttribute('data-palette');
       const fileData = getCurrentScheduleFileData();
+      console.log('[THEME DEBUG] palette click:', palette, 'fileData:', fileData ? 'exists' : 'NULL', 'theme before:', fileData ? JSON.stringify(fileData.theme) : 'n/a');
       if (fileData) {
         if (!fileData.theme) fileData.theme = {};
         fileData.theme.palette = palette;
+        console.log('[THEME DEBUG] theme after:', JSON.stringify(fileData.theme));
       }
       sessionSave();
       renderSettingsModal(modal);
       renderActiveDay();
+      console.log('[THEME DEBUG] CSS var --sch-bg:', document.documentElement.style.getPropertyValue('--sch-bg'));
+      console.log('[THEME DEBUG] CSS var --sch-accent:', document.documentElement.style.getPropertyValue('--sch-accent'));
       toast('Colors: ' + (PALETTE_LABELS[palette] || palette));
     });
   });
