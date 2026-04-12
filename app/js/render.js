@@ -45,10 +45,21 @@ const SKIN_RENDERERS = {
   phases:function(dayId) { return typeof renderDayBody_phases === 'function' ? renderDayBody_phases(dayId) : ''; },
 };
 
-// Shared reference to current schedule file data for theme access
+// Shared reference to current schedule file data for theme access.
+// Ensures a file data object always exists when the Store has content,
+// so the Appearance tab always has something to write theme settings to.
 let _currentScheduleFileData = null;
 function setCurrentScheduleFileData(data) { _currentScheduleFileData = data; }
-function getCurrentScheduleFileData() { return _currentScheduleFileData; }
+function getCurrentScheduleFileData() {
+  if (!_currentScheduleFileData && Store.getTitle()) {
+    _currentScheduleFileData = {
+      name: Store.getTitle(),
+      current: Store.getPersistedState(),
+      versions: [],
+    };
+  }
+  return _currentScheduleFileData;
+}
 
 function renderDay(dayId) {
   const day = Store.getDay(dayId);
@@ -57,7 +68,8 @@ function renderDay(dayId) {
   if (!container) return;
 
   // Apply theme
-  const theme = getScheduleTheme(_currentScheduleFileData && _currentScheduleFileData.theme);
+  const fileData = getCurrentScheduleFileData();
+  const theme = getScheduleTheme(fileData && fileData.theme);
   applyPalette(theme.palette, theme.customColors);
 
   // Set skin class on page
