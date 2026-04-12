@@ -66,7 +66,7 @@ function renderDayBody_grid(dayId) {
     // Check for shared event starting at this time
     const shared = sharedEvents.find(e => e.startTime === slotStart);
     if (shared) {
-      html += '<div class="grid-banner">';
+      html += '<div class="grid-banner" data-event-id="' + esc(shared.id) + '">';
       html += '<div class="grid-time-col">' + esc(shared.startTime) + '</div>';
       html += '<div class="grid-banner-content">';
       html += '<strong>' + esc(shared.title) + '</strong>';
