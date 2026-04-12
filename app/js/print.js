@@ -49,31 +49,22 @@ function printAllDays() {
     document.body.appendChild(printContainer);
   }
 
+  // Use active skin for print pages
+  const theme = getScheduleTheme(getCurrentScheduleFileData() && getCurrentScheduleFileData().theme);
+  applyPalette(theme.palette, theme.customColors);
+  const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
+
   let html = '';
+  const savedActiveDay = Store.getActiveDay();
   days.forEach(day => {
-    const groups = Store.getGroups();
-    const { mainBands, concurrent } = classifyEvents(day.events, groups);
-    const notes = Store.getNotes(day.id);
-    _daggerFootnotes = [];
-    html += '<div class="page print-page">';
+    Store.setActiveDay(day.id);
+    html += '<div class="page print-page skin-' + theme.skin + '">';
     html += renderHeader(day);
-    html += '<div class="schedule">';
-    let prevTier = null;
-    mainBands.forEach((band, i) => {
-      if (band.tier === 'break' && prevTier && prevTier !== 'break') html += '<div class="section-break"></div>';
-      html += renderBand(band);
-      if (band.tier === 'break') {
-        const next = mainBands[i + 1];
-        if (next && next.tier !== 'break') html += '<div class="section-break"></div>';
-      }
-      prevTier = band.tier;
-    });
-    html += '</div>';
-    if (concurrent.length > 0) html += renderConcurrentRow(concurrent, groups);
-    if (notes.length > 0 || _daggerFootnotes.length > 0) html += renderNotes(notes);
+    html += renderer(day.id);
     html += renderFooter();
     html += '</div>';
   });
+  Store.setActiveDay(savedActiveDay);
   printContainer.innerHTML = html;
 
   // Hide the screen preview during print, show the print pages instead
