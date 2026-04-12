@@ -65,7 +65,8 @@
 │   │   ├── storage.js          ← FSAPI directory access, IndexedDB handle, auto-save, versions
 │   │   ├── library.js          ← schedule library home screen, CRUD, context menu
 │   │   ├── versions.js         ← version panel UI
-│   │   ├── render.js           ← renderDay(), band HTML generation, concurrent row
+│   │   ├── render.js           ← renderDay() dispatcher, shared renderers (header, notes, footer), dagger footnote state
+│   │   ├── skin-band.js        ← band skin: renderDayBody_band(), renderBand(), renderConcurrentRow()
 │   │   ├── print.js            ← print layout engine, adaptive scaling
 │   │   ├── events.js           ← click handlers, keyboard shortcuts
 │   │   ├── inspector.js        ← inspector panel, settings modal, toolbar wiring
@@ -94,10 +95,12 @@
 Scripts load via `<script>` tags in index.html. Order matters — dependencies must load first:
 1. **Foundation:** constants.js → app-state.js (Store) → utils.js → ui-core.js
 2. **Data layer:** schema.js → data-helpers.js → persistence.js → storage.js
-3. **UI layer:** library.js → versions.js
+3. **UI layer:** themes.js → skin-band.js → library.js → versions.js
 4. **Rendering:** render.js → print.js
 5. **Interaction:** events.js → inspector.js
 6. **Data + Init:** data/scheduledata.js → init.js (must be last)
+
+Note: skin-band.js and render.js have a mutual runtime dependency (skin-band calls render's dagger footnote functions; render dispatches to skin-band's renderDayBody_band). Both files load before any rendering occurs, so neither requires the other to be parsed first.
 
 ### State Management
 All app state flows through the `Store` object in `app-state.js`. The Store holds the schedule's days, events, groups, notes, and UI state (active day, selected event, undo/redo stacks). Backward-compatible `window` property aliases allow existing code to read/write globals — these proxy to Store internals via `Object.defineProperty`.

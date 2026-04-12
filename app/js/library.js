@@ -124,6 +124,7 @@ async function openSchedule(fileName) {
 
   Store.reset();
   Store.loadPersistedState(data.current);
+  setCurrentScheduleFileData(data);
   const days = Store.getDays();
   if (days.length) Store.setActiveDay(days[0].id);
 
@@ -145,6 +146,7 @@ async function createNewSchedule(name) {
   Store.setTitle(name);
   const state = Store.getPersistedState();
   const fileData = buildScheduleFile(name, state, [], userName);
+  setCurrentScheduleFileData(fileData);
 
   const ok = await writeScheduleFile(fileName, fileData);
   if (!ok) { toast('Failed to create schedule.'); return; }
@@ -203,6 +205,7 @@ async function returnToLibrary() {
   }
   setCurrentFile(null, null);
   Store.reset();
+  setCurrentScheduleFileData(null);
   showLibrary();
 }
 
