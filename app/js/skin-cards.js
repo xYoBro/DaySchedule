@@ -47,7 +47,8 @@ function renderDayBody_cards(dayId) {
   if (sharedEvents.length > 0) {
     html += '<div class="cards-shared">';
     sharedEvents.forEach(e => {
-      html += '<span class="cards-shared-item" data-event-id="' + esc(e.id) + '">';
+      const breakClass = e.isBreak ? ' cards-shared-break' : '';
+      html += '<span class="cards-shared-item' + breakClass + '" data-event-id="' + esc(e.id) + '">';
       html += '<strong>' + esc(e.startTime) + '</strong> ' + esc(e.title);
       if (e.location) html += ' <span class="cards-shared-loc">\u00b7 ' + esc(e.location) + '</span>';
       html += '</span>';

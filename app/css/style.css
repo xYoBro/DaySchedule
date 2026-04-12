@@ -1657,6 +1657,15 @@ body {
   text-align: center;
   grid-column: 2 / -1;
 }
+.grid-banner-break .grid-banner-content {
+  color: var(--sch-text-muted);
+  font-style: italic;
+  background: var(--sch-border);
+}
+.grid-banner-break .grid-time-col {
+  color: var(--sch-text-muted);
+  font-style: italic;
+}
 .grid-row { background: var(--sch-border); }
 .grid-cell {
   background: var(--sch-bg);
@@ -1699,6 +1708,7 @@ body {
 .cards-shared-item { cursor: pointer; }
 .cards-shared-item:hover { text-decoration: underline; }
 .cards-shared-loc { color: var(--sch-text-muted); }
+.cards-shared-break { color: var(--sch-text-muted); font-style: italic; }
 .cards-grid {
   display: grid;
   gap: 6px;
