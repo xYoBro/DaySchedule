@@ -130,14 +130,35 @@ function loadSampleData() {
 
   const d = day.id;
 
-  Store.addEvent(d, { title: 'Formation', startTime: '0700', endTime: '0730', description: 'Accountability formation.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
-  Store.addEvent(d, { title: "Commander's Call", startTime: '0730', endTime: '0830', description: 'Wing CC addresses unit status.', location: 'Auditorium', poc: 'Wing Commander', groupId: 'grp_all', isMainEvent: true });
-  Store.addEvent(d, { title: 'Safety Briefing', startTime: '0830', endTime: '0900', location: 'Auditorium', poc: 'Safety Office', groupId: 'grp_all' });
-  Store.addEvent(d, { title: 'AFSC-Specific Training', startTime: '0900', endTime: '1100', description: 'Complete outstanding CBTs and certifications.', location: 'Respective Work Areas', poc: 'Flight Chiefs', groupId: 'grp_flight', isMainEvent: true });
+  // === Shared events (main scope — all personnel) ===
+  Store.addEvent(d, { title: 'Formation', startTime: '0700', endTime: '0730', description: 'Accountability formation. Flight chiefs take roll and report to First Sergeant.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
+  Store.addEvent(d, { title: "Commander's Call", startTime: '0730', endTime: '0830', description: 'Wing CC addresses unit status, upcoming deployments, quarterly awards.', location: 'Auditorium', poc: 'Wing Commander', groupId: 'grp_all', isMainEvent: true });
   Store.addEvent(d, { title: 'Lunch', startTime: '1100', endTime: '1200', groupId: 'grp_all', isMainEvent: true, isBreak: true });
-  Store.addEvent(d, { title: 'Ancillary / CBT Completion', startTime: '1200', endTime: '1400', description: 'Complete overdue ancillary training.', location: 'Computer Labs', poc: 'UTM', groupId: 'grp_all', isMainEvent: true });
-  Store.addEvent(d, { title: 'End of Day Formation', startTime: '1600', endTime: '1630', description: 'Final accountability.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
+  Store.addEvent(d, { title: 'End of Day Formation', startTime: '1600', endTime: '1630', description: 'Final accountability. Sunday schedule announcements.', location: 'Bldg 200 Apron', poc: 'First Sergeant', groupId: 'grp_all', isMainEvent: true });
 
-  Store.addNote(d, { category: 'Uniform', text: 'ABUs authorized for PT testing participants. UOD all others.' });
-  Store.addNote(d, { category: 'Dining', text: 'DFAC open 1100\u20131230.' });
+  // === By Flight events (main scope) ===
+  Store.addEvent(d, { title: 'Safety Briefing', startTime: '0830', endTime: '0900', description: 'Quarterly safety stand-down briefing.', location: 'Auditorium', poc: 'Safety Office', groupId: 'grp_flight', isMainEvent: true });
+
+  // === SNCOs — limited scope, concurrent with main ===
+  Store.addEvent(d, { title: 'CBRN Training', startTime: '0900', endTime: '1100', description: 'MOPP gear donning/doffing, decon procedures. Bring canteen.', location: 'Bldg 250 Chem Lab', poc: 'TSgt Rivera', groupId: 'grp_snco' });
+  Store.addEvent(d, { title: 'NCO Professional Development', startTime: '1200', endTime: '1400', description: 'Mentorship workshop and EPR writing clinic.', location: 'Bldg 100 Rm 204', poc: 'CMSgt Daniels', groupId: 'grp_snco' });
+  Store.addEvent(d, { title: 'IG Self-Assessment Review', startTime: '1400', endTime: '1600', description: 'Review self-assessment checklists, stage binders for inspection.', location: 'Bldg 100 Conf Rm', poc: 'Wing IG', groupId: 'grp_snco' });
+
+  // === Flight Chiefs — limited scope, concurrent with main ===
+  Store.addEvent(d, { title: 'Weapons Qualification', startTime: '0900', endTime: '1100', description: 'M4 qualification tables. 80 rds per person. Eye/ear pro required.', location: 'Range 3', poc: 'MSgt Kowalski', groupId: 'grp_chiefs', attendees: 'RSO: TSgt Park, Ammo: SrA Bell' });
+  Store.addEvent(d, { title: 'TCCC Recertification', startTime: '1200', endTime: '1400', description: 'Tactical Combat Casualty Care. Hands-on scenarios with IFAK.', location: 'Med Sim Lab, Bldg 460', poc: 'Medical Group', groupId: 'grp_chiefs' });
+  Store.addEvent(d, { title: 'Convoy Operations Brief', startTime: '1400', endTime: '1530', description: 'Route planning, comms check, vehicle TM review for FTX next month.', location: 'Motor Pool', poc: 'MSgt Franklin', groupId: 'grp_chiefs' });
+
+  // === Additional concurrent events using the existing By Flight group ===
+  Store.addEvent(d, { title: 'CBT Completion Lab', startTime: '0900', endTime: '1100', description: 'Complete all overdue CBTs. Bring CAC reader. See UTM for login issues.', location: 'Computer Lab, Bldg 100', poc: 'UTM', groupId: 'grp_flight' });
+  Store.addEvent(d, { title: 'Equipment Inventory', startTime: '1200', endTime: '1400', description: 'Annual inventory of flight equipment. Hand receipts required.', location: 'Supply Bldg 180', poc: 'SSgt Yamamoto', groupId: 'grp_flight' });
+  Store.addEvent(d, { title: 'Readiness Standup', startTime: '1400', endTime: '1600', description: 'Review weekend readiness metrics, open action items, next UTA planning.', location: 'Conf Rm A', poc: 'CCF', groupId: 'grp_flight' });
+
+  // === Notes ===
+  Store.addNote(d, { category: 'Uniform', text: 'ABUs authorized for PT testing participants and range detail. UOD all others.' });
+  Store.addNote(d, { category: 'Medical', text: 'A1C Snuffy (0900\u20131030, Bldg 460), MSgt Doe (1300\u20131400, VA Clinic)' });
+  Store.addNote(d, { category: 'TDY', text: 'TSgt Martinez returns NCOA Sunday \u2014 Day 2 only.' });
+  Store.addNote(d, { category: 'Facility', text: 'Bldg 300 HVAC down. Events relocated to Bldg 200 overflow.' });
+  Store.addNote(d, { category: 'Vehicle', text: 'GOV #4372 reserved for medical transport 0830\u20131200. Keys at CSS.' });
+  Store.addNote(d, { category: 'Dining', text: 'DFAC open 1100\u20131230. Pizza authorized for flights through lunch.' });
 }
