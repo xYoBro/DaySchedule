@@ -217,6 +217,7 @@ function renderSettingsModal(modal) {
   html += '<div class="modal-tabs">';
   html += '<button class="modal-tab' + (_settingsTab === 'general' ? ' active' : '') + '" data-tab="general">General</button>';
   html += '<button class="modal-tab' + (_settingsTab === 'groups' ? ' active' : '') + '" data-tab="groups">Audience Groups</button>';
+  html += '<button class="modal-tab' + (_settingsTab === 'appearance' ? ' active' : '') + '" data-tab="appearance">Appearance</button>';
   html += '</div>';
 
   // General tab
@@ -247,6 +248,48 @@ function renderSettingsModal(modal) {
     html += '</div>';
   });
   html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Group</button>';
+  html += '</div>';
+
+  // Appearance tab
+  html += '<div class="settings-tab-content" id="settingsTabAppearance"' + (_settingsTab !== 'appearance' ? ' style="display:none;"' : '') + '>';
+
+  // Layout picker
+  html += '<div class="settings-label" style="margin-bottom:8px;">Layout</div>';
+  html += '<div class="skin-picker">';
+  const currentTheme = getScheduleTheme(getCurrentScheduleFileData() && getCurrentScheduleFileData().theme);
+  SKIN_NAMES.forEach(function(skin) {
+    const label = SKIN_LABELS[skin];
+    const selected = skin === currentTheme.skin ? ' selected' : '';
+    html += '<div class="skin-option' + selected + '" data-skin="' + skin + '">';
+    html += '<div class="skin-thumb skin-thumb-' + skin + '"></div>';
+    html += '<div class="skin-option-name">' + esc(label.name) + '</div>';
+    html += '<div class="skin-option-desc">' + esc(label.desc) + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // Color picker
+  html += '<div class="settings-label" style="margin-top:16px;margin-bottom:8px;">Colors</div>';
+  html += '<div class="palette-picker">';
+  PALETTE_NAMES.forEach(function(name) {
+    const p = PALETTES[name];
+    const selected = name === currentTheme.palette ? ' selected' : '';
+    html += '<div class="palette-option' + selected + '" data-palette="' + name + '">';
+    html += '<div class="palette-swatch" style="background:' + esc(p.bg) + ';">';
+    html += '<div class="palette-bar" style="background:' + esc(p.accent) + ';"></div>';
+    html += '<div class="palette-bar" style="background:' + esc(p.accentSecondary) + ';"></div>';
+    html += '<div class="palette-bar" style="background:' + esc(p.accentTertiary) + ';"></div>';
+    html += '</div>';
+    html += '<div class="palette-option-name">' + esc(PALETTE_LABELS[name]) + '</div>';
+    html += '</div>';
+  });
+  // Custom (+)
+  html += '<div class="palette-option' + (currentTheme.palette === 'custom' ? ' selected' : '') + '" data-palette="custom">';
+  html += '<div class="palette-swatch palette-custom-swatch">+</div>';
+  html += '<div class="palette-option-name">Custom</div>';
+  html += '</div>';
+  html += '</div>';
+
   html += '</div>';
 
   // Data section + Done
@@ -358,6 +401,36 @@ function wireSettingsModal(modal) {
       renderSettingsModal(modal);
     });
   }
+
+  // Skin picker
+  modal.querySelectorAll('.skin-option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      const skin = opt.getAttribute('data-skin');
+      const fileData = getCurrentScheduleFileData();
+      if (fileData) {
+        if (!fileData.theme) fileData.theme = {};
+        fileData.theme.skin = skin;
+      }
+      sessionSave();
+      renderSettingsModal(modal);
+      renderActiveDay();
+    });
+  });
+
+  // Palette picker
+  modal.querySelectorAll('.palette-option').forEach(function(opt) {
+    opt.addEventListener('click', function() {
+      const palette = opt.getAttribute('data-palette');
+      const fileData = getCurrentScheduleFileData();
+      if (fileData) {
+        if (!fileData.theme) fileData.theme = {};
+        fileData.theme.palette = palette;
+      }
+      sessionSave();
+      renderSettingsModal(modal);
+      renderActiveDay();
+    });
+  });
 
   // Save data file
   const saveFileBtn = modal.querySelector('#settings-save-file');
