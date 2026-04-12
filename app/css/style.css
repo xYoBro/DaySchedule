@@ -1677,10 +1677,9 @@ body {
 }
 .grid-cell-cont {
   background: var(--sch-surface);
-  opacity: 0.5;
 }
 .grid-cell-empty {
-  background: var(--sch-bg);
+  background: var(--sch-surface);
 }
 
 /* ══════════════════════════════════════════════════════════════
