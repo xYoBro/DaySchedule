@@ -24,9 +24,10 @@
  *     - Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y → redo()
  * ──────────────────────────────────────────────────────────────────────────── */
 
-document.addEventListener('click', e => {
-  console.log('[CLICK DEBUG] target:', e.target.tagName, e.target.className, 'closest .band:', !!e.target.closest('.band[data-event-id]'), 'activeDay:', Store.getActiveDay());
+// Selector for any clickable event element across all skins
+const EVENT_SELECTOR = '[data-event-id]';
 
+document.addEventListener('click', e => {
   // Click on "Also happening" concurrent indicator -> select that concurrent event
   const concIndicator = e.target.closest('.band-conc[data-event-id]');
   if (concIndicator && !e.target.closest('.inspector')) {
@@ -35,20 +36,11 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // Click on event band -> select in inspector
-  const band = e.target.closest('.band[data-event-id]');
-  if (band && !e.target.closest('.inspector')) {
+  // Click on any event element (band, grid cell, card event, phase task) -> select in inspector
+  const eventEl = e.target.closest(EVENT_SELECTOR);
+  if (eventEl && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
-    console.log('[CLICK DEBUG] band found:', band.getAttribute('data-event-id'), 'dayId:', dayId);
-    if (dayId) selectEntity('event', dayId, band.getAttribute('data-event-id'));
-    return;
-  }
-
-  // Click on concurrent event item -> select in inspector
-  const concItem = e.target.closest('.conc-item[data-event-id]');
-  if (concItem && !e.target.closest('.inspector')) {
-    const dayId = Store.getActiveDay();
-    if (dayId) selectEntity('event', dayId, concItem.getAttribute('data-event-id'));
+    if (dayId) selectEntity('event', dayId, eventEl.getAttribute('data-event-id'));
     return;
   }
 
@@ -68,7 +60,7 @@ document.addEventListener('click', e => {
   }
 
   // Click on empty page area -> deselect (show schedule setup)
-  if (e.target.closest('.preview-area') && !e.target.closest('.band') && !e.target.closest('.notes-list li') && !e.target.closest('.conc-item')) {
+  if (e.target.closest('.preview-area') && !e.target.closest(EVENT_SELECTOR) && !e.target.closest('.notes-list li')) {
     selectEntity(null);
     return;
   }
