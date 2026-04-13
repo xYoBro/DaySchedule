@@ -24,6 +24,8 @@ function mountInspectorFixture() {
   window.renameScheduleFile = function() { return Promise.resolve(true); };
   window.hasDirectoryAccess = function() { return false; };
   window.setCurrentFile = function() {};
+  window.setCurrentScheduleFileData = function() {};
+  window.getCurrentScheduleFileData = function() { return null; };
   window.getLastSavedAt = function() { return null; };
 
   sessionStorage.clear();
@@ -84,6 +86,72 @@ describe('inspector — day sheet modal', () => {
 
     assert.equal(stored.attendees, 'Crew chiefs, AGE');
     assert.equal(attendeesInput.value, 'Crew chiefs, AGE');
+  });
+
+  it('explains that main-track placement usually comes from the selected audience', () => {
+    mountInspectorFixture();
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    Store.addEvent(day.id, {
+      title: 'Formation',
+      startTime: '0700',
+      endTime: '0730',
+      groupId: 'grp_all',
+      isMainEvent: true,
+    });
+    Store.setActiveDay(day.id);
+
+    openDayEventSheetModal();
+
+    const help = document.querySelector('#dayEventSheetModalContent .day-sheet-help');
+    const autoLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-mini-label');
+
+    assert(help.textContent.includes('Audience usually decides placement'));
+    assert(help.textContent.includes('Primary'));
+    assert(help.textContent.includes('Main Track'));
+    assert.equal(autoLabel.textContent.trim(), 'From Group');
+  });
+});
+
+describe('inspector — settings and event details copy', () => {
+  it('keeps Primary and Supporting labels when toggling audience groups', () => {
+    mountInspectorFixture();
+
+    const modal = document.getElementById('settingsModalContent');
+    renderSettingsModal(modal);
+
+    const scopeBtn = modal.querySelector('.insp-group-scope');
+    assert(scopeBtn, 'group scope button should exist');
+
+    const firstLabel = scopeBtn.textContent.trim();
+    scopeBtn.click();
+    const secondLabel = scopeBtn.textContent.trim();
+
+    assert(firstLabel === 'Primary' || firstLabel === 'Supporting');
+    assert(secondLabel === 'Primary' || secondLabel === 'Supporting');
+    assert(firstLabel !== secondLabel, 'toggling should swap the label');
+  });
+
+  it('explains main-track placement in event details', () => {
+    mountInspectorFixture();
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, {
+      title: 'Weapons Qualification',
+      startTime: '0830',
+      endTime: '1100',
+      groupId: 'grp_snco',
+    });
+    Store.setActiveDay(day.id);
+
+    selectEntity('event', day.id, evt.id);
+    renderInspector();
+
+    const panel = document.getElementById('inspectorPanel');
+    const text = panel.textContent;
+
+    assert(text.includes('Primary audiences automatically place this event in the main track'));
+    assert(text.includes('Show this in the main track'));
   });
 });
 

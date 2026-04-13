@@ -13,7 +13,7 @@
     <div class="library-header">
       <div class="library-brand">Schedule Builder</div>
       <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">?</button>
-      <button class="library-theme-toggle" id="editorThemeToggle" title="Toggle dark mode"></button>
+      <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
     </div>
     <div class="library-body">
       <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
@@ -68,13 +68,13 @@
       <button class="btn btn-primary" id="addEventBtn">+ Event</button>
       <button class="btn" id="addNoteBtn">+ Note</button>
       <button class="btn" id="addDayBtn">+ Day</button>
-      <button class="btn" id="daySheetBtn">Day Sheet</button>
+      <button class="btn" id="daySheetBtn">Quick Edit</button>
       <div class="tb-sep"></div>
-      <button class="btn" id="versionsBtn">Versions</button>
+      <button class="btn" id="customizeBtn">Customize</button>
       <div class="tb-overflow" id="overflowMenu">
         <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions">&#x2026;</button>
         <div class="tb-overflow-dropdown" id="overflowDropdown">
-          <button class="tb-overflow-item" id="settingsBtn">Settings</button>
+          <button class="tb-overflow-item" id="versionsMenuBtn">Versions</button>
           <button class="tb-overflow-item" id="printBtn">Print</button>
           <button class="tb-overflow-item" id="helpBtn">Help</button>
         </div>
@@ -106,26 +106,22 @@
       <h2>Schedule Builder</h2>
 
       <div class="help-section">
-        <div class="help-section-title">Getting Started</div>
+        <div class="help-section-title">Start Here</div>
         <div class="help-item">
-          <div class="help-item-label">Open the shared copy</div>
-          <div class="help-item-desc">Always open DaySchedule from the shared team copy, not from Downloads, Desktop, email, or a ZIP. The shared copy is the one everyone should use.</div>
+          <div class="help-item-label">1. Open the shared copy</div>
+          <div class="help-item-desc">Always open DaySchedule from the shared team copy, not from Downloads, Desktop, email, or a ZIP.</div>
         </div>
         <div class="help-item">
-          <div class="help-item-label">Connect once per browser</div>
-          <div class="help-item-desc">On first launch, click <strong>Connect Shared Folder</strong> and choose the folder where schedule files live. In most setups, that folder is <code>app/data</code>.</div>
+          <div class="help-item-label">2. Connect once</div>
+          <div class="help-item-desc">On first launch, click <strong>Connect Shared Folder</strong> and choose the folder where the saved schedules live. In most setups, that folder is <code>app/data</code>.</div>
         </div>
         <div class="help-item">
-          <div class="help-item-label">Create a schedule</div>
-          <div class="help-item-desc">From the library, click <strong>+ New Schedule</strong>, give it a name, and start adding days and events. New schedules open in edit mode automatically.</div>
+          <div class="help-item-label">3. Edit the schedule</div>
+          <div class="help-item-desc">Open a schedule, click <strong>Edit</strong> if it opens read-only, then use <strong>Quick Edit</strong> for fast row changes or click an event on the page for detailed editing.</div>
         </div>
         <div class="help-item">
-          <div class="help-item-label">Edit events</div>
-          <div class="help-item-desc">Open the schedule, click <strong>Edit This Schedule</strong> if needed, then click any event on the schedule to open its properties in the inspector panel on the right.</div>
-        </div>
-        <div class="help-item">
-          <div class="help-item-label">Click the header</div>
-          <div class="help-item-desc">Click the schedule header (title/logo area) to open Settings &mdash; change the title, logo, contact info, and audience groups.</div>
+          <div class="help-item-label">4. Let Audience place the event</div>
+          <div class="help-item-desc">In <strong>Quick Edit</strong> and <strong>Event Details</strong>, the selected audience/group usually decides placement. <strong>Primary</strong> audiences go to the main track automatically. <strong>Supporting</strong> or unassigned events stay in the side track unless you turn on <strong>Main Track</strong>.</div>
         </div>
       </div>
 
@@ -137,7 +133,7 @@
         </div>
         <div class="help-item">
           <div class="help-item-label">One editor at a time</div>
-          <div class="help-item-desc">Recommended team workflow: one person edits a schedule at a time. Use <strong>Edit This Schedule</strong> to claim editing, then wait for <strong>Saved</strong> before handing it off.</div>
+          <div class="help-item-desc">Recommended team workflow: one person edits a schedule at a time. Click <strong>Edit</strong>, make your changes, wait for <strong>Saved</strong>, then click <strong>Done Editing</strong> before handing it off.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Take over only when needed</div>
@@ -148,12 +144,12 @@
           <div class="help-item-desc">If you edit a downloaded or personal copy, your changes stay there. Other people will keep working from the shared copy, and the two versions can drift apart.</div>
         </div>
         <div class="help-item">
-          <div class="help-item-label">Before handoff</div>
-          <div class="help-item-desc">If another person needs to edit after you, return to the library only after you see <strong>Saved</strong>. For major changes, save a named version first.</div>
+          <div class="help-item-label">Customize the schedule</div>
+          <div class="help-item-desc">Use <strong>Customize</strong> to change the title, unit logo, layout, and colors. The advanced section also contains group setup and manual export.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Versions</div>
-          <div class="help-item-desc">Use the <strong>Versions</strong> button to save named snapshots (e.g., &ldquo;Draft for Review&rdquo;). You can always restore a previous version &mdash; the current state is auto-backed up first.</div>
+          <div class="help-item-desc">Use <strong>Versions</strong> from the <strong>...</strong> menu to save named snapshots (e.g., &ldquo;Draft for Review&rdquo;). You can always restore a previous version &mdash; the current state is auto-backed up first.</div>
         </div>
       </div>
 
@@ -184,7 +180,15 @@
         </div>
         <div class="help-item">
           <div class="help-item-label">What if the last editor stepped away?</div>
-          <div class="help-item-desc">Edit access uses a lease. If the last editor stops refreshing it, the lock expires automatically and the next person can claim edit access. If the team lead needs in sooner, they can use <strong>Take Over</strong> after confirming the current editor is unavailable.</div>
+          <div class="help-item-desc">Edit access uses a lease. If the last editor stops refreshing it, the lock expires automatically and the next person can click <strong>Edit</strong>. If the team lead needs in sooner, they can use <strong>Take Over</strong> after confirming the current editor is unavailable.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Where do I change the logo or look?</div>
+          <div class="help-item-desc">Use <strong>Customize</strong> in the toolbar. That is where title, unit logo, layout, and colors live.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Why did Main Track change when I changed Audience?</div>
+          <div class="help-item-desc">That is expected. A <strong>Primary</strong> audience automatically places the event in the main track. A <strong>Supporting</strong> or unassigned event stays out of the main track unless you turn on <strong>Main Track</strong> as an override.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">What if I do not see someone else&rsquo;s changes?</div>
@@ -204,7 +208,7 @@
         </div>
         <div class="help-item">
           <div class="help-item-label">Audience groups</div>
-          <div class="help-item-desc"><strong>Main</strong> groups get full-width bands on the schedule. <strong>Limited</strong> groups appear as concurrent side notes when they overlap with main events.</div>
+          <div class="help-item-desc"><strong>Primary</strong> groups automatically place their events in the main track. <strong>Supporting</strong> groups appear as concurrent side items unless you turn on <strong>Main Track</strong> for a specific event.</div>
         </div>
       </div>
 
@@ -250,7 +254,7 @@
     <div class="modal"></div>
   </div>
 
-  <!-- Settings Modal -->
+  <!-- Customize Modal -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal" id="settingsModalContent"></div>
   </div>

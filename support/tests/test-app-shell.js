@@ -51,8 +51,10 @@ describe('UI Harness — app shell', () => {
 
   it('version panel can save and restore through the modal UI', async () => {
     resetUiHarnessState();
+    setUserName('Tester');
     const seeded = await seedUiScheduleFile('Version Harness', { skin: 'bands' });
     await openSchedule(seeded.fileName);
+    await claimCurrentScheduleLock({ silent: true });
 
     await openVersionPanel();
     document.getElementById('versionSaveBtn').click();

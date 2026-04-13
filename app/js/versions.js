@@ -55,7 +55,7 @@ async function renderVersionPanel(modal) {
 
   // Save as version
   if (!editable) {
-    html += '<div class="version-readonly-note">Read-only mode. Claim edit access before saving or restoring versions.</div>';
+    html += '<div class="version-readonly-note">Read-only mode. Click Edit above before saving or restoring versions.</div>';
   } else if (_versionSaveMode) {
     html += '<div class="version-save-inline">';
     html += '<input type="text" class="version-save-input" id="versionNameInput" placeholder="Version name (e.g., Draft for Review)">';

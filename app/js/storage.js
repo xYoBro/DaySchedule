@@ -375,7 +375,7 @@ function getLostLockMessage(status) {
   if (status && status.state === 'locked' && status.lock) {
     return 'Edit lock was taken over by ' + (status.lock.ownerName || 'another editor') + '. DaySchedule switched to read-only.';
   }
-  return 'Edit lock is no longer active. Claim edit access again to keep editing.';
+  return 'Edit lock is no longer active. Click Edit again to keep editing.';
 }
 
 async function readScheduleLock(fileName) {
@@ -413,7 +413,7 @@ function syncEditorChrome() {
     'addNoteBtn',
     'addDayBtn',
     'daySheetBtn',
-    'settingsBtn',
+    'customizeBtn',
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = !editable;
@@ -434,7 +434,7 @@ function updateEditorAccessBar(status) {
   if (status.state === 'mine' && status.lock) {
     text = 'Editing as ' + esc(status.lock.ownerName || getUserName() || 'You')
       + '. Lock refreshes automatically until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.';
-    actions = '<button class="btn" id="editorReleaseBtn">Release Edit Lock</button>';
+    actions = '<button class="btn" id="editorReleaseBtn">Done Editing</button>';
     bar.className = 'editor-access-bar editor-access-editing';
   } else if (status.state === 'locked' && status.lock) {
     text = 'Read-only. Locked by ' + esc(status.lock.ownerName || 'another editor')
@@ -443,8 +443,8 @@ function updateEditorAccessBar(status) {
       + '<button class="btn btn-danger" id="editorTakeOverBtn">Take Over</button>';
     bar.className = 'editor-access-bar editor-access-readonly';
   } else {
-    text = 'Read-only. This schedule is available to edit. Claim it before making changes.';
-    actions = '<button class="btn btn-primary" id="editorClaimBtn">Edit This Schedule</button>';
+    text = 'Read-only. This schedule is available to edit. Click Edit before making changes.';
+    actions = '<button class="btn btn-primary" id="editorClaimBtn">Edit</button>';
     bar.className = 'editor-access-bar editor-access-available';
   }
 
@@ -806,7 +806,7 @@ async function saveCurrentSchedule() {
 }
 
 function forceSave() {
-  if (!isCurrentScheduleEditable()) { toast('This schedule is read-only until you claim edit access.'); return; }
+  if (!isCurrentScheduleEditable()) { toast('This schedule is read-only until you click Edit.'); return; }
   clearTimeout(_autosaveTimer);
   saveCurrentSchedule().then(ok => {
     if (ok) toast('Saved');

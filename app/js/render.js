@@ -96,7 +96,7 @@ function renderHeader(day) {
   const footer = Store.getFooter();
   const dateStr = day.date ? formatDateDisplay(day.date) : '';
 
-  let html = '<div class="hdr">';
+  let html = '<div class="hdr" title="Click to customize this schedule">';
   html += '<div class="hdr-text">';
   html += '<div class="hdr-title">' + esc(Store.getTitle()) + '</div>';
   html += '<div class="hdr-sub">' + esc(dateStr) + ' &ensp;\u2014&ensp; ' + esc(dayLabel) + '</div>';

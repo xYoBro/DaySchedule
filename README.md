@@ -26,15 +26,17 @@ DaySchedule remembers that folder connection for the current browser.
 
 1. Open the same shared DaySchedule copy.
 2. Open the schedule you need from the library.
-3. If the schedule opens in read-only mode, click `Edit This Schedule` to claim edit access.
+3. If the schedule opens in read-only mode, click `Edit`.
+   When you are finished, click `Done Editing` to hand it off clearly.
 4. Make your changes.
+   `Audience` usually controls placement: `Primary` groups go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`.
 5. Wait for `Saved` in the toolbar before handing off to the next person.
 6. Return to the library when you are done.
 
 ## Shared Editing Rules
 
 - One editor at a time per schedule is the safest workflow.
-- Existing schedules may open in read-only mode until someone claims edit access.
+- Existing schedules may open in read-only mode until someone clicks `Edit`.
 - Before handing a schedule to someone else, wait for the save indicator to show `Saved`.
 - If a lead must unblock a schedule before the current lock expires, they can use `Take Over` after confirming the current editor is unavailable.
 - For major updates, use `Versions` first so there is a named checkpoint.
@@ -74,6 +76,10 @@ Choose the folder where the schedule files live. In most DaySchedule copies, tha
 
 The recommended workflow is no. Have one person edit at a time per schedule, then hand off after the toolbar shows `Saved`.
 
+### Why did Main Track change when I changed Audience?
+
+That is expected. `Primary` audiences automatically place the event in the main track. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track` as an override.
+
 ### What if I do not see someone else's changes?
 
 First confirm that you opened the shared copy, not a personal one. Then return to the library and reopen the schedule so the app reloads the latest file.
@@ -84,7 +90,7 @@ Do not keep editing there. Go back to the shared copy, compare what changed, and
 
 ### What if someone is out of office and the team still needs to update the schedule?
 
-DaySchedule uses a lease-style lock. If someone closes the app or stops refreshing the lock, it expires automatically after a timeout. Once it expires, the next person can open the schedule and click `Edit This Schedule`.
+DaySchedule uses a lease-style lock. If someone closes the app or stops refreshing the lock, it expires automatically after a timeout. Once it expires, the next person can open the schedule and click `Edit`.
 
 If the team lead or supervisor needs access sooner, they can use `Take Over` from the read-only banner. That should only be used after confirming that the current editor is unavailable or no longer working in the file.
 

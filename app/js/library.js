@@ -356,11 +356,13 @@ function wireLibrary() {
   const themeToggle = document.getElementById('editorThemeToggle');
   if (themeToggle) {
     themeToggle.textContent = getEditorTheme() === 'dark' ? '\u2600' : '\u263E';
+    themeToggle.title = 'UI theme';
     themeToggle.onclick = () => {
       const current = getEditorTheme();
       const next = current === 'dark' ? 'light' : 'dark';
       applyEditorTheme(next);
       themeToggle.textContent = next === 'dark' ? '\u2600' : '\u263E';
+      themeToggle.title = 'UI theme';
     };
   }
 }
