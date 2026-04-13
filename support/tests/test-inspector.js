@@ -36,7 +36,7 @@ function mountInspectorFixture() {
 }
 
 describe('inspector — day sheet modal', () => {
-  it('opens with the selected event expanded and shows attendees', () => {
+  it('opens with the selected event expanded and shows specific people', () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
@@ -58,7 +58,7 @@ describe('inspector — day sheet modal', () => {
     );
 
     assert(overlay.classList.contains('active'), 'day sheet modal should be active');
-    assert(attendeesInput, 'expanded event should show attendees input');
+    assert(attendeesInput, 'expanded event should show specific-people input');
     assert.equal(attendeesInput.value, 'RSO: TSgt Park, Ammo: SrA Bell');
   });
 
@@ -92,7 +92,7 @@ describe('inspector — day sheet modal', () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
-    Store.addEvent(day.id, {
+    const evt = Store.addEvent(day.id, {
       title: 'Formation',
       startTime: '0700',
       endTime: '0730',
@@ -101,15 +101,22 @@ describe('inspector — day sheet modal', () => {
     });
     Store.setActiveDay(day.id);
 
+    selectEntity('event', day.id, evt.id);
     openDayEventSheetModal();
 
     const help = document.querySelector('#dayEventSheetModalContent .day-sheet-help');
     const autoLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-mini-label');
+    const statusBadge = document.querySelector('#dayEventSheetModalContent .day-sheet-badge-track');
+    const inlineOpenBtn = document.querySelector('#dayEventSheetModalContent .day-sheet-details-toolbar .day-sheet-open-editor');
+    const rowActionOpenBtn = document.querySelector('#dayEventSheetModalContent .day-sheet-row-actions .day-sheet-open-editor');
 
     assert(help.textContent.includes('Audience usually decides placement'));
-    assert(help.textContent.includes('Primary'));
+    assert(help.textContent.includes('Specific People'));
     assert(help.textContent.includes('Main Track'));
-    assert.equal(autoLabel.textContent.trim(), 'From Group');
+    assert.equal(autoLabel.textContent.trim(), 'From Audience');
+    assert.equal(statusBadge.textContent.trim(), 'Primary audience');
+    assert(inlineOpenBtn, 'expanded row should include a full-details button');
+    assert(!rowActionOpenBtn, 'row actions should not include a competing details button');
   });
 });
 
@@ -150,7 +157,9 @@ describe('inspector — settings and event details copy', () => {
     const panel = document.getElementById('inspectorPanel');
     const text = panel.textContent;
 
+    assert(text.includes('Audience'));
     assert(text.includes('Primary audiences automatically place this event in the main track'));
+    assert(text.includes('Specific People'));
     assert(text.includes('Show this in the main track'));
   });
 });

@@ -35,10 +35,10 @@
  *   #addEventBtn       — add event button
  *   #addNoteBtn        — add note button
  *   #addDayBtn         — add day button
- *   #versionsBtn       — versions panel button
+ *   #versionsMenuBtn   — versions panel button (overflow)
  *   #helpBtn           — help button (overflow)
  *   #overflowMenu      — overflow menu container
- *   #settingsBtn       — settings button (overflow)
+ *   #customizeBtn      — customize button
  *   #printBtn          — print button (overflow)
  *   #daySheetBtn       — opens day event sheet modal
  *   #settingsModal     — settings modal overlay
@@ -282,8 +282,8 @@ function renderSettingsModal(modal) {
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
   html += '<label class="settings-label">Point of Contact</label>';
   html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
-  html += '<div class="settings-section-title" style="margin-top:18px;">Who Sees It</div>';
-  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Primary groups automatically place their events in the main track. Supporting groups stay in the side track unless an event is manually promoted.</p>';
+  html += '<div class="settings-section-title" style="margin-top:18px;">Audiences</div>';
+  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Use audiences to decide where events land on the schedule. Primary audiences go to the main track automatically. Supporting audiences stay in the side track unless a specific event is promoted.</p>';
   groups.forEach(g => {
     html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
     html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
@@ -294,8 +294,11 @@ function renderSettingsModal(modal) {
   });
   html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Group</button>';
   html += '<div class="settings-export-row">';
-  html += '<button class="btn" id="settings-save-file">Manual Export</button>';
-  html += '<div class="settings-export-hint">Use this only when browser auto-save is unavailable.</div>';
+  html += '<div class="settings-export-copy">';
+  html += '<div class="settings-export-label">Manual File Export</div>';
+  html += '<div class="settings-export-hint">Only use this when browser auto-save is unavailable or a lead asks for a manual backup file.</div>';
+  html += '</div>';
+  html += '<button class="btn settings-export-btn" id="settings-save-file">Manual Export</button>';
   html += '</div>';
   html += '</div>';
   html += '</details>';
@@ -546,6 +549,42 @@ function getDayEventSheetContext(dayId) {
   return { day, dayIndex, events, groups, groupMap, overlapMap, overlapCount };
 }
 
+function getDaySheetTrackStatus(evt, group) {
+  if (evt.isBreak) {
+    return {
+      label: 'Break',
+      tone: 'break',
+      title: 'Breaks always appear in the main track.'
+    };
+  }
+  if (group && group.scope === 'main') {
+    return {
+      label: 'Primary audience',
+      tone: 'primary',
+      title: 'The selected Primary audience automatically places this event in the main track.'
+    };
+  }
+  if (evt.isMainEvent) {
+    return {
+      label: 'Main Track override',
+      tone: 'override',
+      title: 'This supporting or unassigned event is manually shown in the main track.'
+    };
+  }
+  if (group && group.scope === 'limited') {
+    return {
+      label: 'Supporting audience',
+      tone: 'supporting',
+      title: 'Supporting audiences stay in the side track unless Main Track is turned on.'
+    };
+  }
+  return {
+    label: 'No audience',
+    tone: 'none',
+    title: 'Choose an audience to place this event automatically, or turn on Main Track manually.'
+  };
+}
+
 function renderDayEventSheetModal(modal, dayId, focusInfo) {
   const ctx = getDayEventSheetContext(dayId);
   if (!modal || !ctx) return;
@@ -571,7 +610,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<button class="btn" id="daySheetClose">Close</button>';
   html += '</div>';
   html += '</div>';
-  html += '<div class="day-sheet-help">Audience usually decides placement: <strong>Primary</strong> audiences go to the main track automatically. Use <strong>Main Track</strong> only to override a supporting or unassigned event.</div>';
+  html += '<div class="day-sheet-help">Audience usually decides placement: <strong>Primary</strong> audiences go to the main track automatically. Use the row arrow for <strong>Specific People</strong>, point of contact, and notes. Turn on <strong>Main Track</strong> only to override a supporting or unassigned event.</div>';
 
   if (!ctx.events.length) {
     html += '<div class="day-sheet-table-wrap">';
@@ -586,7 +625,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<div class="day-sheet-table-wrap">';
   html += '<table class="day-sheet-table">';
   html += '<thead><tr>';
-  html += '<th></th>';
+  html += '<th title="Show more row fields">More</th>';
   html += '<th>Start</th>';
   html += '<th>End</th>';
   html += '<th>Title</th>';
@@ -594,19 +633,20 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<th>Location</th>';
   html += '<th>Break</th>';
   html += '<th title="Primary audiences go here automatically. Use the checkbox only to override a supporting or unassigned event.">Main Track</th>';
-  html += '<th>Alerts</th>';
-  html += '<th>Actions</th>';
+  html += '<th>Status</th>';
+  html += '<th></th>';
   html += '</tr></thead><tbody>';
 
   ctx.events.forEach(evt => {
     const group = ctx.groupMap[evt.groupId] || null;
     const overlapNames = ctx.overlapMap[evt.id] || [];
     const canHighlight = !evt.isBreak && !(group && group.scope === 'main');
+    const trackStatus = getDaySheetTrackStatus(evt, group);
     const isExpanded = !!_daySheetExpandedEventIds[evt.id];
     const isSelected = _selection.type === 'event' && _selection.dayId === dayId && _selection.entityId === evt.id;
 
     html += '<tr class="day-sheet-row' + (isSelected ? ' is-selected' : '') + '" data-event-id="' + esc(evt.id) + '">';
-    html += '<td><button class="day-sheet-expand" data-action="toggle-details" data-event-id="' + esc(evt.id) + '" title="' + (isExpanded ? 'Hide details' : 'Show details') + '">' + (isExpanded ? '▾' : '▸') + '</button></td>';
+    html += '<td><button class="day-sheet-expand" data-action="toggle-details" data-event-id="' + esc(evt.id) + '" title="' + (isExpanded ? 'Hide extra fields' : 'Show extra fields') + '">' + (isExpanded ? '▾' : '▸') + '</button></td>';
     html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="startTime" data-focus="startTime" value="' + esc(evt.startTime) + '" maxlength="4" placeholder="0700"></td>';
     html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="endTime" data-focus="endTime" value="' + esc(evt.endTime) + '" maxlength="4" placeholder="0800"></td>';
     html += '<td><input type="text" class="day-sheet-title-input" data-event-id="' + esc(evt.id) + '" data-field="title" data-focus="title" value="' + esc(evt.title) + '"></td>';
@@ -621,16 +661,16 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     if (canHighlight) {
       html += '<td class="day-sheet-flag-cell"><label class="day-sheet-check"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track."></label></td>';
     } else {
-      html += '<td class="day-sheet-flag-cell"><span class="day-sheet-mini-label" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">' + (evt.isBreak ? 'Break' : 'From Group') + '</span></td>';
+      html += '<td class="day-sheet-flag-cell"><span class="day-sheet-mini-label" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">' + (evt.isBreak ? 'Break' : 'From Audience') + '</span></td>';
     }
     html += '<td><div class="day-sheet-status-stack">';
+    html += '<span class="day-sheet-badge day-sheet-badge-track day-sheet-badge-track-' + esc(trackStatus.tone) + '" title="' + esc(trackStatus.title) + '">' + esc(trackStatus.label) + '</span>';
     html += '<span class="day-sheet-duration">' + esc(formatDuration(computeDuration(evt))) + '</span>';
     if (overlapNames.length > 0) {
       html += '<span class="day-sheet-badge warn" title="' + esc('Overlaps with ' + overlapNames.join(', ')) + '">Overlap</span>';
     }
     html += '</div></td>';
     html += '<td><div class="day-sheet-row-actions">';
-    html += '<button class="btn day-sheet-open-editor" data-event-id="' + esc(evt.id) + '">Details</button>';
     html += '<button class="btn day-sheet-delete-event" data-event-id="' + esc(evt.id) + '" data-delete-label="Delete">Delete</button>';
     html += '</div></td>';
     html += '</tr>';
@@ -639,9 +679,13 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
       html += '<tr class="day-sheet-details-row" data-event-id="' + esc(evt.id) + '">';
       html += '<td colspan="10">';
       html += '<div class="day-sheet-details">';
+      html += '<div class="day-sheet-details-toolbar">';
+      html += '<div class="day-sheet-details-copy">Use <strong>Audience</strong> for the group or section this event belongs to. Use <strong>Specific People</strong> only for named exceptions inside that audience.</div>';
+      html += '<button class="btn day-sheet-open-editor" data-event-id="' + esc(evt.id) + '">Open Full Details</button>';
+      html += '</div>';
       html += '<div class="day-sheet-details-grid">';
       html += '<div class="day-sheet-detail-field day-sheet-detail-wide">';
-      html += '<label>Attendees</label>';
+      html += '<label>Specific People</label>';
       html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda">';
       html += '</div>';
       html += '<div class="day-sheet-detail-field">';
@@ -871,19 +915,19 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '</div>';
 
   // Group
-  html += '<label>Who Sees It</label>';
+  html += '<label>Audience</label>';
   html += '<select id="insp-evt-group"' + disabledAttr + '>';
   html += '<option value="">-- None --</option>';
   groups.forEach(g => {
     html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>';
   });
   html += '</select>';
-  html += '<p class="insp-hint">Primary audiences automatically place this event in the main track. Supporting or unassigned events stay in the side track unless you turn on <strong>Main Track</strong> below.</p>';
+  html += '<p class="insp-hint">Use <strong>Audience</strong> for the group or section this event belongs to. Primary audiences automatically place this event in the main track. Supporting or unassigned events stay in the side track unless you turn on <strong>Main Track</strong> below.</p>';
 
-  // Attendees
-  html += '<label>Attendees</label>';
+  // Specific People
+  html += '<label>Specific People</label>';
   html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda"' + textReadOnly + '>';
-  html += '<p class="insp-hint">Specific individuals. Shows as "WHO:" on the band, or "+ names" when a group is already assigned. In tight spaces, names truncate with a footnote in Notes.</p>';
+  html += '<p class="insp-hint">Optional named exceptions within the selected audience. Shows as "WHO:" on the band, or "+ names" when an audience is already assigned. In tight spaces, names truncate with a footnote in Notes.</p>';
 
   // Description
   html += '<label>Description</label>';

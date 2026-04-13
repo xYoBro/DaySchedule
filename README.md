@@ -29,7 +29,8 @@ DaySchedule remembers that folder connection for the current browser.
 3. If the schedule opens in read-only mode, click `Edit`.
    When you are finished, click `Done Editing` to hand it off clearly.
 4. Make your changes.
-   `Audience` usually controls placement: `Primary` groups go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`.
+   `Audience` means the group or section this event belongs to. `Primary` audiences go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`.
+   `Specific People` is only for named exceptions inside that audience.
 5. Wait for `Saved` in the toolbar before handing off to the next person.
 6. Return to the library when you are done.
 
@@ -79,6 +80,10 @@ The recommended workflow is no. Have one person edit at a time per schedule, the
 ### Why did Main Track change when I changed Audience?
 
 That is expected. `Primary` audiences automatically place the event in the main track. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track` as an override.
+
+### What is the difference between Audience and Specific People?
+
+`Audience` is the group, section, or shop the event belongs to. `Specific People` is only for named exceptions or callouts inside that audience.
 
 ### What if I do not see someone else's changes?
 

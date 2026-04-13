@@ -953,9 +953,26 @@ body {
 }
 .editor-access-bar[hidden] { display: none; }
 .editor-access-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   color: #334155;
   line-height: 1.5;
+}
+.editor-access-mode {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+}
+.editor-access-message {
+  font-weight: 500;
 }
 .editor-access-actions {
   display: flex;
@@ -964,21 +981,36 @@ body {
 }
 .editor-access-editing {
   background: #edf7ee;
+  border-bottom-color: #cfe6d3;
 }
 .editor-access-editing .editor-access-text {
   color: #1f5f33;
 }
+.editor-access-editing .editor-access-mode {
+  background: #1f7a3e;
+  color: white;
+}
 .editor-access-readonly {
   background: #fff8e1;
+  border-bottom-color: #f3d88b;
 }
 .editor-access-readonly .editor-access-text {
   color: #7a4f01;
 }
+.editor-access-readonly .editor-access-mode {
+  background: #b56a00;
+  color: white;
+}
 .editor-access-available {
   background: #eef4ff;
+  border-bottom-color: #cadcff;
 }
 .editor-access-available .editor-access-text {
   color: #21467a;
+}
+.editor-access-available .editor-access-mode {
+  background: #2558a8;
+  color: white;
 }
 
 /* ── Day Tabs ── */
@@ -1243,6 +1275,30 @@ body {
   flex-direction: column;
   gap: 3px;
 }
+.day-sheet-badge-track {
+  letter-spacing: 0.15px;
+  text-transform: none;
+}
+.day-sheet-badge-track-primary {
+  color: #1e5f32;
+  background: rgba(26, 122, 64, 0.12);
+}
+.day-sheet-badge-track-supporting {
+  color: #4b5563;
+  background: rgba(74, 85, 104, 0.12);
+}
+.day-sheet-badge-track-override {
+  color: #2558a8;
+  background: rgba(37, 88, 168, 0.12);
+}
+.day-sheet-badge-track-break {
+  color: #7a4f01;
+  background: rgba(181, 106, 0, 0.12);
+}
+.day-sheet-badge-track-none {
+  color: #6b7280;
+  background: rgba(107, 114, 128, 0.1);
+}
 .day-sheet-duration {
   font-size: 10px;
   color: var(--chrome-text-secondary);
@@ -1283,6 +1339,23 @@ body {
 }
 .day-sheet-details {
   padding: 0 0 6px;
+}
+.day-sheet-details-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 0 8px;
+}
+.day-sheet-details-copy {
+  font-size: 10px;
+  color: var(--chrome-text-secondary);
+  line-height: 1.45;
+}
+.day-sheet-details-toolbar .btn {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 10px;
 }
 .day-sheet-details-grid {
   display: grid;
@@ -1451,11 +1524,31 @@ body {
 
 .settings-export-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 10px;
   margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--chrome-border);
+  padding: 12px;
+  border: 1px dashed var(--chrome-border);
+  border-radius: 8px;
+  background: var(--chrome-toolbar);
+}
+
+.settings-export-copy {
+  min-width: 0;
+}
+
+.settings-export-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.45px;
+  text-transform: uppercase;
+  color: var(--chrome-text-secondary);
+  margin-bottom: 3px;
+}
+
+.settings-export-btn {
+  white-space: nowrap;
 }
 
 .settings-export-hint {
@@ -1517,6 +1610,9 @@ body {
   .editor-access-actions {
     width: 100%;
   }
+  .editor-access-text {
+    gap: 6px;
+  }
   .library-item {
     align-items: flex-start;
   }
@@ -1542,6 +1638,10 @@ body {
   }
   .day-sheet-details-grid {
     grid-template-columns: 1fr;
+  }
+  .day-sheet-details-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

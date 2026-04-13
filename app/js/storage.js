@@ -432,18 +432,23 @@ function updateEditorAccessBar(status) {
   let text = '';
   let actions = '';
   if (status.state === 'mine' && status.lock) {
-    text = 'Editing as ' + esc(status.lock.ownerName || getUserName() || 'You')
-      + '. Lock refreshes automatically until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.';
+    text = '<span class="editor-access-mode">Editing</span>'
+      + '<span class="editor-access-message">You are editing as '
+      + esc(status.lock.ownerName || getUserName() || 'You')
+      + '. Lock refreshes automatically until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.</span>';
     actions = '<button class="btn" id="editorReleaseBtn">Done Editing</button>';
     bar.className = 'editor-access-bar editor-access-editing';
   } else if (status.state === 'locked' && status.lock) {
-    text = 'Read-only. Locked by ' + esc(status.lock.ownerName || 'another editor')
-      + ' until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.';
+    text = '<span class="editor-access-mode">Locked by '
+      + esc(status.lock.ownerName || 'another editor')
+      + '</span><span class="editor-access-message">Viewing only until '
+      + esc(formatLockExpiry(status.lock.expiresAt)) + '.</span>';
     actions = '<button class="btn" id="editorRefreshLockBtn">Check Again</button>'
       + '<button class="btn btn-danger" id="editorTakeOverBtn">Take Over</button>';
     bar.className = 'editor-access-bar editor-access-readonly';
   } else {
-    text = 'Read-only. This schedule is available to edit. Click Edit before making changes.';
+    text = '<span class="editor-access-mode">Viewing</span>'
+      + '<span class="editor-access-message">This schedule is open in read-only mode. Click Edit to make changes.</span>';
     actions = '<button class="btn btn-primary" id="editorClaimBtn">Edit</button>';
     bar.className = 'editor-access-bar editor-access-available';
   }

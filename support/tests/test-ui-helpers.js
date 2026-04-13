@@ -94,7 +94,7 @@ function resetUiHarnessState() {
   _dirty = false;
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
-  _settingsTab = 'general';
+  _settingsAdvancedOpen = false;
   _daySheetExpandedEventIds = {};
   _versionSaveMode = false;
   _contextMenuTarget = null;
@@ -117,6 +117,12 @@ function resetUiHarnessState() {
   document.getElementById('tbTitle').value = '';
   document.getElementById('saveIndicator').textContent = '';
   document.getElementById('saveIndicator').className = 'save-status';
+  const accessBar = document.getElementById('editorAccessBar');
+  if (accessBar) accessBar.hidden = true;
+  const accessText = document.getElementById('editorAccessText');
+  if (accessText) accessText.innerHTML = '';
+  const accessActions = document.getElementById('editorAccessActions');
+  if (accessActions) accessActions.innerHTML = '';
   document.getElementById('dayTabs').innerHTML = '';
   document.getElementById('scheduleContainer').innerHTML = '';
   document.getElementById('inspectorPanel').innerHTML = '';
