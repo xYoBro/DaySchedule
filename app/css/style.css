@@ -2273,6 +2273,7 @@ body {
   display: flex;
   flex-direction: column;
   font-size: 9px;
+  padding-top: 2px;
 }
 .grid-header, .grid-row, .grid-banner {
   display: grid;
@@ -2332,11 +2333,15 @@ body {
 .grid-cell-time {
   flex: 0 0 auto;
   white-space: nowrap;
-  font-size: 7.25px;
+  font-size: 7.15px;
   font-weight: 600;
   color: var(--sch-text-secondary);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+}
+.grid-banner-time {
+  font-size: 7px;
+  color: var(--sch-text-muted);
 }
 .grid-banner-meta,
 .grid-cell-meta-line {
@@ -2445,11 +2450,15 @@ body {
 .cards-event-time {
   flex: 0 0 auto;
   white-space: nowrap;
-  font-size: 7.25px;
+  font-size: 7.15px;
   font-weight: 600;
   color: var(--sch-text-secondary);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
+}
+.cards-shared-time {
+  font-size: 7px;
+  color: var(--sch-text-muted);
 }
 .cards-shared-meta,
 .cards-event-meta {
