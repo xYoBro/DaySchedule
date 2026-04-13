@@ -49,6 +49,13 @@ function renderDayBody_grid(dayId) {
   // CSS grid needs explicit column count
   const colCount = activeGroups.length;
   let html = '<div class="grid-schedule" style="--grid-cols:' + colCount + ';">';
+  const overlapWarnings = getGridLaneOverlapWarnings(activeGroups, groupEvents);
+
+  if (overlapWarnings.length > 0) {
+    html += '<div class="grid-view-note">';
+    html += '<strong>Grid view warning:</strong> ' + esc(summarizeGridOverlapWarnings(overlapWarnings));
+    html += '</div>';
+  }
 
   // Column headers
   html += '<div class="grid-header">';
@@ -61,7 +68,6 @@ function renderDayBody_grid(dayId) {
   // Rows
   for (let i = 0; i < timeSlots.length - 1; i++) {
     const slotStart = timeSlots[i];
-    const slotEnd = timeSlots[i + 1];
 
     // Check for shared event starting at this time
     const shared = sharedEvents.find(e => e.startTime === slotStart);
@@ -85,45 +91,94 @@ function renderDayBody_grid(dayId) {
       html += '</div>';
       html += '</div>';
       html += '</div>';
-      continue;
     }
 
-    // Group cells
-    html += '<div class="grid-row">';
-    html += '<div class="grid-time-col">' + esc(slotStart) + '</div>';
-    activeGroups.forEach(g => {
-      const evt = groupEvents.find(e =>
-        e.groupId === g.id &&
-        timeToMinutes(e.startTime) <= timeToMinutes(slotStart) &&
-        timeToMinutes(e.endTime) > timeToMinutes(slotStart)
-      );
-      if (evt && evt.startTime === slotStart) {
-        // Event starts in this slot
-        html += '<div class="grid-cell" style="border-top:2px solid ' + esc(g.color) + ';" data-event-id="' + esc(evt.id) + '">';
-        html += '<div class="grid-cell-head">';
-        html += '<div class="grid-cell-title">' + esc(evt.title) + '</div>';
-        html += '<div class="grid-cell-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
-        html += '</div>';
-        const meta = [];
-        if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
-        if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
-        if (meta.length > 0) {
-          html += '<div class="grid-cell-meta-line">' + meta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
-        }
-        if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
-        if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
-        html += '</div>';
-      } else if (evt) {
-        // Continuation cell
-        html += '<div class="grid-cell grid-cell-cont" data-event-id="' + esc(evt.id) + '"></div>';
-      } else {
-        html += '<div class="grid-cell grid-cell-empty"></div>';
-      }
-    });
-    html += '</div>';
+    const groupRow = renderGridRow(slotStart, activeGroups, groupEvents);
+    if (!shared || groupRow.hasGroupActivity) {
+      html += groupRow.html;
+    }
   }
 
   html += '</div>';
   if (notes.length > 0) html += renderNotes(notes);
   return html;
+}
+
+function renderGridRow(slotStart, activeGroups, groupEvents) {
+  const slotMinutes = timeToMinutes(slotStart);
+  let hasGroupActivity = false;
+  let html = '<div class="grid-row">';
+  html += '<div class="grid-time-col">' + esc(slotStart) + '</div>';
+
+  activeGroups.forEach(g => {
+    const evt = groupEvents.find(e =>
+      e.groupId === g.id &&
+      timeToMinutes(e.startTime) <= slotMinutes &&
+      timeToMinutes(e.endTime) > slotMinutes
+    );
+
+    if (evt) hasGroupActivity = true;
+
+    if (evt && evt.startTime === slotStart) {
+      html += '<div class="grid-cell" style="border-top:2px solid ' + esc(g.color) + ';" data-event-id="' + esc(evt.id) + '">';
+      html += '<div class="grid-cell-head">';
+      html += '<div class="grid-cell-title">' + esc(evt.title) + '</div>';
+      html += '<div class="grid-cell-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
+      html += '</div>';
+      const meta = [];
+      if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
+      if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
+      if (meta.length > 0) {
+        html += '<div class="grid-cell-meta-line">' + meta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
+      }
+      if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
+      if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
+      html += '</div>';
+      return;
+    }
+
+    if (evt) {
+      html += '<div class="grid-cell grid-cell-cont" data-event-id="' + esc(evt.id) + '"></div>';
+      return;
+    }
+
+    html += '<div class="grid-cell grid-cell-empty"></div>';
+  });
+
+  html += '</div>';
+  return { html, hasGroupActivity };
+}
+
+function getGridLaneOverlapWarnings(activeGroups, groupEvents) {
+  const warnings = [];
+
+  activeGroups.forEach(group => {
+    const eventsForGroup = groupEvents
+      .filter(evt => evt.groupId === group.id)
+      .slice()
+      .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+
+    for (let i = 0; i < eventsForGroup.length; i++) {
+      for (let j = i + 1; j < eventsForGroup.length; j++) {
+        const current = eventsForGroup[i];
+        const next = eventsForGroup[j];
+        if (timeToMinutes(next.startTime) >= timeToMinutes(current.endTime)) break;
+        warnings.push({
+          groupName: group.name,
+          titles: [current.title, next.title],
+        });
+      }
+    }
+  });
+
+  return warnings;
+}
+
+function summarizeGridOverlapWarnings(warnings) {
+  const first = warnings[0];
+  const pair = first.titles.join(' and ');
+  if (warnings.length === 1) {
+    return pair + ' overlap in ' + first.groupName + '. Use Cards or Phases to review both events.';
+  }
+  return pair + ' overlap in ' + first.groupName + ', plus ' + (warnings.length - 1) + ' more overlap' + (warnings.length === 2 ? '' : 's') + '. Use Cards or Phases to review all events.';
 }

@@ -98,6 +98,73 @@ describe('UI Harness — render and skins', () => {
     assert(document.querySelector('.grid-cell-cont[data-event-id]'), 'grid continuation cells should keep event ids');
   });
 
+  it('grid skin keeps limited events visible when a shared event starts in the same slot', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'grid' });
+    Store.addEvent(seeded.day1.id, {
+      title: 'Shared Start Drill',
+      startTime: '0700',
+      endTime: '0715',
+      description: 'Short maintenance drill under formation.',
+      location: 'Hangar 4',
+      groupId: 'grp_mx',
+    });
+
+    renderDay(seeded.day1.id);
+
+    assert(
+      document.getElementById('scheduleContainer').textContent.includes('Shared Start Drill'),
+      'grid should still show group events that start under a shared banner'
+    );
+  });
+
+  it('every layout exposes every sample event at least once', () => {
+    resetUiHarnessState();
+    loadSampleData();
+    const dayId = Store.getDays()[0].id;
+    const fileData = {
+      name: Store.getTitle(),
+      current: Store.getPersistedState(),
+      versions: [],
+      theme: { skin: 'bands', palette: 'classic' },
+    };
+    setCurrentScheduleFileData(fileData);
+
+    SKIN_NAMES.forEach(skin => {
+      fileData.theme.skin = skin;
+      renderDay(dayId);
+
+      const renderedIds = new Set(Array.from(document.querySelectorAll('#scheduleContainer [data-event-id]'))
+        .map(node => node.getAttribute('data-event-id')));
+
+      assert.equal(renderedIds.size, Store.getEvents(dayId).length, skin + ' should expose all sample events');
+    });
+
+    fileData.theme.skin = 'grid';
+    renderDay(dayId);
+    assert(document.getElementById('scheduleContainer').textContent.includes('Tool Inventory'), 'grid should show short maintenance events that begin under shared banners');
+    assert(document.getElementById('scheduleContainer').textContent.includes('SABC Refresher'), 'grid should show short medical events that begin under shared banners');
+  });
+
+  it('grid warns when overlapping events share the same group lane', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'grid' });
+    Store.addEvent(seeded.day1.id, {
+      title: 'Second Qualification Block',
+      startTime: '0845',
+      endTime: '0945',
+      description: 'Intentional overlap to verify warning copy.',
+      location: 'Range 2',
+      groupId: 'grp_chiefs',
+    });
+
+    renderDay(seeded.day1.id);
+
+    const note = document.querySelector('.grid-view-note');
+    assert(note, 'grid should warn when one lane contains overlapping events');
+    assert(note.textContent.includes('Use Cards or Phases'), 'grid warning should point to layouts that show every event');
+  });
+
   it('uses contrasting text colors for group-colored labels', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'grid' });

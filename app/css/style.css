@@ -2275,6 +2275,19 @@ body {
   font-size: 9px;
   padding-top: 2px;
 }
+.grid-view-note {
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  border: 1px solid rgba(176, 106, 16, 0.2);
+  border-radius: 6px;
+  background: rgba(176, 106, 16, 0.08);
+  color: var(--sch-text-secondary);
+  font-size: 7.9px;
+  line-height: 1.35;
+}
+.grid-view-note strong {
+  color: var(--sch-text);
+}
 .grid-header, .grid-row, .grid-banner {
   display: grid;
   grid-template-columns: 48px repeat(var(--grid-cols, 4), 1fr);
