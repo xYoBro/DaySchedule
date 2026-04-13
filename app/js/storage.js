@@ -31,6 +31,15 @@
  * EXPORTS — Save indicator:
  *   updateSaveIndicator(state) — state: 'dirty'|'saving'|'saved'|'disconnected'
  *
+ * EXPORTS — Edit access / lock lease:
+ *   getScheduleLockStatus(fileName)      → Promise<{state, lock}>
+ *   syncCurrentScheduleAccess()          → Promise<{state, lock}> — refreshes current file mode
+ *   claimCurrentScheduleLock()           → Promise<{ok, state, lock}>
+ *   takeOverCurrentScheduleLock()        → Promise<{ok, state, lock}>
+ *   releaseCurrentScheduleLock()         → Promise<boolean>
+ *   isCurrentScheduleEditable()          → boolean
+ *   getCurrentScheduleLock()             → object|null
+ *
  * EXPORTS — User identity:
  *   getUserName()     → string
  *   setUserName(name)
@@ -54,6 +63,7 @@
  *   #staleWarningModal  — stale-data warning modal overlay
  *   #userNameModal      — user name prompt modal overlay
  *   #syncConfirmModal   — sync confirmation modal overlay
+ *   #lockTakeoverModal  — lock takeover confirmation modal overlay
  *
  * CONSUMED BY:
  *   persistence.js — markDirty() (from sessionSave)
@@ -79,12 +89,18 @@ const STORAGE_DB_VERSION = 1;
 const STORAGE_STORE_NAME = 'handles';
 const STORAGE_HANDLE_KEY = 'dataDir';
 const AUTOSAVE_DELAY = 2000;
+const LOCK_LEASE_MS = 20 * 60 * 1000;
+const LOCK_REFRESH_MS = 60 * 1000;
+const LOCK_SESSION_KEY = 'dayschedule_lock_session';
 
 let _dirHandle = null;
 let _autosaveTimer = null;
 let _currentFileName = null;
 let _lastKnownSavedAt = null;
 let _dirty = false;
+let _lockRefreshTimer = null;
+let _currentScheduleLock = null;
+let _editorReadOnly = true;
 
 // ── Slug generation ────────────────────────────────────────────────────────
 
@@ -187,10 +203,10 @@ async function promptForDirectory() {
       if (fileCount === 0) verified = true;
     }
     if (!verified) {
-      toast("That doesn't look like the data folder — it should be the 'data' folder inside DaySchedule.");
+      toast("That doesn't look like the shared schedule folder. In most setups, choose the 'app/data' folder inside the shared DaySchedule copy.");
       return null;
     }
-    // Confirm the user understands this must be the synced folder
+    // Confirm the user understands this must be the shared team folder
     const confirmed = await showSyncConfirmation();
     if (!confirmed) return null;
 
@@ -225,6 +241,63 @@ function showSyncConfirmation() {
   });
 }
 
+function showLockTakeoverConfirmation(lock) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('lockTakeoverModal');
+    if (!overlay || !lock) { resolve(false); return; }
+
+    const ownerName = lock.ownerName || 'another editor';
+    const content = overlay.querySelector('.modal');
+    content.innerHTML = '<h2>Take over edit access?</h2>'
+      + '<p class="takeover-desc">This schedule is currently locked by <strong>' + esc(ownerName)
+      + '</strong> until <strong>' + esc(formatLockExpiry(lock.expiresAt))
+      + '</strong>. Use takeover only if that editor is unavailable or has already handed the schedule off.</p>'
+      + '<div class="takeover-list">'
+      + '<div class="takeover-item takeover-warn">If ' + esc(ownerName) + ' is still editing, their unsaved work may be stranded when you take over.</div>'
+      + '<div class="takeover-item takeover-info">This action is intended for a lead or supervisor who needs to unblock the team.</div>'
+      + '</div>'
+      + '<label class="takeover-check"><input type="checkbox" id="takeoverAcknowledge"> I confirmed the current editor is unavailable or the handoff is complete.</label>'
+      + '<div class="modal-actions">'
+      + '<button class="btn" id="takeoverCancelBtn">Cancel</button>'
+      + '<button class="btn btn-danger" id="takeoverConfirmBtn" disabled>Take Over Lock</button>'
+      + '</div>';
+
+    const acknowledge = content.querySelector('#takeoverAcknowledge');
+    const confirmBtn = content.querySelector('#takeoverConfirmBtn');
+    const cancelBtn = content.querySelector('#takeoverCancelBtn');
+
+    const cleanup = (result) => {
+      overlay.classList.remove('active');
+      overlay.removeEventListener('click', onBackdropClick);
+      document.removeEventListener('keydown', onKeyDown, true);
+      acknowledge.onchange = null;
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(result);
+    };
+
+    const onBackdropClick = (e) => {
+      if (e.target === overlay) cleanup(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      cleanup(false);
+    };
+
+    acknowledge.onchange = () => {
+      confirmBtn.disabled = !acknowledge.checked;
+    };
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+
+    overlay.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown, true);
+    overlay.classList.add('active');
+  });
+}
+
 async function restoreDirectoryHandle() {
   const handle = await loadDirectoryHandle();
   if (!handle) return null;
@@ -247,13 +320,342 @@ function hasFSAPI() {
   return typeof window.showDirectoryPicker === 'function';
 }
 
+// ── Edit access / lease locks ───────────────────────────────────────────────
+
+function isLockFileName(fileName) {
+  return /\.lock\.json$/i.test(fileName || '');
+}
+
+function getLockFileName(fileName) {
+  return (fileName || '').replace(/\.json$/i, '.lock.json');
+}
+
+function getLockSessionId() {
+  try {
+    let sessionId = sessionStorage.getItem(LOCK_SESSION_KEY);
+    if (!sessionId) {
+      sessionId = generateId('locksession');
+      sessionStorage.setItem(LOCK_SESSION_KEY, sessionId);
+    }
+    return sessionId;
+  } catch (e) {
+    return 'locksession_fallback';
+  }
+}
+
+function buildScheduleLock(fileName) {
+  const now = Date.now();
+  const nowIso = new Date(now).toISOString();
+  return {
+    scheduleFile: fileName,
+    ownerName: getUserName() || 'Unknown editor',
+    sessionId: getLockSessionId(),
+    token: generateId('lock'),
+    acquiredAt: nowIso,
+    refreshedAt: nowIso,
+    expiresAt: new Date(now + LOCK_LEASE_MS).toISOString(),
+  };
+}
+
+function isScheduleLockExpired(lock) {
+  if (!lock || !lock.expiresAt) return true;
+  return Date.now() >= new Date(lock.expiresAt).getTime();
+}
+
+function isOwnScheduleLock(lock) {
+  return !!lock && lock.sessionId === getLockSessionId();
+}
+
+function formatLockExpiry(expiresAt) {
+  if (!expiresAt) return 'soon';
+  return new Date(expiresAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function getLostLockMessage(status) {
+  if (status && status.state === 'locked' && status.lock) {
+    return 'Edit lock was taken over by ' + (status.lock.ownerName || 'another editor') + '. DaySchedule switched to read-only.';
+  }
+  return 'Edit lock is no longer active. Claim edit access again to keep editing.';
+}
+
+async function readScheduleLock(fileName) {
+  if (!_dirHandle || !fileName) return null;
+  const lock = await readScheduleFile(getLockFileName(fileName), { suppressErrors: true });
+  if (!lock || lock.scheduleFile !== fileName) return null;
+  return lock;
+}
+
+async function getScheduleLockStatus(fileName) {
+  if (!fileName || !_dirHandle) return { state: 'available', lock: null };
+  const lock = await readScheduleLock(fileName);
+  if (!lock || isScheduleLockExpired(lock)) {
+    return { state: 'available', lock: lock || null };
+  }
+  if (isOwnScheduleLock(lock)) {
+    return { state: 'mine', lock };
+  }
+  return { state: 'locked', lock };
+}
+
+function stopLockRefreshTimer() {
+  if (_lockRefreshTimer) {
+    clearTimeout(_lockRefreshTimer);
+    _lockRefreshTimer = null;
+  }
+}
+
+function syncEditorChrome() {
+  const editable = isCurrentScheduleEditable();
+  document.body.classList.toggle('editor-readonly', !editable);
+
+  [
+    'addEventBtn',
+    'addNoteBtn',
+    'addDayBtn',
+    'daySheetBtn',
+    'settingsBtn',
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !editable;
+  });
+
+  const titleInput = document.getElementById('tbTitle');
+  if (titleInput) titleInput.disabled = !editable;
+}
+
+function updateEditorAccessBar(status) {
+  const bar = document.getElementById('editorAccessBar');
+  const textEl = document.getElementById('editorAccessText');
+  const actionsEl = document.getElementById('editorAccessActions');
+  if (!bar || !textEl || !actionsEl || !_currentFileName) return;
+
+  let text = '';
+  let actions = '';
+  if (status.state === 'mine' && status.lock) {
+    text = 'Editing as ' + esc(status.lock.ownerName || getUserName() || 'You')
+      + '. Lock refreshes automatically until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.';
+    actions = '<button class="btn" id="editorReleaseBtn">Release Edit Lock</button>';
+    bar.className = 'editor-access-bar editor-access-editing';
+  } else if (status.state === 'locked' && status.lock) {
+    text = 'Read-only. Locked by ' + esc(status.lock.ownerName || 'another editor')
+      + ' until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.';
+    actions = '<button class="btn" id="editorRefreshLockBtn">Check Again</button>'
+      + '<button class="btn btn-danger" id="editorTakeOverBtn">Take Over</button>';
+    bar.className = 'editor-access-bar editor-access-readonly';
+  } else {
+    text = 'Read-only. This schedule is available to edit. Claim it before making changes.';
+    actions = '<button class="btn btn-primary" id="editorClaimBtn">Edit This Schedule</button>';
+    bar.className = 'editor-access-bar editor-access-available';
+  }
+
+  textEl.textContent = '';
+  textEl.innerHTML = text;
+  actionsEl.innerHTML = actions;
+  bar.hidden = false;
+
+  const claimBtn = document.getElementById('editorClaimBtn');
+  if (claimBtn) {
+    claimBtn.onclick = async () => {
+      const result = await claimCurrentScheduleLock();
+      if (!result.ok && result.state === 'locked' && result.lock) {
+        toast((result.lock.ownerName || 'Another editor') + ' is editing right now.');
+      }
+    };
+  }
+
+  const refreshBtn = document.getElementById('editorRefreshLockBtn');
+  if (refreshBtn) refreshBtn.onclick = () => syncCurrentScheduleAccess();
+
+  const takeOverBtn = document.getElementById('editorTakeOverBtn');
+  if (takeOverBtn) {
+    takeOverBtn.onclick = async () => {
+      await takeOverCurrentScheduleLock();
+    };
+  }
+
+  const releaseBtn = document.getElementById('editorReleaseBtn');
+  if (releaseBtn) {
+    releaseBtn.onclick = async () => {
+      if (isDirty()) {
+        const saved = await saveCurrentSchedule();
+        if (!saved) return;
+      }
+      await releaseCurrentScheduleLock();
+      await syncCurrentScheduleAccess();
+      renderInspector();
+    };
+  }
+}
+
+function applyCurrentScheduleAccess(status) {
+  stopLockRefreshTimer();
+  if (status.state === 'mine' && status.lock) {
+    _currentScheduleLock = status.lock;
+    _editorReadOnly = false;
+    _lockRefreshTimer = setTimeout(() => refreshCurrentScheduleLock(), LOCK_REFRESH_MS);
+  } else {
+    _currentScheduleLock = null;
+    _editorReadOnly = true;
+  }
+  syncEditorChrome();
+  updateEditorAccessBar(status);
+}
+
+async function syncCurrentScheduleAccess() {
+  if (!_currentFileName) {
+    _currentScheduleLock = null;
+    _editorReadOnly = true;
+    stopLockRefreshTimer();
+    const bar = document.getElementById('editorAccessBar');
+    if (bar) bar.hidden = true;
+    syncEditorChrome();
+    return { state: 'available', lock: null };
+  }
+  const status = await getScheduleLockStatus(_currentFileName);
+  applyCurrentScheduleAccess(status);
+  return status;
+}
+
+async function claimCurrentScheduleLock(options) {
+  if (!_currentFileName || !_dirHandle) return { ok: false, state: 'available', lock: null };
+  const existingStatus = await getScheduleLockStatus(_currentFileName);
+  if (existingStatus.state === 'mine' && existingStatus.lock) {
+    applyCurrentScheduleAccess(existingStatus);
+    return { ok: true, state: existingStatus.state, lock: existingStatus.lock };
+  }
+  if (existingStatus.state === 'locked' && (!options || !options.force)) {
+    applyCurrentScheduleAccess(existingStatus);
+    return { ok: false, state: existingStatus.state, lock: existingStatus.lock };
+  }
+  const nextLock = buildScheduleLock(_currentFileName);
+  const wrote = await writeScheduleFile(getLockFileName(_currentFileName), nextLock);
+  if (!wrote) {
+    await syncCurrentScheduleAccess();
+    return { ok: false, state: 'available', lock: null };
+  }
+  const confirmed = await readScheduleLock(_currentFileName);
+  if (!confirmed || confirmed.token !== nextLock.token) {
+    const raced = await getScheduleLockStatus(_currentFileName);
+    applyCurrentScheduleAccess(raced);
+    return { ok: false, state: raced.state, lock: raced.lock };
+  }
+  const status = { state: 'mine', lock: confirmed };
+  applyCurrentScheduleAccess(status);
+  renderActiveDay();
+  renderInspector();
+  if (!options || !options.silent) toast('Edit lock claimed');
+  return { ok: true, state: status.state, lock: status.lock };
+}
+
+async function takeOverCurrentScheduleLock(options) {
+  if (!_currentFileName || !_dirHandle) return { ok: false, state: 'available', lock: null };
+
+  const status = await getScheduleLockStatus(_currentFileName);
+  if (status.state === 'available' || !status.lock) {
+    return claimCurrentScheduleLock(options);
+  }
+  if (status.state === 'mine') {
+    applyCurrentScheduleAccess(status);
+    return { ok: true, state: status.state, lock: status.lock };
+  }
+
+  const confirmed = options && options.confirmed ? true : await showLockTakeoverConfirmation(status.lock);
+  if (!confirmed) {
+    applyCurrentScheduleAccess(status);
+    return { ok: false, state: status.state, lock: status.lock };
+  }
+
+  const result = await claimCurrentScheduleLock({ force: true, silent: true });
+  if (result.ok && (!options || !options.silent)) {
+    toast('Edit lock taken over from ' + (status.lock.ownerName || 'another editor'));
+  }
+  return result;
+}
+
+async function ensureCurrentScheduleLockOwnership() {
+  if (!isCurrentScheduleEditable()) return false;
+  if (!_currentFileName || !_dirHandle || !_currentScheduleLock) return false;
+
+  const lock = await readScheduleLock(_currentFileName);
+  if (lock && lock.token === _currentScheduleLock.token && isOwnScheduleLock(lock) && !isScheduleLockExpired(lock)) {
+    return true;
+  }
+
+  const status = await getScheduleLockStatus(_currentFileName);
+  applyCurrentScheduleAccess(status);
+  if (typeof closeDayEventSheetModal === 'function') closeDayEventSheetModal();
+  if (typeof renderInspector === 'function') renderInspector();
+  updateSaveIndicator(_dirty ? 'dirty' : 'saved');
+  toast(getLostLockMessage(status));
+  return false;
+}
+
+async function refreshCurrentScheduleLock() {
+  if (!_currentFileName || !_currentScheduleLock || !_dirHandle) return false;
+  const current = await readScheduleLock(_currentFileName);
+  if (!current || current.token !== _currentScheduleLock.token || !isOwnScheduleLock(current)) {
+    const status = await getScheduleLockStatus(_currentFileName);
+    applyCurrentScheduleAccess(status);
+    if (typeof closeDayEventSheetModal === 'function') closeDayEventSheetModal();
+    renderInspector();
+    toast(getLostLockMessage(status));
+    return false;
+  }
+  current.refreshedAt = new Date().toISOString();
+  current.expiresAt = new Date(Date.now() + LOCK_LEASE_MS).toISOString();
+  const ok = await writeScheduleFile(getLockFileName(_currentFileName), current);
+  if (!ok) {
+    const status = await getScheduleLockStatus(_currentFileName);
+    applyCurrentScheduleAccess(status);
+    if (typeof closeDayEventSheetModal === 'function') closeDayEventSheetModal();
+    renderInspector();
+    toast('Could not refresh the edit lock. DaySchedule switched to read-only.');
+    return false;
+  }
+  _currentScheduleLock = current;
+  _lockRefreshTimer = setTimeout(() => refreshCurrentScheduleLock(), LOCK_REFRESH_MS);
+  updateEditorAccessBar({ state: 'mine', lock: current });
+  return true;
+}
+
+async function releaseCurrentScheduleLock() {
+  stopLockRefreshTimer();
+  if (!_currentFileName || !_dirHandle || !_currentScheduleLock) {
+    _currentScheduleLock = null;
+    _editorReadOnly = true;
+    syncEditorChrome();
+    return true;
+  }
+  const fileName = _currentFileName;
+  const current = await readScheduleLock(fileName);
+  let ok = true;
+  if (current && current.token === _currentScheduleLock.token && isOwnScheduleLock(current)) {
+    ok = await deleteScheduleFile(getLockFileName(fileName));
+  }
+  _currentScheduleLock = null;
+  _editorReadOnly = true;
+  syncEditorChrome();
+  const bar = document.getElementById('editorAccessBar');
+  if (bar && fileName !== _currentFileName) bar.hidden = true;
+  return ok;
+}
+
+function isCurrentScheduleEditable() {
+  if (!_currentFileName) return true;
+  return !_editorReadOnly;
+}
+
+function getCurrentScheduleLock() {
+  return _currentScheduleLock;
+}
+
 // ── File I/O ───────────────────────────────────────────────────────────────
 
 async function listScheduleFiles() {
   if (!_dirHandle) return [];
   const files = [];
   for await (const [name, entry] of _dirHandle.entries()) {
-    if (entry.kind !== 'file' || !name.endsWith('.json')) continue;
+    if (entry.kind !== 'file' || !name.endsWith('.json') || isLockFileName(name)) continue;
     try {
       const file = await entry.getFile();
       const text = await file.text();
@@ -269,7 +671,7 @@ async function listScheduleFiles() {
   return files;
 }
 
-async function readScheduleFile(fileName) {
+async function readScheduleFile(fileName, options) {
   if (!_dirHandle) return null;
   try {
     const fileHandle = await _dirHandle.getFileHandle(fileName);
@@ -277,7 +679,9 @@ async function readScheduleFile(fileName) {
     const text = await file.text();
     return JSON.parse(text);
   } catch (e) {
-    console.warn('Failed to read schedule:', fileName, e);
+    if (!options || !options.suppressErrors) {
+      console.warn('Failed to read schedule:', fileName, e);
+    }
     return null;
   }
 }
@@ -322,12 +726,26 @@ async function renameScheduleFile(oldName, newName) {
   if (!deleted) {
     console.warn('Rename partial failure: new file written but old file remains:', oldName);
   }
+  const oldLockFile = getLockFileName(oldName);
+  const newLockFile = getLockFileName(newName);
+  const lockData = await readScheduleFile(oldLockFile, { suppressErrors: true });
+  if (lockData) {
+    lockData.scheduleFile = newName;
+    const wroteLock = await writeScheduleFile(newLockFile, lockData);
+    if (wroteLock) {
+      await deleteScheduleFile(oldLockFile);
+      if (_currentScheduleLock && _currentScheduleLock.token === lockData.token) {
+        _currentScheduleLock = lockData;
+      }
+    }
+  }
   return deleted;
 }
 
 // ── Auto-save engine ───────────────────────────────────────────────────────
 
 function markDirty() {
+  if (!isCurrentScheduleEditable()) return;
   _dirty = true;
   updateSaveIndicator('dirty');
   clearTimeout(_autosaveTimer);
@@ -340,7 +758,10 @@ async function autoSave() {
 }
 
 async function saveCurrentSchedule() {
+  if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
+  const ownsLock = await ensureCurrentScheduleLockOwnership();
+  if (!ownsLock) return false;
   updateSaveIndicator('saving');
 
   const userName = getUserName();
@@ -377,7 +798,7 @@ async function saveCurrentSchedule() {
       memFileData.lastSavedBy = userName;
     }
     updateSaveIndicator('saved');
-    sessionSave();
+    sessionSave({ skipDirty: true });
   } else {
     updateSaveIndicator('dirty');
   }
@@ -385,6 +806,7 @@ async function saveCurrentSchedule() {
 }
 
 function forceSave() {
+  if (!isCurrentScheduleEditable()) { toast('This schedule is read-only until you claim edit access.'); return; }
   clearTimeout(_autosaveTimer);
   saveCurrentSchedule().then(ok => {
     if (ok) toast('Saved');
@@ -395,6 +817,13 @@ function setCurrentFile(fileName, lastSavedAt) {
   _currentFileName = fileName;
   _lastKnownSavedAt = lastSavedAt || null;
   _dirty = false;
+  if (!fileName) {
+    _currentScheduleLock = null;
+    _editorReadOnly = true;
+    stopLockRefreshTimer();
+    const bar = document.getElementById('editorAccessBar');
+    if (bar) bar.hidden = true;
+  }
   updateSaveIndicator('saved');
 }
 
@@ -523,7 +952,10 @@ function promptUserName() {
 // ── Version management ─────────────────────────────────────────────────────
 
 async function createVersion(versionName) {
+  if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
+  const ownsLock = await ensureCurrentScheduleLockOwnership();
+  if (!ownsLock) return false;
   const fileData = await readScheduleFile(_currentFileName);
   if (!fileData) return false;
 
@@ -551,7 +983,10 @@ async function createVersion(versionName) {
 }
 
 async function restoreVersion(versionIndex) {
+  if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
+  const ownsLock = await ensureCurrentScheduleLockOwnership();
+  if (!ownsLock) return false;
   const fileData = await readScheduleFile(_currentFileName);
   if (!fileData || !fileData.versions || !fileData.versions[versionIndex]) return false;
 
@@ -605,4 +1040,8 @@ document.addEventListener('click', e => {
       }
     });
   }
+});
+
+window.addEventListener('pagehide', () => {
+  if (_currentScheduleLock && _currentFileName) releaseCurrentScheduleLock();
 });

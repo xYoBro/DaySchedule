@@ -18,28 +18,29 @@
     <div class="library-body">
       <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
         <div class="library-connect-icon">&#x1F4C1;</div>
-        <div class="library-connect-title">Connect your data folder</div>
+        <div class="library-connect-title">Connect the shared schedule folder</div>
+        <div class="library-connect-summary">Use the same shared DaySchedule copy as the rest of your team. DaySchedule remembers this connection for this browser.</div>
         <div class="library-connect-steps">
           <div class="library-connect-step">
             <div class="library-connect-step-num">1</div>
-            <div class="library-connect-step-text">In Teams, go to the channel with DaySchedule and click <strong>Sync</strong> (not Download). This creates a live-synced folder on your computer.</div>
+            <div class="library-connect-step-text">Open the <strong>shared DaySchedule copy</strong> your team uses on this computer. If your team reaches it through SharePoint or Teams, use the shared copy there instead of a personal download.</div>
           </div>
           <div class="library-connect-step">
             <div class="library-connect-step-num">2</div>
-            <div class="library-connect-step-text">Open <strong>index.html</strong> from the synced folder (usually under OneDrive in File Explorer).</div>
+            <div class="library-connect-step-text">Launch DaySchedule from that shared copy.</div>
           </div>
           <div class="library-connect-step">
             <div class="library-connect-step-num">3</div>
-            <div class="library-connect-step-text">Click the button below and pick the <code>data</code> folder inside <code>app</code>. This is where schedules are saved.</div>
+            <div class="library-connect-step-text">Click the button below and choose the folder where schedule files live. In most shared copies, this is <code>app/data</code>.</div>
           </div>
         </div>
-        <button class="btn btn-primary" id="libraryConnectBtn">Choose Data Folder</button>
-        <div class="library-connect-hint">You'll only need to do this once per browser.</div>
-        <div class="library-connect-warn">Do not use a downloaded copy. Changes made outside the synced folder will not be shared with your team.</div>
-        <div class="library-connect-local">Using this locally without Teams? Just pick the <code>data</code> folder wherever you saved DaySchedule. Everything works the same &mdash; the Teams steps above are only needed for shared access.</div>
+        <button class="btn btn-primary" id="libraryConnectBtn">Connect Shared Folder</button>
+        <div class="library-connect-hint">First-time setup only. After that, open the same shared copy whenever you need to edit.</div>
+        <div class="library-connect-warn">Do not work from a downloaded, zipped, or personal copy. Changes made there stay local and can drift from the team copy.</div>
+        <div class="library-connect-local">If you are not sure which shared copy is correct, ask your team lead or admin before editing.</div>
       </div>
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
-        Auto-save requires Chrome or Edge. You're in manual mode — use the Save button to download your data.
+        Auto-save requires Chrome or Edge. In other browsers, DaySchedule falls back to manual <strong>Save to File</strong>.
       </div>
       <button class="btn btn-primary library-new-btn" id="libraryNewBtn">+ New Schedule</button>
       <div class="library-new-inline" id="libraryNewInline" style="display:none;">
@@ -81,6 +82,11 @@
     </div>
   </div>
 
+  <div class="editor-access-bar" id="editorAccessBar" hidden>
+    <div class="editor-access-text" id="editorAccessText"></div>
+    <div class="editor-access-actions" id="editorAccessActions"></div>
+  </div>
+
   <!-- App Body -->
   <div class="app-body">
     <!-- Schedule Preview -->
@@ -102,12 +108,20 @@
       <div class="help-section">
         <div class="help-section-title">Getting Started</div>
         <div class="help-item">
+          <div class="help-item-label">Open the shared copy</div>
+          <div class="help-item-desc">Always open DaySchedule from the shared team copy, not from Downloads, Desktop, email, or a ZIP. The shared copy is the one everyone should use.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Connect once per browser</div>
+          <div class="help-item-desc">On first launch, click <strong>Connect Shared Folder</strong> and choose the folder where schedule files live. In most setups, that folder is <code>app/data</code>.</div>
+        </div>
+        <div class="help-item">
           <div class="help-item-label">Create a schedule</div>
-          <div class="help-item-desc">From the library, tap <strong>+ New Schedule</strong>, give it a name, and start adding days and events.</div>
+          <div class="help-item-desc">From the library, click <strong>+ New Schedule</strong>, give it a name, and start adding days and events. New schedules open in edit mode automatically.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Edit events</div>
-          <div class="help-item-desc">Click any event on the schedule to open its properties in the inspector panel on the right.</div>
+          <div class="help-item-desc">Open the schedule, click <strong>Edit This Schedule</strong> if needed, then click any event on the schedule to open its properties in the inspector panel on the right.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Click the header</div>
@@ -116,18 +130,26 @@
       </div>
 
       <div class="help-section">
-        <div class="help-section-title">Saving &amp; Teams</div>
+        <div class="help-section-title">Saving &amp; Shared Editing</div>
         <div class="help-item">
           <div class="help-item-label">Auto-save</div>
           <div class="help-item-desc">Every change is automatically saved 2 seconds after you stop editing. Watch for <strong>Saved</strong> in the toolbar. You can also press <kbd>Ctrl</kbd>+<kbd>S</kbd> to save immediately.</div>
         </div>
         <div class="help-item">
-          <div class="help-item-label">Teams setup (important)</div>
-          <div class="help-item-desc">You must <strong>Sync</strong> the Teams folder &mdash; not Download it. In your Teams channel, click <strong>Files</strong> &rarr; <strong>Sync</strong>. This creates a live folder on your computer (usually under OneDrive). Open <code>index.html</code> from there. When the app asks for the data folder, pick it from the same synced location. Changes will automatically sync to everyone on the team.</div>
+          <div class="help-item-label">One editor at a time</div>
+          <div class="help-item-desc">Recommended team workflow: one person edits a schedule at a time. Use <strong>Edit This Schedule</strong> to claim editing, then wait for <strong>Saved</strong> before handing it off.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Take over only when needed</div>
+          <div class="help-item-desc">If the current editor is unavailable and the team needs immediate access, a lead can use <strong>Take Over</strong>. That action should only be used after confirming the handoff or that the current editor is no longer working.</div>
         </div>
         <div class="help-item help-item-warn">
-          <div class="help-item-label">What happens if I use a downloaded copy?</div>
-          <div class="help-item-desc">Your changes stay on your computer only. Nobody else will see them, and you won't see anyone else's changes. If someone else is working from the synced version, your work could be lost. Always use the synced folder.</div>
+          <div class="help-item-label">Avoid personal copies</div>
+          <div class="help-item-desc">If you edit a downloaded or personal copy, your changes stay there. Other people will keep working from the shared copy, and the two versions can drift apart.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Before handoff</div>
+          <div class="help-item-desc">If another person needs to edit after you, return to the library only after you see <strong>Saved</strong>. For major changes, save a named version first.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Versions</div>
@@ -147,6 +169,34 @@
       </div>
 
       <div class="help-section">
+        <div class="help-section-title">FAQ</div>
+        <div class="help-item">
+          <div class="help-item-label">Where should I open DaySchedule from?</div>
+          <div class="help-item-desc">Open it from the shared team copy every time. If your team reaches it through SharePoint or Teams, use that shared copy on your computer instead of downloading a separate copy.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">What folder do I pick?</div>
+          <div class="help-item-desc">Choose the folder where the schedule JSON files live. In most DaySchedule copies, that is <code>app/data</code>. If your team packaged it differently, choose the folder that already contains the saved schedules.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Can multiple people edit the same schedule at once?</div>
+          <div class="help-item-desc">The safest workflow is no. Have one person edit at a time per schedule, then hand off after the save indicator shows <strong>Saved</strong>.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">What if the last editor stepped away?</div>
+          <div class="help-item-desc">Edit access uses a lease. If the last editor stops refreshing it, the lock expires automatically and the next person can claim edit access. If the team lead needs in sooner, they can use <strong>Take Over</strong> after confirming the current editor is unavailable.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">What if I do not see someone else&rsquo;s changes?</div>
+          <div class="help-item-desc">Confirm you opened the shared copy, not a personal one. Then return to the library and reopen the schedule so DaySchedule reloads the latest file.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">What browser should I use?</div>
+          <div class="help-item-desc">Use Chrome or Edge for the full auto-save experience. Other browsers can still open the app, but saving falls back to manual <strong>Save to File</strong>.</div>
+        </div>
+      </div>
+
+      <div class="help-section">
         <div class="help-section-title">Tips</div>
         <div class="help-item">
           <div class="help-item-label">Duplicate a schedule</div>
@@ -155,14 +205,6 @@
         <div class="help-item">
           <div class="help-item-label">Audience groups</div>
           <div class="help-item-desc"><strong>Main</strong> groups get full-width bands on the schedule. <strong>Limited</strong> groups appear as concurrent side notes when they overlap with main events.</div>
-        </div>
-        <div class="help-item">
-          <div class="help-item-label">Use Chrome or Edge</div>
-          <div class="help-item-desc">Auto-save only works in Chrome and Edge. Other browsers fall back to manual download.</div>
-        </div>
-        <div class="help-item">
-          <div class="help-item-label">Using locally (no Teams)</div>
-          <div class="help-item-desc">Everything works without Teams. Just open <code>index.html</code> from wherever you saved DaySchedule and pick the <code>data</code> folder when prompted. The Teams sync steps only apply if you need shared access with others.</div>
         </div>
       </div>
 
@@ -175,17 +217,22 @@
   <!-- Sync Confirmation Modal -->
   <div class="modal-overlay" id="syncConfirmModal">
     <div class="modal sync-confirm-modal">
-      <h2>Confirm: Is this the synced folder?</h2>
-      <p class="sync-confirm-desc">The folder you just picked must be inside your <strong>Teams-synced</strong> location (OneDrive). If you're working from a downloaded copy, your changes won't be shared with the team.</p>
+      <h2>Confirm: Is this the shared team folder?</h2>
+      <p class="sync-confirm-desc">The folder you just picked should be the shared DaySchedule copy your team edits together. If you select a personal or downloaded copy, your changes will stay local.</p>
       <div class="sync-confirm-check">
-        <div class="sync-confirm-item sync-confirm-good">I opened this page from the Teams/OneDrive synced folder</div>
-        <div class="sync-confirm-item sync-confirm-bad">I downloaded this folder to my Desktop or Downloads</div>
+        <div class="sync-confirm-item sync-confirm-good">This is the shared team copy that everyone should use</div>
+        <div class="sync-confirm-item sync-confirm-bad">This is a personal, downloaded, or backup copy</div>
       </div>
       <div class="modal-actions">
         <button class="btn" id="syncConfirmNo">Go back</button>
-        <button class="btn btn-primary" id="syncConfirmYes">Yes, this is the synced folder</button>
+        <button class="btn btn-primary" id="syncConfirmYes">Yes, this is the shared folder</button>
       </div>
     </div>
+  </div>
+
+  <!-- Lock Takeover Modal -->
+  <div class="modal-overlay" id="lockTakeoverModal">
+    <div class="modal takeover-modal"></div>
   </div>
 
   <!-- Stale Data Warning Modal -->

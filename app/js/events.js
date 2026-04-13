@@ -47,6 +47,10 @@ document.addEventListener('click', e => {
   // Click on header -> open settings modal (logo, title, contact, groups)
   const hdr = e.target.closest('.hdr');
   if (hdr && !e.target.closest('.inspector')) {
+    if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+      toast('This schedule is read-only until you claim edit access.');
+      return;
+    }
     openSettingsModal();
     return;
   }

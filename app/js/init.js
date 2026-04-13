@@ -110,8 +110,12 @@ async function legacyBoot() {
     Store.setActiveDay(days[0].id);
   }
 
-  // wireToolbar() already called in init — just render
+  if (typeof syncCurrentScheduleAccess === 'function') {
+    await syncCurrentScheduleAccess();
+  }
+  syncToolbarTitle();
   renderActiveDay();
+  renderInspector();
 }
 
 function loadSampleData() {

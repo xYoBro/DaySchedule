@@ -39,6 +39,8 @@ function closeVersionPanel() {
 
 async function renderVersionPanel(modal) {
   const versions = await getVersions();
+  const editable = typeof isCurrentScheduleEditable === 'function' ? isCurrentScheduleEditable() : true;
+  if (!editable) _versionSaveMode = false;
 
   let html = '<h2>Versions</h2>';
 
@@ -52,7 +54,9 @@ async function renderVersionPanel(modal) {
   html += '</div>';
 
   // Save as version
-  if (_versionSaveMode) {
+  if (!editable) {
+    html += '<div class="version-readonly-note">Read-only mode. Claim edit access before saving or restoring versions.</div>';
+  } else if (_versionSaveMode) {
     html += '<div class="version-save-inline">';
     html += '<input type="text" class="version-save-input" id="versionNameInput" placeholder="Version name (e.g., Draft for Review)">';
     html += '<button class="btn btn-primary" id="versionSaveConfirm" style="font-size:12px;">Save</button>';
@@ -74,7 +78,7 @@ async function renderVersionPanel(modal) {
       html += '<div class="version-item-name">' + esc(v.name) + '</div>';
       html += '<div class="version-item-meta">' + esc([time, by].filter(Boolean).join(' \u00b7 ')) + '</div>';
       html += '</div>';
-      html += '<button class="version-restore-btn">Restore</button>';
+      html += '<button class="version-restore-btn"' + (editable ? '' : ' disabled') + '>Restore</button>';
       html += '</div>';
     });
   } else {
@@ -89,11 +93,12 @@ async function renderVersionPanel(modal) {
 }
 
 function wireVersionPanel(modal) {
+  const editable = typeof isCurrentScheduleEditable === 'function' ? isCurrentScheduleEditable() : true;
   const closeBtn = modal.querySelector('#versionCloseBtn');
   if (closeBtn) closeBtn.onclick = () => closeVersionPanel();
 
   const saveBtn = modal.querySelector('#versionSaveBtn');
-  if (saveBtn) {
+  if (saveBtn && editable) {
     saveBtn.onclick = () => {
       _versionSaveMode = true;
       renderVersionPanel(modal);
@@ -104,7 +109,7 @@ function wireVersionPanel(modal) {
   const confirmBtn = modal.querySelector('#versionSaveConfirm');
   const cancelBtn = modal.querySelector('#versionSaveCancel');
 
-  if (nameInput) {
+  if (nameInput && editable) {
     setTimeout(() => nameInput.focus(), 50);
 
     const doSave = async () => {
@@ -136,6 +141,8 @@ function wireVersionPanel(modal) {
       renderVersionPanel(modal);
     };
   }
+
+  if (!editable) return;
 
   // Restore buttons
   modal.querySelectorAll('.version-restore-btn').forEach(btn => {

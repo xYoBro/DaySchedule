@@ -109,9 +109,14 @@ function resetTestState() {
   _currentFileName = null;
   _lastKnownSavedAt = null;
   _dirty = false;
+  _currentScheduleLock = null;
+  _editorReadOnly = true;
   clearTimeout(_autosaveTimer);
   _autosaveTimer = null;
+  clearTimeout(_lockRefreshTimer);
+  _lockRefreshTimer = null;
   localStorage.removeItem('dayschedule_user_name');
+  sessionStorage.removeItem(LOCK_SESSION_KEY);
 }
 
 function wait(ms) {
@@ -162,6 +167,27 @@ describe('Integration — Schedule CRUD', () => {
     assert.equal(list[1].name, 'Old');
     assert.equal(list[0].eventCount, 2);
     assert.equal(list[0].noteCount, 1);
+  });
+
+  it('ignores lock files when listing schedules', async () => {
+    resetTestState();
+    installMockDir('data');
+
+    const fileData = buildScheduleFile('Lock Test', { title: 'Lock Test', days: [], groups: [], logo: null, footer: {} }, [], 'A');
+    await writeScheduleFile('lock-test.json', fileData);
+    await writeScheduleFile('lock-test.lock.json', {
+      scheduleFile: 'lock-test.json',
+      ownerName: 'Other',
+      sessionId: 'other-session',
+      token: 'token_1',
+      acquiredAt: '2026-01-01T00:00:00Z',
+      refreshedAt: '2026-01-01T00:00:00Z',
+      expiresAt: '2099-01-01T00:00:00Z',
+    });
+
+    const list = await listScheduleFiles();
+    assert.equal(list.length, 1, 'lock file should not appear as a schedule');
+    assert.equal(list[0].fileName, 'lock-test.json');
   });
 
   it('reads a schedule file back correctly', async () => {
@@ -243,10 +269,17 @@ describe('Integration — Save/Load Round-Trip', () => {
 });
 
 describe('Integration — Auto-Save Engine', () => {
-  it('markDirty sets dirty flag and schedules save', () => {
+  it('treats schedules without a current file as locally editable', () => {
+    resetTestState();
+    assert.equal(isCurrentScheduleEditable(), true, 'manual mode should remain editable');
+  });
+
+  it('markDirty sets dirty flag and schedules save', async () => {
     resetTestState();
     installMockDir('data');
+    setUserName('Tester');
     setCurrentFile('test.json', '2026-01-01T00:00:00Z');
+    await claimCurrentScheduleLock({ silent: true });
 
     assert(!isDirty(), 'should start clean');
     markDirty();
@@ -262,6 +295,7 @@ describe('Integration — Auto-Save Engine', () => {
     const fileData = buildScheduleFile('Force Save Test', Store.getPersistedState(), [], 'Tester');
     await writeScheduleFile('force-save.json', fileData);
     setCurrentFile('force-save.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
 
     // Modify Store
     Store.setTitle('Updated Title');
@@ -286,6 +320,146 @@ describe('Integration — Auto-Save Engine', () => {
   });
 });
 
+describe('Integration — Edit Locks', () => {
+  it('claims a lock for the current session', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Tester');
+
+    const fileData = buildScheduleFile('Lockable', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('lockable.json', fileData);
+    setCurrentFile('lockable.json', fileData.lastSavedAt);
+
+    const result = await claimCurrentScheduleLock({ silent: true });
+    assert.equal(result.ok, true, 'lock claim should succeed');
+    assert.equal(isCurrentScheduleEditable(), true, 'current schedule should become editable');
+
+    const files = MockFS.getFiles();
+    assert('lockable.lock.json' in files, 'lock file should be written');
+
+    const status = await getScheduleLockStatus('lockable.json');
+    assert.equal(status.state, 'mine');
+    assert.equal(status.lock.ownerName, 'Tester');
+  });
+
+  it('reports another active lock as read-only', async () => {
+    resetTestState();
+    installMockDir('data');
+
+    const fileData = buildScheduleFile('Locked', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('locked.json', fileData);
+    await writeScheduleFile('locked.lock.json', {
+      scheduleFile: 'locked.json',
+      ownerName: 'Other User',
+      sessionId: 'other-session',
+      token: 'token_2',
+      acquiredAt: '2026-01-01T00:00:00Z',
+      refreshedAt: '2026-01-01T00:00:00Z',
+      expiresAt: '2099-01-01T00:00:00Z',
+    });
+
+    const status = await getScheduleLockStatus('locked.json');
+    assert.equal(status.state, 'locked');
+    assert.equal(status.lock.ownerName, 'Other User');
+  });
+
+  it('treats expired locks as available', async () => {
+    resetTestState();
+    installMockDir('data');
+
+    const fileData = buildScheduleFile('Expired', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('expired.json', fileData);
+    await writeScheduleFile('expired.lock.json', {
+      scheduleFile: 'expired.json',
+      ownerName: 'Old Editor',
+      sessionId: 'other-session',
+      token: 'token_3',
+      acquiredAt: '2026-01-01T00:00:00Z',
+      refreshedAt: '2026-01-01T00:00:00Z',
+      expiresAt: '2000-01-01T00:00:00Z',
+    });
+
+    const status = await getScheduleLockStatus('expired.json');
+    assert.equal(status.state, 'available');
+  });
+
+  it('releases the current lock file', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Tester');
+
+    const fileData = buildScheduleFile('Release', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('release.json', fileData);
+    setCurrentFile('release.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+
+    const ok = await releaseCurrentScheduleLock();
+    assert.equal(ok, true, 'release should succeed');
+    assert.equal(isCurrentScheduleEditable(), false, 'current schedule should return to read-only');
+
+    const files = MockFS.getFiles();
+    assert(!('release.lock.json' in files), 'lock file should be removed');
+  });
+
+  it('allows a lead to take over another active lock', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Lead Editor');
+
+    const fileData = buildScheduleFile('Takeover', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('takeover.json', fileData);
+    await writeScheduleFile('takeover.lock.json', {
+      scheduleFile: 'takeover.json',
+      ownerName: 'Original Editor',
+      sessionId: 'other-session',
+      token: 'token_4',
+      acquiredAt: '2026-01-01T00:00:00Z',
+      refreshedAt: '2026-01-01T00:00:00Z',
+      expiresAt: '2099-01-01T00:00:00Z',
+    });
+    setCurrentFile('takeover.json', fileData.lastSavedAt);
+
+    const result = await takeOverCurrentScheduleLock({ confirmed: true, silent: true });
+    assert.equal(result.ok, true, 'takeover should succeed');
+    assert.equal(isCurrentScheduleEditable(), true, 'current session should become editable');
+
+    const status = await getScheduleLockStatus('takeover.json');
+    assert.equal(status.state, 'mine');
+    assert.equal(status.lock.ownerName, 'Lead Editor');
+    assert(status.lock.token !== 'token_4', 'lock token should be replaced');
+  });
+
+  it('blocks saving after another editor takes over the lock', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Original Editor');
+
+    Store.setTitle('Ownership Test');
+    const fileData = buildScheduleFile('Ownership Test', Store.getPersistedState(), [], 'Original Editor');
+    await writeScheduleFile('ownership.json', fileData);
+    setCurrentFile('ownership.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+
+    Store.setTitle('Local Unsaved Change');
+    await writeScheduleFile('ownership.lock.json', {
+      scheduleFile: 'ownership.json',
+      ownerName: 'Lead Editor',
+      sessionId: 'other-session',
+      token: 'token_5',
+      acquiredAt: '2026-01-01T00:00:00Z',
+      refreshedAt: '2026-01-01T00:00:00Z',
+      expiresAt: '2099-01-01T00:00:00Z',
+    });
+
+    const ok = await saveCurrentSchedule();
+    assert.equal(ok, false, 'save should fail after takeover');
+    assert.equal(isCurrentScheduleEditable(), false, 'tab should switch to read-only');
+
+    const loaded = await readScheduleFile('ownership.json');
+    assert.equal(loaded.current.title, 'Ownership Test', 'taken-over tab should not overwrite the file');
+  });
+});
+
 describe('Integration — Version Management', () => {
   it('creates a named version and retrieves it', async () => {
     resetTestState();
@@ -297,6 +471,7 @@ describe('Integration — Version Management', () => {
     const fileData = buildScheduleFile('Version Test', Store.getPersistedState(), [], 'Tester');
     await writeScheduleFile('version-test.json', fileData);
     setCurrentFile('version-test.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
 
     // Create version
     const ok = await createVersion('Draft v1');
@@ -320,6 +495,7 @@ describe('Integration — Version Management', () => {
     const fileData = buildScheduleFile('Restore Test', Store.getPersistedState(), [], 'Tester');
     await writeScheduleFile('restore-test.json', fileData);
     setCurrentFile('restore-test.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
 
     // Save as version
     await createVersion('Before Changes');
@@ -356,6 +532,7 @@ describe('Integration — Version Management', () => {
     const fileData = buildScheduleFile('Snapshot Test', Store.getPersistedState(), [], 'Tester');
     await writeScheduleFile('snapshot.json', fileData);
     setCurrentFile('snapshot.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
 
     // Modify Store without saving to file
     Store.setTitle('Unsaved Changes');
@@ -380,6 +557,7 @@ describe('Integration — Stale-Data Detection', () => {
     const fileData = buildScheduleFile('Stale Test', Store.getPersistedState(), [], 'Tester');
     await writeScheduleFile('stale.json', fileData);
     setCurrentFile('stale.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
 
     // Simulate external edit — modify the file directly with a different timestamp
     const externalEdit = JSON.parse(JSON.stringify(fileData));

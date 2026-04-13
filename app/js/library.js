@@ -77,7 +77,7 @@ async function refreshLibraryList() {
   if (!listEl) return;
 
   if (!hasDirectoryAccess()) {
-    listEl.innerHTML = '<div class="library-empty">Connect your data folder to get started.</div>';
+    listEl.innerHTML = '<div class="library-empty">Connect the shared schedule folder to get started.</div>';
     return;
   }
 
@@ -88,20 +88,40 @@ async function refreshLibraryList() {
   }
 
   let html = '';
-  files.forEach(meta => {
+  const entries = await Promise.all(files.map(async meta => ({
+    meta,
+    lockStatus: await getScheduleLockStatus(meta.fileName),
+  })));
+  entries.forEach(entry => {
+    const meta = entry.meta;
+    const lockStatus = entry.lockStatus;
     const timeAgo = meta.lastSavedAt ? formatTimeAgo(meta.lastSavedAt) : '';
     const stats = meta.dayCount + (meta.dayCount === 1 ? ' day' : ' days') + ' \u00b7 '
       + meta.eventCount + (meta.eventCount === 1 ? ' event' : ' events');
-    const metaLine = [stats, timeAgo].filter(Boolean).join(' \u00b7 ');
+    const accessLine = lockStatus.state === 'mine'
+      ? 'You are editing'
+      : (lockStatus.state === 'locked' && lockStatus.lock
+          ? 'Locked by ' + (lockStatus.lock.ownerName || 'another editor')
+          : 'Available to edit');
+    const metaLine = [stats, timeAgo, accessLine].filter(Boolean).join(' \u00b7 ');
     const badgeClass = meta.versionCount > 0 ? 'final' : 'draft';
     const badgeText = meta.versionCount > 0 ? 'Final' : 'Draft';
+    const accessBadgeClass = lockStatus.state === 'mine'
+      ? 'editing'
+      : (lockStatus.state === 'locked' ? 'locked' : 'available');
+    const accessBadgeText = lockStatus.state === 'mine'
+      ? 'Editing'
+      : (lockStatus.state === 'locked' ? 'Read Only' : 'Available');
 
     html += '<div class="library-item" data-file="' + esc(meta.fileName) + '">';
     html += '<div class="library-item-info">';
     html += '<div class="library-item-name">' + esc(meta.name) + '</div>';
     html += '<div class="library-item-meta">' + esc(metaLine) + '</div>';
     html += '</div>';
+    html += '<div class="library-item-badges">';
+    html += '<span class="library-item-badge library-item-access ' + accessBadgeClass + '">' + accessBadgeText + '</span>';
     html += '<span class="library-item-badge ' + badgeClass + '">' + badgeText + '</span>';
+    html += '</div>';
     html += '</div>';
   });
   listEl.innerHTML = html;
@@ -131,6 +151,7 @@ async function openSchedule(fileName) {
 
   setCurrentFile(fileName, data.lastSavedAt);
   hideLibrary();
+  await syncCurrentScheduleAccess();
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
@@ -154,6 +175,7 @@ async function createNewSchedule(name) {
 
   setCurrentFile(fileName, fileData.lastSavedAt);
   hideLibrary();
+  await claimCurrentScheduleLock({ silent: true });
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
@@ -191,7 +213,17 @@ async function duplicateSchedule(fileName) {
 }
 
 async function deleteSchedule(fileName) {
+  const lockStatus = await getScheduleLockStatus(fileName);
+  if (lockStatus.state === 'locked' && lockStatus.lock) {
+    toast((lockStatus.lock.ownerName || 'Another editor') + ' is editing this schedule right now.');
+    return;
+  }
   const ok = await deleteScheduleFile(fileName);
+  if (ok) {
+    const lockFileName = getLockFileName(fileName);
+    const existingLock = await readScheduleFile(lockFileName, { suppressErrors: true });
+    if (existingLock) await deleteScheduleFile(lockFileName);
+  }
   if (ok) {
     refreshLibraryList();
     toast('Deleted');
@@ -201,9 +233,11 @@ async function deleteSchedule(fileName) {
 }
 
 async function returnToLibrary() {
-  if (isDirty() && hasDirectoryAccess()) {
-    await saveCurrentSchedule();
+  if (isDirty() && hasDirectoryAccess() && isCurrentScheduleEditable()) {
+    const ok = await saveCurrentSchedule();
+    if (!ok) return;
   }
+  await releaseCurrentScheduleLock();
   setCurrentFile(null, null);
   Store.reset();
   setCurrentScheduleFileData(null);

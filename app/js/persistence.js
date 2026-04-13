@@ -4,7 +4,7 @@
  *   saveUndoState()    — push current Store snapshot to undo stack (debounced 800ms)
  *   undo()             — pop undo stack, push to redo, render
  *   redo()             — pop redo stack, push to undo, render
- *   sessionSave()      — debounced write to sessionStorage (500ms) + triggers markDirty()
+ *   sessionSave(options?) — debounced write to sessionStorage (500ms) + triggers markDirty()
  *   sessionLoad()      → boolean — loads from sessionStorage if available
  *   saveDataFile()     → Promise<boolean> — legacy FSAPI single-file save or download fallback
  *   importDataFile()   — opens file picker, parses JS/JSON, loads into Store
@@ -62,7 +62,7 @@ function redo() {
 }
 
 let _sessionSaveTimer = null;
-function sessionSave() {
+function sessionSave(options) {
   clearTimeout(_sessionSaveTimer);
   _sessionSaveTimer = setTimeout(() => {
     try {
@@ -70,7 +70,7 @@ function sessionSave() {
     } catch (e) { /* ignore quota errors */ }
   }, 500);
   // Trigger auto-save if connected
-  if (typeof markDirty === 'function') markDirty();
+  if ((!options || !options.skipDirty) && typeof markDirty === 'function') markDirty();
 }
 
 function sessionLoad() {
@@ -121,7 +121,7 @@ async function saveDataFile() {
     a.click();
     URL.revokeObjectURL(a.href);
     sessionSave();
-    toast('Downloaded scheduledata.js \u2014 place it in the data/ folder.');
+    toast('Downloaded scheduledata.js \u2014 save it back into the shared DaySchedule data folder.');
     return true;
   } finally {
     _saveInProgress = false;
