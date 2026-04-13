@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Schedule Builder — UI Harness</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 24px; background: #f5f5f7; }
+    .pass { color: #1a7a40; } .fail { color: #ff3b30; }
+    .suite { margin: 16px 0; padding: 12px; background: white; border-radius: 8px; }
+    .suite h3 { margin-bottom: 8px; }
+    .result { padding: 2px 0 2px 16px; font-size: 14px; }
+    #summary { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .note { color: #86868b; font-size: 12px; margin-bottom: 16px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div id="summary">Running...</div>
+  <div class="note">UI harness exercises renderers, app-shell flows, and print behavior against the browser-loaded app modules.</div>
+  <div id="results"></div>
+
+  <div class="library-view" id="libraryView">
+    <div class="library-header">
+      <button id="libraryHelpBtn">Help</button>
+      <button id="editorThemeToggle">Theme</button>
+    </div>
+    <div class="library-body">
+      <div id="libraryConnectPrompt" style="display:none;">
+        <button id="libraryConnectBtn">Choose Data Folder</button>
+      </div>
+      <div id="libraryFallbackBanner" style="display:none;"></div>
+      <button id="libraryNewBtn">New Schedule</button>
+      <div id="libraryNewInline" style="display:none;">
+        <input type="text" id="libraryNewName">
+        <button id="libraryNewConfirm">Create</button>
+        <button id="libraryNewCancel">Cancel</button>
+      </div>
+      <div id="libraryList"></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button id="tbBack">Back</button>
+    <input type="text" id="tbTitle" value="">
+    <span id="saveIndicator" class="save-status"></span>
+    <div id="dayTabs"></div>
+    <button id="addEventBtn">+ Event</button>
+    <button id="addNoteBtn">+ Note</button>
+    <button id="addDayBtn">+ Day</button>
+    <button id="daySheetBtn">Day Sheet</button>
+    <button id="versionsBtn">Versions</button>
+    <div id="overflowMenu">
+      <button id="overflowBtn">More</button>
+      <div id="overflowDropdown">
+        <button id="settingsBtn">Settings</button>
+        <button id="printBtn">Print</button>
+        <button id="helpBtn">Help</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="preview-area">
+      <div class="page" id="previewPage">
+        <div id="scheduleContainer"></div>
+      </div>
+    </div>
+    <div class="inspector" id="inspectorPanel"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <div class="modal-overlay" id="helpModal">
+    <div class="modal">
+      <button id="helpCloseBtn">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="syncConfirmModal">
+    <div class="modal">
+      <button id="syncConfirmYes">Yes</button>
+      <button id="syncConfirmNo">No</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="staleWarningModal">
+    <div class="modal"></div>
+  </div>
+
+  <div class="modal-overlay" id="userNameModal">
+    <div class="modal"></div>
+  </div>
+
+  <div class="modal-overlay" id="versionModal">
+    <div class="modal"></div>
+  </div>
+
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal" id="settingsModalContent"></div>
+  </div>
+
+  <div class="modal-overlay" id="dayEventSheetModal">
+    <div class="modal" id="dayEventSheetModalContent"></div>
+  </div>
+
+  <script src="test-runner-async.js"></script>
+
+  <script src="../../app/js/constants.js"></script>
+  <script src="../../app/js/app-state.js"></script>
+  <script src="../../app/js/utils.js"></script>
+  <script src="../../app/js/ui-core.js"></script>
+  <script src="../../app/js/schema.js"></script>
+  <script src="../../app/js/data-helpers.js"></script>
+  <script src="../../app/js/persistence.js"></script>
+  <script src="../../app/js/storage.js"></script>
+  <script src="../../app/js/themes.js"></script>
+  <script src="../../app/js/skin-band.js"></script>
+  <script src="../../app/js/skin-grid.js"></script>
+  <script src="../../app/js/skin-cards.js"></script>
+  <script src="../../app/js/skin-phases.js"></script>
+  <script src="../../app/js/library.js"></script>
+  <script src="../../app/js/versions.js"></script>
+  <script src="../../app/js/render.js"></script>
+  <script src="../../app/js/print.js"></script>
+  <script src="../../app/js/events.js"></script>
+  <script src="../../app/js/inspector.js"></script>
+  <script src="../../app/js/init.js"></script>
+
+  <script src="test-ui-helpers.js"></script>
+  <script src="test-render.js"></script>
+  <script src="test-print.js"></script>
+  <script src="test-app-shell.js"></script>
+
+  <script>AsyncTestRunner.runAsync();</script>
+</body>
+</html>

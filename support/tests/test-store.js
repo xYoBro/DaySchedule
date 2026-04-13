@@ -29,6 +29,21 @@ describe('Store — schedule state', () => {
     assert.equal(events[0].title, 'Formation');
   });
 
+  it('preserves attendees when adding an event', () => {
+    Store.reset();
+    Store.addDay({ date: '2026-03-15', startTime: '0700', endTime: '1630' });
+    const dayId = Store.getDays()[0].id;
+    Store.addEvent(dayId, {
+      title: 'Weapons Qualification',
+      startTime: '0830',
+      endTime: '1100',
+      groupId: 'grp_chiefs',
+      attendees: 'RSO: TSgt Park, Ammo: SrA Bell',
+    });
+    const events = Store.getEvents(dayId);
+    assert.equal(events[0].attendees, 'RSO: TSgt Park, Ammo: SrA Bell');
+  });
+
   it('events auto-sort by start time', () => {
     Store.reset();
     Store.addDay({ date: '2026-03-15', startTime: '0700', endTime: '1630' });

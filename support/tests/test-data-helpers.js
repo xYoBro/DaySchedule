@@ -37,6 +37,22 @@ describe('data-helpers — classifyEvents', () => {
     assert.equal(result.concurrent.some(c => c.id === 'e2'), true);
     assert.equal(result.mainBands.some(b => b.event.id === 'e3'), true);
   });
+
+  it('treats highlighted limited events as main and reports overlaps', () => {
+    const groups = [
+      { id: 'g1', scope: 'main', name: 'All', color: '#000' },
+      { id: 'g2', scope: 'limited', name: 'SNCOs', color: '#000' },
+    ];
+    const events = [
+      { id: 'e1', title: 'Formation', startTime: '0800', endTime: '0900', groupId: 'g1', isMainEvent: true, isBreak: false },
+      { id: 'e2', title: 'SNCO Sync', startTime: '0830', endTime: '0930', groupId: 'g2', isMainEvent: true, isBreak: false },
+    ];
+    const result = classifyEvents(events, groups);
+    const highlighted = result.mainBands.find(b => b.event.id === 'e2');
+    assert(highlighted, 'highlighted limited event should become a main band');
+    assert.equal(highlighted.overlappingMain.length, 1);
+    assert.equal(highlighted.overlappingMain[0].id, 'e1');
+  });
 });
 
 describe('data-helpers — getOverlappingConcurrent', () => {

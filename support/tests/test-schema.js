@@ -20,6 +20,17 @@ describe('schema — normalizeEvent', () => {
     const e = normalizeEvent({ title: 'Lunch', startTime: '1100', endTime: '1200', groupId: 'grp_all', isBreak: true });
     assert.equal(e.isBreak, true);
   });
+
+  it('trims attendees text', () => {
+    const e = normalizeEvent({
+      title: 'Call Roster',
+      startTime: '0900',
+      endTime: '1000',
+      groupId: 'grp_all',
+      attendees: '  TSgt Yoda, SrA Snuffy  ',
+    });
+    assert.equal(e.attendees, 'TSgt Yoda, SrA Snuffy');
+  });
 });
 
 describe('schema — normalizeGroup', () => {

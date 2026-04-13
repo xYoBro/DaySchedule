@@ -87,6 +87,7 @@ const Store = {
       location: e.location || '',
       poc: e.poc || '',
       groupId: e.groupId || '',
+      attendees: e.attendees || '',
       isBreak: e.isBreak || false,
       isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === 'main' : false),
     };

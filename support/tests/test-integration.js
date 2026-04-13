@@ -98,6 +98,9 @@ if (typeof syncToolbarTitle === 'undefined') {
 if (typeof renderInspector === 'undefined') {
   window.renderInspector = function() {};
 }
+if (typeof getCurrentScheduleFileData === 'undefined') {
+  window.getCurrentScheduleFileData = function() { return null; };
+}
 
 function resetTestState() {
   MockFS.reset();

@@ -1,8 +1,8 @@
 # DaySchedule — Status Notes
 
-**Last updated:** 2026-04-11
+**Last updated:** 2026-04-13
 
-## What's Shipped (on main)
+## What's Shipped in Current Workspace
 
 ### Schedule Library
 - Home screen with schedule list, create, duplicate, delete
@@ -28,9 +28,18 @@
 - CSS custom properties for all schedule + editor chrome colors
 - Render dispatcher with skin-specific renderer modules
 
+### Event Authoring
+- Right-side event inspector for title, time, group, attendees ("Who"), description, location, POC, and break/highlight toggles
+- Day Sheet modal for the active day: table editor with inline start/end/title/group/location edits
+- Expandable Day Sheet detail rows for attendees, POC, and description
+- Day Sheet add/delete actions plus "Inspector" jump-back for single-event edits
+- Overlap warnings in the inspector and Day Sheet, including highlighted limited-scope events
+- Attendees rendered in band/cards/phases layouts and preserved on new events / import normalization
+
 ### Testing
-- 50+ unit tests (runner.html)
-- 29+ integration tests (runner-integration.html) with in-memory FSAPI mock
+- 56 browser-based unit tests (`support/tests/runner.html`)
+- 29 browser-based integration tests (`support/tests/runner-integration.html`) with in-memory FSAPI mock
+- 15 browser-based UI harness tests (`support/tests/runner-ui.html`) covering render/skins, shell flows, and print behavior
 - Cross-file contracts on all JS modules
 
 ## Known Remaining Work
@@ -51,3 +60,4 @@
 - `saveCurrentSchedule()` didn't sync theme from in-memory state (fixed: copy before write)
 - Band `.main` colors were hardcoded, not using CSS vars (fixed)
 - Sample data had no main-scope anchors, so limited events weren't concurrent (fixed)
+- Conflict warnings skipped highlighted limited-scope events (fixed: conflict check now uses `classifyEvents()`)
