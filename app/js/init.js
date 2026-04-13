@@ -183,4 +183,7 @@ function loadSampleData() {
   Store.addNote(d, { category: 'Dining', text: 'DFAC open 1100\u20131230. Pizza authorized for flights through lunch.' });
   Store.addNote(d, { category: 'Equipment', text: 'Range: M4s drawn from armory NLT 0800. Return by 1130. POC: MSgt Kowalski.' });
   Store.addNote(d, { category: 'Visitors', text: 'State HQ delegation arriving 1300. Escort required \u2014 CSS.' });
+
+  // Keep the sample schedule immediately interactive for render and shell flows.
+  Store.setActiveDay(d);
 }

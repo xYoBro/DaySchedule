@@ -23,7 +23,7 @@ function renderDayBody_band(dayId) {
   const groups = Store.getGroups();
   const { mainBands, concurrent } = classifyEvents(day.events, groups);
   const notes = Store.getNotes(dayId);
-  const densityWarning = getBandDensityWarning(mainBands, concurrent);
+  const densityInfo = getBandDensityInfo(mainBands, concurrent);
 
   clearDaggerFootnotes();
 
@@ -40,7 +40,7 @@ function renderDayBody_band(dayId) {
     if (band.tier === 'break' && prevTier && prevTier !== 'break') {
       html += '<div class="section-break"></div>';
     }
-    html += renderBand(band);
+    html += renderBand(band, densityInfo);
     if (band.tier === 'break') {
       const next = mainBands[i + 1];
       if (next && next.tier !== 'break') {
@@ -51,14 +51,12 @@ function renderDayBody_band(dayId) {
   });
   html += '</div>';
 
-  if (densityWarning) {
-    html += '<div class="band-view-note">';
-    html += '<strong>Bands view warning:</strong> ' + esc(densityWarning);
-    html += '</div>';
+  if (densityInfo.warning) {
+    html += renderBandDensityNote(densityInfo.warning);
   }
 
   if (concurrent.length > 0) {
-    html += renderConcurrentRow(concurrent, groups);
+    html += renderConcurrentRow(concurrent, groups, densityInfo);
   }
 
   if (notes.length > 0 || getDaggerFootnotes().length > 0) {
@@ -68,34 +66,61 @@ function renderDayBody_band(dayId) {
   return html;
 }
 
-function getBandDensityWarning(mainBands, concurrent) {
-  if (!concurrent || concurrent.length === 0) return '';
+function getBandDensityInfo(mainBands, concurrent) {
+  const info = {
+    denseMode: false,
+    inlinePreviewLimit: Infinity,
+    maxConcurrentOnBand: 0,
+    warning: '',
+  };
 
-  const maxConcurrentOnBand = mainBands.reduce((max, band) => {
+  if (!concurrent || concurrent.length === 0) return info;
+
+  info.maxConcurrentOnBand = mainBands.reduce((max, band) => {
     const count = band.concurrent ? band.concurrent.length : 0;
     return Math.max(max, count);
   }, 0);
 
-  if (concurrent.length < 10 && maxConcurrentOnBand < 4) return '';
+  info.denseMode = concurrent.length >= 10 || info.maxConcurrentOnBand >= 4;
+  info.inlinePreviewLimit = info.denseMode ? 2 : Infinity;
+
+  if (!info.denseMode) return info;
 
   const parts = [];
   parts.push(concurrent.length + ' concurrent event' + (concurrent.length === 1 ? '' : 's'));
-  if (maxConcurrentOnBand > 0) {
-    parts.push('up to ' + maxConcurrentOnBand + ' attached to one time block');
+  if (info.maxConcurrentOnBand > 0) {
+    parts.push('up to ' + info.maxConcurrentOnBand + ' attached to one time block');
   }
-  return parts.join(', ') + '. Try Grid, Cards, or Phases for easier scanning.';
+  info.warning = parts.join(', ') + '. Try Grid, Cards, or Phases for easier scanning.';
+  return info;
 }
 
-function renderBand(band) {
+function renderBandDensityNote(message) {
+  let html = '<div class="band-view-note">';
+  html += '<div class="band-view-note-copy"><strong>Bands view warning:</strong> ' + esc(message) + '</div>';
+  html += '<div class="band-view-actions">';
+  html += '<button type="button" class="band-view-switch" data-skin-switch="grid">Grid</button>';
+  html += '<button type="button" class="band-view-switch" data-skin-switch="cards">Cards</button>';
+  html += '<button type="button" class="band-view-switch" data-skin-switch="phases">Phases</button>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderBand(band, densityInfo) {
   const { event: evt, tier, group, concurrent: concList, overlappingMain } = band;
   const dur = computeDuration(evt);
   const durStr = formatDuration(dur);
   const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
   const groupTextColor = group ? getContrastingTextColor(group.color) : '#ffffff';
+  const previewLimit = densityInfo && densityInfo.denseMode ? densityInfo.inlinePreviewLimit : Infinity;
+  const previewConcurrent = (concList || []).slice(0, previewLimit);
+  const hiddenConcurrentCount = Math.max(0, (concList ? concList.length : 0) - previewConcurrent.length);
 
   const tierClass = tier === 'main' ? 'main' : tier === 'break' ? 'brk' : 'sup';
   const overlapClass = hasMainOverlap ? ' band-overlap' : '';
   const accentStyle = tier === 'main' && group ? ' style="--accent:' + esc(group.color) + ';"' : '';
+  const concSlotClass = densityInfo && densityInfo.denseMode ? 'band-conc-slot band-conc-slot--dense' : 'band-conc-slot';
 
   let html = '<div class="band ' + tierClass + overlapClass + '"' + accentStyle + ' data-event-id="' + esc(evt.id) + '">';
 
@@ -135,32 +160,14 @@ function renderBand(band) {
   html += '</div>';
 
   // Fixed-width concurrent slot — always rendered for alignment
-  html += '<div class="band-conc-slot">';
-  if (concList && concList.length > 0) {
-    concList.forEach(c => {
-      const cGroup = Store.getGroup(c.groupId);
-      html += '<div class="band-conc" data-event-id="' + esc(c.id) + '">';
-      html += '<div class="cc-label">Also at ' + esc(c.startTime) + '</div>';
-      html += '<div class="cc-title">' + esc(c.title) + '</div>';
-      html += '<div class="cc-detail">' + esc(c.startTime + '\u2013' + c.endTime);
-      if (c.location) html += ' \u00b7 ' + esc(c.location);
-      html += '</div>';
-      if (c.poc) html += '<div class="cc-detail">POC: ' + esc(c.poc) + '</div>';
-      if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:' + esc(getContrastingTextColor(cGroup.color)) + ';">' + esc(cGroup.name) + '</span></div>';
-      if (c.attendees) {
-        const prefix = cGroup ? '+ ' : 'WHO: ';
-        if (c.attendees.length > 25) {
-          // Long text will truncate in the 180px slot — add footnote
-          addDaggerFootnote({ title: c.title, time: c.startTime + '\u2013' + c.endTime, attendees: c.attendees });
-          const daggerNum = getDaggerFootnotes().length;
-          html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
-        } else {
-          // Short enough to display in full — no footnote needed
-          html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
-        }
-      }
-      html += '</div>';
+  html += '<div class="' + concSlotClass + '">';
+  if (previewConcurrent.length > 0) {
+    previewConcurrent.forEach(c => {
+      html += renderBandConcurrentCard(c);
     });
+  }
+  if (hiddenConcurrentCount > 0) {
+    html += renderBandConcurrentOverflow(hiddenConcurrentCount);
   }
   html += '</div>';
 
@@ -168,40 +175,109 @@ function renderBand(band) {
   return html;
 }
 
-function renderConcurrentRow(concurrent, groups) {
+function renderBandConcurrentCard(c) {
+  const cGroup = Store.getGroup(c.groupId);
+  let html = '<div class="band-conc" data-event-id="' + esc(c.id) + '">';
+  html += '<div class="cc-label">Also at ' + esc(c.startTime) + '</div>';
+  html += '<div class="cc-title">' + esc(c.title) + '</div>';
+  html += '<div class="cc-detail">' + esc(c.startTime + '\u2013' + c.endTime);
+  if (c.location) html += ' \u00b7 ' + esc(c.location);
+  html += '</div>';
+  if (c.poc) html += '<div class="cc-detail">POC: ' + esc(c.poc) + '</div>';
+  if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:' + esc(getContrastingTextColor(cGroup.color)) + ';">' + esc(cGroup.name) + '</span></div>';
+  if (c.attendees) {
+    const prefix = cGroup ? '+ ' : 'WHO: ';
+    if (c.attendees.length > 25) {
+      addDaggerFootnote({ title: c.title, time: c.startTime + '\u2013' + c.endTime, attendees: c.attendees });
+      const daggerNum = getDaggerFootnotes().length;
+      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
+    } else {
+      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderBandConcurrentOverflow(hiddenConcurrentCount) {
+  let html = '<div class="band-conc band-conc-more">';
+  html += '<div class="cc-label">More below</div>';
+  html += '<div class="cc-title">+' + hiddenConcurrentCount + ' more also happening</div>';
+  html += '<div class="cc-detail">See the grouped concurrent section.</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderConcurrentRow(concurrent, groups, densityInfo) {
   const groupMap = {};
   groups.forEach(g => { groupMap[g.id] = g; });
 
   let html = '<div class="conc-section">';
   html += '<div class="conc-section-label">Also Happening</div>';
-  html += '<div class="conc-row">';
+  if (densityInfo && densityInfo.denseMode) {
+    html += renderConcurrentGroups(concurrent, groupMap);
+  } else {
+    html += '<div class="conc-row">';
+    concurrent.forEach(c => {
+      html += renderConcurrentItem(c, groupMap[c.groupId]);
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderConcurrentGroups(concurrent, groupMap) {
+  const buckets = {};
   concurrent.forEach(c => {
-    const g = groupMap[c.groupId];
-    const borderColor = g ? g.color : '#d2d2d7';
-    html += '<div class="conc-item" style="border-left-color:' + esc(borderColor) + ';" data-event-id="' + esc(c.id) + '">';
-    html += '<div class="ci-time">' + esc(c.startTime + ' \u2013 ' + c.endTime) + '</div>';
-    html += '<div class="ci-title">' + esc(c.title) + '</div>';
-    const parts = [c.location, c.poc].filter(Boolean);
-    if (parts.length) html += '<div class="ci-detail">' + esc(parts.join(' \u00b7 ')) + '</div>';
-    if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
-    if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
-    if (c.attendees) {
-      const prefix = g ? '+ ' : 'WHO: ';
-      // Check if a footnote already exists from the inline band card
-      const existingIdx = getDaggerFootnotes().findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
-      if (existingIdx !== -1) {
-        // Reuse the existing footnote reference
-        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + (existingIdx + 1) + '</sup></div>';
-      } else if (c.attendees.length > 25) {
-        // Long text — create new footnote
-        addDaggerFootnote({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
-        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + getDaggerFootnotes().length + '</sup></div>';
-      } else {
-        html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
-      }
-    }
+    if (!buckets[c.startTime]) buckets[c.startTime] = [];
+    buckets[c.startTime].push(c);
+  });
+
+  const starts = Object.keys(buckets).sort();
+  let html = '<div class="conc-groups">';
+  starts.forEach(startTime => {
+    const bucket = buckets[startTime].slice().sort((a, b) => {
+      const endDiff = a.endTime.localeCompare(b.endTime);
+      return endDiff || a.title.localeCompare(b.title);
+    });
+    html += '<div class="conc-group">';
+    html += '<div class="conc-group-head">';
+    html += '<span class="conc-group-time">' + esc(startTime) + '</span>';
+    html += '<span class="conc-group-count">' + esc(bucket.length + (bucket.length === 1 ? ' event' : ' events')) + '</span>';
+    html += '</div>';
+    html += '<div class="conc-row">';
+    bucket.forEach(c => {
+      html += renderConcurrentItem(c, groupMap[c.groupId]);
+    });
+    html += '</div>';
     html += '</div>';
   });
-  html += '</div></div>';
+  html += '</div>';
+  return html;
+}
+
+function renderConcurrentItem(c, g) {
+  const borderColor = g ? g.color : '#d2d2d7';
+  let html = '<div class="conc-item" style="border-left-color:' + esc(borderColor) + ';" data-event-id="' + esc(c.id) + '">';
+  html += '<div class="ci-time">' + esc(c.startTime + ' \u2013 ' + c.endTime) + '</div>';
+  html += '<div class="ci-title">' + esc(c.title) + '</div>';
+  const parts = [c.location, c.poc].filter(Boolean);
+  if (parts.length) html += '<div class="ci-detail">' + esc(parts.join(' \u00b7 ')) + '</div>';
+  if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
+  if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
+  if (c.attendees) {
+    const prefix = g ? '+ ' : 'WHO: ';
+    const existingIdx = getDaggerFootnotes().findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
+    if (existingIdx !== -1) {
+      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + (existingIdx + 1) + '</sup></div>';
+    } else if (c.attendees.length > 25) {
+      addDaggerFootnote({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + getDaggerFootnotes().length + '</sup></div>';
+    } else {
+      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
+    }
+  }
+  html += '</div>';
   return html;
 }

@@ -51,6 +51,27 @@ describe('UI Harness — render and skins', () => {
     const note = document.querySelector('.band-view-note');
     assert(note, 'bands should warn when concurrent density is high');
     assert(note.textContent.includes('Try Grid, Cards, or Phases'), 'bands warning should point to alternate layouts');
+    assert(document.querySelector('.band-conc-more'), 'dense bands should cap inline concurrent previews and show an overflow summary');
+    assert(document.querySelector('.conc-group'), 'dense bands should group the lower concurrent section by start time');
+    assert(document.querySelector('[data-skin-switch="grid"]'), 'bands warning should offer direct layout switches');
+  });
+
+  it('bands dense warning can switch directly to another layout', () => {
+    resetUiHarnessState();
+    loadSampleData();
+    const dayId = Store.getDays()[0].id;
+    setCurrentScheduleFileData({
+      name: Store.getTitle(),
+      current: Store.getPersistedState(),
+      versions: [],
+      theme: { skin: 'bands', palette: 'classic' },
+    });
+
+    renderDay(dayId);
+
+    document.querySelector('[data-skin-switch="grid"]').click();
+
+    assert(document.getElementById('previewPage').classList.contains('skin-grid'), 'warning action should switch the active skin');
   });
 
   it('bands skin separates title from time and metadata', () => {

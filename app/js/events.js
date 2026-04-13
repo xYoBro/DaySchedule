@@ -14,6 +14,7 @@
  *     - .band-conc[data-event-id] → select concurrent event
  *     - .band[data-event-id] → select event
  *     - .conc-item[data-event-id] → select concurrent event
+ *     - [data-skin-switch] → switch layout skin
  *     - .hdr → open settings modal
  *     - .notes-list li[data-note-id] → select note
  *     - .preview-area (empty area) → deselect
@@ -28,6 +29,20 @@
 const EVENT_SELECTOR = '[data-event-id]';
 
 document.addEventListener('click', e => {
+  const skinSwitch = e.target.closest('[data-skin-switch]');
+  if (skinSwitch) {
+    const skin = skinSwitch.getAttribute('data-skin-switch');
+    const fileData = getCurrentScheduleFileData();
+    if (fileData) {
+      if (!fileData.theme) fileData.theme = {};
+      fileData.theme.skin = skin;
+    }
+    sessionSave();
+    renderActiveDay();
+    toast('Layout: ' + (SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin));
+    return;
+  }
+
   // Click on "Also happening" concurrent indicator -> select that concurrent event
   const concIndicator = e.target.closest('.band-conc[data-event-id]');
   if (concIndicator && !e.target.closest('.inspector')) {

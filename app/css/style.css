@@ -138,9 +138,35 @@ body {
   color: var(--sch-text-secondary);
   font-size: 7.9px;
   line-height: 1.35;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 .band-view-note strong {
   color: var(--sch-text);
+}
+.band-view-note-copy {
+  min-width: 0;
+}
+.band-view-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.band-view-switch {
+  border: 1px solid rgba(37, 88, 168, 0.18);
+  background: rgba(37, 88, 168, 0.08);
+  color: var(--sch-text);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 7.4px;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.band-view-switch:hover {
+  background: rgba(37, 88, 168, 0.14);
 }
 
 /* ── Event Band ── */
@@ -254,6 +280,11 @@ body {
   gap: 4px;
   justify-content: center;
 }
+.band-conc-slot--dense {
+  width: 156px;
+  justify-content: flex-start;
+  padding: 8px 0;
+}
 .band-conc-slot:empty {
   border-left-color: transparent;
 }
@@ -284,6 +315,13 @@ body {
   font-size: var(--band-meta-fs, 7px);
   color: var(--sch-text-muted);
   margin-top: 1px;
+}
+.band-conc-more {
+  border: 1px dashed var(--sch-border);
+  background: rgba(0, 0, 0, 0.02);
+}
+.band-conc-more .cc-title {
+  font-size: 8px;
 }
 .band-conc .cc-badge {
   font-size: 6px;
@@ -439,6 +477,34 @@ body {
   letter-spacing: 1px;
   color: var(--sch-text-muted);
   margin-bottom: 4px;
+}
+.conc-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.conc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.conc-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.conc-group-time {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--sch-text);
+  font-variant-numeric: tabular-nums;
+}
+.conc-group-count {
+  font-size: 7px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  color: var(--sch-text-muted);
 }
 .conc-row {
   display: grid;
@@ -2789,4 +2855,14 @@ body {
   .print-page { page-break-after: always; }
   .print-page:last-child { page-break-after: auto; }
   @page { size: letter portrait; margin: 0.15in; }
+}
+
+@media (max-width: 900px) {
+  .band-view-note {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .band-conc-slot--dense {
+    width: 144px;
+  }
 }
