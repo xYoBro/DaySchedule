@@ -9,7 +9,7 @@
  *   render.js       — clearDaggerFootnotes(), addDaggerFootnote(), getDaggerFootnotes(),
  *                     renderNotes()
  *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getGroup(), Store.getNotes()
- *   utils.js        — esc(), formatDuration()
+ *   utils.js        — esc(), formatDuration(), getContrastingTextColor()
  *   data-helpers.js — classifyEvents(), computeDuration()
  *
  * CONSUMED BY:
@@ -66,6 +66,7 @@ function renderBand(band) {
   const dur = computeDuration(evt);
   const durStr = formatDuration(dur);
   const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
+  const groupTextColor = group ? getContrastingTextColor(group.color) : '#ffffff';
 
   const tierClass = tier === 'main' ? 'main' : tier === 'break' ? 'brk' : 'sup';
   const overlapClass = hasMainOverlap ? ' band-overlap' : '';
@@ -85,15 +86,17 @@ function renderBand(band) {
   // Content
   html += '<div class="band-content">';
   html += '<div class="band-title">' + esc(evt.title) + '</div>';
+  if (tier !== 'break') {
+    const metaParts = ['<span class="band-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];
+    if (evt.location) metaParts.push('<span class="band-meta-item">' + esc(evt.location) + '</span>');
+    if (evt.poc) metaParts.push('<span class="band-meta-item">POC: ' + esc(evt.poc) + '</span>');
+    html += '<div class="band-meta-line">' + metaParts.join('<span class="band-meta-sep">\u00b7</span>') + '</div>';
+  }
   if (evt.description && tier !== 'break') {
     html += '<div class="band-desc">' + esc(evt.description) + '</div>';
   }
-  if ((evt.location || evt.poc) && tier !== 'break') {
-    const locParts = [evt.location, evt.poc ? 'POC: ' + evt.poc : ''].filter(Boolean);
-    html += '<div class="band-loc">' + esc(locParts.join(' \u00b7 ')) + '</div>';
-  }
   if (group && tier !== 'break') {
-    html += '<div><span class="band-tag" style="background:' + esc(group.color) + ';color:white;">' + esc(group.name) + '</span></div>';
+    html += '<div><span class="band-tag" style="background:' + esc(group.color) + ';color:' + esc(groupTextColor) + ';">' + esc(group.name) + '</span></div>';
   }
   if (evt.attendees && tier !== 'break') {
     const attendeeLabel = group ? '+ ' : 'WHO: ';
@@ -118,7 +121,7 @@ function renderBand(band) {
       if (c.location) html += ' \u00b7 ' + esc(c.location);
       html += '</div>';
       if (c.poc) html += '<div class="cc-detail">POC: ' + esc(c.poc) + '</div>';
-      if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:white;">' + esc(cGroup.name) + '</span></div>';
+      if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:' + esc(getContrastingTextColor(cGroup.color)) + ';">' + esc(cGroup.name) + '</span></div>';
       if (c.attendees) {
         const prefix = cGroup ? '+ ' : 'WHO: ';
         if (c.attendees.length > 25) {
@@ -156,7 +159,7 @@ function renderConcurrentRow(concurrent, groups) {
     const parts = [c.location, c.poc].filter(Boolean);
     if (parts.length) html += '<div class="ci-detail">' + esc(parts.join(' \u00b7 ')) + '</div>';
     if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
-    if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</span></div>';
+    if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
     if (c.attendees) {
       const prefix = g ? '+ ' : 'WHO: ';
       // Check if a footnote already exists from the inline band card

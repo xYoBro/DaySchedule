@@ -36,7 +36,7 @@ function mountInspectorFixture() {
 }
 
 describe('inspector — day sheet modal', () => {
-  it('opens with the selected event expanded and shows specific people', () => {
+  it('shows specific people fields inline for the selected event', () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
@@ -58,7 +58,7 @@ describe('inspector — day sheet modal', () => {
     );
 
     assert(overlay.classList.contains('active'), 'day sheet modal should be active');
-    assert(attendeesInput, 'expanded event should show specific-people input');
+    assert(attendeesInput, 'selected event should show specific-people input');
     assert.equal(attendeesInput.value, 'RSO: TSgt Park, Ammo: SrA Bell');
   });
 
@@ -92,7 +92,7 @@ describe('inspector — day sheet modal', () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
-    const evt = Store.addEvent(day.id, {
+    Store.addEvent(day.id, {
       title: 'Formation',
       startTime: '0700',
       endTime: '0730',
@@ -101,22 +101,45 @@ describe('inspector — day sheet modal', () => {
     });
     Store.setActiveDay(day.id);
 
-    selectEntity('event', day.id, evt.id);
     openDayEventSheetModal();
 
-    const help = document.querySelector('#dayEventSheetModalContent .day-sheet-help');
-    const autoLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-mini-label');
+    const help = document.querySelector('#dayEventSheetModalContent .day-sheet-guide');
+    const autoLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-cell-note');
     const statusBadge = document.querySelector('#dayEventSheetModalContent .day-sheet-badge-track');
-    const inlineOpenBtn = document.querySelector('#dayEventSheetModalContent .day-sheet-details-toolbar .day-sheet-open-editor');
-    const rowActionOpenBtn = document.querySelector('#dayEventSheetModalContent .day-sheet-row-actions .day-sheet-open-editor');
+    const specificPeopleLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-detail-label');
 
-    assert(help.textContent.includes('Audience usually decides placement'));
-    assert(help.textContent.includes('Specific People'));
-    assert(help.textContent.includes('Main Track'));
-    assert.equal(autoLabel.textContent.trim(), 'From Audience');
-    assert.equal(statusBadge.textContent.trim(), 'Primary audience');
-    assert(inlineOpenBtn, 'expanded row should include a full-details button');
-    assert(!rowActionOpenBtn, 'row actions should not include a competing details button');
+    assert(help.textContent.includes('Audience'));
+    assert(help.textContent.includes('Main'));
+    assert(help.textContent.includes('Double-click'));
+    assert.equal(autoLabel.textContent.trim(), 'Auto');
+    assert.equal(statusBadge.textContent.trim(), 'Main via audience');
+    assert.equal(specificPeopleLabel.textContent.trim(), 'Specific people');
+    assert(!document.querySelector('#dayEventSheetModalContent .day-sheet-expand'), 'quick edit should not require row expansion');
+    assert(!document.querySelector('#dayEventSheetModalContent .day-sheet-open-editor'), 'quick edit should not include a secondary details path');
+  });
+
+  it('opens the full event editor from quick edit', () => {
+    mountInspectorFixture();
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, {
+      title: 'Commander Update',
+      startTime: '0900',
+      endTime: '0930',
+      groupId: 'grp_all',
+    });
+    Store.setActiveDay(day.id);
+
+    openDayEventSheetModal();
+
+    const btn = document.querySelector('#daySheetOpenDetails');
+    btn.click();
+
+    assert(!_daySheetSelectedEventId, 'quick edit selection should clear when modal closes');
+    assert.equal(_selection.type, 'event');
+    assert.equal(_selection.dayId, day.id);
+    assert.equal(_selection.entityId, evt.id);
+    assert(document.getElementById('inspectorPanel').textContent.includes('Event Details'));
   });
 });
 

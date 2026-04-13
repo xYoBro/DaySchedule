@@ -59,7 +59,7 @@ let _selection = { type: null, dayId: null, entityId: null };
 let _deleteTimer = null;
 let _expandedDayId = null;
 let _settingsAdvancedOpen = false;
-let _daySheetExpandedEventIds = {};
+let _daySheetSelectedEventId = null;
 
 // ── Selection ──────────────────────────────────────────────────────────────
 
@@ -511,9 +511,6 @@ function openDayEventSheetModal(focusInfo) {
     toast('Add a day first');
     return;
   }
-  if (_selection.type === 'event' && _selection.dayId === dayId && _selection.entityId) {
-    _daySheetExpandedEventIds[_selection.entityId] = true;
-  }
   const modal = document.getElementById('dayEventSheetModalContent');
   if (!modal) return;
   renderDayEventSheetModal(modal, dayId, focusInfo);
@@ -521,6 +518,7 @@ function openDayEventSheetModal(focusInfo) {
 }
 
 function closeDayEventSheetModal() {
+  _daySheetSelectedEventId = null;
   closeModal('dayEventSheetModal');
 }
 
@@ -559,35 +557,112 @@ function getDaySheetTrackStatus(evt, group) {
   }
   if (group && group.scope === 'main') {
     return {
-      label: 'Primary audience',
+      label: 'Main via audience',
       tone: 'primary',
       title: 'The selected Primary audience automatically places this event in the main track.'
     };
   }
   if (evt.isMainEvent) {
     return {
-      label: 'Main Track override',
+      label: 'Main override',
       tone: 'override',
       title: 'This supporting or unassigned event is manually shown in the main track.'
     };
   }
   if (group && group.scope === 'limited') {
     return {
-      label: 'Supporting audience',
+      label: 'Side via audience',
       tone: 'supporting',
       title: 'Supporting audiences stay in the side track unless Main Track is turned on.'
     };
   }
   return {
-    label: 'No audience',
+    label: 'Needs audience',
     tone: 'none',
     title: 'Choose an audience to place this event automatically, or turn on Main Track manually.'
   };
 }
 
+function resolveDaySheetSelectedEventId(ctx, dayId, preferredId) {
+  const validIds = new Set(ctx.events.map(evt => evt.id));
+  if (preferredId && validIds.has(preferredId)) return preferredId;
+  if (_daySheetSelectedEventId && validIds.has(_daySheetSelectedEventId)) return _daySheetSelectedEventId;
+  if (_selection.type === 'event' && _selection.dayId === dayId && validIds.has(_selection.entityId)) return _selection.entityId;
+  return ctx.events[0] ? ctx.events[0].id : null;
+}
+
+function buildDaySheetDetailPanel(ctx, eventId) {
+  const evt = ctx.events.find(item => item.id === eventId);
+  if (!evt) return '';
+
+  const group = ctx.groupMap[evt.groupId] || null;
+  const overlapNames = ctx.overlapMap[evt.id] || [];
+  const trackStatus = getDaySheetTrackStatus(evt, group);
+
+  let html = '<div class="day-sheet-detail-bar">';
+  html += '<div class="day-sheet-detail-summary">';
+  html += '<div class="day-sheet-detail-kicker">Selected Row</div>';
+  html += '<div class="day-sheet-detail-heading">' + esc(evt.title || 'Untitled event') + '</div>';
+  html += '<div class="day-sheet-detail-meta">';
+  html += '<span class="day-sheet-detail-meta-item">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>';
+  html += '<span class="day-sheet-detail-meta-item">' + esc(formatDuration(computeDuration(evt))) + '</span>';
+  html += '<span class="day-sheet-badge day-sheet-badge-track day-sheet-badge-track-' + esc(trackStatus.tone) + '" title="' + esc(trackStatus.title) + '">' + esc(trackStatus.label) + '</span>';
+  if (overlapNames.length > 0) {
+    html += '<span class="day-sheet-badge warn" title="' + esc('Overlaps with ' + overlapNames.join(', ')) + '">Overlap</span>';
+  }
+  html += '</div>';
+  html += '</div>';
+  html += '<div class="day-sheet-detail-actions">';
+  html += '<button class="btn" id="daySheetOpenDetails" data-event-id="' + esc(evt.id) + '">Full Details</button>';
+  html += '<button class="btn btn-danger" id="daySheetDeleteSelected" data-event-id="' + esc(evt.id) + '" data-delete-label="Delete">Delete</button>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div class="day-sheet-detail-grid">';
+  html += '<label class="day-sheet-detail-field">';
+  html += '<span class="day-sheet-detail-label">Specific people</span>';
+  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="Optional names or exceptions">';
+  html += '</label>';
+  html += '<label class="day-sheet-detail-field">';
+  html += '<span class="day-sheet-detail-label">POC</span>';
+  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="poc" data-focus="poc" value="' + esc(evt.poc) + '" placeholder="Optional">';
+  html += '</label>';
+  html += '<label class="day-sheet-detail-field day-sheet-detail-wide">';
+  html += '<span class="day-sheet-detail-label">Notes</span>';
+  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description" value="' + esc(evt.description) + '" placeholder="Instructions, details, or uniform notes">';
+  html += '</label>';
+  html += '</div>';
+  if (overlapNames.length > 0) {
+    html += '<p class="day-sheet-details-hint">Overlap warning: ' + esc(overlapNames.join(', ')) + ' share this time block.</p>';
+  }
+  html += '<p class="day-sheet-detail-tip">Click a row to edit these fields below. Double-click a row to open the full event editor.</p>';
+  return html;
+}
+
+function syncDaySheetSelectionUI(modal, dayId, eventId) {
+  if (!modal || !eventId) return;
+  _daySheetSelectedEventId = eventId;
+  modal.querySelectorAll('.day-sheet-row').forEach(row => {
+    row.classList.toggle('is-selected', row.getAttribute('data-event-id') === eventId);
+  });
+  const detailPanel = modal.querySelector('#daySheetDetailPanel');
+  if (detailPanel) {
+    const ctx = getDayEventSheetContext(dayId);
+    detailPanel.innerHTML = buildDaySheetDetailPanel(ctx, eventId);
+    wireDaySheetDetailPanel(modal, dayId);
+  }
+}
+
+function openDaySheetFullDetails(dayId, eventId) {
+  closeDayEventSheetModal();
+  selectEntity('event', dayId, eventId);
+}
+
 function renderDayEventSheetModal(modal, dayId, focusInfo) {
   const ctx = getDayEventSheetContext(dayId);
   if (!modal || !ctx) return;
+  const selectedEventId = resolveDaySheetSelectedEventId(ctx, dayId, focusInfo && focusInfo.eventId);
+  _daySheetSelectedEventId = selectedEventId;
 
   const dayTitle = ctx.day.label || (ctx.day.date ? formatDateShort(ctx.day.date) : 'Day ' + ctx.dayIndex);
   const subtitleBits = [];
@@ -610,7 +685,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<button class="btn" id="daySheetClose">Close</button>';
   html += '</div>';
   html += '</div>';
-  html += '<div class="day-sheet-help">Audience usually decides placement: <strong>Primary</strong> audiences go to the main track automatically. Use the row arrow for <strong>Specific People</strong>, point of contact, and notes. Turn on <strong>Main Track</strong> only to override a supporting or unassigned event.</div>';
+  html += '<div class="day-sheet-guide">Click a row to edit extra fields below. Double-click a row for full details. <strong>Audience</strong> places events automatically; <strong>Main</strong> only overrides.</div>';
 
   if (!ctx.events.length) {
     html += '<div class="day-sheet-table-wrap">';
@@ -625,16 +700,15 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<div class="day-sheet-table-wrap">';
   html += '<table class="day-sheet-table">';
   html += '<thead><tr>';
-  html += '<th title="Show more row fields">More</th>';
   html += '<th>Start</th>';
   html += '<th>End</th>';
   html += '<th>Title</th>';
   html += '<th>Audience</th>';
   html += '<th>Location</th>';
   html += '<th>Break</th>';
-  html += '<th title="Primary audiences go here automatically. Use the checkbox only to override a supporting or unassigned event.">Main Track</th>';
-  html += '<th>Status</th>';
-  html += '<th></th>';
+  html += '<th>Main</th>';
+  html += '<th>Track</th>';
+  html += '<th>Dur</th>';
   html += '</tr></thead><tbody>';
 
   ctx.events.forEach(evt => {
@@ -642,11 +716,9 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     const overlapNames = ctx.overlapMap[evt.id] || [];
     const canHighlight = !evt.isBreak && !(group && group.scope === 'main');
     const trackStatus = getDaySheetTrackStatus(evt, group);
-    const isExpanded = !!_daySheetExpandedEventIds[evt.id];
-    const isSelected = _selection.type === 'event' && _selection.dayId === dayId && _selection.entityId === evt.id;
+    const isSelected = evt.id === selectedEventId;
 
     html += '<tr class="day-sheet-row' + (isSelected ? ' is-selected' : '') + '" data-event-id="' + esc(evt.id) + '">';
-    html += '<td><button class="day-sheet-expand" data-action="toggle-details" data-event-id="' + esc(evt.id) + '" title="' + (isExpanded ? 'Hide extra fields' : 'Show extra fields') + '">' + (isExpanded ? '▾' : '▸') + '</button></td>';
     html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="startTime" data-focus="startTime" value="' + esc(evt.startTime) + '" maxlength="4" placeholder="0700"></td>';
     html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="endTime" data-focus="endTime" value="' + esc(evt.endTime) + '" maxlength="4" placeholder="0800"></td>';
     html += '<td><input type="text" class="day-sheet-title-input" data-event-id="' + esc(evt.id) + '" data-field="title" data-focus="title" value="' + esc(evt.title) + '"></td>';
@@ -657,56 +729,26 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     });
     html += '</select></td>';
     html += '<td><input type="text" class="day-sheet-location-input" data-event-id="' + esc(evt.id) + '" data-field="location" data-focus="location" value="' + esc(evt.location) + '"></td>';
-    html += '<td class="day-sheet-flag-cell"><label class="day-sheet-check"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isBreak ? ' checked' : '') + '></label></td>';
+    html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isBreak ? ' checked' : '') + ' aria-label="Break"></td>';
     if (canHighlight) {
-      html += '<td class="day-sheet-flag-cell"><label class="day-sheet-check"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track."></label></td>';
+      html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track." aria-label="Main track override"></td>';
     } else {
-      html += '<td class="day-sheet-flag-cell"><span class="day-sheet-mini-label" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">' + (evt.isBreak ? 'Break' : 'From Audience') + '</span></td>';
+      html += '<td class="day-sheet-check-cell"><span class="day-sheet-cell-note" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">Auto</span></td>';
     }
-    html += '<td><div class="day-sheet-status-stack">';
+    html += '<td><div class="day-sheet-track-cell">';
     html += '<span class="day-sheet-badge day-sheet-badge-track day-sheet-badge-track-' + esc(trackStatus.tone) + '" title="' + esc(trackStatus.title) + '">' + esc(trackStatus.label) + '</span>';
-    html += '<span class="day-sheet-duration">' + esc(formatDuration(computeDuration(evt))) + '</span>';
     if (overlapNames.length > 0) {
       html += '<span class="day-sheet-badge warn" title="' + esc('Overlaps with ' + overlapNames.join(', ')) + '">Overlap</span>';
     }
     html += '</div></td>';
-    html += '<td><div class="day-sheet-row-actions">';
-    html += '<button class="btn day-sheet-delete-event" data-event-id="' + esc(evt.id) + '" data-delete-label="Delete">Delete</button>';
-    html += '</div></td>';
+    html += '<td><span class="day-sheet-duration">' + esc(formatDuration(computeDuration(evt))) + '</span></td>';
     html += '</tr>';
-
-    if (isExpanded) {
-      html += '<tr class="day-sheet-details-row" data-event-id="' + esc(evt.id) + '">';
-      html += '<td colspan="10">';
-      html += '<div class="day-sheet-details">';
-      html += '<div class="day-sheet-details-toolbar">';
-      html += '<div class="day-sheet-details-copy">Use <strong>Audience</strong> for the group or section this event belongs to. Use <strong>Specific People</strong> only for named exceptions inside that audience.</div>';
-      html += '<button class="btn day-sheet-open-editor" data-event-id="' + esc(evt.id) + '">Open Full Details</button>';
-      html += '</div>';
-      html += '<div class="day-sheet-details-grid">';
-      html += '<div class="day-sheet-detail-field day-sheet-detail-wide">';
-      html += '<label>Specific People</label>';
-      html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda">';
-      html += '</div>';
-      html += '<div class="day-sheet-detail-field">';
-      html += '<label>Point of Contact</label>';
-      html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="poc" data-focus="poc" value="' + esc(evt.poc) + '">';
-      html += '</div>';
-      html += '<div class="day-sheet-detail-field day-sheet-detail-wide">';
-      html += '<label>Description</label>';
-      html += '<textarea data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description">' + esc(evt.description) + '</textarea>';
-      html += '</div>';
-      html += '</div>';
-      if (overlapNames.length > 0) {
-        html += '<p class="day-sheet-details-hint">Overlap warning: ' + esc(overlapNames.join(', ')) + ' share this time block.</p>';
-      }
-      html += '</div>';
-      html += '</td>';
-      html += '</tr>';
-    }
   });
 
   html += '</tbody></table>';
+  html += '</div>';
+  html += '<div class="day-sheet-detail-panel" id="daySheetDetailPanel">';
+  html += buildDaySheetDetailPanel(ctx, selectedEventId);
   html += '</div>';
   html += '</div>';
 
@@ -747,22 +789,26 @@ function wireDayEventSheetModal(modal, dayId) {
       sessionSave();
       renderActiveDay();
       renderInspector();
-      if (evt) {
-        _daySheetExpandedEventIds[evt.id] = true;
-        renderDayEventSheetModal(modal, dayId, { eventId: evt.id, field: 'title' });
-      }
-    });
+      if (evt) renderDayEventSheetModal(modal, dayId, { eventId: evt.id, field: 'title' });
+      });
   }
 
-  modal.querySelectorAll('[data-action="toggle-details"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const eventId = btn.getAttribute('data-event-id');
-      _daySheetExpandedEventIds[eventId] = !_daySheetExpandedEventIds[eventId];
-      renderDayEventSheetModal(modal, dayId, { eventId, field: 'title' });
+  modal.querySelectorAll('.day-sheet-row').forEach(row => {
+    const eventId = row.getAttribute('data-event-id');
+    row.addEventListener('click', () => {
+      syncDaySheetSelectionUI(modal, dayId, eventId);
+    });
+    row.addEventListener('dblclick', (e) => {
+      if (e.target.closest('input, select, textarea, button, label')) return;
+      openDaySheetFullDetails(dayId, eventId);
     });
   });
 
   modal.querySelectorAll('.day-sheet-time-input').forEach(input => {
+    input.addEventListener('focus', () => {
+      const eventId = input.getAttribute('data-event-id');
+      syncDaySheetSelectionUI(modal, dayId, eventId);
+    });
     input.addEventListener('blur', () => {
       const eventId = input.getAttribute('data-event-id');
       const field = input.getAttribute('data-field');
@@ -790,7 +836,11 @@ function wireDayEventSheetModal(modal, dayId) {
     });
   });
 
-  modal.querySelectorAll('.day-sheet-title-input, .day-sheet-location-input, .day-sheet-details input[type="text"], .day-sheet-details textarea').forEach(input => {
+  modal.querySelectorAll('.day-sheet-title-input, .day-sheet-location-input').forEach(input => {
+    input.addEventListener('focus', () => {
+      const eventId = input.getAttribute('data-event-id');
+      syncDaySheetSelectionUI(modal, dayId, eventId);
+    });
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
       const field = input.getAttribute('data-field');
@@ -808,6 +858,10 @@ function wireDayEventSheetModal(modal, dayId) {
   });
 
   modal.querySelectorAll('.day-sheet-group-select').forEach(select => {
+    select.addEventListener('focus', () => {
+      const eventId = select.getAttribute('data-event-id');
+      syncDaySheetSelectionUI(modal, dayId, eventId);
+    });
     select.addEventListener('change', () => {
       const eventId = select.getAttribute('data-event-id');
       const currentEvent = Store.getEvents(dayId).find(e => e.id === eventId);
@@ -822,11 +876,19 @@ function wireDayEventSheetModal(modal, dayId) {
       } else if (oldScope !== newScope) {
         updates.isMainEvent = newScope === 'main';
       }
-      commitDayEventSheetUpdate(dayId, eventId, updates, { rerenderModal: true, checkConflict: true });
+      commitDayEventSheetUpdate(dayId, eventId, updates, {
+        rerenderModal: true,
+        checkConflict: true,
+        focusInfo: { eventId, field: 'groupId' }
+      });
     });
   });
 
   modal.querySelectorAll('.day-sheet-break-toggle').forEach(input => {
+    input.addEventListener('focus', () => {
+      const eventId = input.getAttribute('data-event-id');
+      syncDaySheetSelectionUI(modal, dayId, eventId);
+    });
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
       commitDayEventSheetUpdate(dayId, eventId, { isBreak: input.checked }, { rerenderModal: true, checkConflict: true });
@@ -834,36 +896,62 @@ function wireDayEventSheetModal(modal, dayId) {
   });
 
   modal.querySelectorAll('.day-sheet-main-toggle').forEach(input => {
+    input.addEventListener('focus', () => {
+      const eventId = input.getAttribute('data-event-id');
+      syncDaySheetSelectionUI(modal, dayId, eventId);
+    });
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
       commitDayEventSheetUpdate(dayId, eventId, { isMainEvent: input.checked }, { rerenderModal: true, checkConflict: true });
     });
   });
 
-  modal.querySelectorAll('.day-sheet-open-editor').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const eventId = btn.getAttribute('data-event-id');
-      closeDayEventSheetModal();
-      selectEntity('event', dayId, eventId);
+  wireDaySheetDetailPanel(modal, dayId);
+}
+
+function wireDaySheetDetailPanel(modal, dayId) {
+  const detailPanel = modal.querySelector('#daySheetDetailPanel');
+  if (!detailPanel) return;
+
+  const openDetailsBtn = detailPanel.querySelector('#daySheetOpenDetails');
+  if (openDetailsBtn) {
+    openDetailsBtn.addEventListener('click', () => {
+      const eventId = openDetailsBtn.getAttribute('data-event-id');
+      if (eventId) openDaySheetFullDetails(dayId, eventId);
+    });
+  }
+
+  detailPanel.querySelectorAll('input[type="text"]').forEach(input => {
+    input.addEventListener('change', () => {
+      const eventId = input.getAttribute('data-event-id');
+      const field = input.getAttribute('data-field');
+      const value = typeof input.value === 'string' ? input.value.trim() : input.value;
+      commitDayEventSheetUpdate(dayId, eventId, { [field]: value }, { rerenderModal: false });
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        input.blur();
+      }
     });
   });
 
-  modal.querySelectorAll('.day-sheet-delete-event').forEach(btn => {
-    wireDeleteButton(btn, () => {
-      const eventId = btn.getAttribute('data-event-id');
+  const deleteBtn = detailPanel.querySelector('#daySheetDeleteSelected');
+  if (deleteBtn) {
+    wireDeleteButton(deleteBtn, () => {
+      const eventId = deleteBtn.getAttribute('data-event-id');
+      const events = Store.getEvents(dayId).slice()
+        .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+      const index = events.findIndex(evt => evt.id === eventId);
+      const nextEventId = (events[index + 1] && events[index + 1].id) || (events[index - 1] && events[index - 1].id) || null;
       saveUndoState();
       Store.removeEvent(dayId, eventId);
-      delete _daySheetExpandedEventIds[eventId];
       sessionSave();
-      if (_selection.type === 'event' && _selection.dayId === dayId && _selection.entityId === eventId) {
-        selectEntity(null);
-      } else {
-        renderInspector();
-      }
       renderActiveDay();
-      renderDayEventSheetModal(modal, dayId);
+      renderInspector();
+      renderDayEventSheetModal(modal, dayId, nextEventId ? { eventId: nextEventId } : null);
     });
-  });
+  }
 }
 
 function commitDayEventSheetUpdate(dayId, eventId, updates, options) {

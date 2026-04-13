@@ -35,6 +35,51 @@ describe('UI Harness — render and skins', () => {
     assert(document.querySelector('.dagger-note'), 'long attendees should be footnoted in notes');
   });
 
+  it('bands skin separates title from time and metadata', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'bands' });
+    const target = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Formation');
+
+    renderDay(seeded.day1.id);
+
+    const band = document.querySelector('.band[data-event-id="' + target.id + '"]');
+    const title = band.querySelector('.band-title');
+    const meta = band.querySelector('.band-meta-line');
+
+    assert.equal(title.textContent.trim(), 'Formation');
+    assert(meta.textContent.includes('0700–0730'), 'meta line should repeat the event time');
+    assert(meta.textContent.includes('Bldg 200 Apron'), 'meta line should include location');
+    assert(!title.textContent.includes('Bldg 200 Apron'), 'title should stay visually separate from metadata');
+  });
+
+  it('repeats event time without collapsing the title hierarchy', () => {
+    ['grid', 'cards', 'phases'].forEach(skin => {
+      resetUiHarnessState();
+      const seeded = seedUiSchedule({ skin: skin });
+
+      renderDay(seeded.day1.id);
+
+      if (skin === 'grid') {
+        const cell = Array.from(document.querySelectorAll('.grid-cell')).find(node => node.textContent.includes('Weapons Qualification'));
+        assert.equal(cell.querySelector('.grid-cell-title').textContent.trim(), 'Weapons Qualification');
+        assert.equal(cell.querySelector('.grid-cell-time').textContent.trim(), '0830–1030');
+        assert(cell.querySelector('.grid-cell-meta-line').textContent.includes('Range 3'), 'grid should keep location in secondary metadata');
+      }
+
+      if (skin === 'cards') {
+        const card = Array.from(document.querySelectorAll('.cards-event')).find(node => node.textContent.includes('Weapons Qualification'));
+        assert.equal(card.querySelector('.cards-event-title').textContent.trim(), 'Weapons Qualification');
+        assert.equal(card.querySelector('.cards-event-time').textContent.trim(), '0830–1030');
+        assert(card.querySelector('.cards-event-meta').textContent.includes('Range 3'), 'cards should keep location in secondary metadata');
+      }
+
+      if (skin === 'phases') {
+        const task = Array.from(document.querySelectorAll('.phase-task')).find(node => node.textContent.includes('Weapons Qualification'));
+        assert(task.querySelector('.phase-task-meta').textContent.includes('0830–1030'), 'phases should repeat time in task metadata');
+      }
+    });
+  });
+
   it('grid skin renders shared banners and continuation cells as clickable elements', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'grid' });
@@ -49,7 +94,25 @@ describe('UI Harness — render and skins', () => {
     renderDay(seeded.day1.id);
 
     assert(document.querySelector('.grid-banner[data-event-id]'), 'grid skin should render shared banners');
+    assert(document.querySelector('.grid-banner-stack'), 'grid shared banners should render a centered content stack');
     assert(document.querySelector('.grid-cell-cont[data-event-id]'), 'grid continuation cells should keep event ids');
+  });
+
+  it('uses contrasting text colors for group-colored labels', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'grid' });
+    Store.updateGroup('grp_chiefs', { color: '#fff3a0' });
+    Store.updateGroup('grp_mx', { color: '#1f3a5f' });
+
+    renderDay(seeded.day1.id);
+
+    const gridHeader = Array.from(document.querySelectorAll('.grid-group-col'))
+      .find(node => node.textContent.includes('Flight Chiefs'));
+    const darkLabel = document.querySelector('.grid-group-col[style*="#1f3a5f"]');
+
+    assert(gridHeader, 'grid header should exist for the updated group');
+    assert(gridHeader.getAttribute('style').includes('color:#1d1d1f'), 'light group colors should use dark text');
+    assert(darkLabel && darkLabel.getAttribute('style').includes('color:#ffffff'), 'dark group colors should keep white text');
   });
 
   it('cards and phases skins expose attendee details in event content', () => {

@@ -36,3 +36,17 @@ describe('utils — esc', () => {
   it('handles empty string', () => { assert.equal(esc(''), ''); });
   it('handles null/undefined', () => { assert.equal(esc(null), ''); });
 });
+
+describe('utils — getContrastingTextColor', () => {
+  it('returns dark text for light backgrounds', () => {
+    assert.equal(getContrastingTextColor('#fff3a0'), '#1d1d1f');
+  });
+
+  it('returns white text for dark backgrounds', () => {
+    assert.equal(getContrastingTextColor('#1f3a5f'), '#ffffff');
+  });
+
+  it('supports shorthand hex colors', () => {
+    assert.equal(getContrastingTextColor('#ff0'), '#1d1d1f');
+  });
+});

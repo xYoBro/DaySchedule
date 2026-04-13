@@ -5,7 +5,7 @@
  *
  * REQUIRES:
  *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js        — esc(), timeToMinutes()
+ *   utils.js        — esc(), timeToMinutes(), getContrastingTextColor()
  *   render.js       — renderNotes(), clearDaggerFootnotes()
  *
  * CONSUMED BY:
@@ -54,7 +54,7 @@ function renderDayBody_grid(dayId) {
   html += '<div class="grid-header">';
   html += '<div class="grid-time-col"></div>';
   activeGroups.forEach(g => {
-    html += '<div class="grid-group-col" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</div>';
+    html += '<div class="grid-group-col" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</div>';
   });
   html += '</div>';
 
@@ -70,10 +70,19 @@ function renderDayBody_grid(dayId) {
       html += '<div class="' + bannerClass + '" data-event-id="' + esc(shared.id) + '">';
       html += '<div class="grid-time-col">' + esc(shared.startTime) + '</div>';
       html += '<div class="grid-banner-content">';
-      html += '<strong>' + esc(shared.title) + '</strong>';
-      const bannerMeta = [shared.location, shared.poc ? 'POC: ' + shared.poc : ''].filter(Boolean);
-      if (bannerMeta.length) html += ' &mdash; ' + esc(bannerMeta.join(' \u00b7 '));
+      html += '<div class="grid-banner-stack">';
+      html += '<div class="grid-banner-head">';
+      html += '<div class="grid-banner-title">' + esc(shared.title) + '</div>';
+      html += '<div class="grid-banner-time">' + esc(shared.startTime + '\u2013' + shared.endTime) + '</div>';
+      html += '</div>';
+      const bannerMeta = [];
+      if (shared.location) bannerMeta.push('<span>' + esc(shared.location) + '</span>');
+      if (shared.poc) bannerMeta.push('<span>POC: ' + esc(shared.poc) + '</span>');
+      if (bannerMeta.length > 0) {
+        html += '<div class="grid-banner-meta">' + bannerMeta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
+      }
       if (shared.description) html += '<div class="grid-banner-desc">' + esc(shared.description) + '</div>';
+      html += '</div>';
       html += '</div>';
       html += '</div>';
       continue;
@@ -91,10 +100,18 @@ function renderDayBody_grid(dayId) {
       if (evt && evt.startTime === slotStart) {
         // Event starts in this slot
         html += '<div class="grid-cell" style="border-top:2px solid ' + esc(g.color) + ';" data-event-id="' + esc(evt.id) + '">';
+        html += '<div class="grid-cell-head">';
         html += '<div class="grid-cell-title">' + esc(evt.title) + '</div>';
-        const meta = [evt.location, evt.poc ? 'POC: ' + evt.poc : ''].filter(Boolean);
-        if (meta.length) html += '<div class="grid-cell-meta">' + esc(meta.join(' \u00b7 ')) + '</div>';
+        html += '<div class="grid-cell-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
+        html += '</div>';
+        const meta = [];
+        if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
+        if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
+        if (meta.length > 0) {
+          html += '<div class="grid-cell-meta-line">' + meta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
+        }
         if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
+        if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
         html += '</div>';
       } else if (evt) {
         // Continuation cell

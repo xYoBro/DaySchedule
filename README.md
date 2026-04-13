@@ -29,6 +29,8 @@ DaySchedule remembers that folder connection for the current browser.
 3. If the schedule opens in read-only mode, click `Edit`.
    When you are finished, click `Done Editing` to hand it off clearly.
 4. Make your changes.
+   `Quick Edit` works like a dense worksheet: one row per event, with a selected-row editor at the bottom for the extra fields.
+   Click a row to edit those extra fields, or double-click a row to jump straight into full event details.
    `Audience` means the group or section this event belongs to. `Primary` audiences go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`.
    `Specific People` is only for named exceptions inside that audience.
 5. Wait for `Saved` in the toolbar before handing off to the next person.

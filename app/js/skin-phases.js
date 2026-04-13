@@ -5,7 +5,7 @@
  *
  * REQUIRES:
  *   app-state.js — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js     — esc()
+ *   utils.js     — esc(), getContrastingTextColor()
  *   render.js    — renderNotes(), clearDaggerFootnotes()
  *
  * CONSUMED BY:
@@ -62,16 +62,15 @@ function renderDayBody_phases(dayId) {
     if (evt) {
       html += '<div class="phase-block' + (isBreak ? ' phase-break' : '') + '" data-event-id="' + esc(evt.id) + '">';
       html += '<div class="phase-header">';
-      html += '<div class="phase-name">';
-      if (evt.startTime) html += '<span class="phase-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>';
-      html += esc(evt.title);
-      html += '</div>';
+      html += '<div class="phase-name">' + esc(evt.title) + '</div>';
+      if (!isBreak) {
+        const meta = ['<span class="phase-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];
+        if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
+        if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
+        html += '<div class="phase-meta-line">' + meta.join('<span class="phase-meta-sep">\u00b7</span>') + '</div>';
+      }
       if (evt.description && !isBreak) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
-      }
-      const meta = [evt.location, evt.poc ? 'POC: ' + evt.poc : ''].filter(Boolean);
-      if (meta.length && !isBreak) {
-        html += '<div class="phase-meta">' + esc(meta.join(' \u00b7 ')) + '</div>';
       }
       html += '</div>';
     } else {
@@ -84,12 +83,16 @@ function renderDayBody_phases(dayId) {
         const t = task.event;
         const g = task.group;
         html += '<div class="phase-task" data-event-id="' + esc(t.id) + '">';
-        if (g) html += '<span class="phase-task-group" style="background:' + esc(g.color) + ';color:white;">' + esc(g.name) + '</span>';
+        html += '<div class="phase-task-head">';
+        if (g) html += '<span class="phase-task-group" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span>';
         html += '<span class="phase-task-title">' + esc(t.title) + '</span>';
-        if (t.startTime) html += '<span class="phase-task-time">' + esc(t.startTime + '\u2013' + t.endTime) + '</span>';
-        const details = [t.location, t.poc ? 'POC: ' + t.poc : '', t.description].filter(Boolean);
-        if (details.length) {
-          html += '<div class="phase-task-detail">' + esc(details.join(' \u00b7 ')) + '</div>';
+        html += '</div>';
+        const taskMeta = ['<span class="phase-task-inline-time">' + esc(t.startTime + '\u2013' + t.endTime) + '</span>'];
+        if (t.location) taskMeta.push('<span>' + esc(t.location) + '</span>');
+        if (t.poc) taskMeta.push('<span>POC: ' + esc(t.poc) + '</span>');
+        html += '<div class="phase-task-meta">' + taskMeta.join('<span class="phase-meta-sep">\u00b7</span>') + '</div>';
+        if (t.description) {
+          html += '<div class="phase-task-detail">' + esc(t.description) + '</div>';
         }
         if (t.attendees) html += '<div class="phase-task-detail">WHO: ' + esc(t.attendees) + '</div>';
         html += '</div>';

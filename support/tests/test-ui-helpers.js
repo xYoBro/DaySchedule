@@ -95,7 +95,7 @@ function resetUiHarnessState() {
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
   _settingsAdvancedOpen = false;
-  _daySheetExpandedEventIds = {};
+  _daySheetSelectedEventId = null;
   _versionSaveMode = false;
   _contextMenuTarget = null;
 

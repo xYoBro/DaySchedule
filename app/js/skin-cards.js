@@ -49,8 +49,16 @@ function renderDayBody_cards(dayId) {
     sharedEvents.forEach(e => {
       const breakClass = e.isBreak ? ' cards-shared-break' : '';
       html += '<span class="cards-shared-item' + breakClass + '" data-event-id="' + esc(e.id) + '">';
-      html += '<strong>' + esc(e.startTime) + '</strong> ' + esc(e.title);
-      if (e.location) html += ' <span class="cards-shared-loc">\u00b7 ' + esc(e.location) + '</span>';
+      html += '<span class="cards-shared-head">';
+      html += '<span class="cards-shared-title">' + esc(e.title) + '</span>';
+      html += '<span class="cards-shared-time">' + esc(e.startTime + '\u2013' + e.endTime) + '</span>';
+      html += '</span>';
+      const sharedMeta = [];
+      if (e.location) sharedMeta.push('<span>' + esc(e.location) + '</span>');
+      if (e.poc) sharedMeta.push('<span>POC: ' + esc(e.poc) + '</span>');
+      if (sharedMeta.length > 0) {
+        html += '<span class="cards-shared-meta">' + sharedMeta.join('<span class="cards-meta-sep">\u00b7</span>') + '</span>';
+      }
       html += '</span>';
     });
     html += '</div>';
@@ -68,10 +76,16 @@ function renderDayBody_cards(dayId) {
 
     gEvents.forEach(evt => {
       html += '<div class="cards-event" data-event-id="' + esc(evt.id) + '">';
-      html += '<div class="cards-event-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
+      html += '<div class="cards-event-head">';
       html += '<div class="cards-event-title">' + esc(evt.title) + '</div>';
-      if (evt.location) html += '<div class="cards-event-detail">' + esc(evt.location) + '</div>';
-      if (evt.poc) html += '<div class="cards-event-detail">POC: ' + esc(evt.poc) + '</div>';
+      html += '<div class="cards-event-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
+      html += '</div>';
+      const meta = [];
+      if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
+      if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
+      if (meta.length > 0) {
+        html += '<div class="cards-event-meta">' + meta.join('<span class="cards-meta-sep">\u00b7</span>') + '</div>';
+      }
       if (evt.description) html += '<div class="cards-event-detail">' + esc(evt.description) + '</div>';
       if (evt.attendees) html += '<div class="cards-event-detail">WHO: ' + esc(evt.attendees) + '</div>';
       html += '</div>';
