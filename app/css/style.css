@@ -129,6 +129,19 @@ body {
   flex-direction: column;
   gap: 0;
 }
+.band-view-note {
+  margin-top: 10px;
+  padding: 6px 8px;
+  border: 1px solid rgba(176, 106, 16, 0.2);
+  border-radius: 6px;
+  background: rgba(176, 106, 16, 0.08);
+  color: var(--sch-text-secondary);
+  font-size: 7.9px;
+  line-height: 1.35;
+}
+.band-view-note strong {
+  color: var(--sch-text);
+}
 
 /* ── Event Band ── */
 .band {
@@ -428,11 +441,13 @@ body {
   margin-bottom: 4px;
 }
 .conc-row {
-  display: flex;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px 12px;
+  align-items: start;
 }
 .conc-item {
-  flex: 1;
+  min-width: 0;
   padding: 6px 0 6px 10px;
   border-left: 2px solid var(--sch-border);
   cursor: pointer;
@@ -457,6 +472,7 @@ body {
   font-size: var(--conc-detail-fs, 7.5px);
   color: var(--sch-text-muted);
   margin-top: 1px;
+  line-height: 1.35;
 }
 .conc-item .ci-badge {
   font-size: 6.5px;

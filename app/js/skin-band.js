@@ -23,6 +23,7 @@ function renderDayBody_band(dayId) {
   const groups = Store.getGroups();
   const { mainBands, concurrent } = classifyEvents(day.events, groups);
   const notes = Store.getNotes(dayId);
+  const densityWarning = getBandDensityWarning(mainBands, concurrent);
 
   clearDaggerFootnotes();
 
@@ -50,6 +51,12 @@ function renderDayBody_band(dayId) {
   });
   html += '</div>';
 
+  if (densityWarning) {
+    html += '<div class="band-view-note">';
+    html += '<strong>Bands view warning:</strong> ' + esc(densityWarning);
+    html += '</div>';
+  }
+
   if (concurrent.length > 0) {
     html += renderConcurrentRow(concurrent, groups);
   }
@@ -59,6 +66,24 @@ function renderDayBody_band(dayId) {
   }
 
   return html;
+}
+
+function getBandDensityWarning(mainBands, concurrent) {
+  if (!concurrent || concurrent.length === 0) return '';
+
+  const maxConcurrentOnBand = mainBands.reduce((max, band) => {
+    const count = band.concurrent ? band.concurrent.length : 0;
+    return Math.max(max, count);
+  }, 0);
+
+  if (concurrent.length < 10 && maxConcurrentOnBand < 4) return '';
+
+  const parts = [];
+  parts.push(concurrent.length + ' concurrent event' + (concurrent.length === 1 ? '' : 's'));
+  if (maxConcurrentOnBand > 0) {
+    parts.push('up to ' + maxConcurrentOnBand + ' attached to one time block');
+  }
+  return parts.join(', ') + '. Try Grid, Cards, or Phases for easier scanning.';
 }
 
 function renderBand(band) {

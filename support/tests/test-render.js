@@ -35,6 +35,24 @@ describe('UI Harness — render and skins', () => {
     assert(document.querySelector('.dagger-note'), 'long attendees should be footnoted in notes');
   });
 
+  it('bands warns and uses a wrapping concurrent grid when the day is dense', () => {
+    resetUiHarnessState();
+    loadSampleData();
+    const dayId = Store.getDays()[0].id;
+    setCurrentScheduleFileData({
+      name: Store.getTitle(),
+      current: Store.getPersistedState(),
+      versions: [],
+      theme: { skin: 'bands', palette: 'classic' },
+    });
+
+    renderDay(dayId);
+
+    const note = document.querySelector('.band-view-note');
+    assert(note, 'bands should warn when concurrent density is high');
+    assert(note.textContent.includes('Try Grid, Cards, or Phases'), 'bands warning should point to alternate layouts');
+  });
+
   it('bands skin separates title from time and metadata', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'bands' });
