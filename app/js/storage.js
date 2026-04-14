@@ -272,13 +272,27 @@ function showSyncConfirmation() {
 
     const cleanup = (result) => {
       overlay.classList.remove('active');
+      overlay.removeEventListener('click', onBackdropClick);
+      document.removeEventListener('keydown', onKeyDown, true);
       confirmBtn.onclick = null;
       cancelBtn.onclick = null;
       resolve(result);
     };
 
+    const onBackdropClick = (e) => {
+      if (e.target === overlay) cleanup(false);
+    };
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      cleanup(false);
+    };
+
     confirmBtn.onclick = () => cleanup(true);
     cancelBtn.onclick = () => cleanup(false);
+    overlay.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown, true);
   });
 }
 
@@ -961,11 +975,19 @@ function showStaleDataWarning(otherUser, otherTime, otherData) {
   content.querySelector('#staleLoadBtn').onclick = () => {
     overlay.classList.remove('active');
     Store.loadPersistedState(otherData.current);
+    if (typeof setCurrentScheduleFileData === 'function') {
+      setCurrentScheduleFileData(JSON.parse(JSON.stringify(otherData)));
+    }
+    const days = Store.getDays();
+    if (!days.find(day => day.id === Store.getActiveDay())) {
+      Store.setActiveDay(days[0] ? days[0].id : null);
+    }
     _lastKnownSavedAt = otherData.lastSavedAt;
     _dirty = false;
     updateSaveIndicator('saved');
     renderActiveDay();
     syncToolbarTitle();
+    renderInspector();
     toast('Loaded external changes');
   };
 
@@ -1013,16 +1035,40 @@ function promptUserName() {
     const input = content.querySelector('#userNameInput');
     setTimeout(() => input.focus(), 50);
 
+    const cleanup = (result) => {
+      overlay.classList.remove('active');
+      overlay.removeEventListener('click', onBackdropClick);
+      document.removeEventListener('keydown', onKeyDown, true);
+      doneBtn.onclick = null;
+      input.removeEventListener('keydown', onInputKeyDown);
+      resolve(result);
+    };
+
     const done = () => {
       const name = input.value.trim();
       if (!name) { input.focus(); return; }
       setUserName(name);
-      overlay.classList.remove('active');
-      resolve(name);
+      cleanup(name);
     };
 
-    content.querySelector('#userNameDone').onclick = done;
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') done(); });
+    const onBackdropClick = (e) => {
+      if (e.target === overlay) cleanup('');
+    };
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      cleanup('');
+    };
+    const onInputKeyDown = (e) => {
+      if (e.key === 'Enter') done();
+    };
+
+    const doneBtn = content.querySelector('#userNameDone');
+    doneBtn.onclick = done;
+    input.addEventListener('keydown', onInputKeyDown);
+    overlay.addEventListener('click', onBackdropClick);
+    document.addEventListener('keydown', onKeyDown, true);
   });
 }
 
@@ -1039,17 +1085,18 @@ async function createVersion(versionName) {
   if (!fileData) return false;
 
   const now = new Date().toISOString();
+  const currentState = JSON.parse(JSON.stringify(Store.getPersistedState()));
   const version = {
     name: versionName,
     savedBy: userName,
     savedAt: now,
-    data: JSON.parse(JSON.stringify(fileData.current)),
+    data: JSON.parse(JSON.stringify(currentState)),
   };
   if (!fileData.versions) fileData.versions = [];
   fileData.versions.unshift(version);
   appendActivity(fileData, 'version_saved', versionName, userName, now);
 
-  fileData.current = Store.getPersistedState();
+  fileData.current = currentState;
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
 
@@ -1081,12 +1128,13 @@ async function restoreVersion(versionIndex) {
 
   // Save reference before mutating the array
   const target = fileData.versions[versionIndex];
+  const currentState = JSON.parse(JSON.stringify(Store.getPersistedState()));
 
   const backup = {
     name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
     savedBy: userName,
     savedAt: new Date().toISOString(),
-    data: JSON.parse(JSON.stringify(fileData.current)),
+    data: currentState,
   };
   fileData.versions.unshift(backup);
 
@@ -1098,6 +1146,10 @@ async function restoreVersion(versionIndex) {
   const ok = await writeScheduleFile(_currentFileName, fileData);
   if (ok) {
     Store.loadPersistedState(fileData.current);
+    const days = Store.getDays();
+    if (!days.find(day => day.id === Store.getActiveDay())) {
+      Store.setActiveDay(days[0] ? days[0].id : null);
+    }
     _lastKnownSavedAt = fileData.lastSavedAt;
     _dirty = false;
     const memFileData = getCurrentScheduleFileData();
@@ -1110,6 +1162,7 @@ async function restoreVersion(versionIndex) {
     updateSaveIndicator('saved');
     renderActiveDay();
     syncToolbarTitle();
+    renderInspector();
   }
   return ok;
 }

@@ -50,6 +50,9 @@ function undo() {
   _redoStack.push(Store.snapshot());
   Store.restore(_undoStack.pop());
   renderActiveDay();
+  syncToolbarTitle();
+  renderInspector();
+  sessionSave();
   toast('Undo');
 }
 
@@ -58,6 +61,9 @@ function redo() {
   _undoStack.push(Store.snapshot());
   Store.restore(_redoStack.pop());
   renderActiveDay();
+  syncToolbarTitle();
+  renderInspector();
+  sessionSave();
   toast('Redo');
 }
 
@@ -152,8 +158,11 @@ function importDataFile() {
           throw new Error('Invalid schedule file — no days array found.');
         }
         // Normalize all data through schema validators
-        if (state.days) state.days = state.days.map(normalizeDay);
-        if (state.groups) state.groups = state.groups.map(normalizeGroup);
+        if (state.days) state.days = state.days.map(normalizeDay).filter(Boolean);
+        if (state.groups) state.groups = state.groups.map(normalizeGroup).filter(Boolean);
+        if (!state.days.length) {
+          throw new Error('Invalid schedule file — no valid days found.');
+        }
 
         saveUndoState();
         Store.loadPersistedState(state);

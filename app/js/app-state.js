@@ -154,7 +154,7 @@ const Store = {
 
   snapshot() {
     return JSON.parse(JSON.stringify({
-      title: _title, days: _days, groups: _groups, logo: _logo, footer: _footer,
+      title: _title, days: _days, groups: _groups, logo: _logo, footer: _footer, activeDay: _activeDay,
     }));
   },
   restore(snap) {
@@ -163,6 +163,9 @@ const Store = {
     _groups = snap.groups || JSON.parse(JSON.stringify(DEFAULT_GROUPS));
     _logo = snap.logo || null;
     _footer = snap.footer || { contact: '', poc: '', updated: '' };
+    _activeDay = _days.find(d => d.id === snap.activeDay)
+      ? snap.activeDay
+      : (_days[0] ? _days[0].id : null);
   },
 
   duplicateDay(sourceDayId) {

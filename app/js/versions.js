@@ -142,6 +142,8 @@ function wireVersionPanel(modal) {
     nameInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') doSave();
       if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
         _versionSaveMode = false;
         renderVersionPanel(modal);
       }

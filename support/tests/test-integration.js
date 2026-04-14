@@ -509,14 +509,8 @@ describe('Integration — Version Management', () => {
     // Save as version
     await createVersion('Before Changes');
 
-    // Modify the schedule
+    // Modify the working copy in memory without saving it to disk
     Store.setTitle('Modified Title');
-    const modState = Store.getPersistedState();
-    const modFile = await readScheduleFile('restore-test.json');
-    modFile.current = modState;
-    modFile.lastSavedAt = new Date().toISOString();
-    await writeScheduleFile('restore-test.json', modFile);
-    _lastKnownSavedAt = modFile.lastSavedAt;
 
     // Restore version 0 ("Before Changes")
     const ok = await restoreVersion(0);
@@ -527,8 +521,10 @@ describe('Integration — Version Management', () => {
 
     // Should now have 2 versions: auto-backup + "Before Changes"
     const versions = await getVersions();
+    const loaded = await readScheduleFile('restore-test.json');
     assert.equal(versions.length, 2, 'should have backup + original version');
     assert(versions[0].name.startsWith('Auto-backup'), 'first version should be auto-backup');
+    assert.equal(loaded.versions[0].data.title, 'Modified Title', 'auto-backup should capture the unsaved working copy');
     assert.equal(versions[1].name, 'Before Changes');
 
     const activity = await getRecentActivity();
@@ -549,13 +545,12 @@ describe('Integration — Version Management', () => {
     // Modify Store without saving to file
     Store.setTitle('Unsaved Changes');
 
-    // Create version — should capture the file's current (old) state as version,
-    // and write the Store's state (new) as the working copy
+    // Create version — both the saved version and working copy should capture the in-memory Store state
     await createVersion('Checkpoint');
 
     const loaded = await readScheduleFile('snapshot.json');
     assert.equal(loaded.current.title, 'Unsaved Changes', 'working copy should reflect Store');
-    assert.equal(loaded.versions[0].data.title, 'Snapshot Test', 'version should capture pre-change state');
+    assert.equal(loaded.versions[0].data.title, 'Unsaved Changes', 'version should capture the current Store state');
   });
 });
 

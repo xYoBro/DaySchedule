@@ -1,3 +1,27 @@
+async function importUiJson(state, fileName) {
+  const originalCreateElement = document.createElement.bind(document);
+  let importInput = null;
+
+  document.createElement = function(tagName, options) {
+    const el = originalCreateElement(tagName, options);
+    if (String(tagName).toLowerCase() === 'input' && !importInput) importInput = el;
+    return el;
+  };
+
+  try {
+    importDataFile();
+    assert(importInput, 'import should create a file input');
+    Object.defineProperty(importInput, 'files', {
+      configurable: true,
+      value: [new File([JSON.stringify(state)], fileName || 'import.json', { type: 'application/json' })],
+    });
+    importInput.dispatchEvent(new Event('change'));
+    await wait(30);
+  } finally {
+    document.createElement = originalCreateElement;
+  }
+}
+
 describe('UI Harness — app shell', () => {
   it('scales editor chrome up for larger viewports without shrinking smaller ones', () => {
     resetUiHarnessState();
@@ -48,6 +72,38 @@ describe('UI Harness — app shell', () => {
     assert.equal(Store.getTitle(), 'June Drill');
     assert.equal(getCurrentFileName(), 'june-drill.json');
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
+  });
+
+  it('renames the file only when the title edit is committed', async () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+    setUserName('Tester');
+    await createNewSchedule('Original Title');
+
+    const titleInput = document.getElementById('tbTitle');
+    const originalRename = window.renameScheduleFile;
+    const renameCalls = [];
+
+    window.renameScheduleFile = async (oldFile, newFile) => {
+      renameCalls.push([oldFile, newFile]);
+      return true;
+    };
+
+    try {
+      titleInput.value = 'Original Title Draft';
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+      titleInput.value = 'Final Title';
+      titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+
+      assert.equal(renameCalls.length, 0, 'typing should not rename the file');
+
+      titleInput.dispatchEvent(new Event('change', { bubbles: true }));
+      await wait(0);
+
+      assert.deepEqual(renameCalls, [['original-title.json', 'final-title.json']]);
+    } finally {
+      window.renameScheduleFile = originalRename;
+    }
   });
 
   it('returnToLibrary saves dirty state before resetting the editor', async () => {
@@ -101,6 +157,192 @@ describe('UI Harness — app shell', () => {
     await openVersionPanel();
     assert(document.getElementById('versionModal').textContent.includes('Recent Activity'));
     assert(document.getElementById('versionModal').textContent.includes('Restored version "Draft Alpha"'));
+  });
+
+  it('Escape delegates to modal-specific cleanup paths', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    const seeded = await seedUiScheduleFile('Escape Harness', { skin: 'bands' });
+    await openSchedule(seeded.fileName);
+    await claimCurrentScheduleLock({ silent: true });
+
+    openHelpModal({ tab: 'faq' });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wait(0);
+    assert.equal(document.getElementById('helpModal').classList.contains('active'), false);
+
+    openSettingsModal();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wait(0);
+    assert.equal(document.getElementById('settingsModal').classList.contains('active'), false);
+
+    const evt = Store.getEvents(Store.getActiveDay())[0];
+    selectEntity('event', Store.getActiveDay(), evt.id);
+    openDayEventSheetModal();
+    assert.equal(_daySheetSelectedEventId, evt.id);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wait(0);
+    assert.equal(document.getElementById('dayEventSheetModal').classList.contains('active'), false);
+    assert.equal(_daySheetSelectedEventId, null);
+
+    await openVersionPanel();
+    document.getElementById('versionSaveBtn').click();
+    await wait(20);
+    const nameInput = document.getElementById('versionNameInput');
+    nameInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wait(20);
+    assert(document.getElementById('versionModal').classList.contains('active'), 'Escape in save mode should keep the version panel open');
+    assert.equal(document.getElementById('versionNameInput'), null, 'Escape should exit inline save mode');
+  });
+
+  it('cancels sync confirmation on Escape and backdrop click', async () => {
+    resetUiHarnessState();
+
+    const escapePromise = showSyncConfirmation();
+    await wait(0);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    assert.equal(await escapePromise, false);
+
+    const clickPromise = showSyncConfirmation();
+    await wait(0);
+    document.getElementById('syncConfirmModal').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    assert.equal(await clickPromise, false);
+  });
+
+  it('cancels the name prompt on Escape and backdrop click', async () => {
+    resetUiHarnessState();
+
+    const escapePromise = promptUserName();
+    await wait(0);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    assert.equal(await escapePromise, '');
+
+    const clickPromise = promptUserName();
+    await wait(0);
+    document.getElementById('userNameModal').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    assert.equal(await clickPromise, '');
+  });
+
+  it('undo refreshes the toolbar title and persists the restored working copy', async () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'bands', dayCount: 2, title: 'Undo Baseline' });
+
+    renderActiveDay();
+    syncToolbarTitle();
+    saveUndoState();
+    Store.setTitle('Undo Edited');
+    Store.setActiveDay(seeded.day2.id);
+    renderActiveDay();
+    syncToolbarTitle();
+
+    undo();
+
+    assert.equal(Store.getTitle(), 'Undo Baseline');
+    assert.equal(Store.getActiveDay(), seeded.day1.id);
+    assert.equal(document.getElementById('tbTitle').value, 'Undo Baseline');
+
+    await wait(600);
+    const saved = JSON.parse(sessionStorage.getItem('schedule_state'));
+    assert.equal(saved.title, 'Undo Baseline');
+  });
+
+  it('loading external changes replaces file metadata and refreshes the editor UI', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    const seeded = await seedUiScheduleFile('Local Copy', { skin: 'bands' });
+    await openSchedule(seeded.fileName);
+
+    const oldEvent = Store.getEvents(Store.getActiveDay())[0];
+    selectEntity('event', Store.getActiveDay(), oldEvent.id);
+
+    const remoteState = {
+      title: 'Remote Copy',
+      days: [{
+        id: 'day_remote',
+        date: '2026-04-20',
+        label: null,
+        startTime: '0700',
+        endTime: '1630',
+        events: [{
+          id: 'evt_remote',
+          title: 'Remote Formation',
+          startTime: '0700',
+          endTime: '0730',
+          description: '',
+          location: '',
+          poc: '',
+          groupId: 'grp_all',
+          attendees: '',
+          isBreak: false,
+          isMainEvent: true,
+        }],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    };
+    const otherData = buildScheduleFile('Remote Copy', remoteState, [{ name: 'Remote Version', data: remoteState }], 'Remote User');
+    otherData.theme = { skin: 'grid', palette: 'airforce', customColors: null };
+
+    showStaleDataWarning('Remote User', otherData.lastSavedAt, otherData);
+    document.getElementById('staleLoadBtn').click();
+    await wait(0);
+
+    assert.equal(Store.getTitle(), 'Remote Copy');
+    assert.equal(Store.getActiveDay(), 'day_remote');
+    assert.equal(document.getElementById('tbTitle').value, 'Remote Copy');
+    assert.equal(getCurrentScheduleFileData().theme.skin, 'grid');
+    assert.equal(getCurrentScheduleFileData().versions[0].name, 'Remote Version');
+    assert(document.getElementById('scheduleContainer').textContent.includes('Remote Formation'));
+  });
+
+  it('filters invalid top-level imports and rejects invalid imported event ranges', async () => {
+    resetUiHarnessState();
+
+    await importUiJson({
+      title: 'Imported Schedule',
+      days: [
+        null,
+        {
+          id: 'day_valid',
+          date: '2026-05-01',
+          startTime: '0700',
+          endTime: '1630',
+          events: [
+            { title: 'Valid Event', startTime: '0900', endTime: '1000', groupId: 'grp_all' },
+            { title: 'Bad Event', startTime: '1000', endTime: '1000', groupId: 'grp_all' },
+          ],
+          notes: [],
+        },
+      ],
+      groups: [null, { id: 'grp_extra', name: 'Extra', scope: 'limited', color: '#123456' }],
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    }, 'import.json');
+
+    assert.equal(Store.getTitle(), 'Imported Schedule');
+    assert.equal(Store.getDays().length, 1);
+    assert.equal(Store.getGroups().length, 1);
+    assert.equal(Store.getActiveDay(), 'day_valid');
+    assert.equal(Store.getEvents('day_valid').length, 1);
+    assert.equal(Store.getEvents('day_valid')[0].title, 'Valid Event');
+  });
+
+  it('shows a clear error when an import has no valid days', async () => {
+    resetUiHarnessState();
+    Store.setTitle('Before Import');
+
+    await importUiJson({
+      title: 'Broken Import',
+      days: [null],
+      groups: [],
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    }, 'broken.json');
+
+    assert.equal(Store.getTitle(), 'Before Import');
+    assert.equal(document.getElementById('toast').textContent, 'Import failed: Invalid schedule file — no valid days found.');
   });
 
   it('prompts for a real name before claiming edit access', async () => {

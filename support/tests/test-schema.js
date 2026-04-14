@@ -31,6 +31,14 @@ describe('schema — normalizeEvent', () => {
     });
     assert.equal(e.attendees, 'TSgt Yoda, SrA Snuffy');
   });
+
+  it('rejects events whose end time is not after the start time', () => {
+    const sameTime = normalizeEvent({ title: 'Bad', startTime: '0900', endTime: '0900', groupId: 'grp_all' });
+    const backwards = normalizeEvent({ title: 'Bad', startTime: '1000', endTime: '0900', groupId: 'grp_all' });
+
+    assert.equal(sameTime, null);
+    assert.equal(backwards, null);
+  });
 });
 
 describe('schema — normalizeGroup', () => {

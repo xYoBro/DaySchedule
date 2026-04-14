@@ -71,7 +71,9 @@ function openModal(id) {
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.classList.remove('active');
   if (_previousFocus && _previousFocus.focus) {
     _previousFocus.focus();
     _previousFocus = null;
@@ -99,7 +101,29 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   const active = document.querySelector('.modal-overlay.active');
-  if (active) { e.preventDefault(); closeModal(active.id); }
+  if (!active) return;
+  if (active.id === 'settingsModal' && typeof closeSettingsModal === 'function') {
+    e.preventDefault();
+    closeSettingsModal();
+    return;
+  }
+  if (active.id === 'dayEventSheetModal' && typeof closeDayEventSheetModal === 'function') {
+    e.preventDefault();
+    closeDayEventSheetModal();
+    return;
+  }
+  if (active.id === 'helpModal' && typeof closeHelpModal === 'function') {
+    e.preventDefault();
+    closeHelpModal();
+    return;
+  }
+  if (active.id === 'versionModal' && typeof closeVersionPanel === 'function') {
+    e.preventDefault();
+    closeVersionPanel();
+    return;
+  }
+  e.preventDefault();
+  closeModal(active.id);
 });
 
 applyViewportUiScale();

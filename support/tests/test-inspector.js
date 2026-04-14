@@ -88,6 +88,33 @@ describe('inspector — day sheet modal', () => {
     assert.equal(attendeesInput.value, 'Crew chiefs, AGE');
   });
 
+  it('rejects invalid quick-edit time ranges and restores the prior value', () => {
+    mountInspectorFixture();
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, {
+      title: 'Aircraft Launch Sim',
+      startTime: '1200',
+      endTime: '1400',
+      groupId: 'grp_chiefs',
+    });
+    Store.setActiveDay(day.id);
+
+    selectEntity('event', day.id, evt.id);
+    openDayEventSheetModal();
+
+    const endInput = document.querySelector(
+      '#dayEventSheetModalContent .day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="endTime"]'
+    );
+    endInput.value = '1100';
+    endInput.dispatchEvent(new Event('blur'));
+
+    const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
+    assert.equal(stored.endTime, '1400');
+    assert.equal(endInput.value, '1400');
+    assert.equal(document.getElementById('toast').textContent, 'End time must be after start time.');
+  });
+
   it('explains that main-track placement usually comes from the selected audience', () => {
     mountInspectorFixture();
 
@@ -166,6 +193,31 @@ describe('inspector — settings and event details copy', () => {
     assert(firstLabel !== secondLabel, 'toggling should swap the label');
   });
 
+  it('reclassifies existing events when an audience switches from Primary to Supporting', () => {
+    mountInspectorFixture();
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, {
+      title: 'Flight Training',
+      startTime: '0800',
+      endTime: '1000',
+      groupId: 'grp_flight',
+      isMainEvent: true,
+    });
+    Store.setActiveDay(day.id);
+
+    const modal = document.getElementById('settingsModalContent');
+    renderSettingsModal(modal);
+    modal.querySelector('.settings-tab[data-settings-tab="audiences"]').click();
+
+    const scopeBtn = modal.querySelector('.insp-group-item[data-group-id="grp_flight"] .insp-group-scope');
+    scopeBtn.click();
+
+    const updated = Store.getEvents(day.id).find(item => item.id === evt.id);
+    assert.equal(Store.getGroup('grp_flight').scope, 'limited');
+    assert.equal(updated.isMainEvent, false);
+  });
+
   it('explains main-track placement in event details', () => {
     mountInspectorFixture();
 
@@ -188,6 +240,32 @@ describe('inspector — settings and event details copy', () => {
     assert(text.includes('Primary audiences automatically place this event in the main track'));
     assert(text.includes('Specific People'));
     assert(text.includes('Show this in the main track'));
+  });
+
+  it('rejects invalid full-editor time ranges and restores the previous value', () => {
+    mountInspectorFixture();
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, {
+      title: 'Weapons Qualification',
+      startTime: '0830',
+      endTime: '1100',
+      groupId: 'grp_snco',
+    });
+    Store.setActiveDay(day.id);
+
+    selectEntity('event', day.id, evt.id);
+    renderInspector();
+
+    const panel = document.getElementById('inspectorPanel');
+    const endInput = panel.querySelector('#insp-evt-end');
+    endInput.value = '0800';
+    endInput.dispatchEvent(new Event('blur'));
+
+    const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
+    assert.equal(stored.endTime, '1100');
+    assert.equal(endInput.value, '1100');
+    assert.equal(document.getElementById('toast').textContent, 'End time must be after start time.');
   });
 
   it('explains shared-time exceptions in event details', () => {

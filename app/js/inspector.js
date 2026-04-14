@@ -63,19 +63,25 @@ let _daySheetSelectedEventId = null;
 
 // ── Selection ──────────────────────────────────────────────────────────────
 
+function syncPreviewSelection() {
+  const container = document.getElementById('scheduleContainer');
+  if (!container) return;
+
+  container.querySelectorAll('[data-event-id].selected').forEach(el => el.classList.remove('selected'));
+  container.querySelectorAll('.notes-list li.selected').forEach(el => el.classList.remove('selected'));
+
+  if (_selection.type === 'event' && _selection.entityId) {
+    container.querySelectorAll('[data-event-id="' + _selection.entityId + '"]').forEach(el => el.classList.add('selected'));
+  } else if (_selection.type === 'note' && _selection.entityId) {
+    const noteEl = container.querySelector('.notes-list li[data-note-id="' + _selection.entityId + '"]');
+    if (noteEl) noteEl.classList.add('selected');
+  }
+}
+
 function selectEntity(type, dayId, entityId) {
   _selection = { type: type || null, dayId: dayId || null, entityId: entityId || null };
   renderInspector();
-  // Highlight selected band/note in preview
-  document.querySelectorAll('.band.selected').forEach(b => b.classList.remove('selected'));
-  document.querySelectorAll('.notes-list li.selected').forEach(n => n.classList.remove('selected'));
-  if (type === 'event' && entityId) {
-    const band = document.querySelector('.band[data-event-id="' + entityId + '"]');
-    if (band) band.classList.add('selected');
-  } else if (type === 'note' && entityId) {
-    const noteEl = document.querySelector('.notes-list li[data-note-id="' + entityId + '"]');
-    if (noteEl) noteEl.classList.add('selected');
-  }
+  syncPreviewSelection();
 }
 
 // ── Render dispatcher ──────────────────────────────────────────────────────
@@ -409,8 +415,16 @@ function wireSettingsModal(modal) {
       const isMain = scopeBtn.classList.contains('main');
       const newScope = isMain ? 'limited' : 'main';
       Store.updateGroup(groupId, { scope: newScope });
+      Store.getDays().forEach(day => {
+        Store.getEvents(day.id)
+          .filter(evt => evt.groupId === groupId)
+          .forEach(evt => {
+            Store.updateEvent(day.id, evt.id, { isMainEvent: newScope === 'main' });
+          });
+      });
       scopeBtn.classList.toggle('main', !isMain);
       scopeBtn.textContent = isMain ? 'Supporting' : 'Primary';
+      renderActiveDay();
       sessionSave();
     });
 
@@ -868,8 +882,15 @@ function wireDayEventSheetModal(modal, dayId) {
       const focusInfo = input._daySheetNextFocus || null;
       input._daySheetNextFocus = null;
       const snapped = snapToQuarter(input.value);
+      const updates = { [field]: snapped };
+      if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
+        const evt = Store.getEvents(dayId).find(item => item.id === eventId);
+        if (evt) input.value = evt[field];
+        toast('End time must be after start time.');
+        return;
+      }
       input.value = snapped;
-      commitDayEventSheetUpdate(dayId, eventId, { [field]: snapped }, { rerenderModal: true, checkConflict: true, focusInfo });
+      commitDayEventSheetUpdate(dayId, eventId, updates, { rerenderModal: true, checkConflict: true, focusInfo });
     });
     input.addEventListener('keydown', (e) => {
       const fieldOrder = ['startTime', 'endTime', 'title', 'groupId', 'location'];
@@ -1162,6 +1183,7 @@ function wireEventInspector(panel, dayId, eventId) {
   const groupSelect = panel.querySelector('#insp-evt-group');
   if (groupSelect) {
     groupSelect.addEventListener('change', () => {
+      saveUndoState();
       const oldGroup = Store.getGroup(Store.getEvents(dayId).find(e => e.id === eventId).groupId);
       const newGroup = Store.getGroup(groupSelect.value);
       const oldScope = oldGroup ? oldGroup.scope : 'limited';
@@ -1287,6 +1309,7 @@ function renderActiveDay() {
   const dayId = Store.getActiveDay();
   if (dayId) renderDay(dayId);
   renderDayTabs();
+  syncPreviewSelection();
 }
 
 function renderDayTabs() {
@@ -1386,16 +1409,13 @@ function wireToolbar() {
       Store.setTitle(tbTitle.value.trim());
       renderActiveDay();
       sessionSave();
-      // Update filename if we have directory access
+    });
+    tbTitle.addEventListener('change', async () => {
       const oldFile = getCurrentFileName();
-      if (oldFile && hasDirectoryAccess()) {
-        const newSlug = scheduleNameToSlug(tbTitle.value.trim());
-        const newFile = newSlug + '.json';
-        if (newFile !== oldFile) {
-          renameScheduleFile(oldFile, newFile).then(ok => {
-            if (ok) setCurrentFile(newFile, _lastKnownSavedAt);
-          });
-        }
+      if (!oldFile || !hasDirectoryAccess()) return;
+      const newFile = scheduleNameToSlug(tbTitle.value.trim()) + '.json';
+      if (newFile !== oldFile && await renameScheduleFile(oldFile, newFile)) {
+        setCurrentFile(newFile, getLastSavedAt());
       }
     });
   }
@@ -1496,17 +1516,30 @@ function checkTimeConflict(dayId, eventId) {
   }
 }
 
+function eventTimeRangeIsValid(dayId, eventId, updates) {
+  const evt = Store.getEvents(dayId).find(item => item.id === eventId);
+  if (!evt) return true;
+  const nextStart = updates && updates.startTime != null ? updates.startTime : evt.startTime;
+  const nextEnd = updates && updates.endTime != null ? updates.endTime : evt.endTime;
+  return timeToMinutes(nextEnd) > timeToMinutes(nextStart);
+}
+
 function wireTimeInput(panel, selector, field, dayId, eventId) {
   const input = panel.querySelector(selector);
   if (!input) return;
   input.addEventListener('blur', () => {
     const snapped = snapToQuarter(input.value);
+    const updates = { [field]: snapped };
+    if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
+      const evt = Store.getEvents(dayId).find(item => item.id === eventId);
+      if (evt) input.value = evt[field];
+      toast('End time must be after start time.');
+      return;
+    }
     input.value = snapped;
     saveUndoState();
-    Store.updateEvent(dayId, eventId, { [field]: snapped });
+    Store.updateEvent(dayId, eventId, updates);
     renderActiveDay();
-    const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
-    if (band) band.classList.add('selected');
     sessionSave();
     checkTimeConflict(dayId, eventId);
   });

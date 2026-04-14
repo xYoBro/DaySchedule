@@ -25,6 +25,7 @@ function normalizeEvent(raw) {
   if (!title) return null;
   const startTime = normalizeTime(raw.startTime);
   const endTime = normalizeTime(raw.endTime);
+  if (timeToMinutes(endTime) <= timeToMinutes(startTime)) return null;
   return {
     id:          raw.id || generateId('evt'),
     title,

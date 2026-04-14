@@ -809,6 +809,29 @@ body {
   outline: 2px solid #2558a8;
   outline-offset: -2px;
 }
+.band-conc.selected,
+.conc-item.selected,
+.grid-banner.selected,
+.cards-shared-item.selected,
+.cards-event.selected,
+.phase-block.selected,
+.phase-task.selected {
+  outline: 2px solid #2558a8;
+  outline-offset: 0;
+}
+.cards-event.selected,
+.phase-task.selected {
+  background: rgba(var(--app-accent), 0.08);
+  margin: 0 -4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  border-radius: 3px;
+}
+.phase-block.selected {
+  background: rgba(var(--app-accent), 0.06);
+  border-radius: 4px;
+  padding-right: 6px;
+}
 
 /* ── Main-on-main overlap indicator ── */
 .band.band-overlap {

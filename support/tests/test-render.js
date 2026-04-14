@@ -13,6 +13,22 @@ describe('UI Harness — render and skins', () => {
     });
   });
 
+  it('keeps the selected event visibly selected across every skin', () => {
+    SKIN_NAMES.forEach(skin => {
+      resetUiHarnessState();
+      const seeded = seedUiSchedule({ skin: skin });
+      const target = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Weapons Qualification');
+
+      selectEntity('event', seeded.day1.id, target.id);
+      renderActiveDay();
+
+      assert(
+        document.querySelector('#scheduleContainer [data-event-id="' + target.id + '"].selected'),
+        skin + ' should keep the selected event marked in the preview'
+      );
+    });
+  });
+
   it('applies palette colors from file-level theme data during render', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'bands', palette: 'airforce' });

@@ -64,4 +64,17 @@ describe('Store — schedule state', () => {
     Store.restore(snap);
     assert.equal(Store.getTitle(), 'Test');
   });
+
+  it('snapshot and restore preserve the active day when it still exists', () => {
+    Store.reset();
+    const day1 = Store.addDay({ date: '2026-03-15' });
+    const day2 = Store.addDay({ date: '2026-03-16' });
+    Store.setActiveDay(day2.id);
+
+    const snap = Store.snapshot();
+    Store.setActiveDay(day1.id);
+    Store.restore(snap);
+
+    assert.equal(Store.getActiveDay(), day2.id);
+  });
 });
