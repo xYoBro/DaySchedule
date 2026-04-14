@@ -21,6 +21,8 @@ Use one shared master copy of the full DaySchedule folder.
 5. Confirm that you selected the shared team folder, not a personal or downloaded copy.
 6. When prompted for your name, use the real name your team will recognize.
 
+If your team reaches DaySchedule through Microsoft Teams, open the team or channel `Files` tab, click `Sync`, wait for the shared folder to appear on your computer, then open DaySchedule from that synced folder. Sync matters because DaySchedule saves directly into the shared folder. A download creates a separate copy that other people will not see.
+
 DaySchedule remembers that folder connection for the current browser.
 
 ## Daily Use
@@ -33,7 +35,7 @@ DaySchedule remembers that folder connection for the current browser.
    `Quick Edit` works like a dense worksheet: one row per event, with a selected-row editor at the bottom for the extra fields.
    Click a row to edit those extra fields, or double-click a row to jump straight into full event details.
    `Audience` means the group or section this event belongs to. `Primary` audiences go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`.
-   `Specific People` is only for named exceptions inside that audience.
+   `Specific People` is for named people. Use it when an event is only for a few named people, or when a few named people need something different from the main audience.
 5. Wait for `Saved` in the toolbar before handing off to the next person.
 6. Return to the library when you are done.
 
@@ -86,7 +88,7 @@ That is expected. `Primary` audiences automatically place the event in the main 
 
 ### What is the difference between Audience and Specific People?
 
-`Audience` is the group, section, or shop the event belongs to. `Specific People` is only for named exceptions or callouts inside that audience.
+`Audience` is the group, section, or shop the event belongs to. `Specific People` is for named people, either by themselves or inside that audience.
 
 ### What if I do not see someone else's changes?
 

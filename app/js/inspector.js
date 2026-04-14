@@ -645,7 +645,7 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += '<div class="day-sheet-detail-grid">';
   html += '<label class="day-sheet-detail-field">';
   html += '<span class="day-sheet-detail-label">Specific people</span>';
-  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="Optional names or exceptions">';
+  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="Optional named people">';
   html += '</label>';
   html += '<label class="day-sheet-detail-field">';
   html += '<span class="day-sheet-detail-label">POC</span>';
@@ -1054,7 +1054,7 @@ function renderEventInspector(panel, dayId, eventId) {
   // Specific People
   html += '<label>Specific People</label>';
   html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda"' + textReadOnly + '>';
-  html += '<p class="insp-hint">Optional named exceptions within the selected audience. Shows as "WHO:" on the band, or "+ names" when an audience is already assigned. In tight spaces, names truncate with a footnote in Notes.</p>';
+  html += '<p class="insp-hint">Optional named people. Use this when an event is only for a few named people, or when a few named people need something different from the selected audience. In tight spaces, names truncate with a footnote in Notes.</p>';
 
   // Description
   html += '<label>Description</label>';

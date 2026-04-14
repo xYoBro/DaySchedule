@@ -59,6 +59,7 @@
 let _contextMenuTarget = null;
 const HELP_SEEN_KEY = 'dayschedule_help_seen';
 const HELP_COACHMARK_DISMISSED_KEY = 'dayschedule_help_coachmark_dismissed';
+let _helpActiveTab = 'start';
 
 function showLibrary() {
   document.getElementById('libraryView').classList.add('active');
@@ -361,7 +362,7 @@ function wireLibrary() {
   if (floatingHelpBtn) floatingHelpBtn.onclick = () => openHelpModal();
 
   const coachmarkOpenBtn = document.getElementById('helpCoachmarkOpenBtn');
-  if (coachmarkOpenBtn) coachmarkOpenBtn.onclick = () => openHelpModal();
+  if (coachmarkOpenBtn) coachmarkOpenBtn.onclick = () => openHelpModal({ tab: 'start' });
 
   const coachmarkDismissBtn = document.getElementById('helpCoachmarkDismissBtn');
   if (coachmarkDismissBtn) coachmarkDismissBtn.onclick = () => dismissHelpCoachmark();
@@ -427,15 +428,42 @@ function syncHelpEntryPoints() {
   }
 }
 
-function openHelpModal() {
+function setHelpTab(tabName) {
+  _helpActiveTab = tabName || 'start';
   const overlay = document.getElementById('helpModal');
   if (!overlay) return;
-  markHelpSeen();
-  overlay.classList.add('active');
-  syncHelpEntryPoints();
+  overlay.querySelectorAll('[data-help-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-help-tab') === _helpActiveTab);
+  });
+  overlay.querySelectorAll('[data-help-panel]').forEach(panel => {
+    panel.classList.toggle('active', panel.getAttribute('data-help-panel') === _helpActiveTab);
+  });
+}
 
+function wireHelpModal(overlay) {
+  if (!overlay) return;
   const closeBtn = overlay.querySelector('#helpCloseBtn');
   if (closeBtn) closeBtn.onclick = () => closeHelpModal();
+
+  overlay.querySelectorAll('[data-help-tab]').forEach(btn => {
+    btn.onclick = () => setHelpTab(btn.getAttribute('data-help-tab'));
+  });
+
+  setHelpTab(_helpActiveTab || 'start');
+}
+
+function openHelpModal(options) {
+  const overlay = document.getElementById('helpModal');
+  if (!overlay) return;
+  const wasSeen = hasSeenStartupHelp();
+  const defaultTab = options && options.tab
+    ? options.tab
+    : (wasSeen ? 'faq' : 'start');
+  markHelpSeen();
+  _helpActiveTab = defaultTab;
+  overlay.classList.add('active');
+  syncHelpEntryPoints();
+  wireHelpModal(overlay);
 }
 
 function closeHelpModal() {

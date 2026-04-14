@@ -95,6 +95,7 @@ function resetUiHarnessState() {
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
   _settingsActiveTab = 'look';
+  _helpActiveTab = 'start';
   _daySheetSelectedEventId = null;
   _versionSaveMode = false;
   _contextMenuTarget = null;
@@ -147,6 +148,12 @@ function resetUiHarnessState() {
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
+  });
+  document.querySelectorAll('[data-help-tab]').forEach((el, idx) => {
+    el.classList.toggle('active', idx === 0);
+  });
+  document.querySelectorAll('[data-help-panel]').forEach((el, idx) => {
+    el.classList.toggle('active', idx === 0);
   });
 
   document.querySelector('#staleWarningModal .modal').innerHTML = '';

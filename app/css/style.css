@@ -2313,6 +2313,15 @@ body {
   max-height: 80vh;
   overflow-y: auto;
 }
+.help-tabs {
+  margin: -4px 0 16px;
+}
+.help-tab-panel {
+  display: none;
+}
+.help-tab-panel.active {
+  display: block;
+}
 .help-section {
   margin-bottom: 20px;
 }

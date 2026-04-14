@@ -120,12 +120,24 @@ describe('UI Harness — app shell', () => {
     await wait(0);
 
     assert(document.getElementById('helpModal').classList.contains('active'), 'floating help should open the in-app help modal');
+    assert(document.querySelector('[data-help-tab="start"]').classList.contains('active'), 'help should open on the Start Here tab');
+
+    document.querySelector('[data-help-tab="faq"]').click();
+    await wait(0);
+    assert(document.querySelector('[data-help-tab="faq"]').classList.contains('active'), 'faq tab should activate when clicked');
+    assert(document.querySelector('[data-help-panel="faq"]').classList.contains('active'), 'faq panel should activate when clicked');
 
     document.getElementById('helpCloseBtn').click();
     await wait(0);
 
     assert.equal(floatingBtn.textContent, 'Help');
     assert.equal(coachmark.hidden, true, 'coachmark should stay hidden after help is opened once');
+
+    floatingBtn.click();
+    await wait(0);
+    assert(document.querySelector('[data-help-tab="faq"]').classList.contains('active'), 'after onboarding is seen, help should reopen on FAQ');
+    document.getElementById('helpCloseBtn').click();
+    await wait(0);
   });
 
   it('keyboard shortcuts dispatch to the current shell handlers', () => {
