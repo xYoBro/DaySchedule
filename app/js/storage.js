@@ -44,12 +44,14 @@
  *   getUserName()     → string
  *   setUserName(name)
  *   hasUserName()     → boolean
+ *   ensureUserName()  → Promise<string> — prompts if missing
  *   promptUserName()  → Promise<string>  — shows modal, stores in localStorage
  *
  * EXPORTS — Versions:
  *   createVersion(name)          → Promise<boolean>
  *   restoreVersion(versionIndex) → Promise<boolean>  — auto-backs up current first
  *   getVersions()                → Promise<Array<{index, name, savedBy, savedAt}>>
+ *   getRecentActivity()          → Promise<Array<{text, user, at}>>
  *
  * REQUIRES:
  *   app-state.js   — Store.getPersistedState(), Store.loadPersistedState()
@@ -92,6 +94,7 @@ const AUTOSAVE_DELAY = 2000;
 const LOCK_LEASE_MS = 20 * 60 * 1000;
 const LOCK_REFRESH_MS = 60 * 1000;
 const LOCK_SESSION_KEY = 'dayschedule_lock_session';
+const ACTIVITY_LIMIT = 25;
 
 let _dirHandle = null;
 let _autosaveTimer = null;
@@ -114,6 +117,43 @@ function scheduleNameToSlug(name) {
 
 // ── Schedule file envelope ─────────────────────────────────────────────────
 
+function buildActivityEntry(type, detail, user, at) {
+  return {
+    type: type || 'note',
+    detail: detail || '',
+    user: user || '',
+    at: at || new Date().toISOString(),
+  };
+}
+
+function ensureActivityLog(fileData) {
+  if (!fileData.activity || !Array.isArray(fileData.activity)) fileData.activity = [];
+  return fileData.activity;
+}
+
+function appendActivity(fileData, type, detail, user, at) {
+  const activity = ensureActivityLog(fileData);
+  activity.unshift(buildActivityEntry(type, detail, user, at));
+  if (activity.length > ACTIVITY_LIMIT) activity.length = ACTIVITY_LIMIT;
+  return activity;
+}
+
+function formatActivityText(entry) {
+  const detail = entry && entry.detail ? entry.detail : '';
+  switch (entry && entry.type) {
+    case 'created':
+      return 'Created schedule';
+    case 'takeover':
+      return 'Took over edit lock' + (detail ? ' from ' + detail : '');
+    case 'version_saved':
+      return 'Saved version "' + detail + '"';
+    case 'version_restored':
+      return 'Restored version "' + detail + '"';
+    default:
+      return detail || 'Updated schedule';
+  }
+}
+
 function buildScheduleFile(name, storeState, versions, savedBy) {
   const now = new Date().toISOString();
   return {
@@ -123,6 +163,7 @@ function buildScheduleFile(name, storeState, versions, savedBy) {
     lastSavedAt: now,
     current: storeState,
     versions: versions || [],
+    activity: savedBy ? [buildActivityEntry('created', '', savedBy, now)] : [],
   };
 }
 
@@ -523,6 +564,8 @@ async function syncCurrentScheduleAccess() {
 
 async function claimCurrentScheduleLock(options) {
   if (!_currentFileName || !_dirHandle) return { ok: false, state: 'available', lock: null };
+  const userName = await ensureUserName();
+  if (!userName) return { ok: false, state: 'available', lock: null };
   const existingStatus = await getScheduleLockStatus(_currentFileName);
   if (existingStatus.state === 'mine' && existingStatus.lock) {
     applyCurrentScheduleAccess(existingStatus);
@@ -554,6 +597,8 @@ async function claimCurrentScheduleLock(options) {
 
 async function takeOverCurrentScheduleLock(options) {
   if (!_currentFileName || !_dirHandle) return { ok: false, state: 'available', lock: null };
+  const userName = await ensureUserName();
+  if (!userName) return { ok: false, state: 'available', lock: null };
 
   const status = await getScheduleLockStatus(_currentFileName);
   if (status.state === 'available' || !status.lock) {
@@ -571,6 +616,25 @@ async function takeOverCurrentScheduleLock(options) {
   }
 
   const result = await claimCurrentScheduleLock({ force: true, silent: true });
+  if (result.ok) {
+    const fileData = await readScheduleFile(_currentFileName);
+    if (fileData) {
+      const now = new Date().toISOString();
+      appendActivity(fileData, 'takeover', status.lock.ownerName || 'another editor', userName, now);
+      fileData.lastSavedBy = userName;
+      fileData.lastSavedAt = now;
+      const wrote = await writeScheduleFile(_currentFileName, fileData);
+      if (wrote) {
+        _lastKnownSavedAt = now;
+        const memFileData = getCurrentScheduleFileData();
+        if (memFileData) {
+          memFileData.lastSavedAt = now;
+          memFileData.lastSavedBy = userName;
+          memFileData.activity = fileData.activity;
+        }
+      }
+    }
+  }
   if (result.ok && (!options || !options.silent)) {
     toast('Edit lock taken over from ' + (status.lock.ownerName || 'another editor'));
   }
@@ -765,11 +829,12 @@ async function autoSave() {
 async function saveCurrentSchedule() {
   if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
+  const userName = await ensureUserName();
+  if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
   if (!ownsLock) return false;
   updateSaveIndicator('saving');
 
-  const userName = getUserName();
   const state = Store.getPersistedState();
   const existing = await readScheduleFile(_currentFileName);
 
@@ -786,6 +851,7 @@ async function saveCurrentSchedule() {
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
   if (existing) fileData.name = state.title || fileData.name;
+  ensureActivityLog(fileData);
 
   // Sync theme from in-memory state (set by Appearance tab)
   const memFileData = getCurrentScheduleFileData();
@@ -801,6 +867,7 @@ async function saveCurrentSchedule() {
     if (memFileData) {
       memFileData.lastSavedAt = now;
       memFileData.lastSavedBy = userName;
+      memFileData.activity = fileData.activity;
     }
     updateSaveIndicator('saved');
     sessionSave({ skipDirty: true });
@@ -925,13 +992,18 @@ function hasUserName() {
   return !!getUserName();
 }
 
+async function ensureUserName() {
+  if (hasUserName()) return getUserName();
+  return promptUserName();
+}
+
 function promptUserName() {
   return new Promise(resolve => {
     const overlay = document.getElementById('userNameModal');
     if (!overlay) { resolve(''); return; }
     const content = overlay.querySelector('.modal');
     content.innerHTML = '<h2>Welcome</h2>'
-      + '<p style="margin:12px 0;font-size:14px;color:#48484a;">What\'s your name? This tags your saves so others know who made changes.</p>'
+      + '<p style="margin:12px 0;font-size:14px;color:#48484a;">What\'s your name? Use the real name your team will recognize. DaySchedule tags saves, versions, and takeovers with it.</p>'
       + '<input type="text" id="userNameInput" placeholder="e.g., SrA Martinez" style="width:100%;padding:8px 12px;font-size:14px;border:1px solid #d2d2d7;border-radius:6px;">'
       + '<div class="modal-actions">'
       + '<button class="btn btn-primary" id="userNameDone">Continue</button>'
@@ -959,6 +1031,8 @@ function promptUserName() {
 async function createVersion(versionName) {
   if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
+  const userName = await ensureUserName();
+  if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
   if (!ownsLock) return false;
   const fileData = await readScheduleFile(_currentFileName);
@@ -967,21 +1041,29 @@ async function createVersion(versionName) {
   const now = new Date().toISOString();
   const version = {
     name: versionName,
-    savedBy: getUserName(),
+    savedBy: userName,
     savedAt: now,
     data: JSON.parse(JSON.stringify(fileData.current)),
   };
   if (!fileData.versions) fileData.versions = [];
   fileData.versions.unshift(version);
+  appendActivity(fileData, 'version_saved', versionName, userName, now);
 
   fileData.current = Store.getPersistedState();
-  fileData.lastSavedBy = getUserName();
+  fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
 
   const ok = await writeScheduleFile(_currentFileName, fileData);
   if (ok) {
     _dirty = false;
     _lastKnownSavedAt = fileData.lastSavedAt;
+    const memFileData = getCurrentScheduleFileData();
+    if (memFileData) {
+      memFileData.lastSavedAt = fileData.lastSavedAt;
+      memFileData.lastSavedBy = fileData.lastSavedBy;
+      memFileData.activity = fileData.activity;
+      memFileData.versions = fileData.versions;
+    }
     updateSaveIndicator('saved');
   }
   return ok;
@@ -990,6 +1072,8 @@ async function createVersion(versionName) {
 async function restoreVersion(versionIndex) {
   if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
+  const userName = await ensureUserName();
+  if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
   if (!ownsLock) return false;
   const fileData = await readScheduleFile(_currentFileName);
@@ -1000,21 +1084,29 @@ async function restoreVersion(versionIndex) {
 
   const backup = {
     name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
-    savedBy: getUserName(),
+    savedBy: userName,
     savedAt: new Date().toISOString(),
     data: JSON.parse(JSON.stringify(fileData.current)),
   };
   fileData.versions.unshift(backup);
 
   fileData.current = JSON.parse(JSON.stringify(target.data));
-  fileData.lastSavedBy = getUserName();
+  fileData.lastSavedBy = userName;
   fileData.lastSavedAt = new Date().toISOString();
+  appendActivity(fileData, 'version_restored', target.name, userName, fileData.lastSavedAt);
 
   const ok = await writeScheduleFile(_currentFileName, fileData);
   if (ok) {
     Store.loadPersistedState(fileData.current);
     _lastKnownSavedAt = fileData.lastSavedAt;
     _dirty = false;
+    const memFileData = getCurrentScheduleFileData();
+    if (memFileData) {
+      memFileData.lastSavedAt = fileData.lastSavedAt;
+      memFileData.lastSavedBy = fileData.lastSavedBy;
+      memFileData.activity = fileData.activity;
+      memFileData.versions = fileData.versions;
+    }
     updateSaveIndicator('saved');
     renderActiveDay();
     syncToolbarTitle();
@@ -1031,6 +1123,17 @@ async function getVersions() {
     name: v.name,
     savedBy: v.savedBy,
     savedAt: v.savedAt,
+  }));
+}
+
+async function getRecentActivity() {
+  if (!_currentFileName || !_dirHandle) return [];
+  const fileData = await readScheduleFile(_currentFileName);
+  if (!fileData) return [];
+  return (fileData.activity || []).slice(0, 5).map(entry => ({
+    text: formatActivityText(entry),
+    user: entry.user || '',
+    at: entry.at || '',
   }));
 }
 

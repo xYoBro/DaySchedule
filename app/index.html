@@ -12,8 +12,10 @@
   <div class="library-view" id="libraryView">
     <div class="library-header">
       <div class="library-brand">Schedule Builder</div>
-      <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">?</button>
-      <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
+      <div class="library-header-actions">
+        <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Start Here</button>
+        <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
+      </div>
     </div>
     <div class="library-body">
       <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
@@ -38,6 +40,7 @@
         <div class="library-connect-hint">First-time setup only. After that, open the same shared copy whenever you need to edit.</div>
         <div class="library-connect-warn">Do not work from a downloaded, zipped, or personal copy. Changes made there stay local and can drift from the team copy.</div>
         <div class="library-connect-local">If you are not sure which shared copy is correct, ask your team lead or admin before editing.</div>
+        <div class="library-connect-help">Need a refresher? Click <strong>Start Here</strong> in the lower-right corner any time.</div>
       </div>
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
         Auto-save requires Chrome or Edge. In other browsers, DaySchedule falls back to manual <strong>Save to File</strong>.
@@ -100,6 +103,16 @@
   <!-- Toast -->
   <div id="toast" class="toast"></div>
 
+  <div class="help-coachmark" id="helpCoachmark" hidden>
+    <div class="help-coachmark-title">Start Here</div>
+    <div class="help-coachmark-desc">Open the shared copy, connect the shared folder once, use your real name, and wait for <strong>Saved</strong> before handing the schedule off.</div>
+    <div class="help-coachmark-actions">
+      <button class="btn btn-primary" id="helpCoachmarkOpenBtn">Open Help</button>
+      <button class="btn" id="helpCoachmarkDismissBtn">Not now</button>
+    </div>
+  </div>
+  <button class="floating-help-btn" id="floatingHelpBtn" title="Help &amp; shortcuts">Start Here</button>
+
   <!-- Help Modal -->
   <div class="modal-overlay" id="helpModal">
     <div class="modal help-modal">
@@ -107,6 +120,10 @@
 
       <div class="help-section">
         <div class="help-section-title">Start Here</div>
+        <div class="help-item">
+          <div class="help-item-label">0. Use your real name</div>
+          <div class="help-item-desc">The first time you edit, DaySchedule asks for your name. Use the real name your team will recognize, because saves, versions, and takeovers are tagged with it.</div>
+        </div>
         <div class="help-item">
           <div class="help-item-label">1. Open the shared copy</div>
           <div class="help-item-desc">Always open DaySchedule from the shared team copy, not from Downloads, Desktop, email, or a ZIP.</div>
@@ -149,11 +166,15 @@
         </div>
         <div class="help-item">
           <div class="help-item-label">Customize the schedule</div>
-          <div class="help-item-desc">Use <strong>Customize</strong> to change the title, unit logo, layout, and colors. The advanced section also contains group setup and manual export.</div>
+          <div class="help-item-desc">Use <strong>Customize</strong> to change the title, unit logo, layout, colors, audiences, and export options.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Versions</div>
           <div class="help-item-desc">Use <strong>Versions</strong> from the <strong>...</strong> menu to save named snapshots (e.g., &ldquo;Draft for Review&rdquo;). You can always restore a previous version &mdash; the current state is auto-backed up first.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Crowded days</div>
+          <div class="help-item-desc">Use <strong>Bands</strong> for presentation, but switch to <strong>Grid</strong> or <strong>Cards</strong> to validate crowded days before publishing. Layout applies to the whole schedule, not one day at a time.</div>
         </div>
       </div>
 
@@ -188,7 +209,11 @@
         </div>
         <div class="help-item">
           <div class="help-item-label">Where do I change the logo or look?</div>
-          <div class="help-item-desc">Use <strong>Customize</strong> in the toolbar. That is where title, unit logo, layout, and colors live.</div>
+          <div class="help-item-desc">Use <strong>Customize</strong> in the toolbar. That is where title, unit logo, layout, colors, and audiences live.</div>
+        </div>
+        <div class="help-item">
+          <div class="help-item-label">Can different days use different layouts?</div>
+          <div class="help-item-desc">Not currently. Layout is schedule-wide, so switching to Bands, Grid, Cards, or Phases changes the full schedule.</div>
         </div>
         <div class="help-item">
           <div class="help-item-label">Why did Main Track change when I changed Audience?</div>

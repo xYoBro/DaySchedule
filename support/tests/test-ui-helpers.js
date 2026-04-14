@@ -102,6 +102,8 @@ function resetUiHarnessState() {
   sessionStorage.clear();
   localStorage.removeItem('dayschedule_user_name');
   localStorage.removeItem('dayschedule_editor_theme');
+  localStorage.removeItem('dayschedule_help_seen');
+  localStorage.removeItem('dayschedule_help_coachmark_dismissed');
   applyEditorTheme('light');
 
   document.getElementById('libraryView').className = 'library-view';
@@ -113,6 +115,8 @@ function resetUiHarnessState() {
   document.getElementById('libraryNewInline').style.display = 'none';
   document.getElementById('libraryNewBtn').style.display = '';
   document.getElementById('libraryNewName').value = '';
+  document.getElementById('libraryHelpBtn').textContent = 'Start Here';
+  document.getElementById('libraryHelpBtn').className = '';
   document.getElementById('editorThemeToggle').textContent = 'Theme';
   document.getElementById('tbTitle').value = '';
   document.getElementById('saveIndicator').textContent = '';
@@ -127,6 +131,9 @@ function resetUiHarnessState() {
   document.getElementById('scheduleContainer').innerHTML = '';
   document.getElementById('inspectorPanel').innerHTML = '';
   document.getElementById('toast').textContent = '';
+  document.getElementById('floatingHelpBtn').textContent = 'Start Here';
+  document.getElementById('floatingHelpBtn').className = '';
+  document.getElementById('helpCoachmark').hidden = true;
   document.getElementById('previewPage').className = 'page';
 
   [

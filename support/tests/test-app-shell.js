@@ -77,6 +77,55 @@ describe('UI Harness — app shell', () => {
     assert.equal(Store.getTitle(), 'Version Harness');
     assert.equal(document.getElementById('versionModal').classList.contains('active'), false);
     assert.equal(versions.length, 2, 'restoring should create an auto-backup');
+
+    await openVersionPanel();
+    assert(document.getElementById('versionModal').textContent.includes('Recent Activity'));
+    assert(document.getElementById('versionModal').textContent.includes('Restored version "Draft Alpha"'));
+  });
+
+  it('prompts for a real name before claiming edit access', async () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+
+    const fileData = buildScheduleFile('Prompt Test', Store.getPersistedState(), [], '');
+    await writeScheduleFile('prompt-test.json', fileData);
+    setCurrentFile('prompt-test.json', fileData.lastSavedAt);
+
+    const claimPromise = claimCurrentScheduleLock({ silent: true });
+    await wait(10);
+
+    const overlay = document.getElementById('userNameModal');
+    assert(overlay.classList.contains('active'), 'name prompt should appear before edit access is claimed');
+
+    document.getElementById('userNameInput').value = 'SrA Tester';
+    document.getElementById('userNameDone').click();
+
+    const result = await claimPromise;
+    assert.equal(result.ok, true, 'claim should continue after a valid name is entered');
+    assert.equal(getUserName(), 'SrA Tester');
+  });
+
+  it('uses an in-app start-here affordance instead of a separate handout', async () => {
+    resetUiHarnessState();
+    showLibrary();
+    await wait(0);
+
+    const floatingBtn = document.getElementById('floatingHelpBtn');
+    const coachmark = document.getElementById('helpCoachmark');
+
+    assert.equal(floatingBtn.textContent, 'Start Here');
+    assert.equal(coachmark.hidden, false, 'coachmark should appear on first library launch');
+
+    floatingBtn.click();
+    await wait(0);
+
+    assert(document.getElementById('helpModal').classList.contains('active'), 'floating help should open the in-app help modal');
+
+    document.getElementById('helpCloseBtn').click();
+    await wait(0);
+
+    assert.equal(floatingBtn.textContent, 'Help');
+    assert.equal(coachmark.hidden, true, 'coachmark should stay hidden after help is opened once');
   });
 
   it('keyboard shortcuts dispatch to the current shell handlers', () => {

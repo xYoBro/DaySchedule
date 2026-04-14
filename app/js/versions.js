@@ -5,7 +5,7 @@
  *   closeVersionPanel()  — hides version modal
  *
  * REQUIRES:
- *   storage.js  — getVersions(), createVersion(), restoreVersion(), getLastSavedAt()
+ *   storage.js  — getVersions(), getRecentActivity(), createVersion(), restoreVersion(), getLastSavedAt()
  *   library.js  — formatTimeAgo()
  *   utils.js    — esc()
  *   ui-core.js  — toast()
@@ -39,6 +39,7 @@ function closeVersionPanel() {
 
 async function renderVersionPanel(modal) {
   const versions = await getVersions();
+  const activity = await getRecentActivity();
   const editable = typeof isCurrentScheduleEditable === 'function' ? isCurrentScheduleEditable() : true;
   if (!editable) _versionSaveMode = false;
 
@@ -65,6 +66,18 @@ async function renderVersionPanel(modal) {
   } else {
     html += '<button class="version-save-btn" id="versionSaveBtn">Save as Version\u2026</button>';
     html += '<div class="version-save-hint">Stamp the current state with a name</div>';
+  }
+
+  if (activity.length > 0) {
+    html += '<div class="version-list-label">Recent Activity</div>';
+    activity.forEach(item => {
+      const time = item.at ? new Date(item.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      const by = item.user ? 'by ' + esc(item.user) : '';
+      html += '<div class="version-activity-item">';
+      html += '<div class="version-activity-name">' + esc(item.text) + '</div>';
+      html += '<div class="version-activity-meta">' + esc([time, by].filter(Boolean).join(' \u00b7 ')) + '</div>';
+      html += '</div>';
+    });
   }
 
   // Version list

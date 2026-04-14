@@ -116,6 +116,8 @@ function resetTestState() {
   clearTimeout(_lockRefreshTimer);
   _lockRefreshTimer = null;
   localStorage.removeItem('dayschedule_user_name');
+  localStorage.removeItem('dayschedule_help_seen');
+  localStorage.removeItem('dayschedule_help_coachmark_dismissed');
   sessionStorage.removeItem(LOCK_SESSION_KEY);
 }
 
@@ -427,6 +429,10 @@ describe('Integration — Edit Locks', () => {
     assert.equal(status.state, 'mine');
     assert.equal(status.lock.ownerName, 'Lead Editor');
     assert(status.lock.token !== 'token_4', 'lock token should be replaced');
+
+    const activity = await getRecentActivity();
+    assert.equal(activity[0].text, 'Took over edit lock from Original Editor');
+    assert.equal(activity[0].user, 'Lead Editor');
   });
 
   it('blocks saving after another editor takes over the lock', async () => {
@@ -481,6 +487,9 @@ describe('Integration — Version Management', () => {
     assert.equal(versions.length, 1);
     assert.equal(versions[0].name, 'Draft v1');
     assert.equal(versions[0].savedBy, 'Tester');
+
+    const activity = await getRecentActivity();
+    assert.equal(activity[0].text, 'Saved version "Draft v1"');
   });
 
   it('restoreVersion loads version data and creates auto-backup', async () => {
@@ -521,6 +530,9 @@ describe('Integration — Version Management', () => {
     assert.equal(versions.length, 2, 'should have backup + original version');
     assert(versions[0].name.startsWith('Auto-backup'), 'first version should be auto-backup');
     assert.equal(versions[1].name, 'Before Changes');
+
+    const activity = await getRecentActivity();
+    assert.equal(activity[0].text, 'Restored version "Before Changes"');
   });
 
   it('createVersion captures current Store state, not stale file state', async () => {

@@ -21,8 +21,11 @@
 
   <div class="library-view" id="libraryView">
     <div class="library-header">
-      <button id="libraryHelpBtn">Help</button>
-      <button id="editorThemeToggle">Theme</button>
+      <div>Schedule Builder</div>
+      <div class="library-header-actions">
+        <button id="libraryHelpBtn">Start Here</button>
+        <button id="editorThemeToggle">Theme</button>
+      </div>
     </div>
     <div class="library-body">
       <div id="libraryConnectPrompt" style="display:none;">
@@ -74,6 +77,12 @@
   </div>
 
   <div id="toast" class="toast"></div>
+
+  <div id="helpCoachmark" hidden>
+    <button id="helpCoachmarkOpenBtn">Open Help</button>
+    <button id="helpCoachmarkDismissBtn">Not now</button>
+  </div>
+  <button id="floatingHelpBtn">Start Here</button>
 
   <div class="modal-overlay" id="helpModal">
     <div class="modal">

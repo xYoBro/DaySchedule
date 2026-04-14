@@ -17,7 +17,7 @@
  * REQUIRES:
  *   storage.js    — hasDirectoryAccess, listScheduleFiles, readScheduleFile, writeScheduleFile,
  *                   deleteScheduleFile, scheduleNameToSlug, buildScheduleFile, setCurrentFile,
- *                   saveCurrentSchedule, isDirty, promptForDirectory, hasUserName, promptUserName,
+ *                   saveCurrentSchedule, isDirty, promptForDirectory, hasUserName, ensureUserName,
  *                   getUserName
  *   app-state.js  — Store.reset(), Store.loadPersistedState(), Store.getDays(),
  *                   Store.setActiveDay(), Store.setTitle(), Store.getPersistedState()
@@ -57,12 +57,15 @@
 /* ── library.js ── Schedule library home screen ────────────────────────────── */
 
 let _contextMenuTarget = null;
+const HELP_SEEN_KEY = 'dayschedule_help_seen';
+const HELP_COACHMARK_DISMISSED_KEY = 'dayschedule_help_coachmark_dismissed';
 
 function showLibrary() {
   document.getElementById('libraryView').classList.add('active');
   document.querySelector('.toolbar').style.display = 'none';
   document.querySelector('.app-body').style.display = 'none';
   closeContextMenu();
+  syncHelpEntryPoints();
   refreshLibraryList();
 }
 
@@ -70,6 +73,7 @@ function hideLibrary() {
   document.getElementById('libraryView').classList.remove('active');
   document.querySelector('.toolbar').style.display = '';
   document.querySelector('.app-body').style.display = '';
+  syncHelpEntryPoints();
 }
 
 async function refreshLibraryList() {
@@ -141,7 +145,7 @@ async function openSchedule(fileName) {
   const data = await readScheduleFile(fileName);
   if (!data || !data.current) { toast('Failed to open schedule — file may be corrupt.'); return; }
 
-  if (!hasUserName()) await promptUserName();
+  if (!await ensureUserName()) return;
 
   Store.reset();
   Store.loadPersistedState(data.current);
@@ -158,7 +162,7 @@ async function openSchedule(fileName) {
 }
 
 async function createNewSchedule(name) {
-  if (!hasUserName()) await promptUserName();
+  if (!await ensureUserName()) return;
 
   const slug = scheduleNameToSlug(name);
   const fileName = slug + '.json';
@@ -353,6 +357,15 @@ function wireLibrary() {
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) libraryHelpBtn.onclick = () => openHelpModal();
 
+  const floatingHelpBtn = document.getElementById('floatingHelpBtn');
+  if (floatingHelpBtn) floatingHelpBtn.onclick = () => openHelpModal();
+
+  const coachmarkOpenBtn = document.getElementById('helpCoachmarkOpenBtn');
+  if (coachmarkOpenBtn) coachmarkOpenBtn.onclick = () => openHelpModal();
+
+  const coachmarkDismissBtn = document.getElementById('helpCoachmarkDismissBtn');
+  if (coachmarkDismissBtn) coachmarkDismissBtn.onclick = () => dismissHelpCoachmark();
+
   const themeToggle = document.getElementById('editorThemeToggle');
   if (themeToggle) {
     themeToggle.textContent = getEditorTheme() === 'dark' ? '\u2600' : '\u263E';
@@ -365,14 +378,61 @@ function wireLibrary() {
       themeToggle.title = 'UI theme';
     };
   }
+
+  syncHelpEntryPoints();
 }
 
 // ── Help modal ─────────────────────────────────────────────────────────────
 
+function hasSeenStartupHelp() {
+  return localStorage.getItem(HELP_SEEN_KEY) === '1';
+}
+
+function markHelpSeen() {
+  localStorage.setItem(HELP_SEEN_KEY, '1');
+  localStorage.removeItem(HELP_COACHMARK_DISMISSED_KEY);
+}
+
+function isHelpCoachmarkDismissed() {
+  return localStorage.getItem(HELP_COACHMARK_DISMISSED_KEY) === '1';
+}
+
+function dismissHelpCoachmark() {
+  localStorage.setItem(HELP_COACHMARK_DISMISSED_KEY, '1');
+  syncHelpEntryPoints();
+}
+
+function syncHelpEntryPoints() {
+  const libraryVisible = document.getElementById('libraryView') && document.getElementById('libraryView').classList.contains('active');
+  const helpOpen = document.getElementById('helpModal') && document.getElementById('helpModal').classList.contains('active');
+  const seen = hasSeenStartupHelp();
+  const label = seen ? 'Help' : 'Start Here';
+
+  const libraryHelpBtn = document.getElementById('libraryHelpBtn');
+  if (libraryHelpBtn) {
+    libraryHelpBtn.textContent = label;
+    libraryHelpBtn.classList.toggle('attention', !seen);
+  }
+
+  const floatingHelpBtn = document.getElementById('floatingHelpBtn');
+  if (floatingHelpBtn) {
+    floatingHelpBtn.textContent = label;
+    floatingHelpBtn.classList.toggle('attention', !seen);
+    floatingHelpBtn.title = seen ? 'Help & shortcuts' : 'Start here';
+  }
+
+  const coachmark = document.getElementById('helpCoachmark');
+  if (coachmark) {
+    coachmark.hidden = !!(seen || isHelpCoachmarkDismissed() || helpOpen || !libraryVisible);
+  }
+}
+
 function openHelpModal() {
   const overlay = document.getElementById('helpModal');
   if (!overlay) return;
+  markHelpSeen();
   overlay.classList.add('active');
+  syncHelpEntryPoints();
 
   const closeBtn = overlay.querySelector('#helpCloseBtn');
   if (closeBtn) closeBtn.onclick = () => closeHelpModal();
@@ -381,6 +441,7 @@ function openHelpModal() {
 function closeHelpModal() {
   const overlay = document.getElementById('helpModal');
   if (overlay) overlay.classList.remove('active');
+  syncHelpEntryPoints();
 }
 
 document.addEventListener('click', e => {

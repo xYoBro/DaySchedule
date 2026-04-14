@@ -30,6 +30,9 @@ describe('Storage — buildScheduleFile', () => {
     assert.equal(file.lastSavedBy, 'Tester');
     assert(file.lastSavedAt, 'should have timestamp');
     assert(file.createdAt, 'should have createdAt');
+    assert.equal(file.activity.length, 1);
+    assert.equal(file.activity[0].type, 'created');
+    assert.equal(file.activity[0].user, 'Tester');
   });
 });
 

@@ -19,6 +19,7 @@ Use one shared master copy of the full DaySchedule folder.
 4. Choose the folder where schedule files live.
    In most DaySchedule copies, this is `app/data`.
 5. Confirm that you selected the shared team folder, not a personal or downloaded copy.
+6. When prompted for your name, use the real name your team will recognize.
 
 DaySchedule remembers that folder connection for the current browser.
 
@@ -58,7 +59,7 @@ If you are publishing this for a unit or shop, keep the workflow simple:
 - Make one shared DaySchedule folder the official team copy.
 - Use SharePoint as the source of truth if that is your approved shared location.
 - Use Teams as the doorway if that is how your people find the shared copy.
-- Pin a short "Start Here" post with the setup steps and screenshots.
+- Tell users there is one entry point: open `index.html` from the shared copy, then use the in-app `Start Here` / `Help` button for setup and reminders.
 - Tell everyone to keep opening the same shared copy on their computer after the first setup.
 
 The user-facing rule should be simple:
@@ -101,6 +102,14 @@ DaySchedule uses a lease-style lock. If someone closes the app or stops refreshi
 
 If the team lead or supervisor needs access sooner, they can use `Take Over` from the read-only banner. That should only be used after confirming that the current editor is unavailable or no longer working in the file.
 
+### Can different days use different layouts?
+
+Not currently. Layout is schedule-wide, so switching to Bands, Grid, Cards, or Phases changes the full schedule.
+
+### What should I do on extremely crowded days?
+
+Use `Bands` for the presentation view, then switch to `Grid` or `Cards` to sanity-check crowded overlapping schedules before you hand them off or print them.
+
 ## Future Improvement
 
-If this project stays on a shared-folder model, the next useful UX improvement would be a small audit trail for lock takeovers so the team can see who overrode the last lock and when.
+If this project stays on a shared-folder model, the next useful improvements should come from real-world user testing: where people hesitate, which layouts they switch to on crowded days, and where handoffs still create confusion.
