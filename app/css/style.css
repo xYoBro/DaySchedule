@@ -806,10 +806,9 @@ body {
   color: white;
 }
 
-/* ── Selected event band highlight ── */
-.band.selected {
-  outline: 2px solid #2558a8;
-  outline-offset: -2px;
+/* ── Selected event highlight ── */
+#scheduleContainer [data-event-id].selected {
+  box-shadow: inset 0 0 0 2px #2558a8;
 }
 .band-conc.selected,
 .conc-item.selected,
@@ -818,8 +817,13 @@ body {
 .cards-event.selected,
 .phase-block.selected,
 .phase-task.selected {
-  outline: 2px solid #2558a8;
-  outline-offset: 0;
+  border-radius: 4px;
+}
+.band-conc.selected,
+.conc-item.selected,
+.grid-banner.selected,
+.cards-shared-item.selected {
+  background: rgba(var(--app-accent), 0.08);
 }
 .cards-event.selected,
 .phase-task.selected {
