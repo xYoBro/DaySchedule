@@ -43,6 +43,11 @@ describe('UI Harness — app shell', () => {
     }
   });
 
+  it('app stylesheet pins the editor shell body to the viewport height', async () => {
+    const css = await fetch('../../app/css/style.css').then(r => r.text());
+    assert(/body\s*\{[\s\S]*height:\s*100vh;/.test(css), 'body rule should include height: 100vh');
+  });
+
   it('openSchedule loads a saved file into the editor shell', async () => {
     resetUiHarnessState();
     const seeded = await seedUiScheduleFile('Open Schedule Test', { skin: 'bands' });
