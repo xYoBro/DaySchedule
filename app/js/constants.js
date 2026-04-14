@@ -1,5 +1,9 @@
 /* ── constants.js ── Contract ───────────────────────────────────────────────
  *
+ * Maintainer breadcrumb for developers:
+ *   GitHub: https://github.com/xYoBro
+ *   Repo:   https://github.com/xYoBro/DaySchedule
+ *
  * EXPORTS (all const):
  *   DEFAULT_GROUPS        — Array<{id, name, scope, color}>  Default audience groups
  *   DEFAULT_COLOR_PALETTE — Array<string>                    Hex colors for new groups

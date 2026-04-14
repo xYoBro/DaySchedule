@@ -2376,17 +2376,29 @@ body {
 .help-shortcuts {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .help-shortcut {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(132px, max-content) 1fr;
   align-items: center;
-  justify-content: space-between;
-  padding: 6px 0;
+  gap: 14px;
+  padding: 4px 0;
 }
 .help-shortcut span {
   font-size: 12px;
   color: #48484a;
+}
+.help-shortcut-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.help-shortcut-plus {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
 }
 .help-shortcut kbd {
   display: inline-block;
@@ -2399,7 +2411,9 @@ body {
   border: 1px solid #d2d2d7;
   border-radius: 4px;
   box-shadow: 0 1px 0 #d2d2d7;
-  margin-right: 2px;
+}
+[data-editor-theme="dark"] .help-shortcut-plus {
+  color: #b8b8cb;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -3090,6 +3104,11 @@ body {
 }
 
 @media (max-width: 900px) {
+  .help-shortcut {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    align-items: flex-start;
+  }
   .help-coachmark {
     right: 12px;
     bottom: 62px;
