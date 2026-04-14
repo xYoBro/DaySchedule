@@ -33,21 +33,21 @@ describe('UI Harness — render and skins', () => {
     SKIN_NAMES.forEach(skin => {
       resetUiHarnessState();
       const seeded = seedUiSchedule({ skin: skin });
+      const expected = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Weapons Qualification');
 
       renderActiveDay();
 
-      const target = Array.from(document.querySelectorAll('#scheduleContainer [data-event-id]')).find(el =>
-        (el.textContent || '').includes('Weapons Qualification')
-      ) || document.querySelector('#scheduleContainer [data-event-id]');
+      const target = document.querySelector('#scheduleContainer [data-event-id="' + expected.id + '"]');
 
       target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
       assert(
-        document.querySelector('#scheduleContainer [data-event-id].selected'),
+        document.querySelector('#scheduleContainer [data-event-id="' + expected.id + '"].selected'),
         skin + ' should mark the clicked event as selected'
       );
       assert.equal(_selection.type, 'event');
       assert.equal(_selection.dayId, seeded.day1.id);
+      assert.equal(_selection.entityId, expected.id);
     });
   });
 

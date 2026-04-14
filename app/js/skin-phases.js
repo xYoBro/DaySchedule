@@ -63,8 +63,8 @@ function renderDayBody_phases(dayId) {
     const exceptionNote = sharedExceptions ? summarizeExceptionNote(sharedExceptions, 3) : '';
 
     if (evt) {
-      html += '<div class="phase-block' + (isBreak ? ' phase-break' : '') + '" data-event-id="' + esc(evt.id) + '">';
-      html += '<div class="phase-header">';
+      html += '<div class="phase-block' + (isBreak ? ' phase-break' : '') + '">';
+      html += '<div class="phase-header" data-event-id="' + esc(evt.id) + '">';
       html += '<div class="phase-name">' + esc(evt.title) + '</div>';
       if (!isBreak) {
         const meta = ['<span class="phase-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];

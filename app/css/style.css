@@ -815,7 +815,7 @@ body {
 .grid-banner.selected,
 .cards-shared-item.selected,
 .cards-event.selected,
-.phase-block.selected,
+.phase-header.selected,
 .phase-task.selected {
   border-radius: 4px;
 }
@@ -833,10 +833,11 @@ body {
   padding-right: 4px;
   border-radius: 3px;
 }
-.phase-block.selected {
+.phase-header.selected {
   background: rgba(var(--app-accent), 0.06);
+  margin: 0 -6px;
+  padding: 8px 6px 4px;
   border-radius: 4px;
-  padding-right: 6px;
 }
 
 /* ── Main-on-main overlap indicator ── */
