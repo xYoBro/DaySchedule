@@ -11,6 +11,7 @@
  *
  * SIDE EFFECTS:
  *   Registers global click listener for:
+ *     - [data-conc-jump] → scroll to matching "Also Happening" time group
  *     - .band-conc[data-event-id] → select concurrent event
  *     - .band[data-event-id] → select event
  *     - .conc-item[data-event-id] → select concurrent event
@@ -29,6 +30,16 @@
 const EVENT_SELECTOR = '[data-event-id]';
 
 document.addEventListener('click', e => {
+  const concJump = e.target.closest('[data-conc-jump]');
+  if (concJump) {
+    const jumpTime = concJump.getAttribute('data-conc-jump');
+    const target = jumpTime ? document.querySelector('[data-conc-group="' + jumpTime + '"]') : null;
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    return;
+  }
+
   const skinSwitch = e.target.closest('[data-skin-switch]');
   if (skinSwitch) {
     const skin = skinSwitch.getAttribute('data-skin-switch');

@@ -5,6 +5,7 @@
  *   eventsOverlap(a, b)                         → boolean (touch-exclusive)
  *   getOverlappingConcurrent(mainEvt, concs)    → Array<event>
  *   classifyEvents(events, groups)              → {mainBands[], concurrent[]}
+ *   analyzeDayLayout(events, groups, classified?) → layout metrics + recommendation
  *
  * REQUIRES:
  *   utils.js — timeToMinutes()
@@ -12,6 +13,7 @@
  * CONSUMED BY:
  *   render.js    — computeDuration, classifyEvents
  *   print.js     — classifyEvents
+ *   skin-band.js — analyzeDayLayout()
  *   inspector.js — classifyEvents, eventsOverlap (via checkTimeConflict)
  * ──────────────────────────────────────────────────────────────────────────── */
 
@@ -101,4 +103,48 @@ function classifyEvents(events, groups) {
   });
 
   return { mainBands, concurrent };
+}
+
+function analyzeDayLayout(events, groups, classified) {
+  const layout = classified || classifyEvents(events, groups);
+  const concurrent = layout.concurrent || [];
+  const bucketMap = {};
+
+  concurrent.forEach(evt => {
+    if (!bucketMap[evt.startTime]) bucketMap[evt.startTime] = [];
+    bucketMap[evt.startTime].push(evt);
+  });
+
+  const bucketStarts = Object.keys(bucketMap).sort();
+  const bucketSizes = bucketStarts.map(start => bucketMap[start].length);
+  const maxConcurrentAtStart = bucketSizes.length ? Math.max.apply(null, bucketSizes) : 0;
+  const sparseBucketCount = bucketSizes.filter(size => size <= 2).length;
+  const limitedGroupCount = new Set(concurrent.map(evt => evt.groupId).filter(Boolean)).size;
+  const longConcurrentCount = concurrent.filter(evt => computeDuration(evt) >= 120).length;
+
+  let recommendedSkin = 'bands';
+  let reason = 'the day mostly follows one main track.';
+
+  if (maxConcurrentAtStart >= 4 || concurrent.length >= 10) {
+    recommendedSkin = 'grid';
+    reason = 'it compares simultaneous group events side by side.';
+  } else if (limitedGroupCount >= 3 && bucketStarts.length >= 4) {
+    recommendedSkin = 'cards';
+    reason = 'it gives each group its own stable column for scanning.';
+  } else if (longConcurrentCount >= 3 && bucketStarts.length <= 3) {
+    recommendedSkin = 'phases';
+    reason = 'it reads better when the day is a few long group blocks.';
+  }
+
+  return {
+    recommendedSkin,
+    reason,
+    concurrentCount: concurrent.length,
+    bucketCount: bucketStarts.length,
+    bucketStarts,
+    maxConcurrentAtStart,
+    sparseBucketCount,
+    limitedGroupCount,
+    usePackedConcurrent: concurrent.length >= 8 && bucketStarts.length >= 5 && sparseBucketCount >= Math.ceil(bucketStarts.length / 2),
+  };
 }

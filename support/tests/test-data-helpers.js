@@ -74,3 +74,55 @@ describe('data-helpers — computeDuration', () => {
     assert.equal(computeDuration({ startTime: '0900', endTime: '1100' }), 120);
   });
 });
+
+describe('data-helpers — analyzeDayLayout', () => {
+  it('recommends grid for heavy simultaneous group activity', () => {
+    const groups = [
+      { id: 'all', scope: 'main', name: 'All', color: '#000' },
+      { id: 'a', scope: 'limited', name: 'A', color: '#111' },
+      { id: 'b', scope: 'limited', name: 'B', color: '#222' },
+      { id: 'c', scope: 'limited', name: 'C', color: '#333' },
+      { id: 'd', scope: 'limited', name: 'D', color: '#444' },
+    ];
+    const events = [
+      { id: 'm1', title: 'Main Block', startTime: '0800', endTime: '1200', groupId: 'all', isMainEvent: true, isBreak: false },
+      { id: 'a1', title: 'A Task', startTime: '0830', endTime: '1000', groupId: 'a', isMainEvent: false, isBreak: false },
+      { id: 'b1', title: 'B Task', startTime: '0830', endTime: '1030', groupId: 'b', isMainEvent: false, isBreak: false },
+      { id: 'c1', title: 'C Task', startTime: '0830', endTime: '1100', groupId: 'c', isMainEvent: false, isBreak: false },
+      { id: 'd1', title: 'D Task', startTime: '0830', endTime: '1130', groupId: 'd', isMainEvent: false, isBreak: false },
+    ];
+
+    const analysis = analyzeDayLayout(events, groups);
+    assert.equal(analysis.recommendedSkin, 'grid');
+    assert.equal(analysis.maxConcurrentAtStart, 4);
+  });
+
+  it('flags ragged dense concurrency for packed overflow rendering', () => {
+    const groups = [
+      { id: 'all', scope: 'main', name: 'All', color: '#000' },
+      { id: 'a', scope: 'limited', name: 'A', color: '#111' },
+      { id: 'b', scope: 'limited', name: 'B', color: '#222' },
+      { id: 'c', scope: 'limited', name: 'C', color: '#333' },
+      { id: 'd', scope: 'limited', name: 'D', color: '#444' },
+    ];
+    const events = [
+      { id: 'm1', title: 'Main Block', startTime: '0800', endTime: '1500', groupId: 'all', isMainEvent: true, isBreak: false },
+      { id: 'a1', title: 'A0830', startTime: '0830', endTime: '0930', groupId: 'a', isMainEvent: false, isBreak: false },
+      { id: 'b1', title: 'B0830', startTime: '0830', endTime: '1000', groupId: 'b', isMainEvent: false, isBreak: false },
+      { id: 'c1', title: 'C0830', startTime: '0830', endTime: '1030', groupId: 'c', isMainEvent: false, isBreak: false },
+      { id: 'd1', title: 'D0830', startTime: '0830', endTime: '1100', groupId: 'd', isMainEvent: false, isBreak: false },
+      { id: 'a2', title: 'A0930', startTime: '0930', endTime: '1000', groupId: 'a', isMainEvent: false, isBreak: false },
+      { id: 'b2', title: 'B1000', startTime: '1000', endTime: '1030', groupId: 'b', isMainEvent: false, isBreak: false },
+      { id: 'c2', title: 'C1200', startTime: '1200', endTime: '1300', groupId: 'c', isMainEvent: false, isBreak: false },
+      { id: 'd2', title: 'D1200', startTime: '1200', endTime: '1330', groupId: 'd', isMainEvent: false, isBreak: false },
+      { id: 'a3', title: 'A1330', startTime: '1330', endTime: '1400', groupId: 'a', isMainEvent: false, isBreak: false },
+      { id: 'b3', title: 'B1400', startTime: '1400', endTime: '1430', groupId: 'b', isMainEvent: false, isBreak: false },
+      { id: 'c3', title: 'C1400', startTime: '1400', endTime: '1500', groupId: 'c', isMainEvent: false, isBreak: false },
+      { id: 'd3', title: 'D1430', startTime: '1430', endTime: '1500', groupId: 'd', isMainEvent: false, isBreak: false },
+    ];
+
+    const analysis = analyzeDayLayout(events, groups);
+    assert.equal(analysis.usePackedConcurrent, true);
+    assert.equal(analysis.bucketCount >= 5, true);
+  });
+});

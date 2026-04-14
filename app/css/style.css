@@ -149,6 +149,9 @@ body {
 .band-view-note-copy {
   min-width: 0;
 }
+.band-view-recommendation {
+  color: var(--sch-text);
+}
 .band-view-actions {
   display: flex;
   gap: 6px;
@@ -167,6 +170,10 @@ body {
 }
 .band-view-switch:hover {
   background: rgba(37, 88, 168, 0.14);
+}
+.band-view-switch--recommended {
+  background: rgba(37, 88, 168, 0.14);
+  border-color: rgba(37, 88, 168, 0.28);
 }
 
 /* ── Event Band ── */
@@ -320,8 +327,15 @@ body {
   border: 1px dashed var(--sch-border);
   background: rgba(0, 0, 0, 0.02);
 }
+.band-conc-more:hover {
+  background: rgba(var(--app-accent), 0.06);
+  border-color: rgba(var(--app-accent), 0.22);
+}
 .band-conc-more .cc-title {
   font-size: 8px;
+}
+.band-conc-more .cc-detail:last-child {
+  color: var(--sch-text-secondary);
 }
 .band-conc .cc-badge {
   font-size: 6px;
@@ -483,6 +497,12 @@ body {
   flex-direction: column;
   gap: 10px;
 }
+.conc-packed {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 12px;
+  align-items: start;
+}
 .conc-group {
   display: flex;
   flex-direction: column;
@@ -521,6 +541,16 @@ body {
   transition: background 0.15s;
 }
 .conc-item:hover { background: rgba(var(--app-accent),0.04); }
+.conc-item--packed {
+  padding-top: 8px;
+  padding-right: 4px;
+}
+.conc-pack-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
 .conc-item .ci-time {
   font-size: var(--conc-time-fs, 8.5px);
   font-weight: 600;

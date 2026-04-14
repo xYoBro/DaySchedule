@@ -2,15 +2,15 @@
  *
  * EXPORTS:
  *   renderDayBody_band(dayId)         → HTML string — full schedule body for band skin
- *   renderBand(band)                  → HTML string — single event band
- *   renderConcurrentRow(conc, groups) → HTML string — "Also Happening" section
+ *   renderBand(band, densityInfo)     → HTML string — single event band
+ *   renderConcurrentRow(conc, groups, densityInfo) → HTML string — "Also Happening" section
  *
  * REQUIRES:
  *   render.js       — clearDaggerFootnotes(), addDaggerFootnote(), getDaggerFootnotes(),
  *                     renderNotes()
  *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getGroup(), Store.getNotes()
  *   utils.js        — esc(), formatDuration(), getContrastingTextColor()
- *   data-helpers.js — classifyEvents(), computeDuration()
+ *   data-helpers.js — classifyEvents(), computeDuration(), analyzeDayLayout()
  *
  * CONSUMED BY:
  *   render.js — renderDay() dispatches to renderDayBody_band() for the bands skin
@@ -21,9 +21,11 @@ function renderDayBody_band(dayId) {
   const day = Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
-  const { mainBands, concurrent } = classifyEvents(day.events, groups);
+  const classified = classifyEvents(day.events, groups);
+  const { mainBands, concurrent } = classified;
   const notes = Store.getNotes(dayId);
-  const densityInfo = getBandDensityInfo(mainBands, concurrent);
+  const layoutAnalysis = analyzeDayLayout(day.events, groups, classified);
+  const densityInfo = getBandDensityInfo(mainBands, concurrent, layoutAnalysis);
 
   clearDaggerFootnotes();
 
@@ -51,9 +53,7 @@ function renderDayBody_band(dayId) {
   });
   html += '</div>';
 
-  if (densityInfo.warning) {
-    html += renderBandDensityNote(densityInfo.warning);
-  }
+  if (densityInfo.warning) html += renderBandDensityNote(densityInfo);
 
   if (concurrent.length > 0) {
     html += renderConcurrentRow(concurrent, groups, densityInfo);
@@ -66,12 +66,15 @@ function renderDayBody_band(dayId) {
   return html;
 }
 
-function getBandDensityInfo(mainBands, concurrent) {
+function getBandDensityInfo(mainBands, concurrent, layoutAnalysis) {
   const info = {
     denseMode: false,
     inlinePreviewLimit: Infinity,
     maxConcurrentOnBand: 0,
     warning: '',
+    recommendedSkin: layoutAnalysis ? layoutAnalysis.recommendedSkin : 'bands',
+    recommendationReason: layoutAnalysis ? layoutAnalysis.reason : '',
+    usePackedConcurrent: layoutAnalysis ? layoutAnalysis.usePackedConcurrent : false,
   };
 
   if (!concurrent || concurrent.length === 0) return info;
@@ -95,13 +98,26 @@ function getBandDensityInfo(mainBands, concurrent) {
   return info;
 }
 
-function renderBandDensityNote(message) {
+function renderBandDensityNote(densityInfo) {
+  const recommendedSkin = densityInfo.recommendedSkin;
+  const recommendedLabel = SKIN_LABELS[recommendedSkin] ? SKIN_LABELS[recommendedSkin].name : recommendedSkin;
+  const actionOrder = ['grid', 'cards', 'phases'].filter(skin => skin !== recommendedSkin);
+  if (['grid', 'cards', 'phases'].includes(recommendedSkin)) actionOrder.unshift(recommendedSkin);
+
   let html = '<div class="band-view-note">';
-  html += '<div class="band-view-note-copy"><strong>Bands view warning:</strong> ' + esc(message) + '</div>';
+  html += '<div class="band-view-note-copy">';
+  html += '<strong>Bands view warning:</strong> ' + esc(densityInfo.warning);
+  if (recommendedSkin && recommendedSkin !== 'bands') {
+    html += ' <span class="band-view-recommendation">Recommended: <strong>' + esc(recommendedLabel) + '</strong> because ' + esc(densityInfo.recommendationReason) + '</span>';
+  }
+  html += '</div>';
   html += '<div class="band-view-actions">';
-  html += '<button type="button" class="band-view-switch" data-skin-switch="grid">Grid</button>';
-  html += '<button type="button" class="band-view-switch" data-skin-switch="cards">Cards</button>';
-  html += '<button type="button" class="band-view-switch" data-skin-switch="phases">Phases</button>';
+  actionOrder.forEach(skin => {
+    const label = SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin;
+    const recommendedClass = skin === recommendedSkin ? ' band-view-switch--recommended' : '';
+    const buttonLabel = skin === recommendedSkin ? 'Use ' + label : label;
+    html += '<button type="button" class="band-view-switch' + recommendedClass + '" data-skin-switch="' + esc(skin) + '">' + esc(buttonLabel) + '</button>';
+  });
   html += '</div>';
   html += '</div>';
   return html;
@@ -113,9 +129,12 @@ function renderBand(band, densityInfo) {
   const durStr = formatDuration(dur);
   const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
   const groupTextColor = group ? getContrastingTextColor(group.color) : '#ffffff';
-  const previewLimit = densityInfo && densityInfo.denseMode ? densityInfo.inlinePreviewLimit : Infinity;
+  const previewLimit = getBandPreviewLimit(concList || [], densityInfo);
   const previewConcurrent = (concList || []).slice(0, previewLimit);
   const hiddenConcurrentCount = Math.max(0, (concList ? concList.length : 0) - previewConcurrent.length);
+  const jumpStartTime = hiddenConcurrentCount > 0 && concList[previewConcurrent.length]
+    ? concList[previewConcurrent.length].startTime
+    : '';
 
   const tierClass = tier === 'main' ? 'main' : tier === 'break' ? 'brk' : 'sup';
   const overlapClass = hasMainOverlap ? ' band-overlap' : '';
@@ -167,12 +186,19 @@ function renderBand(band, densityInfo) {
     });
   }
   if (hiddenConcurrentCount > 0) {
-    html += renderBandConcurrentOverflow(hiddenConcurrentCount);
+    html += renderBandConcurrentOverflow(hiddenConcurrentCount, jumpStartTime);
   }
   html += '</div>';
 
   html += '</div>';
   return html;
+}
+
+function getBandPreviewLimit(concList, densityInfo) {
+  if (!densityInfo || !densityInfo.denseMode) return Infinity;
+  if (!concList || concList.length === 0) return densityInfo.inlinePreviewLimit;
+  if (concList.length >= 6) return 1;
+  return densityInfo.inlinePreviewLimit;
 }
 
 function renderBandConcurrentCard(c) {
@@ -199,11 +225,16 @@ function renderBandConcurrentCard(c) {
   return html;
 }
 
-function renderBandConcurrentOverflow(hiddenConcurrentCount) {
-  let html = '<div class="band-conc band-conc-more">';
+function renderBandConcurrentOverflow(hiddenConcurrentCount, jumpStartTime) {
+  const jumpAttr = jumpStartTime ? ' data-conc-jump="' + esc(jumpStartTime) + '"' : '';
+  let html = '<div class="band-conc band-conc-more"' + jumpAttr + '>';
   html += '<div class="cc-label">More below</div>';
   html += '<div class="cc-title">+' + hiddenConcurrentCount + ' more also happening</div>';
-  html += '<div class="cc-detail">See the grouped concurrent section.</div>';
+  if (jumpStartTime) {
+    html += '<div class="cc-detail">Jump to the ' + esc(jumpStartTime) + ' group below.</div>';
+  } else {
+    html += '<div class="cc-detail">See the grouped concurrent section.</div>';
+  }
   html += '</div>';
   return html;
 }
@@ -214,7 +245,9 @@ function renderConcurrentRow(concurrent, groups, densityInfo) {
 
   let html = '<div class="conc-section">';
   html += '<div class="conc-section-label">Also Happening</div>';
-  if (densityInfo && densityInfo.denseMode) {
+  if (densityInfo && densityInfo.usePackedConcurrent) {
+    html += renderConcurrentPacked(concurrent, groupMap);
+  } else if (densityInfo && densityInfo.denseMode) {
     html += renderConcurrentGroups(concurrent, groupMap);
   } else {
     html += '<div class="conc-row">';
@@ -223,6 +256,32 @@ function renderConcurrentRow(concurrent, groups, densityInfo) {
     });
     html += '</div>';
   }
+  html += '</div>';
+  return html;
+}
+
+function renderConcurrentPacked(concurrent, groupMap) {
+  const buckets = {};
+  concurrent.forEach(c => {
+    if (!buckets[c.startTime]) buckets[c.startTime] = [];
+    buckets[c.startTime].push(c);
+  });
+
+  const starts = Object.keys(buckets).sort();
+  let html = '<div class="conc-packed">';
+  starts.forEach(startTime => {
+    const bucket = buckets[startTime].slice().sort((a, b) => {
+      const endDiff = a.endTime.localeCompare(b.endTime);
+      return endDiff || a.title.localeCompare(b.title);
+    });
+    bucket.forEach((c, index) => {
+      html += renderConcurrentItem(c, groupMap[c.groupId], {
+        packed: true,
+        groupAnchor: index === 0 ? startTime : '',
+        groupHeading: index === 0 ? { time: startTime, count: bucket.length } : null,
+      });
+    });
+  });
   html += '</div>';
   return html;
 }
@@ -241,7 +300,7 @@ function renderConcurrentGroups(concurrent, groupMap) {
       const endDiff = a.endTime.localeCompare(b.endTime);
       return endDiff || a.title.localeCompare(b.title);
     });
-    html += '<div class="conc-group">';
+    html += '<div class="conc-group" data-conc-group="' + esc(startTime) + '">';
     html += '<div class="conc-group-head">';
     html += '<span class="conc-group-time">' + esc(startTime) + '</span>';
     html += '<span class="conc-group-count">' + esc(bucket.length + (bucket.length === 1 ? ' event' : ' events')) + '</span>';
@@ -257,9 +316,25 @@ function renderConcurrentGroups(concurrent, groupMap) {
   return html;
 }
 
-function renderConcurrentItem(c, g) {
+function renderConcurrentItem(c, g, options) {
+  const opts = options || {};
   const borderColor = g ? g.color : '#d2d2d7';
-  let html = '<div class="conc-item" style="border-left-color:' + esc(borderColor) + ';" data-event-id="' + esc(c.id) + '">';
+  const packedClass = opts.packed ? ' conc-item--packed' : '';
+  const groupAnchorAttr = opts.groupAnchor ? ' data-conc-group="' + esc(opts.groupAnchor) + '"' : '';
+  let html = '<div class="conc-item' + packedClass + '" style="border-left-color:' + esc(borderColor) + ';" data-event-id="' + esc(c.id) + '"' + groupAnchorAttr + '>';
+  if (opts.groupHeading) {
+    html += '<div class="conc-pack-head">';
+    html += '<span class="conc-group-time">' + esc(opts.groupHeading.time) + '</span>';
+    html += '<span class="conc-group-count">' + esc(opts.groupHeading.count + (opts.groupHeading.count === 1 ? ' event' : ' events')) + '</span>';
+    html += '</div>';
+  }
+  html += renderConcurrentItemBody(c, g);
+  html += '</div>';
+  return html;
+}
+
+function renderConcurrentItemBody(c, g) {
+  let html = '';
   html += '<div class="ci-time">' + esc(c.startTime + ' \u2013 ' + c.endTime) + '</div>';
   html += '<div class="ci-title">' + esc(c.title) + '</div>';
   const parts = [c.location, c.poc].filter(Boolean);
@@ -278,6 +353,5 @@ function renderConcurrentItem(c, g) {
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
     }
   }
-  html += '</div>';
   return html;
 }

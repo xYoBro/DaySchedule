@@ -51,9 +51,21 @@ describe('UI Harness — render and skins', () => {
     const note = document.querySelector('.band-view-note');
     assert(note, 'bands should warn when concurrent density is high');
     assert(note.textContent.includes('Try Grid, Cards, or Phases'), 'bands warning should point to alternate layouts');
-    assert(document.querySelector('.band-conc-more'), 'dense bands should cap inline concurrent previews and show an overflow summary');
-    assert(document.querySelector('.conc-group'), 'dense bands should group the lower concurrent section by start time');
+    assert(note.textContent.includes('Recommended: Grid'), 'dense bands should recommend the clearest alternate layout');
+    assert(document.querySelector('.band-conc-more[data-conc-jump]'), 'dense bands should cap inline concurrent previews and make overflow summaries jump to grouped details');
+    assert(document.querySelector('.conc-packed'), 'ragged dense days should use the packed concurrent board');
     assert(document.querySelector('[data-skin-switch="grid"]'), 'bands warning should offer direct layout switches');
+
+    const ancillaryBand = Array.from(document.querySelectorAll('.band')).find(node => {
+      const title = node.querySelector('.band-title');
+      return title && title.textContent.trim() === 'Ancillary / CBT Completion';
+    });
+    assert(ancillaryBand, 'sample schedule should include the ancillary training band');
+    assert.equal(
+      ancillaryBand.querySelectorAll('.band-conc[data-event-id]').length,
+      1,
+      'heaviest dense bands should keep only one inline concurrent preview'
+    );
   });
 
   it('bands dense warning can switch directly to another layout', () => {
@@ -72,6 +84,30 @@ describe('UI Harness — render and skins', () => {
     document.querySelector('[data-skin-switch="grid"]').click();
 
     assert(document.getElementById('previewPage').classList.contains('skin-grid'), 'warning action should switch the active skin');
+  });
+
+  it('bands overflow summary jumps to the matching concurrent group', () => {
+    resetUiHarnessState();
+    loadSampleData();
+    const dayId = Store.getDays()[0].id;
+    setCurrentScheduleFileData({
+      name: Store.getTitle(),
+      current: Store.getPersistedState(),
+      versions: [],
+      theme: { skin: 'bands', palette: 'classic' },
+    });
+
+    renderDay(dayId);
+
+    const overflowCard = document.querySelector('.band-conc-more[data-conc-jump]');
+    const jumpTime = overflowCard.getAttribute('data-conc-jump');
+    const target = document.querySelector('[data-conc-group="' + jumpTime + '"]');
+    let jumpedTo = null;
+    target.scrollIntoView = () => { jumpedTo = target.getAttribute('data-conc-group'); };
+
+    overflowCard.click();
+
+    assert.equal(jumpedTo, jumpTime, 'overflow summary should jump to the matching concurrent group');
   });
 
   it('bands skin separates title from time and metadata', () => {
