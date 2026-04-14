@@ -6,6 +6,7 @@
  * REQUIRES:
  *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
  *   utils.js        — esc(), timeToMinutes(), getContrastingTextColor()
+ *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
  *   render.js       — renderNotes(), clearDaggerFootnotes()
  *
  * CONSUMED BY:
@@ -72,6 +73,8 @@ function renderDayBody_grid(dayId) {
     // Check for shared event starting at this time
     const shared = sharedEvents.find(e => e.startTime === slotStart);
     if (shared) {
+      const sharedExceptions = getSharedEventExceptions(shared, events, groups);
+      const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
       const bannerClass = shared.isBreak ? 'grid-banner grid-banner-break' : 'grid-banner';
       html += '<div class="' + bannerClass + '" data-event-id="' + esc(shared.id) + '">';
       html += '<div class="grid-time-col">' + esc(shared.startTime) + '</div>';
@@ -88,6 +91,9 @@ function renderDayBody_grid(dayId) {
         html += '<div class="grid-banner-meta">' + bannerMeta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
       }
       if (shared.description) html += '<div class="grid-banner-desc">' + esc(shared.description) + '</div>';
+      if (exceptionNote) {
+        html += '<div class="grid-banner-exception">Exceptions: ' + esc(exceptionNote) + '</div>';
+      }
       html += '</div>';
       html += '</div>';
       html += '</div>';

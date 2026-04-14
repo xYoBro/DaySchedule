@@ -189,6 +189,41 @@ describe('inspector — settings and event details copy', () => {
     assert(text.includes('Specific People'));
     assert(text.includes('Show this in the main track'));
   });
+
+  it('explains shared-time exceptions in event details', () => {
+    mountInspectorFixture();
+    const limitedAudienceName = Store.getGroup('grp_snco').name;
+
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const shared = Store.addEvent(day.id, {
+      title: 'All-Hands Cyber Awareness',
+      startTime: '1500',
+      endTime: '1530',
+      groupId: 'grp_all',
+    });
+    const limited = Store.addEvent(day.id, {
+      title: 'Convoy Ops Brief',
+      startTime: '1400',
+      endTime: '1530',
+      groupId: 'grp_snco',
+      attendees: 'MSgt Franklin',
+    });
+    Store.setActiveDay(day.id);
+
+    selectEntity('event', day.id, shared.id);
+    renderInspector();
+    let panel = document.getElementById('inspectorPanel');
+    assert(panel.textContent.includes('Exceptions active during this block'));
+    assert(panel.textContent.includes(limitedAudienceName));
+    assert(panel.textContent.includes('Named people: MSgt Franklin'));
+
+    selectEntity('event', day.id, limited.id);
+    renderInspector();
+    panel = document.getElementById('inspectorPanel');
+    assert(panel.textContent.includes('It will read as an exception for ' + limitedAudienceName));
+    assert(panel.textContent.includes('All-Hands Cyber Awareness'));
+    assert(panel.textContent.includes('Named people: MSgt Franklin'));
+  });
 });
 
 describe('inspector — conflict detection', () => {

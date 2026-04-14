@@ -998,6 +998,7 @@ function renderEventInspector(panel, dayId, eventId) {
   if (!evt) { renderScheduleSetup(panel); return; }
 
   const groups = Store.getGroups();
+  const evtGroup = Store.getGroup(evt.groupId);
   const readOnly = typeof isCurrentScheduleEditable === 'function' ? !isCurrentScheduleEditable() : false;
   const textReadOnly = readOnly ? ' readonly' : '';
   const disabledAttr = readOnly ? ' disabled' : '';
@@ -1011,9 +1012,23 @@ function renderEventInspector(panel, dayId, eventId) {
   const allEvents = Store.getEvents(dayId);
   const { mainBands } = classifyEvents(allEvents, groups);
   const thisBand = mainBands.find(b => b.event.id === eventId);
+  const sharedExceptions = getSharedEventExceptions(evt, allEvents, groups);
+  const sharedOverlaps = getOverlappingSharedEvents(evt, allEvents, groups);
+  const sharedNames = summarizeDisplayList(sharedExceptions.attendeeNames, 4);
+  const eventNames = summarizeDisplayList(evt.attendees ? evt.attendees.split(/\s*(?:,|;|\n|\/)\s*/).map(name => name.trim()).filter(Boolean) : [], 4);
   if (thisBand && thisBand.overlappingMain && thisBand.overlappingMain.length > 0) {
     const names = thisBand.overlappingMain.map(m => esc(m.title)).join(', ');
     html += '<div class="insp-overlap-warn">Overlaps with ' + names + '</div>';
+  }
+  if (sharedExceptions.groupNames.length > 0) {
+    html += '<div class="insp-context-note">Exceptions active during this block: ' + esc(summarizeDisplayList(sharedExceptions.groupNames, 3)) + '.';
+    if (sharedNames) html += ' Named people: ' + esc(sharedNames) + '.';
+    html += '</div>';
+  } else if (sharedOverlaps.titles.length > 0) {
+    const audienceLabel = evtGroup ? evtGroup.name : 'this audience';
+    html += '<div class="insp-context-note">This runs during ' + esc(summarizeDisplayList(sharedOverlaps.titles, 2)) + '. It will read as an exception for ' + esc(audienceLabel) + '.';
+    if (eventNames) html += ' Named people: ' + esc(eventNames) + '.';
+    html += '</div>';
   }
 
   // Title
@@ -1058,7 +1073,6 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '</div>';
 
   // Highlight override — only show if group scope is limited
-  const evtGroup = Store.getGroup(evt.groupId);
   const groupIsMain = evtGroup && evtGroup.scope === 'main';
   if (!groupIsMain && !evt.isBreak) {
     html += '<div class="insp-toggle-section">';

@@ -6,6 +6,7 @@
  * REQUIRES:
  *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
  *   utils.js        — esc()
+ *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
  *   render.js       — renderNotes(), clearDaggerFootnotes()
  *
  * CONSUMED BY:
@@ -47,6 +48,8 @@ function renderDayBody_cards(dayId) {
   if (sharedEvents.length > 0) {
     html += '<div class="cards-shared">';
     sharedEvents.forEach(e => {
+      const sharedExceptions = getSharedEventExceptions(e, events, groups);
+      const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
       const breakClass = e.isBreak ? ' cards-shared-break' : '';
       html += '<span class="cards-shared-item' + breakClass + '" data-event-id="' + esc(e.id) + '">';
       html += '<span class="cards-shared-head">';
@@ -58,6 +61,9 @@ function renderDayBody_cards(dayId) {
       if (e.poc) sharedMeta.push('<span>POC: ' + esc(e.poc) + '</span>');
       if (sharedMeta.length > 0) {
         html += '<span class="cards-shared-meta">' + sharedMeta.join('<span class="cards-meta-sep">\u00b7</span>') + '</span>';
+      }
+      if (exceptionNote) {
+        html += '<span class="cards-shared-exception">Exceptions: ' + esc(exceptionNote) + '</span>';
       }
       html += '</span>';
     });

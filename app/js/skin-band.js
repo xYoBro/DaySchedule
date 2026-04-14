@@ -10,7 +10,8 @@
  *                     renderNotes()
  *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getGroup(), Store.getNotes()
  *   utils.js        — esc(), formatDuration(), getContrastingTextColor()
- *   data-helpers.js — classifyEvents(), computeDuration(), analyzeDayLayout()
+ *   data-helpers.js — classifyEvents(), computeDuration(), analyzeDayLayout(),
+ *                     getSharedEventExceptions(), summarizeExceptionNote()
  *
  * CONSUMED BY:
  *   render.js — renderDay() dispatches to renderDayBody_band() for the bands skin
@@ -128,6 +129,8 @@ function renderBand(band, densityInfo) {
   const dur = computeDuration(evt);
   const durStr = formatDuration(dur);
   const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
+  const sharedExceptions = getSharedEventExceptions(evt, Store.getEvents(Store.getActiveDay()), Store.getGroups());
+  const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
   const groupTextColor = group ? getContrastingTextColor(group.color) : '#ffffff';
   const previewLimit = getBandPreviewLimit(concList || [], densityInfo);
   const previewConcurrent = (concList || []).slice(0, previewLimit);
@@ -170,6 +173,9 @@ function renderBand(band, densityInfo) {
   if (evt.attendees && tier !== 'break') {
     const attendeeLabel = group ? '+ ' : 'WHO: ';
     html += '<div class="band-attendees">' + attendeeLabel + esc(evt.attendees) + '</div>';
+  }
+  if (exceptionNote) {
+    html += '<div class="band-exception-note">Exceptions: ' + esc(exceptionNote) + '</div>';
   }
   // Overlap notice for main-on-main conflicts
   if (hasMainOverlap) {

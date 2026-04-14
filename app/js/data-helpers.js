@@ -3,8 +3,12 @@
  * EXPORTS:
  *   computeDuration(event)                      → minutes (number)
  *   eventsOverlap(a, b)                         → boolean (touch-exclusive)
- *   getOverlappingConcurrent(mainEvt, concs)    → Array<event>
- *   classifyEvents(events, groups)              → {mainBands[], concurrent[]}
+ *   getOverlappingConcurrent(mainEvt, concs)      → Array<event>
+ *   getSharedEventExceptions(evt, events, groups) → {events[], groupNames[], titles[], attendeeNames[]}
+ *   getOverlappingSharedEvents(evt, events, groups) → {events[], groupNames[], titles[], attendeeNames[]}
+ *   summarizeDisplayList(items, limit?)          → string
+ *   summarizeExceptionNote(info, itemLimit?)     → string
+ *   classifyEvents(events, groups)                → {mainBands[], concurrent[]}
  *   analyzeDayLayout(events, groups, classified?) → layout metrics + recommendation
  *
  * REQUIRES:
@@ -40,26 +44,153 @@ function compareBandOrder(a, b) {
   return (a.title || '').localeCompare(b.title || '');
 }
 
-function classifyEvents(events, groups) {
-  const groupMap = {};
-  groups.forEach(g => { groupMap[g.id] = g; });
+function getGroupMap(groupsOrMap) {
+  if (!groupsOrMap) return {};
+  if (!Array.isArray(groupsOrMap)) return groupsOrMap;
+  const map = {};
+  groupsOrMap.forEach(group => { map[group.id] = group; });
+  return map;
+}
 
-  // Derive effective "is main" from the group's CURRENT scope at render time.
-  // isMainEvent on the event is a manual override — only honored when the
-  // group scope is limited (the "Highlight this event" checkbox).
-  function isEffectiveMain(evt) {
-    if (evt.isBreak) return true; // breaks always go in main track
-    const group = groupMap[evt.groupId];
-    if (!group) return false; // no group — never main
-    if (group.scope === 'main') return true; // main-scope group — always main
-    return !!evt.isMainEvent; // limited-scope — only if manually highlighted
+function isEventEffectiveMain(evt, groupsOrMap) {
+  if (!evt) return false;
+  if (evt.isBreak) return true;
+  const groupMap = getGroupMap(groupsOrMap);
+  const group = groupMap[evt.groupId];
+  if (!group) return false;
+  if (group.scope === 'main') return true;
+  return !!evt.isMainEvent;
+}
+
+function isSharedTrackEvent(evt, groupsOrMap) {
+  if (!evt) return false;
+  if (evt.isBreak) return true;
+  const groupMap = getGroupMap(groupsOrMap);
+  const group = groupMap[evt.groupId];
+  return !!(group && group.scope === 'main');
+}
+
+function summarizeDisplayList(items, limit) {
+  const values = (items || []).filter(Boolean);
+  if (!values.length) return '';
+  const maxItems = limit || 2;
+  const visible = values.slice(0, maxItems);
+  const hiddenCount = values.length - visible.length;
+  let text = visible.join(', ');
+  if (hiddenCount > 0) text += ' +' + hiddenCount + ' more';
+  return text;
+}
+
+function formatNaturalList(items, limit) {
+  const values = (items || []).filter(Boolean);
+  if (!values.length) return '';
+  const maxItems = limit || 3;
+  const visible = values.slice(0, maxItems);
+  const hiddenCount = values.length - visible.length;
+
+  if (hiddenCount > 0) {
+    if (visible.length === 1) return visible[0] + ' and ' + hiddenCount + ' more';
+    if (visible.length === 2) return visible[0] + ', ' + visible[1] + ', and ' + hiddenCount + ' more';
+    return visible.slice(0, -1).join(', ') + ', ' + visible[visible.length - 1] + ', and ' + hiddenCount + ' more';
   }
+
+  if (visible.length === 1) return visible[0];
+  if (visible.length === 2) return visible[0] + ' and ' + visible[1];
+  return visible.slice(0, -1).join(', ') + ', and ' + visible[visible.length - 1];
+}
+
+function summarizeExceptionNote(info, itemLimit) {
+  if (!info) return '';
+  const ordered = [];
+  const seen = new Set();
+
+  (info.groupNames || []).forEach(name => {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    ordered.push(name);
+  });
+  (info.attendeeNames || []).forEach(name => {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    ordered.push(name);
+  });
+
+  return formatNaturalList(ordered, itemLimit || 3);
+}
+
+function collectAttendeeNames(attendees) {
+  if (!attendees) return [];
+  return String(attendees)
+    .split(/\s*(?:,|;|\n|\/)\s*/)
+    .map(item => item.trim())
+    .filter(Boolean);
+}
+
+function buildOverlapInfo(events, groupMap) {
+  const overlaps = (events || []).slice().sort(compareBandOrder);
+  const seenGroups = new Set();
+  const groupNames = [];
+  const seenAttendees = new Set();
+  const attendeeNames = [];
+
+  overlaps.forEach(evt => {
+    const groupName = (groupMap[evt.groupId] && groupMap[evt.groupId].name) || 'Unassigned';
+    if (seenGroups.has(groupName)) return;
+    seenGroups.add(groupName);
+    groupNames.push(groupName);
+  });
+
+  overlaps.forEach(evt => {
+    collectAttendeeNames(evt.attendees).forEach(name => {
+      if (seenAttendees.has(name)) return;
+      seenAttendees.add(name);
+      attendeeNames.push(name);
+    });
+  });
+
+  return {
+    events: overlaps,
+    groupNames: groupNames,
+    titles: overlaps.map(evt => evt.title),
+    attendeeNames: attendeeNames,
+  };
+}
+
+function getSharedEventExceptions(evt, events, groupsOrMap) {
+  const groupMap = getGroupMap(groupsOrMap);
+  if (!isSharedTrackEvent(evt, groupMap) || evt.isBreak) {
+    return { events: [], groupNames: [], titles: [], attendeeNames: [] };
+  }
+  const overlaps = (events || []).filter(other =>
+    other.id !== evt.id &&
+    !isEventEffectiveMain(other, groupMap) &&
+    eventsOverlap(evt, other)
+  );
+  return buildOverlapInfo(overlaps, groupMap);
+}
+
+function getOverlappingSharedEvents(evt, events, groupsOrMap) {
+  const groupMap = getGroupMap(groupsOrMap);
+  if (!evt || isEventEffectiveMain(evt, groupMap) || evt.isBreak) {
+    return { events: [], groupNames: [], titles: [], attendeeNames: [] };
+  }
+  const overlaps = (events || []).filter(other =>
+    other.id !== evt.id &&
+    isSharedTrackEvent(other, groupMap) &&
+    !other.isBreak &&
+    eventsOverlap(evt, other)
+  );
+  return buildOverlapInfo(overlaps, groupMap);
+}
+
+function classifyEvents(events, groups) {
+  const groupMap = getGroupMap(groups);
 
   const mainEvents = [];
   const limitedEvents = [];
 
   events.forEach(evt => {
-    if (isEffectiveMain(evt)) {
+    if (isEventEffectiveMain(evt, groupMap)) {
       mainEvents.push(evt);
     } else {
       limitedEvents.push(evt);

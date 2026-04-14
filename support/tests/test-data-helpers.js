@@ -78,6 +78,52 @@ describe('data-helpers — classifyEvents', () => {
   });
 });
 
+describe('data-helpers — shared event exceptions', () => {
+  it('summarizes limited audiences overlapping a shared event', () => {
+    const groups = [
+      { id: 'all', scope: 'main', name: 'All Personnel', color: '#000' },
+      { id: 'chiefs', scope: 'limited', name: 'Flight Chiefs', color: '#111' },
+      { id: 'mx', scope: 'limited', name: 'Maintenance', color: '#222' },
+    ];
+    const events = [
+      { id: 'shared', title: 'Cyber Awareness', startTime: '1500', endTime: '1530', groupId: 'all', isMainEvent: true, isBreak: false },
+      { id: 'chiefs', title: 'Convoy Ops Brief', startTime: '1400', endTime: '1530', groupId: 'chiefs', isMainEvent: false, isBreak: false, attendees: 'MSgt Franklin, TSgt Park' },
+      { id: 'mx', title: 'MX Debrief', startTime: '1430', endTime: '1500', groupId: 'mx', isMainEvent: false, isBreak: false },
+    ];
+
+    const info = getSharedEventExceptions(events[0], events, groups);
+
+    assert.equal(info.events.length, 1);
+    assert.equal(info.groupNames.join(', '), 'Flight Chiefs');
+    assert.equal(info.attendeeNames.join(', '), 'MSgt Franklin, TSgt Park');
+  });
+
+  it('finds shared events that a limited audience will read as an exception to', () => {
+    const groups = [
+      { id: 'all', scope: 'main', name: 'All Personnel', color: '#000' },
+      { id: 'chiefs', scope: 'limited', name: 'Flight Chiefs', color: '#111' },
+    ];
+    const events = [
+      { id: 'shared', title: 'Cyber Awareness', startTime: '1500', endTime: '1530', groupId: 'all', isMainEvent: true, isBreak: false },
+      { id: 'chiefs', title: 'Convoy Ops Brief', startTime: '1400', endTime: '1530', groupId: 'chiefs', isMainEvent: false, isBreak: false, attendees: 'MSgt Franklin' },
+    ];
+
+    const info = getOverlappingSharedEvents(events[1], events, groups);
+
+    assert.equal(info.events.length, 1);
+    assert.equal(info.titles[0], 'Cyber Awareness');
+  });
+
+  it('collapses group and named exceptions into one compact schedule note', () => {
+    const text = summarizeExceptionNote({
+      groupNames: ['Flight Chiefs'],
+      attendeeNames: ['TSgt Snuffy', 'A1C Broadmoore'],
+    }, 3);
+
+    assert.equal(text, 'Flight Chiefs, TSgt Snuffy, and A1C Broadmoore');
+  });
+});
+
 describe('data-helpers — getOverlappingConcurrent', () => {
   it('finds concurrent events overlapping a main event', () => {
     const mainEvt = { startTime: '0900', endTime: '1100' };

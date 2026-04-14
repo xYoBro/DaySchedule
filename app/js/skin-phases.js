@@ -4,9 +4,10 @@
  *   renderDayBody_phases(dayId) → string (HTML)
  *
  * REQUIRES:
- *   app-state.js — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js     — esc(), getContrastingTextColor()
- *   render.js    — renderNotes(), clearDaggerFootnotes()
+ *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
+ *   utils.js        — esc(), getContrastingTextColor()
+ *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
+ *   render.js       — renderNotes(), clearDaggerFootnotes()
  *
  * CONSUMED BY:
  *   render.js — dispatches to this when skin === 'phases'
@@ -58,6 +59,8 @@ function renderDayBody_phases(dayId) {
   phases.forEach((phase, i) => {
     const evt = phase.event;
     const isBreak = evt && evt.isBreak;
+    const sharedExceptions = evt ? getSharedEventExceptions(evt, events, groups) : null;
+    const exceptionNote = sharedExceptions ? summarizeExceptionNote(sharedExceptions, 3) : '';
 
     if (evt) {
       html += '<div class="phase-block' + (isBreak ? ' phase-break' : '') + '" data-event-id="' + esc(evt.id) + '">';
@@ -71,6 +74,9 @@ function renderDayBody_phases(dayId) {
       }
       if (evt.description && !isBreak) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
+      }
+      if (exceptionNote) {
+        html += '<div class="phase-exception-note">Exceptions: ' + esc(exceptionNote) + '</div>';
       }
       html += '</div>';
     } else {

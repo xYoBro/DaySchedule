@@ -190,6 +190,38 @@ describe('UI Harness — render and skins', () => {
     });
   });
 
+  it('shows exception nudges when limited events overlap a shared block', () => {
+    SKIN_NAMES.forEach(skin => {
+      resetUiHarnessState();
+      const seeded = seedUiSchedule({ skin: skin });
+      Store.addEvent(seeded.day1.id, {
+        title: 'All-Hands Cyber Awareness',
+        startTime: '1500',
+        endTime: '1530',
+        groupId: 'grp_all',
+        isMainEvent: true,
+      });
+      Store.addEvent(seeded.day1.id, {
+        title: 'Convoy Ops Brief',
+        startTime: '1400',
+        endTime: '1530',
+        groupId: 'grp_chiefs',
+        attendees: 'MSgt Franklin',
+      });
+
+      renderDay(seeded.day1.id);
+
+      assert(
+        document.getElementById('scheduleContainer').textContent.includes('Exceptions: Flight Chiefs'),
+        skin + ' should nudge users when a shared event has limited-audience exceptions'
+      );
+      assert(
+        document.getElementById('scheduleContainer').textContent.includes('MSgt Franklin'),
+        skin + ' should surface named exceptions inline with the exception note'
+      );
+    });
+  });
+
   it('grid skin renders shared banners and continuation cells as clickable elements', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'grid' });
