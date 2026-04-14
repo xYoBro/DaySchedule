@@ -82,7 +82,10 @@ async function refreshLibraryList() {
   if (!listEl) return;
 
   if (!hasDirectoryAccess()) {
-    listEl.innerHTML = '<div class="library-empty">Connect the shared schedule folder to get started.</div>';
+    const emptyMessage = hasFSAPI()
+      ? 'Connect the shared schedule folder to browse team schedules. If you need to keep working right now, you can still create a local draft and use Manual Export later.'
+      : 'This browser cannot connect to the shared schedule folder. You can still create a local draft and use Manual Export to save a copy.';
+    listEl.innerHTML = '<div class="library-empty">' + esc(emptyMessage) + '</div>';
     return;
   }
 
@@ -174,6 +177,20 @@ async function createNewSchedule(name) {
   const state = Store.getPersistedState();
   const fileData = buildScheduleFile(name, state, [], userName);
   setCurrentScheduleFileData(fileData);
+
+  if (!hasDirectoryAccess()) {
+    setCurrentFile(null, null);
+    hideLibrary();
+    if (typeof syncCurrentScheduleAccess === 'function') {
+      await syncCurrentScheduleAccess();
+    }
+    syncToolbarTitle();
+    renderActiveDay();
+    renderInspector();
+    sessionSave();
+    toast('Created ' + name + ' locally. Use Manual Export to save a copy.');
+    return;
+  }
 
   const ok = await writeScheduleFile(fileName, fileData);
   if (!ok) { toast('Failed to create schedule.'); return; }

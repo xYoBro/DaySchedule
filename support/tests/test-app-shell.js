@@ -79,6 +79,39 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
   });
 
+  it('createNewSchedule falls back to a local draft when folder access is unavailable', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    showLibrary();
+    await wait(0);
+
+    await createNewSchedule('Safari Draft');
+    await wait(600);
+
+    const files = UiMockFS.getFiles();
+    assert.equal(Object.keys(files).length, 0, 'local draft should not create a shared-folder file');
+    assert.equal(Store.getTitle(), 'Safari Draft');
+    assert.equal(getCurrentFileName(), null);
+    assert.equal(isCurrentScheduleEditable(), true, 'local draft should stay editable');
+    assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
+    assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Safari Draft');
+    assert.equal(
+      document.getElementById('toast').textContent,
+      'Created Safari Draft locally. Use Manual Export to save a copy.'
+    );
+  });
+
+  it('library explains the local-draft fallback when folder access is unavailable', async () => {
+    resetUiHarnessState();
+    showLibrary();
+    await wait(0);
+
+    assert(
+      document.getElementById('libraryList').textContent.includes('local draft'),
+      'library should explain the local-draft fallback when no shared folder is connected'
+    );
+  });
+
   it('renames the file only when the title edit is committed', async () => {
     resetUiHarnessState();
     installUiMockDir('data');
