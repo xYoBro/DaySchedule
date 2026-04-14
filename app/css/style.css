@@ -1228,6 +1228,17 @@ body {
   background: #2558a8;
   color: white;
 }
+.editor-access-local {
+  background: #fff7ed;
+  border-bottom-color: #f4c78f;
+}
+.editor-access-local .editor-access-text {
+  color: #8a4b08;
+}
+.editor-access-local .editor-access-mode {
+  background: #c96a10;
+  color: white;
+}
 
 /* ── Day Tabs ── */
 .day-tabs {

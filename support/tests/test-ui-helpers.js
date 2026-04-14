@@ -92,6 +92,7 @@ function resetUiHarnessState() {
   _currentFileName = null;
   _lastKnownSavedAt = null;
   _dirty = false;
+  _manualDraftExported = false;
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
   _settingsActiveTab = 'look';

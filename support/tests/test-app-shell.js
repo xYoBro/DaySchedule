@@ -95,10 +95,41 @@ describe('UI Harness — app shell', () => {
     assert.equal(isCurrentScheduleEditable(), true, 'local draft should stay editable');
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
     assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Safari Draft');
+    assert.equal(document.getElementById('editorAccessBar').hidden, false, 'local draft warning should stay visible');
+    assert(document.getElementById('editorAccessText').textContent.includes('app/data'));
+    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Manual Export');
     assert.equal(
       document.getElementById('toast').textContent,
       'Created Safari Draft locally. Use Manual Export to save a copy.'
     );
+  });
+
+  it('local draft warning persists after manual export and reminds the user to sync the file', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    await createNewSchedule('Safari Draft');
+    await wait(600);
+
+    const originalSaveDataFile = window.saveDataFile;
+    let exportCalls = 0;
+    window.saveDataFile = async () => {
+      exportCalls += 1;
+      notifyManualDraftExport();
+      return true;
+    };
+
+    try {
+      document.getElementById('editorManualExportBtn').click();
+      await wait(0);
+    } finally {
+      window.saveDataFile = originalSaveDataFile;
+    }
+
+    assert.equal(exportCalls, 1, 'manual export action should stay available from the persistent warning');
+    assert.equal(document.getElementById('editorAccessBar').hidden, false, 'warning should remain visible after export');
+    assert(document.getElementById('editorAccessText').textContent.includes('still not synced yet'));
+    assert(document.getElementById('editorAccessText').textContent.includes('app/data'));
+    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Export Again');
   });
 
   it('library explains the local-draft fallback when folder access is unavailable', async () => {

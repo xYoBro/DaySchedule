@@ -112,6 +112,7 @@ async function saveDataFile() {
         await writable.write(content);
         await writable.close();
         sessionSave();
+        if (typeof notifyManualDraftExport === 'function') notifyManualDraftExport();
         toast('Saved to ' + _fileHandle.name);
         return true;
       } catch (err) {
@@ -127,7 +128,8 @@ async function saveDataFile() {
     a.click();
     URL.revokeObjectURL(a.href);
     sessionSave();
-    toast('Downloaded scheduledata.js \u2014 save it back into the shared DaySchedule data folder.');
+    if (typeof notifyManualDraftExport === 'function') notifyManualDraftExport();
+    toast('Downloaded scheduledata.js \u2014 put it in the shared DaySchedule app/data folder.');
     return true;
   } finally {
     _saveInProgress = false;

@@ -104,6 +104,7 @@ let _dirty = false;
 let _lockRefreshTimer = null;
 let _currentScheduleLock = null;
 let _editorReadOnly = true;
+let _manualDraftExported = false;
 
 // ── Slug generation ────────────────────────────────────────────────────────
 
@@ -478,15 +479,34 @@ function syncEditorChrome() {
   if (titleInput) titleInput.disabled = !editable;
 }
 
+function hasLocalDraftSession() {
+  return !_currentFileName && (!!Store.getTitle() || Store.getDays().length > 0);
+}
+
 function updateEditorAccessBar(status) {
   const bar = document.getElementById('editorAccessBar');
   const textEl = document.getElementById('editorAccessText');
   const actionsEl = document.getElementById('editorAccessActions');
-  if (!bar || !textEl || !actionsEl || !_currentFileName) return;
+  if (!bar || !textEl || !actionsEl) return;
 
   let text = '';
   let actions = '';
-  if (status.state === 'mine' && status.lock) {
+  if (!_currentFileName) {
+    if (!hasLocalDraftSession()) {
+      bar.hidden = true;
+      return;
+    }
+    text = '<span class="editor-access-mode">Local Draft</span>'
+      + '<span class="editor-access-message">'
+      + (_manualDraftExported
+          ? 'Manual export downloaded. It is still not synced yet. Put <strong>scheduledata.js</strong> into the shared DaySchedule <strong>app/data</strong> folder, then reopen it from the shared copy.'
+          : 'This schedule only exists in this browser right now. Use <strong>Manual Export</strong>, then put <strong>scheduledata.js</strong> into the shared DaySchedule <strong>app/data</strong> folder so the team can open it.')
+      + '</span>';
+    actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
+      + (_manualDraftExported ? 'Export Again' : 'Manual Export')
+      + '</button>';
+    bar.className = 'editor-access-bar editor-access-local';
+  } else if (status.state === 'mine' && status.lock) {
     text = '<span class="editor-access-mode">Editing</span>'
       + '<span class="editor-access-message">You are editing as '
       + esc(status.lock.ownerName || getUserName() || 'You')
@@ -512,6 +532,12 @@ function updateEditorAccessBar(status) {
   textEl.innerHTML = text;
   actionsEl.innerHTML = actions;
   bar.hidden = false;
+
+  const manualExportBtn = document.getElementById('editorManualExportBtn');
+  if (manualExportBtn) {
+    manualExportBtn.onclick = () => saveDataFile();
+    return;
+  }
 
   const claimBtn = document.getElementById('editorClaimBtn');
   if (claimBtn) {
@@ -566,9 +592,8 @@ async function syncCurrentScheduleAccess() {
     _currentScheduleLock = null;
     _editorReadOnly = true;
     stopLockRefreshTimer();
-    const bar = document.getElementById('editorAccessBar');
-    if (bar) bar.hidden = true;
     syncEditorChrome();
+    updateEditorAccessBar({ state: 'available', lock: null });
     return { state: 'available', lock: null };
   }
   const status = await getScheduleLockStatus(_currentFileName);
@@ -903,6 +928,7 @@ function setCurrentFile(fileName, lastSavedAt) {
   _currentFileName = fileName;
   _lastKnownSavedAt = lastSavedAt || null;
   _dirty = false;
+  _manualDraftExported = false;
   if (!fileName) {
     _currentScheduleLock = null;
     _editorReadOnly = true;
@@ -923,6 +949,11 @@ function isDirty() {
 
 function getLastSavedAt() {
   return _lastKnownSavedAt;
+}
+
+function notifyManualDraftExport() {
+  _manualDraftExported = true;
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 
 // ── Save indicator ─────────────────────────────────────────────────────────
