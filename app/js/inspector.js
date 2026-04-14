@@ -13,7 +13,7 @@
  *   openAddEvent(dayId)      — creates new event, selects it
  *   openAddNote(dayId)       — creates new note, selects it
  *   snapToQuarter(timeStr)   → string — snaps to nearest 15-min increment
- *   formatDateShort(dateStr) → string — "Sat, 15 Mar"
+ *   formatDateShort(dateStr) → string — "Sat, Mar 15"
  *
  * REQUIRES:
  *   app-state.js    — Store (all read/write methods)
@@ -131,7 +131,7 @@ function renderScheduleSetup(panel) {
       html += '<div><label>End</label><input type="text" class="insp-day-end" value="' + esc(day.endTime) + '" placeholder="1630"' + disabledAttr + '></div>';
       html += '</div>';
       html += '<label>Label</label>';
-      html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Day 1)"' + disabledAttr + '>';
+      html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Sat, Mar 15)"' + disabledAttr + '>';
       html += '<button class="btn insp-day-duplicate" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Duplicate Day</button>';
       if (days.length > 1) {
         html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Remove Day</button>';
@@ -520,7 +520,36 @@ function formatDateShort(dateStr) {
   if (isNaN(d.getTime())) return dateStr;
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return days[d.getDay()] + ', ' + d.getDate() + ' ' + months[d.getMonth()];
+  return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate();
+}
+
+function formatIsoLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return year + '-' + month + '-' + day;
+}
+
+function addDaysToIsoDate(dateStr, daysToAdd) {
+  const base = new Date(dateStr + 'T00:00:00');
+  if (isNaN(base.getTime())) return '';
+  base.setDate(base.getDate() + daysToAdd);
+  return formatIsoLocalDate(base);
+}
+
+function getDefaultNewDayDate() {
+  const activeDay = Store.getDay(Store.getActiveDay());
+  if (activeDay && activeDay.date) return addDaysToIsoDate(activeDay.date, 1);
+
+  const datedDays = Store.getDays()
+    .map(day => day.date)
+    .filter(Boolean)
+    .sort();
+  if (datedDays.length > 0) {
+    return addDaysToIsoDate(datedDays[datedDays.length - 1], 1);
+  }
+
+  return formatIsoLocalDate(new Date());
 }
 
 // ── Day Event Sheet Modal ─────────────────────────────────────────────────
@@ -1306,7 +1335,7 @@ function wireToolbar() {
       return;
     }
     saveUndoState();
-    const day = Store.addDay({ date: '', startTime: '0700', endTime: '1630' });
+    const day = Store.addDay({ date: getDefaultNewDayDate(), startTime: '0700', endTime: '1630' });
     if (!Store.getActiveDay()) Store.setActiveDay(day.id);
     _expandedDayId = day.id;
     sessionSave();

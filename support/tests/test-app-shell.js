@@ -140,6 +140,29 @@ describe('UI Harness — app shell', () => {
     await wait(0);
   });
 
+  it('adds a new day with a real default date label instead of Day 1', () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+    setUserName('Tester');
+
+    const firstDay = Store.addDay({ date: '2026-03-15', startTime: '0700', endTime: '1630' });
+    Store.setActiveDay(firstDay.id);
+    renderActiveDay();
+
+    document.getElementById('addDayBtn').click();
+
+    const days = Store.getDays();
+    const newDay = days.find(day => day.id !== firstDay.id);
+    const tabText = document.getElementById('dayTabs').textContent;
+
+    assert(newDay, 'a second day should be created');
+    assert.equal(newDay.date, '2026-03-16');
+    assert(tabText.includes('Sun, Mar 15'));
+    assert(tabText.includes('Mon, Mar 16'));
+    assert(!tabText.includes('Day 1'));
+    assert(!tabText.includes('Day 2'));
+  });
+
   it('keyboard shortcuts dispatch to the current shell handlers', () => {
     resetUiHarnessState();
 
