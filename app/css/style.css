@@ -445,48 +445,37 @@ body {
 
 /* ── BREAK band — minimal ── */
 .band.brk {
-  background: var(--sch-surface);
+  margin: 8px 0;
+  background: rgba(29, 29, 31, 0.06);
   justify-content: center;
-  border-bottom-color: var(--sch-border);
+  border-top: 1px solid rgba(29, 29, 31, 0.14);
+  border-bottom: 1px solid rgba(29, 29, 31, 0.14);
 }
 .band.brk .band-time {
-  border-right-color: var(--sch-border);
-  padding: 6px 10px 6px 4px;
+  border-right-color: rgba(29, 29, 31, 0.18);
+  padding: 8px 10px 8px 4px;
 }
 .band.brk .band-time .t-start {
   font-size: 11px;
-  font-weight: 600;
-  color: var(--sch-text-muted);
+  font-weight: 700;
+  color: rgba(29, 29, 31, 0.72);
 }
 .band.brk .band-time .t-end {
-  color: var(--sch-text-muted);
+  color: rgba(29, 29, 31, 0.5);
 }
 .band.brk .band-content {
   display: flex;
   align-items: center;
-  padding: 6px 12px 6px 14px;
+  padding: 8px 12px 8px 14px;
 }
 .band.brk .band-title {
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 750;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--sch-text-muted);
+  color: rgba(29, 29, 31, 0.8);
 }
 .band.brk .band-conc-slot { width: 0; border: none; }
-
-/* ── Section divider between morning/afternoon ── */
-.section-break {
-  height: 8px;
-  background: linear-gradient(
-    90deg,
-    transparent 0,
-    transparent 84px,
-    rgba(29, 29, 31, 0.08) 84px,
-    rgba(29, 29, 31, 0.08) calc(100% - 12px),
-    transparent calc(100% - 12px)
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════
    CONCURRENT STANDALONE — below schedule

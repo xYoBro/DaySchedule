@@ -38,13 +38,8 @@ function renderDayBody_band(dayId) {
     html += '<p>Click <strong>+ Note</strong> to add scheduling notes.</p>';
     html += '</div>';
   }
-  let prevTier = null;
   mainBands.forEach((band) => {
-    if (band.tier === 'break' && prevTier && prevTier !== 'break') {
-      html += '<div class="section-break"></div>';
-    }
     html += renderBand(band, densityInfo);
-    prevTier = band.tier;
   });
   html += '</div>';
 
