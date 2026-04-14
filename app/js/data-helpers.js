@@ -32,6 +32,14 @@ function getOverlappingConcurrent(mainEvt, concurrents) {
   return concurrents.filter(c => eventsOverlap(mainEvt, c));
 }
 
+function compareBandOrder(a, b) {
+  const startDiff = timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+  if (startDiff !== 0) return startDiff;
+  const durationDiff = computeDuration(b) - computeDuration(a);
+  if (durationDiff !== 0) return durationDiff;
+  return (a.title || '').localeCompare(b.title || '');
+}
+
 function classifyEvents(events, groups) {
   const groupMap = {};
   groups.forEach(g => { groupMap[g.id] = g; });
@@ -58,22 +66,19 @@ function classifyEvents(events, groups) {
     }
   });
 
-  mainEvents.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+  mainEvents.sort(compareBandOrder);
 
-  const concurrent = [];
-  const supporting = [];
+  const concurrentToMain = [];
+  const independentLimited = [];
 
   limitedEvents.forEach(evt => {
     const overlapsMain = mainEvents.some(m => !m.isBreak && eventsOverlap(m, evt));
     if (overlapsMain) {
-      concurrent.push(evt);
+      concurrentToMain.push(evt);
     } else {
-      supporting.push(evt);
+      independentLimited.push(evt);
     }
   });
-
-  const allBandEvents = [...mainEvents, ...supporting]
-    .sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
   // Detect main-on-main overlaps
   function getOverlappingMain(evt) {
@@ -82,27 +87,55 @@ function classifyEvents(events, groups) {
 
   // Track which concurrent events have been placed so each appears only once,
   // on the first band it overlaps with (the band active when it starts).
-  const placedConcurrent = new Set();
+  const placedConcurrentToMain = new Set();
 
-  const mainBands = allBandEvents.map(evt => {
-    const effMain = isEffectiveMain(evt);
-    const overlappingMain = effMain && !evt.isBreak ? getOverlappingMain(evt) : [];
+  const mainBands = mainEvents.map(evt => {
     let bandConcurrent = [];
     if (!evt.isBreak) {
-      bandConcurrent = getOverlappingConcurrent(evt, concurrent)
-        .filter(c => !placedConcurrent.has(c.id));
-      bandConcurrent.forEach(c => placedConcurrent.add(c.id));
+      bandConcurrent = getOverlappingConcurrent(evt, concurrentToMain)
+        .filter(c => !placedConcurrentToMain.has(c.id));
+      bandConcurrent.forEach(c => placedConcurrentToMain.add(c.id));
     }
     return {
       event: evt,
-      tier: evt.isBreak ? 'break' : effMain ? 'main' : 'supporting',
+      tier: evt.isBreak ? 'break' : 'main',
       group: groupMap[evt.groupId] || null,
       concurrent: bandConcurrent,
-      overlappingMain, // other main events that share time with this one
+      overlappingMain: !evt.isBreak ? getOverlappingMain(evt) : [],
     };
   });
 
-  return { mainBands, concurrent };
+  const supportingBands = buildSupportingBands(independentLimited, groupMap);
+  const allConcurrent = concurrentToMain.concat(supportingBands.flatMap(band => band.concurrent));
+
+  return {
+    mainBands: mainBands.concat(supportingBands).sort((a, b) => compareBandOrder(a.event, b.event)),
+    concurrent: allConcurrent,
+  };
+}
+
+function buildSupportingBands(events, groupMap) {
+  const sorted = events.slice().sort(compareBandOrder);
+  const used = new Set();
+  const bands = [];
+
+  sorted.forEach(evt => {
+    if (used.has(evt.id)) return;
+    used.add(evt.id);
+
+    const attached = sorted.filter(other => !used.has(other.id) && eventsOverlap(evt, other));
+    attached.forEach(other => used.add(other.id));
+
+    bands.push({
+      event: evt,
+      tier: 'supporting',
+      group: groupMap[evt.groupId] || null,
+      concurrent: attached,
+      overlappingMain: [],
+    });
+  });
+
+  return bands;
 }
 
 function analyzeDayLayout(events, groups, classified) {

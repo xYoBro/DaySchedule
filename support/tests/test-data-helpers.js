@@ -53,6 +53,29 @@ describe('data-helpers — classifyEvents', () => {
     assert.equal(highlighted.overlappingMain.length, 1);
     assert.equal(highlighted.overlappingMain[0].id, 'e1');
   });
+
+  it('anchors limited-only overlap clusters under a supporting band', () => {
+    const groups = [
+      { id: 'flight', scope: 'limited', name: 'By Flight', color: '#000' },
+      { id: 'mx', scope: 'limited', name: 'Maintenance', color: '#111' },
+      { id: 'med', scope: 'limited', name: 'Medical', color: '#222' },
+    ];
+    const events = [
+      { id: 'e1', title: 'AFSC Training', startTime: '0830', endTime: '1100', groupId: 'flight', isMainEvent: false, isBreak: false },
+      { id: 'e2', title: 'Tool Inventory', startTime: '0830', endTime: '0930', groupId: 'mx', isMainEvent: false, isBreak: false },
+      { id: 'e3', title: 'PHA Screenings', startTime: '0830', endTime: '1100', groupId: 'med', isMainEvent: false, isBreak: false },
+      { id: 'e4', title: 'TO Library Update', startTime: '0930', endTime: '1100', groupId: 'mx', isMainEvent: false, isBreak: false },
+    ];
+
+    const result = classifyEvents(events, groups);
+    const anchor = result.mainBands.find(b => b.event.id === 'e1');
+
+    assert(anchor, 'longest early limited event should remain as the supporting anchor band');
+    assert.equal(anchor.tier, 'supporting');
+    assert.equal(anchor.concurrent.length, 3);
+    assert.equal(result.mainBands.length, 1);
+    assert.equal(result.concurrent.length, 3);
+  });
 });
 
 describe('data-helpers — getOverlappingConcurrent', () => {

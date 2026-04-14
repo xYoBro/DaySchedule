@@ -150,6 +150,10 @@ describe('inspector — settings and event details copy', () => {
     const modal = document.getElementById('settingsModalContent');
     renderSettingsModal(modal);
 
+    const audiencesTab = modal.querySelector('.settings-tab[data-settings-tab="audiences"]');
+    assert(audiencesTab, 'audiences tab should exist at the top level');
+    audiencesTab.click();
+
     const scopeBtn = modal.querySelector('.insp-group-scope');
     assert(scopeBtn, 'group scope button should exist');
 

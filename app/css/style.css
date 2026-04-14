@@ -1586,6 +1586,49 @@ body {
   line-height: 1.55;
 }
 
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.settings-tab {
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  color: var(--chrome-text-secondary);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.settings-tab:hover {
+  background: #eef4ff;
+  border-color: rgba(var(--app-accent), 0.18);
+}
+
+.settings-tab.active {
+  background: rgba(var(--app-accent), 0.12);
+  border-color: rgba(var(--app-accent), 0.28);
+  color: #21467a;
+}
+
+.settings-panel-group {
+  min-height: 320px;
+}
+
+.settings-panel {
+  display: none;
+}
+
+.settings-panel.active {
+  display: block;
+}
+
 .settings-section {
   padding: 14px 0 0;
   border-top: 1px solid var(--chrome-border);

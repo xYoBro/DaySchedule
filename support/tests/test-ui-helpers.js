@@ -94,7 +94,7 @@ function resetUiHarnessState() {
   _dirty = false;
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
-  _settingsAdvancedOpen = false;
+  _settingsActiveTab = 'look';
   _daySheetSelectedEventId = null;
   _versionSaveMode = false;
   _contextMenuTarget = null;

@@ -7,7 +7,7 @@
  *   renderDayTabs()          — renders day tab buttons in toolbar
  *   wireToolbar()            — wires all toolbar buttons, title input, overflow menu
  *   syncToolbarTitle()       — syncs toolbar title input with Store.getTitle()
- *   openSettingsModal()      — opens settings modal (general + groups tabs)
+ *   openSettingsModal()      — opens settings modal (basics/look/audiences/advanced tabs)
  *   closeSettingsModal()     — closes settings modal, re-renders
  *   openDayEventSheetModal() — opens a day-only table editor for the active day
  *   openAddEvent(dayId)      — creates new event, selects it
@@ -58,7 +58,7 @@
 let _selection = { type: null, dayId: null, entityId: null };
 let _deleteTimer = null;
 let _expandedDayId = null;
-let _settingsAdvancedOpen = false;
+let _settingsActiveTab = 'look';
 let _daySheetSelectedEventId = null;
 
 // ── Selection ──────────────────────────────────────────────────────────────
@@ -225,8 +225,17 @@ function renderSettingsModal(modal) {
   const currentTheme = getScheduleTheme(getCurrentScheduleFileData() && getCurrentScheduleFileData().theme);
 
   let html = '<h2>Customize Schedule</h2>';
-  html += '<p class="settings-summary">Change the title, unit logo, layout, and colors here. Open Advanced only when you need groups, header text, or manual export.</p>';
+  html += '<p class="settings-summary">Choose what you want to change: basics, look, audiences, or advanced export options.</p>';
+  html += '<div class="settings-tabs" role="tablist" aria-label="Customize sections">';
+  html += renderSettingsTab('basics', 'Basics');
+  html += renderSettingsTab('look', 'Look');
+  html += renderSettingsTab('audiences', 'Audiences');
+  html += renderSettingsTab('advanced', 'Advanced');
+  html += '</div>';
 
+  html += '<div class="settings-panel-group">';
+
+  html += '<section class="settings-panel' + (_settingsActiveTab === 'basics' ? ' active' : '') + '" data-settings-panel="basics">';
   html += '<div class="settings-section">';
   html += '<div class="settings-section-title">Basics</div>';
   html += '<label class="settings-label">Schedule Title</label>';
@@ -237,8 +246,14 @@ function renderSettingsModal(modal) {
     html += '<div class="settings-logo-preview"><img src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
     html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove logo</button></div>';
   }
+  html += '<label class="settings-label">Header Line</label>';
+  html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
+  html += '<label class="settings-label">Point of Contact</label>';
+  html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
   html += '</div>';
+  html += '</section>';
 
+  html += '<section class="settings-panel' + (_settingsActiveTab === 'look' ? ' active' : '') + '" data-settings-panel="look">';
   html += '<div class="settings-section">';
   html += '<div class="settings-section-title">Look</div>';
   html += '<div class="settings-label" style="margin-bottom:8px;">Layout</div>';
@@ -274,15 +289,11 @@ function renderSettingsModal(modal) {
   html += '</div>';
   html += '</div>';
   html += '</div>';
+  html += '</section>';
 
-  html += '<details class="settings-advanced"' + (_settingsAdvancedOpen ? ' open' : '') + ' id="settingsAdvanced">';
-  html += '<summary>Advanced</summary>';
-  html += '<div class="settings-advanced-body">';
-  html += '<label class="settings-label">Header Line</label>';
-  html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
-  html += '<label class="settings-label">Point of Contact</label>';
-  html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
-  html += '<div class="settings-section-title" style="margin-top:18px;">Audiences</div>';
+  html += '<section class="settings-panel' + (_settingsActiveTab === 'audiences' ? ' active' : '') + '" data-settings-panel="audiences">';
+  html += '<div class="settings-section">';
+  html += '<div class="settings-section-title">Audiences</div>';
   html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Use audiences to decide where events land on the schedule. Primary audiences go to the main track automatically. Supporting audiences stay in the side track unless a specific event is promoted.</p>';
   groups.forEach(g => {
     html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
@@ -293,6 +304,13 @@ function renderSettingsModal(modal) {
     html += '</div>';
   });
   html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Group</button>';
+  html += '</div>';
+  html += '</section>';
+
+  html += '<section class="settings-panel' + (_settingsActiveTab === 'advanced' ? ' active' : '') + '" data-settings-panel="advanced">';
+  html += '<div class="settings-section">';
+  html += '<div class="settings-section-title">Advanced</div>';
+  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:10px;">Only use manual export when browser auto-save is unavailable or a lead asks for a backup file.</p>';
   html += '<div class="settings-export-row">';
   html += '<div class="settings-export-copy">';
   html += '<div class="settings-export-label">Manual File Export</div>';
@@ -301,7 +319,8 @@ function renderSettingsModal(modal) {
   html += '<button class="btn settings-export-btn" id="settings-save-file">Manual Export</button>';
   html += '</div>';
   html += '</div>';
-  html += '</details>';
+  html += '</section>';
+  html += '</div>';
 
   html += '<div class="modal-actions">';
   html += '<button class="btn btn-primary" id="settings-done">Done</button>';
@@ -311,13 +330,18 @@ function renderSettingsModal(modal) {
   wireSettingsModal(modal);
 }
 
+function renderSettingsTab(tabId, label) {
+  const active = _settingsActiveTab === tabId ? ' active' : '';
+  return '<button type="button" class="settings-tab' + active + '" data-settings-tab="' + esc(tabId) + '" role="tab" aria-selected="' + (_settingsActiveTab === tabId ? 'true' : 'false') + '">' + esc(label) + '</button>';
+}
+
 function wireSettingsModal(modal) {
-  const advanced = modal.querySelector('#settingsAdvanced');
-  if (advanced) {
-    advanced.addEventListener('toggle', () => {
-      _settingsAdvancedOpen = advanced.open;
+  modal.querySelectorAll('.settings-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      _settingsActiveTab = tab.getAttribute('data-settings-tab') || 'look';
+      renderSettingsModal(modal);
     });
-  }
+  });
 
   // General tab fields — auto-commit on change
   const titleInput = modal.querySelector('#settings-title');

@@ -110,6 +110,41 @@ describe('UI Harness — render and skins', () => {
     assert.equal(jumpedTo, jumpTime, 'overflow summary should jump to the matching concurrent group');
   });
 
+  it('bands keeps dense limited-only clusters grouped when a former anchor becomes limited', () => {
+    resetUiHarnessState();
+    loadSampleData();
+    const dayId = Store.getDays()[0].id;
+    Store.updateGroup('grp_flight', { scope: 'limited' });
+    setCurrentScheduleFileData({
+      name: Store.getTitle(),
+      current: Store.getPersistedState(),
+      versions: [],
+      theme: { skin: 'bands', palette: 'classic' },
+    });
+
+    renderDay(dayId);
+
+    const afscBand = Array.from(document.querySelectorAll('.band')).find(node => {
+      const title = node.querySelector('.band-title');
+      return title && title.textContent.trim() === 'AFSC-Specific Training';
+    });
+    const ancillaryBand = Array.from(document.querySelectorAll('.band')).find(node => {
+      const title = node.querySelector('.band-title');
+      return title && title.textContent.trim() === 'Ancillary / CBT Completion';
+    });
+
+    assert(afscBand, 'demoted flight anchor should still render as a band');
+    assert(ancillaryBand, 'second demoted flight anchor should still render as a band');
+    assert(
+      afscBand.querySelector('.band-conc[data-event-id]') || afscBand.querySelector('.band-conc-more'),
+      'morning limited cluster should stay grouped under the AFSC band'
+    );
+    assert(
+      ancillaryBand.querySelector('.band-conc[data-event-id]') || ancillaryBand.querySelector('.band-conc-more'),
+      'afternoon limited cluster should stay grouped under the ancillary band'
+    );
+  });
+
   it('bands skin separates title from time and metadata', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'bands' });
