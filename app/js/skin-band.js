@@ -39,17 +39,11 @@ function renderDayBody_band(dayId) {
     html += '</div>';
   }
   let prevTier = null;
-  mainBands.forEach((band, i) => {
+  mainBands.forEach((band) => {
     if (band.tier === 'break' && prevTier && prevTier !== 'break') {
       html += '<div class="section-break"></div>';
     }
     html += renderBand(band, densityInfo);
-    if (band.tier === 'break') {
-      const next = mainBands[i + 1];
-      if (next && next.tier !== 'break') {
-        html += '<div class="section-break"></div>';
-      }
-    }
     prevTier = band.tier;
   });
   html += '</div>';

@@ -477,8 +477,15 @@ body {
 
 /* ── Section divider between morning/afternoon ── */
 .section-break {
-  height: 2px;
-  background: linear-gradient(90deg, var(--sch-text) 0%, var(--sch-text) 70px, transparent 76px, var(--sch-border) 82px, var(--sch-border) 100%);
+  height: 8px;
+  background: linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 84px,
+    rgba(29, 29, 31, 0.08) 84px,
+    rgba(29, 29, 31, 0.08) calc(100% - 12px),
+    transparent calc(100% - 12px)
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════

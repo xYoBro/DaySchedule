@@ -2,6 +2,8 @@
 
 DaySchedule is a browser-based schedule builder designed to run from a shared folder. It is meant for teams that need a simple shared workflow without deploying a traditional web app.
 
+Licensed under the MIT License. See [LICENSE](/Users/adknott/Code/DaySchedule/LICENSE).
+
 ## Recommended Setup
 
 Use one shared master copy of the full DaySchedule folder.
