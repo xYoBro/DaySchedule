@@ -650,6 +650,7 @@ body {
 
 .preview-area {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: calc(16px * var(--ui-scale));
   display: flex;
@@ -665,6 +666,7 @@ body {
 .inspector {
   width: 320px;
   flex-shrink: 0;
+  min-height: 0;
   background: var(--chrome-surface);
   border-left: 1px solid var(--chrome-border);
   overflow-y: auto;
