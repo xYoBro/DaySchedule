@@ -3,6 +3,8 @@
  * EXPORTS:
  *   openModal(id)       — shows modal overlay by DOM id, focuses first input
  *   closeModal(id)      — hides modal, restores focus
+ *   computeViewportUiScale(width?, height?) → number — monitor-aware chrome scale
+ *   applyViewportUiScale() → number — writes --ui-scale based on current viewport
  *   toast(msg)          — shows 2.2s notification toast
  *   closeDropdowns()    — closes all .dropdown elements
  *
@@ -25,6 +27,40 @@
  * ──────────────────────────────────────────────────────────────────────────── */
 
 let _previousFocus = null;
+let _viewportUiScaleFrame = null;
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function computeViewportUiScale(viewportWidth, viewportHeight) {
+  const width = Math.max(0, viewportWidth || window.innerWidth || 0);
+  const height = Math.max(0, viewportHeight || window.innerHeight || 0);
+  const widthBoost = clampNumber((width - 1600) / 1840, 0, 1);
+  const heightBoost = clampNumber((height - 900) / 540, 0, 1);
+  return clampNumber(1 + (widthBoost * 0.16) + (heightBoost * 0.08), 1, 1.24);
+}
+
+function applyViewportUiScale() {
+  const viewport = window.visualViewport;
+  const scale = computeViewportUiScale(
+    viewport ? viewport.width : window.innerWidth,
+    viewport ? viewport.height : window.innerHeight
+  );
+  document.documentElement.style.setProperty('--ui-scale', scale.toFixed(3));
+  return scale;
+}
+
+function scheduleViewportUiScale() {
+  if (_viewportUiScaleFrame) return;
+  const queueFrame = window.requestAnimationFrame
+    ? window.requestAnimationFrame.bind(window)
+    : function(cb) { return setTimeout(cb, 16); };
+  _viewportUiScaleFrame = queueFrame(() => {
+    _viewportUiScaleFrame = null;
+    applyViewportUiScale();
+  });
+}
 
 function openModal(id) {
   _previousFocus = document.activeElement;
@@ -65,3 +101,10 @@ document.addEventListener('keydown', e => {
   const active = document.querySelector('.modal-overlay.active');
   if (active) { e.preventDefault(); closeModal(active.id); }
 });
+
+applyViewportUiScale();
+window.addEventListener('resize', scheduleViewportUiScale);
+window.addEventListener('orientationchange', scheduleViewportUiScale);
+if (window.visualViewport && window.visualViewport.addEventListener) {
+  window.visualViewport.addEventListener('resize', scheduleViewportUiScale);
+}

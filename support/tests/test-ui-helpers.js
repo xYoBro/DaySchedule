@@ -106,6 +106,7 @@ function resetUiHarnessState() {
   localStorage.removeItem('dayschedule_help_seen');
   localStorage.removeItem('dayschedule_help_coachmark_dismissed');
   applyEditorTheme('light');
+  document.documentElement.style.setProperty('--ui-scale', '1');
 
   document.getElementById('libraryView').className = 'library-view';
   document.querySelector('.toolbar').style.display = '';

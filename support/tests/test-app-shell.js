@@ -1,4 +1,24 @@
 describe('UI Harness — app shell', () => {
+  it('scales editor chrome up for larger viewports without shrinking smaller ones', () => {
+    resetUiHarnessState();
+
+    const standardScale = computeViewportUiScale(1366, 768);
+    const widescreenScale = computeViewportUiScale(3440, 1440);
+
+    assert.equal(standardScale, 1);
+    assert.equal(widescreenScale, 1.24);
+
+    const originalViewport = window.visualViewport;
+    window.visualViewport = { width: 3440, height: 1440 };
+    try {
+      assert.equal(applyViewportUiScale(), 1.24);
+      assert.equal(document.documentElement.style.getPropertyValue('--ui-scale'), '1.240');
+    } finally {
+      window.visualViewport = originalViewport;
+      document.documentElement.style.setProperty('--ui-scale', '1');
+    }
+  });
+
   it('openSchedule loads a saved file into the editor shell', async () => {
     resetUiHarnessState();
     const seeded = await seedUiScheduleFile('Open Schedule Test', { skin: 'bands' });

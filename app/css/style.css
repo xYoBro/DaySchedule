@@ -6,6 +6,7 @@
 /* ── Variables ── */
 :root {
   --app-accent: 37,88,168; /* #2558a8 as RGB for rgba() use */
+  --ui-scale: 1;
 
   /* Schedule palette — set by themes.js, defaults match Classic */
   --sch-bg: #ffffff;
@@ -39,6 +40,9 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -639,14 +643,15 @@ body {
 /* ── App body — two-column layout ── */
 .app-body {
   display: flex;
-  height: calc(100vh - 45px);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: hidden;
 }
 
 .preview-area {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: calc(16px * var(--ui-scale));
   display: flex;
   justify-content: center;
 }
@@ -665,6 +670,36 @@ body {
   overflow-y: auto;
   padding: 16px;
   font-size: 13px;
+}
+.toolbar,
+.editor-access-bar,
+.inspector,
+.modal,
+.library-header,
+.library-body,
+.library-context,
+.toast,
+.floating-help-btn,
+.help-coachmark {
+  zoom: var(--ui-scale);
+}
+.toolbar,
+.editor-access-bar {
+  transform-origin: top left;
+}
+.inspector {
+  transform-origin: top right;
+}
+.modal,
+.library-header,
+.library-body,
+.library-context {
+  transform-origin: top center;
+}
+.toast,
+.floating-help-btn,
+.help-coachmark {
+  transform-origin: bottom right;
 }
 .insp-header {
   display: flex;
@@ -1870,7 +1905,9 @@ body {
 .library-view {
   display: none;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   background: var(--chrome-surface);
 }
 .library-view.active {
@@ -3082,7 +3119,7 @@ body {
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
 @media print {
-  body { background: white; padding: 0; }
+  body { background: white; padding: 0; display: block; overflow: visible; }
   .toolbar, .inspector, .toast, .modal-overlay, .library-view, .library-context, .floating-help-btn, .help-coachmark { display: none !important; }
   .app-body { height: auto; overflow: visible; display: block; }
   .preview-area { padding: 0; display: block; }
