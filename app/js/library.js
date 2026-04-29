@@ -262,7 +262,7 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
-  sessionSave();
+  sessionSave((typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) ? { skipDirty: true } : undefined);
   toast('Opened ' + sourceFileName);
 }
 
@@ -363,8 +363,10 @@ async function deleteSchedule(fileName) {
 }
 
 async function returnToLibrary() {
-  if (isDirty() && hasDirectoryAccess() && isCurrentScheduleEditable()) {
-    const ok = await saveCurrentSchedule();
+  if (isDirty() && isCurrentScheduleEditable()) {
+    const ok = hasDirectoryAccess()
+      ? await saveCurrentSchedule()
+      : (typeof saveScheduleWorkbookFile === 'function' ? await saveScheduleWorkbookFile() : false);
     if (!ok) return;
   }
   await releaseCurrentScheduleLock();

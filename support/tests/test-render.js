@@ -444,10 +444,22 @@ describe('UI Harness — render and skins', () => {
     const gridHeader = Array.from(document.querySelectorAll('.grid-group-col'))
       .find(node => node.textContent.includes('Flight Chiefs'));
     const darkLabel = document.querySelector('.grid-group-col[style*="#1f3a5f"]');
+    const chiefsEvent = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Weapons Qualification');
+    const mxEvent = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Aircraft Launch Sim');
+    const chiefsCell = document.querySelector('.grid-cell[data-event-id="' + chiefsEvent.id + '"]');
+    const mxCell = document.querySelector('.grid-cell[data-event-id="' + mxEvent.id + '"]');
+    const chiefsAudience = chiefsCell.querySelector('.grid-cell-audience');
+    const mxAudience = mxCell.querySelector('.grid-cell-audience');
 
     assert(gridHeader, 'grid header should exist for the updated group');
     assert(gridHeader.getAttribute('style').includes('color:#1d1d1f'), 'light group colors should use dark text');
     assert(darkLabel && darkLabel.getAttribute('style').includes('color:#ffffff'), 'dark group colors should keep white text');
+    assert(chiefsCell.getAttribute('style').includes('--grid-accent:#fff3a0'), 'grid event rails should use the group color');
+    assert(chiefsCell.getAttribute('style').includes('--grid-accent-text:#1d1d1f'), 'light grid event accents should use dark text');
+    assert(chiefsAudience.textContent.includes('Flight Chiefs'), 'grid event cards should label the audience without relying on color alone');
+    assert(mxCell.getAttribute('style').includes('--grid-accent:#1f3a5f'), 'grid event rails should follow updated dark group colors');
+    assert(mxCell.getAttribute('style').includes('--grid-accent-text:#ffffff'), 'dark grid event accents should use white text');
+    assert(mxAudience.textContent.includes('Maintenance'), 'grid event cards should include the group label');
   });
 
   it('cards and phases skins expose attendee details in event content', () => {

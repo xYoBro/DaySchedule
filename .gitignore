@@ -7,4 +7,5 @@
 __pycache__/
 *.pyc
 app/Schedule.zip
+output/
 support/docs/app-code-review-2026-04-14.md

@@ -160,16 +160,23 @@ function renderGridRow(slotStart, activeGroups, groupEvents) {
 
 function renderGridCell(evt, group, isContinuation) {
   const className = isContinuation ? 'grid-cell grid-cell-cont' : 'grid-cell';
-  let html = '<div class="' + className + '" style="border-top:2px solid ' + esc(group.color) + ';" data-event-id="' + esc(evt.id) + '">';
+  const accentText = getContrastingTextColor(group.color);
+  const accentStyle = '--grid-accent:' + esc(group.color) + ';--grid-accent-text:' + esc(accentText) + ';';
+  let html = '<div class="' + className + '" style="' + accentStyle + '" data-event-id="' + esc(evt.id) + '">';
   html += '<div class="grid-cell-head">';
   html += '<div class="grid-cell-title">' + esc(evt.title) + '</div>';
   html += '<div class="grid-cell-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
   html += '</div>';
   if (isContinuation) {
+    html += '<div class="grid-cell-body">';
+    html += '<div class="grid-cell-audience">' + esc(group.name) + '</div>';
     html += '<div class="grid-cell-meta">Continues from ' + esc(evt.startTime) + '</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
+  html += '<div class="grid-cell-body">';
+  html += '<div class="grid-cell-audience">' + esc(group.name) + '</div>';
   const meta = [];
   if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
   if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
@@ -178,6 +185,7 @@ function renderGridCell(evt, group, isContinuation) {
   }
   if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
   if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
+  html += '</div>';
   html += '</div>';
   return html;
 }

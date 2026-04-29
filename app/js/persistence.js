@@ -139,8 +139,12 @@ function getScheduleEnvelopeId(envelope) {
 }
 
 function buildScheduleWorkbookEnvelope(fileData) {
-  const source = fileData || (typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null);
-  const state = fileData && fileData.current ? cloneScheduleData(fileData.current) : buildSerializableState();
+  const currentFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+  const source = fileData || currentFileData;
+  const isCurrentSource = !fileData || fileData === currentFileData;
+  const state = isCurrentSource
+    ? buildSerializableState()
+    : (fileData && fileData.current ? cloneScheduleData(fileData.current) : buildSerializableState());
   if (!state.activeDay) state.activeDay = Store.getActiveDay();
   if (!state.theme && source && source.theme) state.theme = source.theme;
   const title = state && state.title ? state.title : (Store.getTitle() || 'Untitled Schedule');
@@ -189,6 +193,177 @@ function buildScheduleWorkbookObject(fileData) {
   };
 }
 
+function hasScheduleWorkbookHandle() {
+  return !!_scheduleWorkbookHandle;
+}
+
+function getScheduleWorkbookFileName() {
+  return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : '';
+}
+
+function getScheduleWorkbookSnapshot(options) {
+  const opts = options || {};
+  let workbook = _scheduleWorkbookData && typeof _scheduleWorkbookData === 'object'
+    ? cloneScheduleData(_scheduleWorkbookData)
+    : null;
+
+  if (!workbook || !Array.isArray(workbook.schedules)) {
+    workbook = buildStandaloneScheduleWorkbookObject(
+      typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null
+    );
+  }
+
+  if (opts.includeCurrent !== false && (Store.getTitle() || Store.getDays().length)) {
+    const envelope = buildScheduleWorkbookEnvelope(
+      typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null
+    );
+    const activeId = getScheduleEnvelopeId(envelope);
+    const schedules = Array.isArray(workbook.schedules)
+      ? workbook.schedules.map(item => cloneScheduleData(item))
+      : [];
+    const index = schedules.findIndex(item => getScheduleEnvelopeId(item) === activeId);
+    if (index >= 0) schedules[index] = envelope;
+    else schedules.push(envelope);
+    workbook.schedules = schedules;
+    workbook.activeScheduleId = activeId;
+    workbook.schedule = envelope;
+  }
+
+  return workbook;
+}
+
+function summarizeWorkbookSchedule(envelope, index, activeId) {
+  const payload = extractSchedulePayload(envelope);
+  const state = payload.state || {};
+  const days = Array.isArray(state.days) ? state.days : [];
+  let eventCount = 0;
+  let noteCount = 0;
+  days.forEach(day => {
+    eventCount += Array.isArray(day.events) ? day.events.length : 0;
+    noteCount += Array.isArray(day.notes) ? day.notes.length : 0;
+  });
+  const id = getScheduleEnvelopeId(envelope);
+  return {
+    id,
+    index,
+    name: envelope.name || state.title || 'Untitled Schedule',
+    dayCount: days.length,
+    eventCount,
+    noteCount,
+    lastSavedAt: envelope.lastSavedAt || '',
+    active: id === activeId,
+  };
+}
+
+function getScheduleWorkbookEntries() {
+  const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
+  const schedules = Array.isArray(workbook.schedules) ? workbook.schedules : [];
+  const activeId = workbook.activeScheduleId || (workbook.schedule && getScheduleEnvelopeId(workbook.schedule));
+  return schedules.map((item, index) => summarizeWorkbookSchedule(item, index, activeId));
+}
+
+function getUniqueWorkbookScheduleId(name, schedules) {
+  const base = typeof scheduleNameToSlug === 'function'
+    ? scheduleNameToSlug(name)
+    : String(name || 'Schedule').trim().replace(/\s+/g, '-').toLowerCase();
+  const used = new Set((schedules || []).map(item => getScheduleEnvelopeId(item)));
+  let candidate = base || 'schedule';
+  let counter = 2;
+  while (used.has(candidate)) {
+    candidate = (base || 'schedule') + '-' + counter;
+    counter++;
+  }
+  return candidate;
+}
+
+function buildNewWorkbookScheduleEnvelope(name, options) {
+  const opts = options || {};
+  const title = (name || '').trim() || 'New Schedule';
+  const currentState = Store.getPersistedState();
+  const state = opts.duplicate
+    ? cloneScheduleData(currentState)
+    : {
+        title,
+        days: [],
+        groups: cloneScheduleData(currentState.groups || []),
+        logo: currentState.logo || null,
+        footer: cloneScheduleData(currentState.footer || { contact: '', poc: '', updated: '' }),
+      };
+  state.title = title;
+  const now = new Date().toISOString();
+  const currentFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+  const envelope = {
+    name: title,
+    createdAt: now,
+    lastSavedBy: typeof getUserName === 'function' ? getUserName() : '',
+    lastSavedAt: now,
+    current: state,
+    versions: [],
+    activity: [],
+  };
+  if (opts.duplicate && currentFileData) {
+    if (currentFileData.theme) envelope.theme = cloneScheduleData(currentFileData.theme);
+  } else if (currentFileData && currentFileData.theme) {
+    envelope.theme = cloneScheduleData(currentFileData.theme);
+  }
+  return envelope;
+}
+
+function loadWorkbookScheduleEnvelope(envelope, options) {
+  const opts = options || {};
+  const payload = extractSchedulePayload(envelope);
+  const state = normalizePersistedState(payload.state || {}, { requireDays: false });
+  const fileData = payload.fileData ? cloneScheduleData(payload.fileData) : {
+    name: state.title || 'Untitled Schedule',
+    current: state,
+    versions: [],
+    activity: [],
+  };
+  fileData.current = state;
+  fileData.id = getScheduleEnvelopeId(fileData);
+  if (!Array.isArray(fileData.versions)) fileData.versions = [];
+  if (!Array.isArray(fileData.activity)) fileData.activity = [];
+
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
+  Store.reset();
+  Store.loadPersistedState(state);
+  if (typeof setCurrentScheduleFileData === 'function') setCurrentScheduleFileData(fileData);
+  if (typeof syncToolbarTitle === 'function') syncToolbarTitle();
+  if (typeof renderActiveDay === 'function') renderActiveDay();
+  if (typeof renderInspector === 'function') renderInspector();
+  if (typeof renderWorkbookSwitcher === 'function') renderWorkbookSwitcher();
+  sessionSave(opts.skipDirty ? { skipDirty: true } : undefined);
+}
+
+function switchScheduleInWorkbook(scheduleId) {
+  const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
+  const schedules = Array.isArray(workbook.schedules) ? workbook.schedules : [];
+  const target = schedules.find(item => getScheduleEnvelopeId(item) === scheduleId);
+  if (!target) return false;
+  workbook.activeScheduleId = getScheduleEnvelopeId(target);
+  workbook.schedule = cloneScheduleData(target);
+  workbook.savedAt = new Date().toISOString();
+  _scheduleWorkbookData = workbook;
+  loadWorkbookScheduleEnvelope(target);
+  toast('Opened ' + (target.name || 'schedule'));
+  return true;
+}
+
+function createScheduleInWorkbook(name, options) {
+  const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
+  if (!Array.isArray(workbook.schedules)) workbook.schedules = [];
+  const envelope = buildNewWorkbookScheduleEnvelope(name, options);
+  envelope.id = getUniqueWorkbookScheduleId(envelope.name, workbook.schedules);
+  workbook.schedules.push(envelope);
+  workbook.activeScheduleId = envelope.id;
+  workbook.schedule = cloneScheduleData(envelope);
+  workbook.savedAt = new Date().toISOString();
+  _scheduleWorkbookData = workbook;
+  loadWorkbookScheduleEnvelope(envelope);
+  toast('Created ' + envelope.name);
+  return envelope.id;
+}
+
 function buildStandaloneScheduleWorkbookObject(fileData) {
   const prior = _scheduleWorkbookData;
   _scheduleWorkbookData = null;
@@ -214,7 +389,10 @@ function getScheduleWorkbookSuggestedName() {
 
 async function saveScheduleWorkbookFile(options) {
   const opts = options || {};
-  if (_saveInProgress) { toast('Save already in progress.'); return false; }
+  if (_saveInProgress) {
+    if (!opts.silent) toast('Save already in progress.');
+    return false;
+  }
   _saveInProgress = true;
   try {
     const suggestedName = opts.suggestedName || getScheduleWorkbookSuggestedName();
@@ -223,6 +401,7 @@ async function saveScheduleWorkbookFile(options) {
     if (window.showSaveFilePicker) {
       try {
         let handle = opts.reuseHandle === false ? null : _scheduleWorkbookHandle;
+        if (!handle && opts.requireHandle) return false;
         if (!handle) {
           handle = await window.showSaveFilePicker({
             suggestedName,
@@ -238,13 +417,17 @@ async function saveScheduleWorkbookFile(options) {
         if (opts.reuseHandle !== false) _scheduleWorkbookHandle = handle;
         _scheduleWorkbookData = JSON.parse(content);
         sessionSave({ skipDirty: true });
-        toast('Saved ' + (handle.name || suggestedName));
+        if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+        if (!opts.silent) toast('Saved ' + (handle.name || suggestedName));
         return true;
       } catch (err) {
         if (err.name === 'AbortError') return false;
         console.warn('Schedule save failed, falling back:', err);
+        if (opts.requireHandle) return false;
       }
     }
+
+    if (opts.requireHandle) return false;
 
     const blob = new Blob([content], { type: 'application/json' });
     const a = document.createElement('a');
@@ -254,7 +437,8 @@ async function saveScheduleWorkbookFile(options) {
     URL.revokeObjectURL(a.href);
     _scheduleWorkbookData = JSON.parse(content);
     sessionSave({ skipDirty: true });
-    toast('Downloaded ' + suggestedName);
+    if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+    if (!opts.silent) toast('Downloaded ' + suggestedName);
     return true;
   } finally {
     _saveInProgress = false;
@@ -378,7 +562,7 @@ function loadParsedScheduleData(parsed) {
   }
   _fileHandle = null;
   _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
-  sessionSave();
+  sessionSave(_scheduleWorkbookHandle ? { skipDirty: true } : undefined);
   renderActiveDay();
   syncToolbarTitle();
   if (typeof renderInspector === 'function') renderInspector();

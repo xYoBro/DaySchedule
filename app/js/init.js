@@ -32,6 +32,7 @@
 (async function init() {
   wireToolbar();
   wireLibrary();
+  if (typeof wireWorkbookUi === 'function') wireWorkbookUi();
   applyEditorTheme(getEditorTheme());
 
   // Check FSAPI support

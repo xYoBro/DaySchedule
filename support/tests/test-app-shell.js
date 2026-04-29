@@ -40,6 +40,38 @@ async function importUiFromLibrary(state, fileName) {
   }
 }
 
+function buildUiWorkbook(count, activeIndex) {
+  const schedules = [];
+  for (let i = 1; i <= count; i++) {
+    const dayId = 'day_workbook_' + i;
+    const state = {
+      title: 'Drill ' + i,
+      days: [{
+        id: dayId,
+        date: '2026-05-' + String((i % 28) + 1).padStart(2, '0'),
+        startTime: '0700',
+        endTime: '1630',
+        events: [{ title: 'Brief ' + i, startTime: '0800', endTime: '0900', groupId: 'grp_all', isMainEvent: true }],
+        notes: i % 2 ? [{ category: 'Note', text: 'Note ' + i }] : [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+      activeDay: dayId,
+    };
+    const fileData = buildScheduleFile('Drill ' + i, state, [], 'Tester');
+    fileData.id = 'drill-' + i;
+    schedules.push(fileData);
+  }
+  const active = schedules[Math.max(0, Math.min(schedules.length - 1, activeIndex - 1))];
+  return {
+    fileType: 'dayschedule',
+    schemaVersion: 1,
+    activeScheduleId: active.id,
+    schedules,
+  };
+}
+
 describe('UI Harness — app shell', () => {
   it('scales editor chrome up for larger viewports without shrinking smaller ones', () => {
     resetUiHarnessState();
@@ -767,6 +799,109 @@ describe('UI Harness — app shell', () => {
     assert.equal(saved.schedules[0].name, 'Previous Workbook Schedule');
     assert.equal(saved.schedules[1].name, 'Updated Workbook Schedule');
     assert.equal(saved.schedules[1].current.title, 'Updated Workbook Schedule');
+  });
+
+  it('autosaves an opened .schedule workbook back to its writable handle without prompting', async () => {
+    resetUiHarnessState();
+    showLibrary();
+    await wait(0);
+
+    const workbook = buildUiWorkbook(60, 60);
+    let written = '';
+    let savePickerCalls = 0;
+    const handle = {
+      name: 'five-year.schedule',
+      async getFile() {
+        return new File([JSON.stringify(workbook)], 'five-year.schedule', { type: 'application/json' });
+      },
+      async createWritable() {
+        return {
+          async write(value) { written = String(value); },
+          async close() {},
+        };
+      },
+    };
+    const originalOpenFilePicker = window.showOpenFilePicker;
+    const originalSaveFilePicker = window.showSaveFilePicker;
+    window.showOpenFilePicker = async () => [handle];
+    window.showSaveFilePicker = async () => {
+      savePickerCalls += 1;
+      throw new Error('autosave must reuse the workbook handle');
+    };
+
+    try {
+      document.getElementById('libraryImportBtn').click();
+      await wait(80);
+
+      Store.setTitle('Drill 60 Updated');
+      syncToolbarTitle();
+      sessionSave();
+      clearTimeout(_autosaveTimer);
+      await autoSave();
+    } finally {
+      window.showOpenFilePicker = originalOpenFilePicker;
+      window.showSaveFilePicker = originalSaveFilePicker;
+    }
+
+    const saved = JSON.parse(written);
+    assert.equal(savePickerCalls, 0, 'autosave must not open a save picker');
+    assert.equal(saved.schedules.length, 60, 'autosave should preserve all workbook schedules');
+    assert.equal(saved.activeScheduleId, 'drill-60');
+    assert.equal(saved.schedules[59].name, 'Drill 60 Updated');
+    assert.equal(saved.schedules[59].current.title, 'Drill 60 Updated');
+    assert.equal(isDirty(), false, 'successful autosave should clear dirty state');
+    assert(document.getElementById('editorAccessText').textContent.includes('Autosaves to five-year.schedule'));
+  });
+
+  it('searches and switches within a 60-schedule workbook without a busy library screen', async () => {
+    resetUiHarnessState();
+    showLibrary();
+    await wait(0);
+
+    const workbook = buildUiWorkbook(60, 1);
+    const handle = {
+      name: 'five-year.schedule',
+      async getFile() {
+        return new File([JSON.stringify(workbook)], 'five-year.schedule', { type: 'application/json' });
+      },
+      async createWritable() {
+        return {
+          async write() {},
+          async close() {},
+        };
+      },
+    };
+    const originalOpenFilePicker = window.showOpenFilePicker;
+    window.showOpenFilePicker = async () => [handle];
+
+    try {
+      document.getElementById('libraryImportBtn').click();
+      await wait(80);
+    } finally {
+      window.showOpenFilePicker = originalOpenFilePicker;
+    }
+
+    assert.equal(Store.getTitle(), 'Drill 1');
+    assert.equal(document.getElementById('workbookSwitchLabel').textContent, '60 schedules');
+
+    openWorkbookModal();
+    const search = document.getElementById('workbookSearch');
+    search.value = 'Drill 60';
+    search.dispatchEvent(new Event('input'));
+    assert.equal(document.querySelectorAll('.workbook-item').length, 1);
+    document.querySelector('.workbook-item').click();
+
+    assert.equal(Store.getTitle(), 'Drill 60');
+    assert.equal(Store.getEvents(Store.getActiveDay())[0].title, 'Brief 60');
+
+    openWorkbookModal();
+    document.getElementById('workbookNewName').value = 'Drill 61';
+    document.getElementById('workbookDuplicateBtn').click();
+
+    assert.equal(Store.getTitle(), 'Drill 61');
+    assert.equal(Store.getEvents(Store.getActiveDay())[0].title, 'Brief 60');
+    assert.equal(getScheduleWorkbookEntries().length, 61);
+    assert.equal(document.getElementById('workbookSwitchLabel').textContent, '61 schedules');
   });
 
   it('shows a clear error when an import has no valid days', async () => {

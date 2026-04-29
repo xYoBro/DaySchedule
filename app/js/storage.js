@@ -158,6 +158,7 @@ function formatActivityText(entry) {
 function buildScheduleFile(name, storeState, versions, savedBy) {
   const now = new Date().toISOString();
   return {
+    id: scheduleNameToSlug(name),
     name: name,
     createdAt: now,
     lastSavedBy: savedBy || '',
@@ -495,14 +496,18 @@ function updateEditorAccessBar(status) {
       bar.hidden = true;
       return;
     }
+    const workbookFileName = typeof getScheduleWorkbookFileName === 'function' ? getScheduleWorkbookFileName() : '';
+    const hasWorkbookTarget = typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle();
     text = '<span class="editor-access-mode">Workbook</span>'
       + '<span class="editor-access-message">'
-      + (_manualDraftExported
+      + (hasWorkbookTarget
+          ? 'Autosaves to <strong>' + esc(workbookFileName || '.schedule file') + '</strong>.'
+          : _manualDraftExported
           ? 'Saved as a <strong>.schedule</strong> file. Save again after more edits.'
           : 'Save this workbook as a <strong>.schedule</strong> file before closing.')
       + '</span>';
     actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
-      + (_manualDraftExported ? 'Save Again' : 'Save .schedule')
+      + (hasWorkbookTarget ? 'Save Now' : (_manualDraftExported ? 'Save Again' : 'Save .schedule'))
       + '</button>';
     bar.className = 'editor-access-bar editor-access-local';
   } else if (status.state === 'mine' && status.lock) {
@@ -871,7 +876,16 @@ function markDirty() {
 }
 
 async function autoSave() {
-  if (!_dirty || !_currentFileName || !_dirHandle) return;
+  if (!_dirty) return;
+  if (!_currentFileName && typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) {
+    updateSaveIndicator('saving');
+    const saved = typeof saveScheduleWorkbookFile === 'function'
+      ? await saveScheduleWorkbookFile({ silent: true, requireHandle: true })
+      : false;
+    if (!saved) updateSaveIndicator('dirty');
+    return;
+  }
+  if (!_currentFileName || !_dirHandle) return;
   await saveCurrentSchedule();
 }
 
@@ -929,6 +943,15 @@ async function saveCurrentSchedule() {
 function forceSave() {
   if (!isCurrentScheduleEditable()) { toast('Read-only. Click Edit.'); return; }
   clearTimeout(_autosaveTimer);
+  if (!_currentFileName && typeof saveScheduleWorkbookFile === 'function') {
+    saveScheduleWorkbookFile({ silent: true }).then(ok => {
+      if (ok) {
+        if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+        toast('Saved');
+      }
+    });
+    return;
+  }
   saveCurrentSchedule().then(ok => {
     if (ok) toast('Saved');
   });
@@ -963,6 +986,13 @@ function getLastSavedAt() {
 
 function notifyManualDraftExport() {
   _manualDraftExported = true;
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
+}
+
+function markScheduleWorkbookSaved() {
+  _dirty = false;
+  _manualDraftExported = true;
+  updateSaveIndicator('saved');
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 

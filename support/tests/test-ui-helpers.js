@@ -92,6 +92,9 @@ function resetUiHarnessState() {
   _currentFileName = null;
   _lastKnownSavedAt = null;
   _dirty = false;
+  _scheduleWorkbookHandle = null;
+  _scheduleWorkbookData = null;
+  _workbookSearchText = '';
   _manualDraftExported = false;
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
@@ -124,6 +127,8 @@ function resetUiHarnessState() {
   document.getElementById('libraryHelpBtn').className = '';
   document.getElementById('editorThemeToggle').textContent = 'Theme';
   document.getElementById('tbTitle').value = '';
+  document.getElementById('workbookSwitchBtn').hidden = true;
+  document.getElementById('workbookSwitchLabel').textContent = '1 schedule';
   document.getElementById('saveIndicator').textContent = '';
   document.getElementById('saveIndicator').className = 'save-status';
   const accessBar = document.getElementById('editorAccessBar');
@@ -144,6 +149,7 @@ function resetUiHarnessState() {
     'staleWarningModal',
     'userNameModal',
     'versionModal',
+    'workbookModal',
     'settingsModal',
     'dayEventSheetModal',
   ].forEach(id => {

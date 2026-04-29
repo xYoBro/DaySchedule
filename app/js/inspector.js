@@ -1527,6 +1527,7 @@ function wireToolbar() {
 function syncToolbarTitle() {
   const tbTitle = document.getElementById('tbTitle');
   if (tbTitle) tbTitle.value = Store.getTitle();
+  if (typeof renderWorkbookSwitcher === 'function') renderWorkbookSwitcher();
 }
 
 // ── Add event / note ───────────────────────────────────────────────────────

@@ -73,48 +73,48 @@ body {
 .hdr {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 10px;
-  margin-bottom: 8px;
-  border-bottom: 2px solid var(--sch-text);
+  gap: 18px;
+  padding: 3px 0 13px;
+  margin-bottom: 11px;
+  border-bottom: 3px solid var(--sch-text);
   cursor: pointer;
-  border-radius: 6px;
   transition: background 0.15s;
 }
-.hdr:hover { background: rgba(var(--app-accent), 0.03); }
+.hdr:hover { background: linear-gradient(90deg, rgba(var(--app-accent), 0.04), transparent 62%); }
 .hdr-text { flex: 1; }
 .hdr-title {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 900;
   color: var(--sch-text);
-  letter-spacing: -0.2px;
-  line-height: 1;
+  letter-spacing: -0.55px;
+  line-height: 0.96;
 }
 .hdr-sub {
-  font-size: 10.5px;
-  font-weight: 400;
+  font-size: 11.4px;
+  font-weight: 500;
   color: var(--sch-text-secondary);
-  margin-top: 2px;
+  margin-top: 4px;
 }
 .hdr-meta {
-  font-size: 7.5px;
-  font-weight: 500;
+  font-size: 7.8px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.4px;
   color: var(--sch-text-muted);
-  margin-top: 4px;
+  margin-top: 6px;
 }
 .hdr-logo {
   width: 1in;
   height: 1in;
-  border-radius: 6px;
-  background: var(--sch-border);
-  border: 0px solid #e0e0e4;
+  border-radius: 7px;
+  background: linear-gradient(145deg, var(--sch-surface), var(--sch-border));
+  border: 1px solid rgba(0,0,0,0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
 }
 .hdr-logo img {
   width: 100%;
@@ -1081,7 +1081,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  gap: 14px;
+  padding: 7px 14px;
   background: var(--chrome-toolbar);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
@@ -1100,6 +1101,19 @@ body {
   letter-spacing: -0.2px;
   white-space: nowrap;
   user-select: none;
+}
+.tb-back {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--chrome-text-muted);
+  cursor: pointer;
+}
+.tb-back:hover {
+  background: rgba(0,0,0,0.06);
+  color: var(--chrome-text);
 }
 .tb-title {
   font-family: inherit;
@@ -1122,10 +1136,33 @@ body {
   cursor: not-allowed;
 }
 .tb-title:disabled:hover { background: transparent; }
+.workbook-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.workbook-switch-btn:hover {
+  background: rgba(var(--app-accent),0.08);
+  border-color: rgba(var(--app-accent),0.28);
+}
+.workbook-switch-btn[hidden] { display: none; }
+.workbook-switch-caret {
+  color: var(--chrome-text-muted);
+  font-size: 10px;
+}
 .tb-sep {
   width: 1px;
-  height: 20px;
-  background: rgba(0,0,0,0.1);
+  height: 24px;
+  background: rgba(0,0,0,0.08);
   flex-shrink: 0;
 }
 
@@ -1201,6 +1238,36 @@ body {
   min-height: 34px;
   border-radius: 999px;
 }
+.tb-create-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.035);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
+}
+.tb-create-group .btn,
+.tb-create-btn {
+  min-height: 30px;
+  padding: 5px 11px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--chrome-text-muted);
+  font-weight: 700;
+}
+.tb-create-group .btn + .btn,
+.tb-create-btn + .tb-create-btn {
+  margin-left: 1px;
+}
+.tb-create-group .btn:hover,
+.tb-create-btn:hover {
+  background: var(--chrome-toolbar);
+  color: var(--chrome-text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
 #daySheetBtn {
   background: linear-gradient(135deg, rgba(var(--app-accent), 1) 0%, #163f7e 100%);
   color: white;
@@ -1211,12 +1278,12 @@ body {
   background: linear-gradient(135deg, #2c63b6 0%, #1b4a91 100%);
 }
 #addEventBtn {
-  background: rgba(var(--app-accent), 0.1);
-  color: #21467a;
-  border-color: rgba(var(--app-accent), 0.16);
+  background: transparent;
+  color: var(--chrome-text-muted);
 }
 #addEventBtn:hover {
-  background: rgba(var(--app-accent), 0.16);
+  background: var(--chrome-toolbar);
+  color: var(--chrome-text);
 }
 #overflowBtn {
   border-radius: 999px;
@@ -1313,16 +1380,16 @@ body {
   display: flex;
   gap: 4px;
   background: rgba(0,0,0,0.04);
-  border-radius: 8px;
+  border-radius: 14px;
   padding: 3px;
 }
 .day-tab {
   font-family: inherit;
   font-size: 11px;
-  font-weight: 500;
-  padding: 5px 14px;
+  font-weight: 700;
+  padding: 5px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: 11px;
   background: transparent;
   color: #86868b;
   cursor: pointer;
@@ -1406,6 +1473,133 @@ body {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid var(--chrome-border);
+}
+.modal-close-btn {
+  border: none;
+  background: rgba(0,0,0,0.05);
+  color: var(--chrome-text-muted);
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.modal-close-btn:hover {
+  background: rgba(0,0,0,0.1);
+  color: var(--chrome-text);
+}
+
+/* ── Workbook schedules ── */
+.workbook-modal {
+  max-width: 640px;
+}
+.workbook-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.workbook-head h2 {
+  margin-bottom: 6px;
+}
+.workbook-desc {
+  color: var(--chrome-text-muted);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+}
+.workbook-create {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.workbook-new-input,
+.workbook-search {
+  width: 100%;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font: inherit;
+  outline: none;
+}
+.workbook-new-input:focus,
+.workbook-search:focus {
+  border-color: rgba(var(--app-accent),0.55);
+  box-shadow: 0 0 0 3px rgba(var(--app-accent),0.14);
+}
+.workbook-count {
+  color: var(--chrome-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 10px 0 8px;
+}
+.workbook-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(52vh, 520px);
+  overflow: auto;
+  padding-right: 2px;
+}
+.workbook-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-toolbar);
+  color: var(--chrome-text);
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.workbook-item:hover {
+  border-color: rgba(var(--app-accent),0.35);
+  background: rgba(var(--app-accent),0.06);
+}
+.workbook-item.active {
+  border-color: rgba(var(--app-accent),0.55);
+  box-shadow: inset 4px 0 0 rgb(var(--app-accent));
+}
+.workbook-item-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.workbook-item-name {
+  font-size: 14px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workbook-item-meta {
+  color: var(--chrome-text-muted);
+  font-size: 12px;
+}
+.workbook-active-badge {
+  background: rgba(var(--app-accent),0.12);
+  color: rgb(var(--app-accent));
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.workbook-empty {
+  color: var(--chrome-text-muted);
+  border: 1px dashed var(--chrome-border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
 }
 
 /* ── Day event sheet modal ── */
@@ -2008,6 +2202,12 @@ body {
   }
   .day-sheet-table {
     min-width: 880px;
+  }
+  .workbook-create {
+    grid-template-columns: 1fr;
+  }
+  .workbook-create .btn {
+    width: 100%;
   }
 }
 
@@ -2916,9 +3116,16 @@ body {
   color: #ffdba6;
 }
 [data-editor-theme="dark"] #addEventBtn {
-  background: rgba(91, 141, 239, 0.16);
-  color: #d8e5ff;
-  border-color: rgba(91, 141, 239, 0.2);
+  background: transparent;
+  color: #c7cbe0;
+}
+[data-editor-theme="dark"] .tb-create-group {
+  background: rgba(255,255,255,0.05);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+[data-editor-theme="dark"] .tb-create-group .btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #f5f7ff;
 }
 [data-editor-theme="dark"] .library-new-btn {
   background: rgba(91, 141, 239, 0.16);
@@ -2937,7 +3144,8 @@ body {
   background: #eef4ff;
 }
 [data-editor-theme="dark"] #addEventBtn:hover {
-  background: rgba(91, 141, 239, 0.22);
+  background: rgba(255,255,255,0.08);
+  color: #f5f7ff;
 }
 [data-editor-theme="dark"] #daySheetBtn {
   background: linear-gradient(135deg, #5b8def 0%, #315fc4 100%);
@@ -3137,25 +3345,57 @@ body {
 .grid-cell {
   background: var(--sch-bg);
   border: 1px solid var(--sch-border);
+  border-left: 6px solid var(--grid-accent, var(--sch-border));
   border-radius: 8px;
-  padding: 6px 7px;
+  padding: 0;
   cursor: pointer;
   min-height: 38px;
+  overflow: hidden;
 }
 .grid-banner:hover,
 .grid-cell:hover { background: var(--sch-surface); }
 .grid-cell.selected { background: rgba(var(--app-accent), 0.08); }
+.grid-cell-head {
+  padding: 6px 7px;
+  align-items: center;
+}
 .grid-cell-title {
   font-weight: 800;
   color: var(--sch-text);
   font-size: 8.95px;
   line-height: 1.15;
 }
+.grid-cell-body {
+  padding: 5px 7px 6px;
+}
+.grid-cell-audience {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 3px;
+  border-radius: 999px;
+  padding: 1px 6px 1.5px;
+  background: var(--grid-accent, var(--sch-text-muted));
+  color: var(--grid-accent-text, #ffffff);
+  font-size: 6.6px;
+  font-weight: 850;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 .grid-cell-meta {
   color: var(--sch-text-muted);
   font-size: 7.15px;
-  margin-top: 2px;
   line-height: 1.3;
+}
+.grid-cell-audience + .grid-cell-meta-line,
+.grid-cell-audience + .grid-cell-meta {
+  margin-top: 0;
+}
+.grid-cell-meta + .grid-cell-meta,
+.grid-cell-meta-line + .grid-cell-meta {
+  margin-top: 2px;
 }
 .grid-cell-attendees {
   color: var(--sch-text-secondary);
@@ -3554,7 +3794,7 @@ body {
    ══════════════════════════════════════════════════════════════ */
 @media print {
   body { background: white; padding: 0; display: block; overflow: visible; }
-  .toolbar, .inspector, .toast, .modal-overlay, .library-view, .library-context { display: none !important; }
+  .toolbar, .editor-access-bar, .inspector, .toast, .modal-overlay, .library-view, .library-context { display: none !important; }
   .app-body { height: auto; overflow: visible; display: block; }
   .preview-area { padding: 0; display: block; }
   #printContainer { display: block !important; }
@@ -3563,6 +3803,97 @@ body {
     border-radius: 0;
     min-height: 0 !important;
     padding: 0.2in 0.25in 0.18in;
+  }
+  .grid-schedule { gap: 2px; }
+  .grid-view-note {
+    margin-bottom: 2px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 6px;
+    line-height: 1.18;
+  }
+  .grid-header,
+  .grid-slot {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 2px;
+  }
+  .grid-time-col {
+    padding: 3px 3px 0 0;
+    font-size: 7px;
+  }
+  .grid-header .grid-time-col {
+    padding-top: 3px;
+    font-size: 5.8px;
+  }
+  .grid-lane-head-strip,
+  .grid-row {
+    gap: 2px;
+  }
+  .grid-group-col {
+    border-radius: 4px;
+    padding: 3px 4px;
+    font-size: 5.8px;
+  }
+  .grid-slot-body,
+  .grid-main-stack,
+  .grid-cell-stack {
+    gap: 2px;
+  }
+  .grid-main-stack {
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+  }
+  .grid-banner {
+    border-radius: 5px;
+  }
+  .grid-banner-content {
+    padding: 3px 5px;
+  }
+  .grid-banner-head,
+  .grid-cell-head {
+    gap: 4px;
+  }
+  .grid-cell-head {
+    padding: 2px 4px;
+  }
+  .grid-cell-body {
+    padding: 2px 4px;
+  }
+  .grid-cell-audience {
+    margin-bottom: 1px;
+    padding: 0.5px 4px 1px;
+    font-size: 5.2px;
+  }
+  .grid-banner-title,
+  .grid-cell-title {
+    font-size: 6.7px;
+    line-height: 1.08;
+  }
+  .grid-banner-time,
+  .grid-cell-time,
+  .grid-banner-meta,
+  .grid-cell-meta-line,
+  .grid-cell-meta,
+  .grid-banner-exception {
+    font-size: 5.7px;
+    line-height: 1.1;
+  }
+  .grid-banner-desc,
+  .grid-cell-audience,
+  .grid-cell-meta:not(.grid-cell-attendees),
+  .grid-cell-cont .grid-cell-head,
+  .grid-cell-cont .grid-cell-meta,
+  .grid-cell-empty {
+    display: none;
+  }
+  .grid-cell {
+    min-height: 0;
+    border-radius: 5px;
+  }
+  .grid-cell-cont {
+    min-height: 0;
+    padding: 1px 0;
+    border-top-width: 1px !important;
+    background: transparent;
   }
   .footer { margin-top: 5px; }
   .print-page { page-break-after: always; }
@@ -3732,14 +4063,20 @@ const LAYOUT_TARGETS = {
       <div class="tb-brand">Schedule Builder</div>
       <div class="tb-sep"></div>
       <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title">
+      <button class="workbook-switch-btn" id="workbookSwitchBtn" type="button" hidden>
+        <span id="workbookSwitchLabel">1 schedule</span>
+        <span class="workbook-switch-caret">▾</span>
+      </button>
       <span class="save-status" id="saveIndicator"></span>
       <div class="tb-sep"></div>
       <div class="day-tabs" id="dayTabs"></div>
     </div>
     <div class="toolbar-right">
-      <button class="btn btn-primary" id="addEventBtn">+ Event</button>
-      <button class="btn" id="addNoteBtn">+ Note</button>
-      <button class="btn" id="addDayBtn">+ Day</button>
+      <div class="tb-create-group" aria-label="Add schedule item">
+        <button class="btn tb-create-btn" id="addDayBtn">+ Day</button>
+        <button class="btn tb-create-btn" id="addEventBtn">+ Event</button>
+        <button class="btn tb-create-btn" id="addNoteBtn">+ Note</button>
+      </div>
       <button class="btn" id="daySheetBtn">Quick Edit</button>
       <div class="tb-sep"></div>
       <button class="btn" id="customizeBtn">Customize</button>
@@ -3923,6 +4260,11 @@ const LAYOUT_TARGETS = {
   <!-- Version Panel Modal -->
   <div class="modal-overlay" id="versionModal">
     <div class="modal"></div>
+  </div>
+
+  <!-- Workbook Schedules Modal -->
+  <div class="modal-overlay" id="workbookModal">
+    <div class="modal workbook-modal"></div>
   </div>
 
   <!-- Customize Modal -->
@@ -4947,8 +5289,12 @@ function getScheduleEnvelopeId(envelope) {
 }
 
 function buildScheduleWorkbookEnvelope(fileData) {
-  const source = fileData || (typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null);
-  const state = fileData && fileData.current ? cloneScheduleData(fileData.current) : buildSerializableState();
+  const currentFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+  const source = fileData || currentFileData;
+  const isCurrentSource = !fileData || fileData === currentFileData;
+  const state = isCurrentSource
+    ? buildSerializableState()
+    : (fileData && fileData.current ? cloneScheduleData(fileData.current) : buildSerializableState());
   if (!state.activeDay) state.activeDay = Store.getActiveDay();
   if (!state.theme && source && source.theme) state.theme = source.theme;
   const title = state && state.title ? state.title : (Store.getTitle() || 'Untitled Schedule');
@@ -4997,6 +5343,177 @@ function buildScheduleWorkbookObject(fileData) {
   };
 }
 
+function hasScheduleWorkbookHandle() {
+  return !!_scheduleWorkbookHandle;
+}
+
+function getScheduleWorkbookFileName() {
+  return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : '';
+}
+
+function getScheduleWorkbookSnapshot(options) {
+  const opts = options || {};
+  let workbook = _scheduleWorkbookData && typeof _scheduleWorkbookData === 'object'
+    ? cloneScheduleData(_scheduleWorkbookData)
+    : null;
+
+  if (!workbook || !Array.isArray(workbook.schedules)) {
+    workbook = buildStandaloneScheduleWorkbookObject(
+      typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null
+    );
+  }
+
+  if (opts.includeCurrent !== false && (Store.getTitle() || Store.getDays().length)) {
+    const envelope = buildScheduleWorkbookEnvelope(
+      typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null
+    );
+    const activeId = getScheduleEnvelopeId(envelope);
+    const schedules = Array.isArray(workbook.schedules)
+      ? workbook.schedules.map(item => cloneScheduleData(item))
+      : [];
+    const index = schedules.findIndex(item => getScheduleEnvelopeId(item) === activeId);
+    if (index >= 0) schedules[index] = envelope;
+    else schedules.push(envelope);
+    workbook.schedules = schedules;
+    workbook.activeScheduleId = activeId;
+    workbook.schedule = envelope;
+  }
+
+  return workbook;
+}
+
+function summarizeWorkbookSchedule(envelope, index, activeId) {
+  const payload = extractSchedulePayload(envelope);
+  const state = payload.state || {};
+  const days = Array.isArray(state.days) ? state.days : [];
+  let eventCount = 0;
+  let noteCount = 0;
+  days.forEach(day => {
+    eventCount += Array.isArray(day.events) ? day.events.length : 0;
+    noteCount += Array.isArray(day.notes) ? day.notes.length : 0;
+  });
+  const id = getScheduleEnvelopeId(envelope);
+  return {
+    id,
+    index,
+    name: envelope.name || state.title || 'Untitled Schedule',
+    dayCount: days.length,
+    eventCount,
+    noteCount,
+    lastSavedAt: envelope.lastSavedAt || '',
+    active: id === activeId,
+  };
+}
+
+function getScheduleWorkbookEntries() {
+  const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
+  const schedules = Array.isArray(workbook.schedules) ? workbook.schedules : [];
+  const activeId = workbook.activeScheduleId || (workbook.schedule && getScheduleEnvelopeId(workbook.schedule));
+  return schedules.map((item, index) => summarizeWorkbookSchedule(item, index, activeId));
+}
+
+function getUniqueWorkbookScheduleId(name, schedules) {
+  const base = typeof scheduleNameToSlug === 'function'
+    ? scheduleNameToSlug(name)
+    : String(name || 'Schedule').trim().replace(/\s+/g, '-').toLowerCase();
+  const used = new Set((schedules || []).map(item => getScheduleEnvelopeId(item)));
+  let candidate = base || 'schedule';
+  let counter = 2;
+  while (used.has(candidate)) {
+    candidate = (base || 'schedule') + '-' + counter;
+    counter++;
+  }
+  return candidate;
+}
+
+function buildNewWorkbookScheduleEnvelope(name, options) {
+  const opts = options || {};
+  const title = (name || '').trim() || 'New Schedule';
+  const currentState = Store.getPersistedState();
+  const state = opts.duplicate
+    ? cloneScheduleData(currentState)
+    : {
+        title,
+        days: [],
+        groups: cloneScheduleData(currentState.groups || []),
+        logo: currentState.logo || null,
+        footer: cloneScheduleData(currentState.footer || { contact: '', poc: '', updated: '' }),
+      };
+  state.title = title;
+  const now = new Date().toISOString();
+  const currentFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+  const envelope = {
+    name: title,
+    createdAt: now,
+    lastSavedBy: typeof getUserName === 'function' ? getUserName() : '',
+    lastSavedAt: now,
+    current: state,
+    versions: [],
+    activity: [],
+  };
+  if (opts.duplicate && currentFileData) {
+    if (currentFileData.theme) envelope.theme = cloneScheduleData(currentFileData.theme);
+  } else if (currentFileData && currentFileData.theme) {
+    envelope.theme = cloneScheduleData(currentFileData.theme);
+  }
+  return envelope;
+}
+
+function loadWorkbookScheduleEnvelope(envelope, options) {
+  const opts = options || {};
+  const payload = extractSchedulePayload(envelope);
+  const state = normalizePersistedState(payload.state || {}, { requireDays: false });
+  const fileData = payload.fileData ? cloneScheduleData(payload.fileData) : {
+    name: state.title || 'Untitled Schedule',
+    current: state,
+    versions: [],
+    activity: [],
+  };
+  fileData.current = state;
+  fileData.id = getScheduleEnvelopeId(fileData);
+  if (!Array.isArray(fileData.versions)) fileData.versions = [];
+  if (!Array.isArray(fileData.activity)) fileData.activity = [];
+
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
+  Store.reset();
+  Store.loadPersistedState(state);
+  if (typeof setCurrentScheduleFileData === 'function') setCurrentScheduleFileData(fileData);
+  if (typeof syncToolbarTitle === 'function') syncToolbarTitle();
+  if (typeof renderActiveDay === 'function') renderActiveDay();
+  if (typeof renderInspector === 'function') renderInspector();
+  if (typeof renderWorkbookSwitcher === 'function') renderWorkbookSwitcher();
+  sessionSave(opts.skipDirty ? { skipDirty: true } : undefined);
+}
+
+function switchScheduleInWorkbook(scheduleId) {
+  const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
+  const schedules = Array.isArray(workbook.schedules) ? workbook.schedules : [];
+  const target = schedules.find(item => getScheduleEnvelopeId(item) === scheduleId);
+  if (!target) return false;
+  workbook.activeScheduleId = getScheduleEnvelopeId(target);
+  workbook.schedule = cloneScheduleData(target);
+  workbook.savedAt = new Date().toISOString();
+  _scheduleWorkbookData = workbook;
+  loadWorkbookScheduleEnvelope(target);
+  toast('Opened ' + (target.name || 'schedule'));
+  return true;
+}
+
+function createScheduleInWorkbook(name, options) {
+  const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
+  if (!Array.isArray(workbook.schedules)) workbook.schedules = [];
+  const envelope = buildNewWorkbookScheduleEnvelope(name, options);
+  envelope.id = getUniqueWorkbookScheduleId(envelope.name, workbook.schedules);
+  workbook.schedules.push(envelope);
+  workbook.activeScheduleId = envelope.id;
+  workbook.schedule = cloneScheduleData(envelope);
+  workbook.savedAt = new Date().toISOString();
+  _scheduleWorkbookData = workbook;
+  loadWorkbookScheduleEnvelope(envelope);
+  toast('Created ' + envelope.name);
+  return envelope.id;
+}
+
 function buildStandaloneScheduleWorkbookObject(fileData) {
   const prior = _scheduleWorkbookData;
   _scheduleWorkbookData = null;
@@ -5022,7 +5539,10 @@ function getScheduleWorkbookSuggestedName() {
 
 async function saveScheduleWorkbookFile(options) {
   const opts = options || {};
-  if (_saveInProgress) { toast('Save already in progress.'); return false; }
+  if (_saveInProgress) {
+    if (!opts.silent) toast('Save already in progress.');
+    return false;
+  }
   _saveInProgress = true;
   try {
     const suggestedName = opts.suggestedName || getScheduleWorkbookSuggestedName();
@@ -5031,6 +5551,7 @@ async function saveScheduleWorkbookFile(options) {
     if (window.showSaveFilePicker) {
       try {
         let handle = opts.reuseHandle === false ? null : _scheduleWorkbookHandle;
+        if (!handle && opts.requireHandle) return false;
         if (!handle) {
           handle = await window.showSaveFilePicker({
             suggestedName,
@@ -5046,13 +5567,17 @@ async function saveScheduleWorkbookFile(options) {
         if (opts.reuseHandle !== false) _scheduleWorkbookHandle = handle;
         _scheduleWorkbookData = JSON.parse(content);
         sessionSave({ skipDirty: true });
-        toast('Saved ' + (handle.name || suggestedName));
+        if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+        if (!opts.silent) toast('Saved ' + (handle.name || suggestedName));
         return true;
       } catch (err) {
         if (err.name === 'AbortError') return false;
         console.warn('Schedule save failed, falling back:', err);
+        if (opts.requireHandle) return false;
       }
     }
+
+    if (opts.requireHandle) return false;
 
     const blob = new Blob([content], { type: 'application/json' });
     const a = document.createElement('a');
@@ -5062,7 +5587,8 @@ async function saveScheduleWorkbookFile(options) {
     URL.revokeObjectURL(a.href);
     _scheduleWorkbookData = JSON.parse(content);
     sessionSave({ skipDirty: true });
-    toast('Downloaded ' + suggestedName);
+    if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+    if (!opts.silent) toast('Downloaded ' + suggestedName);
     return true;
   } finally {
     _saveInProgress = false;
@@ -5186,7 +5712,7 @@ function loadParsedScheduleData(parsed) {
   }
   _fileHandle = null;
   _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
-  sessionSave();
+  sessionSave(_scheduleWorkbookHandle ? { skipDirty: true } : undefined);
   renderActiveDay();
   syncToolbarTitle();
   if (typeof renderInspector === 'function') renderInspector();
@@ -5477,6 +6003,7 @@ function formatActivityText(entry) {
 function buildScheduleFile(name, storeState, versions, savedBy) {
   const now = new Date().toISOString();
   return {
+    id: scheduleNameToSlug(name),
     name: name,
     createdAt: now,
     lastSavedBy: savedBy || '',
@@ -5814,14 +6341,18 @@ function updateEditorAccessBar(status) {
       bar.hidden = true;
       return;
     }
+    const workbookFileName = typeof getScheduleWorkbookFileName === 'function' ? getScheduleWorkbookFileName() : '';
+    const hasWorkbookTarget = typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle();
     text = '<span class="editor-access-mode">Workbook</span>'
       + '<span class="editor-access-message">'
-      + (_manualDraftExported
+      + (hasWorkbookTarget
+          ? 'Autosaves to <strong>' + esc(workbookFileName || '.schedule file') + '</strong>.'
+          : _manualDraftExported
           ? 'Saved as a <strong>.schedule</strong> file. Save again after more edits.'
           : 'Save this workbook as a <strong>.schedule</strong> file before closing.')
       + '</span>';
     actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
-      + (_manualDraftExported ? 'Save Again' : 'Save .schedule')
+      + (hasWorkbookTarget ? 'Save Now' : (_manualDraftExported ? 'Save Again' : 'Save .schedule'))
       + '</button>';
     bar.className = 'editor-access-bar editor-access-local';
   } else if (status.state === 'mine' && status.lock) {
@@ -6190,7 +6721,16 @@ function markDirty() {
 }
 
 async function autoSave() {
-  if (!_dirty || !_currentFileName || !_dirHandle) return;
+  if (!_dirty) return;
+  if (!_currentFileName && typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) {
+    updateSaveIndicator('saving');
+    const saved = typeof saveScheduleWorkbookFile === 'function'
+      ? await saveScheduleWorkbookFile({ silent: true, requireHandle: true })
+      : false;
+    if (!saved) updateSaveIndicator('dirty');
+    return;
+  }
+  if (!_currentFileName || !_dirHandle) return;
   await saveCurrentSchedule();
 }
 
@@ -6248,6 +6788,15 @@ async function saveCurrentSchedule() {
 function forceSave() {
   if (!isCurrentScheduleEditable()) { toast('Read-only. Click Edit.'); return; }
   clearTimeout(_autosaveTimer);
+  if (!_currentFileName && typeof saveScheduleWorkbookFile === 'function') {
+    saveScheduleWorkbookFile({ silent: true }).then(ok => {
+      if (ok) {
+        if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+        toast('Saved');
+      }
+    });
+    return;
+  }
   saveCurrentSchedule().then(ok => {
     if (ok) toast('Saved');
   });
@@ -6282,6 +6831,13 @@ function getLastSavedAt() {
 
 function notifyManualDraftExport() {
   _manualDraftExported = true;
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
+}
+
+function markScheduleWorkbookSaved() {
+  _dirty = false;
+  _manualDraftExported = true;
+  updateSaveIndicator('saved');
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 
@@ -7221,16 +7777,23 @@ function renderGridRow(slotStart, activeGroups, groupEvents) {
 
 function renderGridCell(evt, group, isContinuation) {
   const className = isContinuation ? 'grid-cell grid-cell-cont' : 'grid-cell';
-  let html = '<div class="' + className + '" style="border-top:2px solid ' + esc(group.color) + ';" data-event-id="' + esc(evt.id) + '">';
+  const accentText = getContrastingTextColor(group.color);
+  const accentStyle = '--grid-accent:' + esc(group.color) + ';--grid-accent-text:' + esc(accentText) + ';';
+  let html = '<div class="' + className + '" style="' + accentStyle + '" data-event-id="' + esc(evt.id) + '">';
   html += '<div class="grid-cell-head">';
   html += '<div class="grid-cell-title">' + esc(evt.title) + '</div>';
   html += '<div class="grid-cell-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
   html += '</div>';
   if (isContinuation) {
+    html += '<div class="grid-cell-body">';
+    html += '<div class="grid-cell-audience">' + esc(group.name) + '</div>';
     html += '<div class="grid-cell-meta">Continues from ' + esc(evt.startTime) + '</div>';
+    html += '</div>';
     html += '</div>';
     return html;
   }
+  html += '<div class="grid-cell-body">';
+  html += '<div class="grid-cell-audience">' + esc(group.name) + '</div>';
   const meta = [];
   if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
   if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
@@ -7239,6 +7802,7 @@ function renderGridCell(evt, group, isContinuation) {
   }
   if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
   if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
+  html += '</div>';
   html += '</div>';
   return html;
 }
@@ -7779,7 +8343,7 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
-  sessionSave();
+  sessionSave((typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) ? { skipDirty: true } : undefined);
   toast('Opened ' + sourceFileName);
 }
 
@@ -7880,8 +8444,10 @@ async function deleteSchedule(fileName) {
 }
 
 async function returnToLibrary() {
-  if (isDirty() && hasDirectoryAccess() && isCurrentScheduleEditable()) {
-    const ok = await saveCurrentSchedule();
+  if (isDirty() && isCurrentScheduleEditable()) {
+    const ok = hasDirectoryAccess()
+      ? await saveCurrentSchedule()
+      : (typeof saveScheduleWorkbookFile === 'function' ? await saveScheduleWorkbookFile() : false);
     if (!ok) return;
   }
   await releaseCurrentScheduleLock();
@@ -8443,6 +9009,167 @@ function formatDateDisplay(dateStr) {
 
 </script>
   <script>
+/* ── workbook-ui.js ── Simple multi-schedule workbook navigation ───────────
+ *
+ * Keeps the .schedule file mental model small: one workbook file contains many
+ * schedules. This layer only owns the switcher UI; persistence.js owns data.
+ */
+
+let _workbookSearchText = '';
+
+function formatWorkbookMeta(entry) {
+  const parts = [];
+  parts.push(entry.dayCount + (entry.dayCount === 1 ? ' day' : ' days'));
+  parts.push(entry.eventCount + (entry.eventCount === 1 ? ' event' : ' events'));
+  if (entry.noteCount) parts.push(entry.noteCount + (entry.noteCount === 1 ? ' note' : ' notes'));
+  return parts.join(' · ');
+}
+
+function renderWorkbookSwitcher() {
+  const btn = document.getElementById('workbookSwitchBtn');
+  const label = document.getElementById('workbookSwitchLabel');
+  if (!btn || !label) return;
+
+  if (!Store.getTitle() && !Store.getDays().length) {
+    btn.hidden = true;
+    return;
+  }
+
+  const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
+  btn.hidden = false;
+  label.textContent = entries.length === 1 ? '1 schedule' : entries.length + ' schedules';
+  btn.title = 'Schedules in this workbook';
+}
+
+function getFilteredWorkbookEntries() {
+  const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
+  const query = _workbookSearchText.trim().toLowerCase();
+  if (!query) return entries;
+  return entries.filter(entry => {
+    return String(entry.name || '').toLowerCase().includes(query)
+      || String(entry.lastSavedAt || '').toLowerCase().includes(query);
+  });
+}
+
+function renderWorkbookModal() {
+  const overlay = document.getElementById('workbookModal');
+  if (!overlay) return;
+  const content = overlay.querySelector('.modal');
+  if (!content) return;
+
+  const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
+  const filtered = getFilteredWorkbookEntries();
+  const active = entries.find(entry => entry.active) || entries[0];
+  const defaultName = active && active.name ? active.name + ' Copy' : 'New Schedule';
+
+  let html = '<div class="workbook-head">'
+    + '<div>'
+    + '<h2>Workbook Schedules</h2>'
+    + '<p class="workbook-desc">One .schedule file can hold years of drills. Search, open, or create the next one here.</p>'
+    + '</div>'
+    + '<button class="modal-close-btn" id="workbookCloseBtn" aria-label="Close">&times;</button>'
+    + '</div>'
+    + '<div class="workbook-create">'
+    + '<input type="text" id="workbookNewName" class="workbook-new-input" value="' + esc(defaultName) + '" aria-label="New schedule name">'
+    + '<button class="btn" id="workbookNewBtn">New Blank</button>'
+    + '<button class="btn btn-primary" id="workbookDuplicateBtn">Duplicate Current</button>'
+    + '</div>'
+    + '<input type="search" id="workbookSearch" class="workbook-search" value="' + esc(_workbookSearchText) + '" placeholder="Search 60+ schedules..." aria-label="Search schedules">'
+    + '<div class="workbook-count">' + filtered.length + ' of ' + entries.length + ' schedules</div>'
+    + '<div class="workbook-list">';
+
+  if (!filtered.length) {
+    html += '<div class="workbook-empty">No schedules match that search.</div>';
+  } else {
+    filtered.forEach(entry => {
+      html += '<button class="workbook-item' + (entry.active ? ' active' : '') + '" data-schedule-id="' + esc(entry.id) + '">'
+        + '<span class="workbook-item-main">'
+        + '<span class="workbook-item-name">' + esc(entry.name) + '</span>'
+        + '<span class="workbook-item-meta">' + esc(formatWorkbookMeta(entry)) + '</span>'
+        + '</span>'
+        + (entry.active ? '<span class="workbook-active-badge">Open</span>' : '')
+        + '</button>';
+    });
+  }
+
+  html += '</div>';
+  content.className = 'modal workbook-modal';
+  content.innerHTML = html;
+
+  const search = content.querySelector('#workbookSearch');
+  if (search) {
+    search.addEventListener('input', () => {
+      _workbookSearchText = search.value;
+      renderWorkbookModal();
+      const nextSearch = document.getElementById('workbookSearch');
+      if (nextSearch) {
+        nextSearch.focus();
+        nextSearch.setSelectionRange(nextSearch.value.length, nextSearch.value.length);
+      }
+    });
+  }
+
+  const closeBtn = content.querySelector('#workbookCloseBtn');
+  if (closeBtn) closeBtn.onclick = closeWorkbookModal;
+
+  const newBtn = content.querySelector('#workbookNewBtn');
+  if (newBtn) {
+    newBtn.onclick = () => {
+      const input = document.getElementById('workbookNewName');
+      const name = input && input.value.trim() ? input.value.trim() : 'New Schedule';
+      if (typeof createScheduleInWorkbook === 'function') createScheduleInWorkbook(name, { duplicate: false });
+      closeWorkbookModal();
+    };
+  }
+
+  const duplicateBtn = content.querySelector('#workbookDuplicateBtn');
+  if (duplicateBtn) {
+    duplicateBtn.onclick = () => {
+      const input = document.getElementById('workbookNewName');
+      const name = input && input.value.trim() ? input.value.trim() : defaultName;
+      if (typeof createScheduleInWorkbook === 'function') createScheduleInWorkbook(name, { duplicate: true });
+      closeWorkbookModal();
+    };
+  }
+
+  content.querySelectorAll('.workbook-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const id = item.getAttribute('data-schedule-id');
+      if (typeof switchScheduleInWorkbook === 'function') switchScheduleInWorkbook(id);
+      closeWorkbookModal();
+    });
+  });
+}
+
+function openWorkbookModal() {
+  const overlay = document.getElementById('workbookModal');
+  if (!overlay) return;
+  renderWorkbookModal();
+  overlay.classList.add('active');
+  const search = document.getElementById('workbookSearch');
+  if (search) setTimeout(() => search.focus(), 0);
+}
+
+function closeWorkbookModal() {
+  const overlay = document.getElementById('workbookModal');
+  if (overlay) overlay.classList.remove('active');
+}
+
+function wireWorkbookUi() {
+  const btn = document.getElementById('workbookSwitchBtn');
+  if (btn) btn.onclick = openWorkbookModal;
+
+  const overlay = document.getElementById('workbookModal');
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeWorkbookModal();
+    });
+  }
+  renderWorkbookSwitcher();
+}
+
+</script>
+  <script>
 /* ── print.js ── Contract ──────────────────────────────────────────────────
  *
  * EXPORTS:
@@ -8516,9 +9243,9 @@ function printAllDays() {
   const previewArea = document.querySelector('.preview-area');
 
   setTimeout(() => {
-    applyPrintScaling(true);
     if (previewArea) previewArea.style.display = 'none';
     printContainer.style.display = 'block';
+    applyPrintScaling(true);
     window.print();
     // Restore screen view after print
     printContainer.style.display = 'none';
@@ -8656,7 +9383,7 @@ function applyPrintScalingToPage(page, forPrint) {
   // Final fallback: zoom shrinks actual layout dimensions.
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
-  const scale = maxH / contentH;
+  let scale = maxH / contentH;
   page.style.zoom = scale;
   page.dataset.printScaled = '1';
 
@@ -8669,6 +9396,16 @@ function applyPrintScalingToPage(page, forPrint) {
     // Compensate so the card still appears as 11in visually.
     // e.g. zoom=0.96 → min-height = 11in/0.96 = 11.458in → renders as 11in.
     page.style.minHeight = (11 / scale) + 'in';
+  }
+
+  // Browser zoom rounding can leave the final rendered box a few pixels taller
+  // than scrollHeight predicted. Re-measure the actual box and correct once.
+  void page.offsetHeight;
+  const renderedHeight = page.getBoundingClientRect().height;
+  if (renderedHeight > maxH) {
+    scale = scale * (maxH / renderedHeight) * 0.995;
+    page.style.zoom = scale;
+    if (!forPrint) page.style.minHeight = (11 / scale) + 'in';
   }
 }
 
@@ -10359,6 +11096,7 @@ function wireToolbar() {
 function syncToolbarTitle() {
   const tbTitle = document.getElementById('tbTitle');
   if (tbTitle) tbTitle.value = Store.getTitle();
+  if (typeof renderWorkbookSwitcher === 'function') renderWorkbookSwitcher();
 }
 
 // ── Add event / note ───────────────────────────────────────────────────────
@@ -10497,6 +11235,7 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
 (async function init() {
   wireToolbar();
   wireLibrary();
+  if (typeof wireWorkbookUi === 'function') wireWorkbookUi();
   applyEditorTheme(getEditorTheme());
 
   // Check FSAPI support

@@ -73,14 +73,20 @@
       <div class="tb-brand">Schedule Builder</div>
       <div class="tb-sep"></div>
       <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title">
+      <button class="workbook-switch-btn" id="workbookSwitchBtn" type="button" hidden>
+        <span id="workbookSwitchLabel">1 schedule</span>
+        <span class="workbook-switch-caret">▾</span>
+      </button>
       <span class="save-status" id="saveIndicator"></span>
       <div class="tb-sep"></div>
       <div class="day-tabs" id="dayTabs"></div>
     </div>
     <div class="toolbar-right">
-      <button class="btn btn-primary" id="addEventBtn">+ Event</button>
-      <button class="btn" id="addNoteBtn">+ Note</button>
-      <button class="btn" id="addDayBtn">+ Day</button>
+      <div class="tb-create-group" aria-label="Add schedule item">
+        <button class="btn tb-create-btn" id="addDayBtn">+ Day</button>
+        <button class="btn tb-create-btn" id="addEventBtn">+ Event</button>
+        <button class="btn tb-create-btn" id="addNoteBtn">+ Note</button>
+      </div>
       <button class="btn" id="daySheetBtn">Quick Edit</button>
       <div class="tb-sep"></div>
       <button class="btn" id="customizeBtn">Customize</button>
@@ -266,6 +272,11 @@
     <div class="modal"></div>
   </div>
 
+  <!-- Workbook Schedules Modal -->
+  <div class="modal-overlay" id="workbookModal">
+    <div class="modal workbook-modal"></div>
+  </div>
+
   <!-- Customize Modal -->
   <div class="modal-overlay" id="settingsModal">
     <div class="modal" id="settingsModalContent"></div>
@@ -292,6 +303,7 @@
   <script src="js/library.js"></script>
   <script src="js/versions.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/workbook-ui.js"></script>
   <script src="js/print.js"></script>
   <script src="js/events.js"></script>
   <script src="js/inspector.js"></script>

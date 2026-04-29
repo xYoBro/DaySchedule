@@ -48,11 +48,16 @@
   <div class="toolbar">
     <button id="tbBack">Back</button>
     <input type="text" id="tbTitle" value="">
+    <button id="workbookSwitchBtn" type="button" hidden>
+      <span id="workbookSwitchLabel">1 schedule</span>
+    </button>
     <span id="saveIndicator" class="save-status"></span>
     <div id="dayTabs"></div>
-    <button id="addEventBtn">+ Event</button>
-    <button id="addNoteBtn">+ Note</button>
-    <button id="addDayBtn">+ Day</button>
+    <div class="tb-create-group">
+      <button id="addDayBtn">+ Day</button>
+      <button id="addEventBtn">+ Event</button>
+      <button id="addNoteBtn">+ Note</button>
+    </div>
     <button id="daySheetBtn">Quick Edit</button>
     <button id="customizeBtn">Customize</button>
     <div id="overflowMenu">
@@ -115,6 +120,10 @@
     <div class="modal"></div>
   </div>
 
+  <div class="modal-overlay" id="workbookModal">
+    <div class="modal workbook-modal"></div>
+  </div>
+
   <div class="modal-overlay" id="settingsModal">
     <div class="modal" id="settingsModalContent"></div>
   </div>
@@ -141,6 +150,7 @@
   <script src="../../app/js/library.js"></script>
   <script src="../../app/js/versions.js"></script>
   <script src="../../app/js/render.js"></script>
+  <script src="../../app/js/workbook-ui.js"></script>
   <script src="../../app/js/print.js"></script>
   <script src="../../app/js/events.js"></script>
   <script src="../../app/js/inspector.js"></script>

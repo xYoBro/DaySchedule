@@ -24,6 +24,11 @@ const MIME_TYPES = {
 };
 const SMOKE_SKINS = ['bands', 'grid', 'cards', 'phases'];
 
+if (process.argv.includes('--feature-print-audit')) {
+  require('./feature-print-audit').main();
+  return;
+}
+
 function getContentType(filePath) {
   return MIME_TYPES[path.extname(filePath).toLowerCase()] || 'application/octet-stream';
 }

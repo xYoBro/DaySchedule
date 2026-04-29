@@ -71,9 +71,9 @@ function printAllDays() {
   const previewArea = document.querySelector('.preview-area');
 
   setTimeout(() => {
-    applyPrintScaling(true);
     if (previewArea) previewArea.style.display = 'none';
     printContainer.style.display = 'block';
+    applyPrintScaling(true);
     window.print();
     // Restore screen view after print
     printContainer.style.display = 'none';
@@ -211,7 +211,7 @@ function applyPrintScalingToPage(page, forPrint) {
   // Final fallback: zoom shrinks actual layout dimensions.
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
-  const scale = maxH / contentH;
+  let scale = maxH / contentH;
   page.style.zoom = scale;
   page.dataset.printScaled = '1';
 
@@ -224,6 +224,16 @@ function applyPrintScalingToPage(page, forPrint) {
     // Compensate so the card still appears as 11in visually.
     // e.g. zoom=0.96 → min-height = 11in/0.96 = 11.458in → renders as 11in.
     page.style.minHeight = (11 / scale) + 'in';
+  }
+
+  // Browser zoom rounding can leave the final rendered box a few pixels taller
+  // than scrollHeight predicted. Re-measure the actual box and correct once.
+  void page.offsetHeight;
+  const renderedHeight = page.getBoundingClientRect().height;
+  if (renderedHeight > maxH) {
+    scale = scale * (maxH / renderedHeight) * 0.995;
+    page.style.zoom = scale;
+    if (!forPrint) page.style.minHeight = (11 / scale) + 'in';
   }
 }
 
