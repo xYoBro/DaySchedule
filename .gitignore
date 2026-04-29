@@ -6,3 +6,5 @@
 *.png
 __pycache__/
 *.pyc
+app/Schedule.zip
+support/docs/app-code-review-2026-04-14.md
