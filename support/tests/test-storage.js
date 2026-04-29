@@ -73,7 +73,10 @@ describe('Persistence — .schedule workbook format', () => {
 
     assert.equal(parsedJson.fileType, 'dayschedule');
     assert.equal(parsedJson.schemaVersion, 1);
+    assert.equal(parsedJson.activeScheduleId, 'workbook-drill');
     assert.equal(parsedJson.schedule.name, 'Workbook Drill');
+    assert.equal(parsedJson.schedules.length, 1);
+    assert.equal(parsedJson.schedules[0].name, 'Workbook Drill');
     assert.equal(parsedJson.schedule.versions.length, 1);
     assert.equal(parsedJson.schedule.theme.skin, 'grid');
   });
@@ -88,6 +91,36 @@ describe('Persistence — .schedule workbook format', () => {
     assert.equal(parsed.state.activeDay, 'day_workbook');
     assert.equal(parsed.fileData.versions[0].name, 'Baseline');
     assert.equal(parsed.fileData.theme.palette, 'airforce');
+  });
+
+  it('parses multi-schedule workbooks and preserves inactive schedules', () => {
+    const fixture = makeWorkbookFixture();
+    const inactiveState = {
+      ...fixture.state,
+      title: 'Previous Schedule',
+      days: [{
+        ...fixture.state.days[0],
+        id: 'day_previous',
+        events: [{ title: 'Previous Brief', startTime: '0800', endTime: '0900', groupId: 'grp_all' }],
+      }],
+      activeDay: 'day_previous',
+    };
+    const inactiveFile = buildScheduleFile('Previous Schedule', inactiveState, [], 'Tester');
+    inactiveFile.id = 'previous-schedule';
+    fixture.fileData.id = 'workbook-drill';
+
+    const parsed = parseScheduleWorkbookContent(JSON.stringify({
+      fileType: 'dayschedule',
+      schemaVersion: 1,
+      activeScheduleId: 'workbook-drill',
+      schedules: [inactiveFile, fixture.fileData],
+    }), 'ops.schedule');
+
+    assert.equal(parsed.state.title, 'Workbook Drill');
+    assert.equal(parsed.fileData.id, 'workbook-drill');
+    assert.equal(parsed.workbookData.schedules.length, 2);
+    assert.equal(parsed.workbookData.schedules[0].name, 'Previous Schedule');
+    assert.equal(parsed.workbookData.schedules[1].current.title, 'Workbook Drill');
   });
 
   it('parses legacy SAVED_STATE wrappers with trailing JavaScript safely', () => {

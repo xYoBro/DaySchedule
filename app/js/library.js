@@ -189,7 +189,7 @@ async function createNewSchedule(name) {
     renderActiveDay();
     renderInspector();
     sessionSave();
-    toast('Created ' + name + ' as a local draft');
+    toast('Created ' + name);
     return;
   }
 
@@ -245,13 +245,15 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   Store.loadPersistedState(draftState);
 
   setCurrentFile(null, null);
-  setCurrentScheduleFileData({
-    name: importedName,
-    current: Store.getPersistedState(),
-    versions: [],
-    activity: [],
-    theme: (sourceFileData && sourceFileData.theme) || state.theme || undefined,
-  });
+  const fileData = sourceFileData && typeof sourceFileData === 'object'
+    ? JSON.parse(JSON.stringify(sourceFileData))
+    : { versions: [], activity: [] };
+  fileData.name = importedName;
+  fileData.current = Store.getPersistedState();
+  if (!Array.isArray(fileData.versions)) fileData.versions = [];
+  if (!Array.isArray(fileData.activity)) fileData.activity = [];
+  if (!fileData.theme) fileData.theme = (sourceFileData && sourceFileData.theme) || state.theme || undefined;
+  setCurrentScheduleFileData(fileData);
 
   hideLibrary();
   if (typeof syncCurrentScheduleAccess === 'function') {
@@ -261,7 +263,7 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   renderActiveDay();
   renderInspector();
   sessionSave();
-  toast('Imported ' + sourceFileName + ' as a local draft');
+  toast('Opened ' + sourceFileName);
 }
 
 async function importScheduleIntoLibrary(state, sourceFileName, importedName, sourceFileData) {
@@ -472,6 +474,19 @@ function wireLibrary() {
 
   if (importBtn) {
     importBtn.onclick = () => {
+      if (hasDirectoryAccess()) {
+        importScheduleFromLibrary();
+        return;
+      }
+      if (typeof openScheduleWorkbookFile === 'function') {
+        openScheduleWorkbookFile({
+          onImported: async ({ fileName, state, fileData, workbookData }) => {
+            const importedName = getImportedScheduleBaseName(fileName, state);
+            await openImportedLocalDraft(state, fileName, importedName, fileData, workbookData);
+          },
+        });
+        return;
+      }
       importScheduleFromLibrary();
     };
   }

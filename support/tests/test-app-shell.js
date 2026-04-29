@@ -31,7 +31,13 @@ async function importUiJson(state, fileName) {
 }
 
 async function importUiFromLibrary(state, fileName) {
-  return importUiFile(() => document.getElementById('libraryImportBtn').click(), state, fileName);
+  const originalOpenFilePicker = window.showOpenFilePicker;
+  window.showOpenFilePicker = undefined;
+  try {
+    return await importUiFile(() => document.getElementById('libraryImportBtn').click(), state, fileName);
+  } finally {
+    window.showOpenFilePicker = originalOpenFilePicker;
+  }
 }
 
 describe('UI Harness — app shell', () => {
@@ -122,7 +128,7 @@ describe('UI Harness — app shell', () => {
     assert(getCurrentFileName() !== 'june-drill.json', 'collision should not claim the existing file');
   });
 
-  it('createNewSchedule falls back to a local draft when folder access is unavailable', async () => {
+  it('createNewSchedule opens an unsaved workbook when folder access is unavailable', async () => {
     resetUiHarnessState();
     setUserName('Tester');
     showLibrary();
@@ -132,22 +138,22 @@ describe('UI Harness — app shell', () => {
     await wait(600);
 
     const files = UiMockFS.getFiles();
-    assert.equal(Object.keys(files).length, 0, 'local draft should not create a shared-folder file');
+    assert.equal(Object.keys(files).length, 0, 'new workbook should not create a shared-folder file');
     assert.equal(Store.getTitle(), 'Safari Draft');
     assert.equal(getCurrentFileName(), null);
-    assert.equal(isCurrentScheduleEditable(), true, 'local draft should stay editable');
+    assert.equal(isCurrentScheduleEditable(), true, 'new workbook should stay editable');
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
     assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Safari Draft');
-    assert.equal(document.getElementById('editorAccessBar').hidden, false, 'local draft warning should stay visible');
+    assert.equal(document.getElementById('editorAccessBar').hidden, false, 'workbook save bar should stay visible');
     assert(document.getElementById('editorAccessText').textContent.includes('.schedule'));
     assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Save .schedule');
     assert.equal(
       document.getElementById('toast').textContent,
-      'Created Safari Draft as a local draft'
+      'Created Safari Draft'
     );
   });
 
-  it('local draft save action persists after saving a .schedule file', async () => {
+  it('workbook save action persists after saving a .schedule file', async () => {
     resetUiHarnessState();
     setUserName('Tester');
     await createNewSchedule('Safari Draft');
@@ -179,7 +185,7 @@ describe('UI Harness — app shell', () => {
     showLibrary();
     await wait(0);
 
-    assert.equal(document.getElementById('libraryImportBtn').textContent.trim(), 'Open Schedule');
+    assert.equal(document.getElementById('libraryImportBtn').textContent.trim(), 'Open .schedule');
     assert.equal(document.getElementById('libraryNewBtn').textContent.trim(), 'Create');
     assert.equal(document.getElementById('libraryNewName').value, 'New Schedule');
     assert.equal(document.querySelector('.library-stack').style.display, 'none');
@@ -217,7 +223,7 @@ describe('UI Harness — app shell', () => {
     assert(document.getElementById('editorAccessText').textContent.includes('Editing as'));
   });
 
-  it('home-screen import opens a local draft when the shared folder is not connected', async () => {
+  it('home-screen import opens a workbook when the shared folder is not connected', async () => {
     resetUiHarnessState();
     showLibrary();
     await wait(0);
@@ -242,8 +248,8 @@ describe('UI Harness — app shell', () => {
     assert.equal(getCurrentFileName(), null);
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
     assert.equal(document.getElementById('editorAccessBar').hidden, false);
-    assert(document.getElementById('editorAccessText').textContent.includes('Local Draft'));
-    assert.equal(document.getElementById('toast').textContent, 'Imported scheduledata.js as a local draft');
+    assert(document.getElementById('editorAccessText').textContent.includes('Workbook'));
+    assert.equal(document.getElementById('toast').textContent, 'Opened scheduledata.js');
   });
 
   it('quick edit lets you change start and end before the row time range is validated', async () => {
@@ -669,6 +675,98 @@ describe('UI Harness — app shell', () => {
     assert.equal(getCurrentFileName(), 'envelope-import.json');
     assert.equal(getCurrentScheduleFileData().theme.skin, 'grid');
     assert.equal(getCurrentScheduleFileData().theme.palette, 'airforce');
+  });
+
+  it('opens .schedule workbooks with a writable handle and saves back without dropping inactive schedules', async () => {
+    resetUiHarnessState();
+    showLibrary();
+    await wait(0);
+
+    const activeState = {
+      title: 'Active Workbook Schedule',
+      days: [{
+        id: 'day_active_workbook',
+        date: '2026-05-04',
+        startTime: '0700',
+        endTime: '1630',
+        events: [{ title: 'Active Brief', startTime: '0900', endTime: '1000', groupId: 'grp_all', isMainEvent: true }],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+      activeDay: 'day_active_workbook',
+    };
+    const inactiveState = {
+      title: 'Previous Workbook Schedule',
+      days: [{
+        id: 'day_previous_workbook',
+        date: '2026-05-03',
+        startTime: '0700',
+        endTime: '1630',
+        events: [{ title: 'Previous Brief', startTime: '0800', endTime: '0900', groupId: 'grp_all', isMainEvent: true }],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+      activeDay: 'day_previous_workbook',
+    };
+    const activeFile = buildScheduleFile('Active Workbook Schedule', activeState, [], 'Tester');
+    activeFile.id = 'active-workbook-schedule';
+    const inactiveFile = buildScheduleFile('Previous Workbook Schedule', inactiveState, [], 'Tester');
+    inactiveFile.id = 'previous-workbook-schedule';
+    const workbookContent = JSON.stringify({
+      fileType: 'dayschedule',
+      schemaVersion: 1,
+      activeScheduleId: activeFile.id,
+      schedules: [inactiveFile, activeFile],
+    });
+
+    let written = '';
+    let savePickerCalls = 0;
+    const handle = {
+      name: 'ops.schedule',
+      async getFile() {
+        return new File([workbookContent], 'ops.schedule', { type: 'application/json' });
+      },
+      async createWritable() {
+        return {
+          async write(value) { written = String(value); },
+          async close() {},
+        };
+      },
+    };
+    const originalOpenFilePicker = window.showOpenFilePicker;
+    const originalSaveFilePicker = window.showSaveFilePicker;
+    window.showOpenFilePicker = async () => [handle];
+    window.showSaveFilePicker = async () => {
+      savePickerCalls += 1;
+      return handle;
+    };
+
+    try {
+      document.getElementById('libraryImportBtn').click();
+      await wait(80);
+
+      assert.equal(Store.getTitle(), 'Active Workbook Schedule');
+      assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
+
+      Store.setTitle('Updated Workbook Schedule');
+      syncToolbarTitle();
+      await saveScheduleWorkbookFile();
+    } finally {
+      window.showOpenFilePicker = originalOpenFilePicker;
+      window.showSaveFilePicker = originalSaveFilePicker;
+    }
+
+    const saved = JSON.parse(written);
+    assert.equal(savePickerCalls, 0, 'saving should reuse the handle from Open .schedule');
+    assert.equal(saved.activeScheduleId, 'active-workbook-schedule');
+    assert.equal(saved.schedules.length, 2);
+    assert.equal(saved.schedules[0].name, 'Previous Workbook Schedule');
+    assert.equal(saved.schedules[1].name, 'Updated Workbook Schedule');
+    assert.equal(saved.schedules[1].current.title, 'Updated Workbook Schedule');
   });
 
   it('shows a clear error when an import has no valid days', async () => {

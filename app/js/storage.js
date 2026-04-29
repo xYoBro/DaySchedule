@@ -495,7 +495,7 @@ function updateEditorAccessBar(status) {
       bar.hidden = true;
       return;
     }
-    text = '<span class="editor-access-mode">Local Draft</span>'
+    text = '<span class="editor-access-mode">Workbook</span>'
       + '<span class="editor-access-message">'
       + (_manualDraftExported
           ? 'Saved as a <strong>.schedule</strong> file. Save again after more edits.'

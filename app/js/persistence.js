@@ -28,6 +28,7 @@
 
 let _fileHandle = null;
 let _scheduleWorkbookHandle = null;
+let _scheduleWorkbookData = null;
 let _saveInProgress = false;
 let _undoStack = [];
 let _redoStack = [];
@@ -128,9 +129,18 @@ function cloneScheduleData(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function getScheduleEnvelopeId(envelope) {
+  const source = envelope || {};
+  const name = source.name || (source.current && source.current.title) || Store.getTitle() || 'Schedule';
+  const base = typeof scheduleNameToSlug === 'function'
+    ? scheduleNameToSlug(name)
+    : String(name || 'Schedule').trim().replace(/\s+/g, '-').toLowerCase();
+  return source.id || base || 'schedule';
+}
+
 function buildScheduleWorkbookEnvelope(fileData) {
   const source = fileData || (typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null);
-  const state = source && source.current ? cloneScheduleData(source.current) : buildSerializableState();
+  const state = fileData && fileData.current ? cloneScheduleData(fileData.current) : buildSerializableState();
   if (!state.activeDay) state.activeDay = Store.getActiveDay();
   if (!state.theme && source && source.theme) state.theme = source.theme;
   const title = state && state.title ? state.title : (Store.getTitle() || 'Untitled Schedule');
@@ -145,22 +155,46 @@ function buildScheduleWorkbookEnvelope(fileData) {
         versions: [],
         activity: [],
       };
-  envelope.name = envelope.name || title;
+  envelope.name = title;
   envelope.current = state;
   if (!Array.isArray(envelope.versions)) envelope.versions = [];
   if (!Array.isArray(envelope.activity)) envelope.activity = [];
   if (state && state.theme && !envelope.theme) envelope.theme = state.theme;
+  envelope.id = getScheduleEnvelopeId(envelope);
   return envelope;
 }
 
 function buildScheduleWorkbookObject(fileData) {
   const envelope = buildScheduleWorkbookEnvelope(fileData);
+  const existing = _scheduleWorkbookData && typeof _scheduleWorkbookData === 'object'
+    ? cloneScheduleData(_scheduleWorkbookData)
+    : null;
+  const schedules = existing && Array.isArray(existing.schedules)
+    ? existing.schedules.map(item => cloneScheduleData(item))
+    : [];
+  const activeId = envelope.id;
+  const matchIndex = schedules.findIndex(item => getScheduleEnvelopeId(item) === activeId);
+  if (matchIndex >= 0) {
+    schedules[matchIndex] = envelope;
+  } else {
+    schedules.push(envelope);
+  }
   return {
     fileType: SCHEDULE_WORKBOOK_FILE_TYPE,
     schemaVersion: SCHEDULE_WORKBOOK_SCHEMA_VERSION,
     savedAt: new Date().toISOString(),
+    activeScheduleId: activeId,
+    schedules,
     schedule: envelope,
   };
+}
+
+function buildStandaloneScheduleWorkbookObject(fileData) {
+  const prior = _scheduleWorkbookData;
+  _scheduleWorkbookData = null;
+  const workbook = buildScheduleWorkbookObject(fileData);
+  _scheduleWorkbookData = prior;
+  return workbook;
 }
 
 function buildScheduleWorkbookContent(fileData) {
@@ -202,6 +236,7 @@ async function saveScheduleWorkbookFile(options) {
         await writable.write(content);
         await writable.close();
         if (opts.reuseHandle !== false) _scheduleWorkbookHandle = handle;
+        _scheduleWorkbookData = JSON.parse(content);
         sessionSave({ skipDirty: true });
         toast('Saved ' + (handle.name || suggestedName));
         return true;
@@ -217,6 +252,7 @@ async function saveScheduleWorkbookFile(options) {
     a.download = suggestedName;
     a.click();
     URL.revokeObjectURL(a.href);
+    _scheduleWorkbookData = JSON.parse(content);
     sessionSave({ skipDirty: true });
     toast('Downloaded ' + suggestedName);
     return true;
@@ -284,8 +320,19 @@ function parseScheduleWorkbookContent(content, fileName) {
     && typeof parsed === 'object'
     && !Array.isArray(parsed)
     && parsed.fileType === SCHEDULE_WORKBOOK_FILE_TYPE
-    && parsed.schedule;
-  const payload = isWorkbook ? extractSchedulePayload(parsed.schedule) : extractSchedulePayload(parsed);
+    && (parsed.schedule || Array.isArray(parsed.schedules));
+  let workbookData = null;
+  let activeSchedule = null;
+  if (isWorkbook) {
+    workbookData = cloneScheduleData(parsed);
+    if (Array.isArray(parsed.schedules) && parsed.schedules.length) {
+      activeSchedule = parsed.schedules.find(item => getScheduleEnvelopeId(item) === parsed.activeScheduleId)
+        || parsed.schedules[0];
+    } else {
+      activeSchedule = parsed.schedule;
+    }
+  }
+  const payload = isWorkbook ? extractSchedulePayload(activeSchedule) : extractSchedulePayload(parsed);
   if (!payload.state || !Array.isArray(payload.state.days)) {
     throw new Error('Invalid schedule file \u2014 no days array found.');
   }
@@ -303,12 +350,78 @@ function parseScheduleWorkbookContent(content, fileName) {
   if (state.theme && !fileData.theme) fileData.theme = state.theme;
   if (!Array.isArray(fileData.versions)) fileData.versions = [];
   if (!Array.isArray(fileData.activity)) fileData.activity = [];
+  fileData.id = getScheduleEnvelopeId(fileData);
+  if (workbookData) {
+    workbookData.activeScheduleId = fileData.id;
+    if (Array.isArray(workbookData.schedules)) {
+      const index = workbookData.schedules.findIndex(item => getScheduleEnvelopeId(item) === fileData.id);
+      if (index >= 0) workbookData.schedules[index] = cloneScheduleData(fileData);
+    } else {
+      workbookData.schedules = [cloneScheduleData(fileData)];
+    }
+    workbookData.schedule = cloneScheduleData(fileData);
+  }
   return {
     kind: isWorkbook ? 'schedule-workbook' : (payload.fileData ? 'schedule-envelope' : 'schedule-state'),
     sourceFormat: savedState !== undefined ? 'saved-state-js' : (String(fileName || '').toLowerCase().endsWith('.schedule') ? 'schedule' : 'json'),
     state,
     fileData,
+    workbookData,
   };
+}
+
+function loadParsedScheduleData(parsed) {
+  saveUndoState();
+  Store.loadPersistedState(parsed.state);
+  if (typeof setCurrentScheduleFileData === 'function') {
+    setCurrentScheduleFileData(parsed.fileData);
+  }
+  _fileHandle = null;
+  _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
+  sessionSave();
+  renderActiveDay();
+  syncToolbarTitle();
+  if (typeof renderInspector === 'function') renderInspector();
+}
+
+async function openScheduleWorkbookFile(options) {
+  const opts = options || {};
+  if (window.showOpenFilePicker) {
+    try {
+      const handles = await window.showOpenFilePicker({
+        multiple: false,
+        types: [{
+          description: 'DaySchedule Schedule',
+          accept: { 'application/json': ['.schedule', '.json'] },
+        }],
+      });
+      const handle = handles && handles[0];
+      if (!handle) return false;
+      const file = await handle.getFile();
+      const content = await file.text();
+      const parsed = parseScheduleWorkbookContent(content, file.name || handle.name);
+      _scheduleWorkbookHandle = handle;
+      _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
+      if (opts && typeof opts.onImported === 'function') {
+        await opts.onImported({
+          fileName: file.name || handle.name,
+          state: parsed.state,
+          fileData: parsed.fileData,
+          workbookData: parsed.workbookData,
+        });
+      } else {
+        loadParsedScheduleData(parsed);
+        if (typeof hideLibrary === 'function') hideLibrary();
+        toast('Opened ' + (file.name || handle.name || 'schedule'));
+      }
+      return true;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return false;
+      console.warn('Schedule open failed, falling back:', err);
+    }
+  }
+  importDataFile(opts);
+  return false;
 }
 
 async function saveDataFile() {
@@ -371,24 +484,19 @@ function importDataFile(options) {
         const state = parsed.state;
 
         if (options && typeof options.onImported === 'function') {
+          _scheduleWorkbookHandle = null;
+          _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
           await options.onImported({
             fileName: file.name,
             state: state,
             fileData: parsed.fileData,
+            workbookData: parsed.workbookData,
           });
           return;
         }
 
-        saveUndoState();
-        Store.loadPersistedState(state);
-        if (typeof setCurrentScheduleFileData === 'function') {
-          setCurrentScheduleFileData(parsed.fileData);
-        }
-        _fileHandle = null; // reset so next save prompts for location
-        sessionSave();
-        renderActiveDay();
-        syncToolbarTitle();
-        if (typeof renderInspector === 'function') renderInspector();
+        _scheduleWorkbookHandle = null; // file input cannot provide a writable handle
+        loadParsedScheduleData(parsed);
         toast('Imported ' + file.name + ' (' + state.days.length + ' days)');
       } catch (err) {
         toast('Import failed: ' + err.message);
