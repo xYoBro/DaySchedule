@@ -115,9 +115,11 @@ function resetUiHarnessState() {
   document.getElementById('libraryList').innerHTML = '';
   document.getElementById('libraryConnectPrompt').style.display = 'none';
   document.getElementById('libraryFallbackBanner').style.display = 'none';
-  document.getElementById('libraryNewInline').style.display = 'none';
+  const libraryStack = document.querySelector('.library-stack');
+  if (libraryStack) libraryStack.style.display = '';
+  document.getElementById('libraryNewInline').style.display = '';
   document.getElementById('libraryNewBtn').style.display = '';
-  document.getElementById('libraryNewName').value = '';
+  document.getElementById('libraryNewName').value = 'New Schedule';
   document.getElementById('libraryHelpBtn').textContent = 'Help';
   document.getElementById('libraryHelpBtn').className = '';
   document.getElementById('editorThemeToggle').textContent = 'Theme';

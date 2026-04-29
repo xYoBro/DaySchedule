@@ -33,13 +33,15 @@
       </div>
       <div id="libraryFallbackBanner" style="display:none;"></div>
       <button id="libraryImportBtn">Open Schedule</button>
-      <button id="libraryNewBtn">New Schedule File</button>
-      <div id="libraryNewInline" style="display:none;">
-        <input type="text" id="libraryNewName">
-        <button id="libraryNewConfirm">Create</button>
-        <button id="libraryNewCancel">Cancel</button>
+      <div id="libraryNewInline">
+        <input type="text" id="libraryNewName" value="New Schedule">
+        <button id="libraryNewBtn">Create</button>
+        <button id="libraryNewConfirm" hidden>Create</button>
+        <button id="libraryNewCancel" hidden>Cancel</button>
       </div>
-      <div id="libraryList"></div>
+      <section class="library-stack">
+        <div id="libraryList"></div>
+      </section>
     </div>
   </div>
 

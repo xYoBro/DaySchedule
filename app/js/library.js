@@ -80,19 +80,19 @@ function hideLibrary() {
 
 async function refreshLibraryList() {
   const listEl = document.getElementById('libraryList');
+  const stackEl = document.querySelector('.library-stack');
   if (!listEl) return;
 
   if (!hasDirectoryAccess()) {
-    const emptyMessage = hasFSAPI()
-      ? 'Open a .schedule file or start a new schedule file.'
-      : 'Open a .schedule file or start a local draft.';
-    listEl.innerHTML = '<div class="library-empty">' + esc(emptyMessage) + '</div>';
+    if (stackEl) stackEl.style.display = 'none';
+    listEl.innerHTML = '';
     return;
   }
+  if (stackEl) stackEl.style.display = '';
 
   const files = await listScheduleFiles();
   if (files.length === 0) {
-    listEl.innerHTML = '<div class="library-empty">No legacy shared-folder schedules yet.</div>';
+    listEl.innerHTML = '<div class="library-empty">No schedules yet.</div>';
     return;
   }
 
@@ -158,11 +158,11 @@ async function openSchedule(fileName) {
 }
 
 async function createNewSchedule(name) {
-  if (!await ensureUserName()) return;
+  if (hasDirectoryAccess() && !await ensureUserName()) return;
 
   const slug = scheduleNameToSlug(name);
   const fileName = slug + '.json';
-  const userName = getUserName();
+  const userName = getUserName() || '';
 
   if (hasDirectoryAccess()) {
     const existing = await readScheduleFile(fileName, { suppressErrors: true });
@@ -450,41 +450,28 @@ function wireLibrary() {
   const newCancel = document.getElementById('libraryNewCancel');
 
   if (newBtn && newInline && newInput) {
-    newBtn.onclick = () => {
-      newBtn.style.display = 'none';
-      newInline.style.display = 'flex';
-      newInput.value = '';
-      newInput.focus();
-    };
-
     const doCreate = () => {
-      const name = newInput.value.trim();
-      if (!name) { newInput.focus(); return; }
-      newInline.style.display = 'none';
-      newBtn.style.display = '';
+      const name = (newInput.value || '').trim() || 'New Schedule';
       createNewSchedule(name);
     };
 
-    newConfirm.onclick = doCreate;
+    newBtn.onclick = doCreate;
+    if (newConfirm) newConfirm.onclick = doCreate;
     newInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') doCreate();
       if (e.key === 'Escape') {
-        newInline.style.display = 'none';
-        newBtn.style.display = '';
+        newInput.value = 'New Schedule';
+        newInput.blur();
       }
     });
-    newCancel.onclick = () => {
-      newInline.style.display = 'none';
-      newBtn.style.display = '';
+    if (newCancel) newCancel.onclick = () => {
+      newInput.value = 'New Schedule';
+      newInput.blur();
     };
   }
 
   if (importBtn) {
     importBtn.onclick = () => {
-      if (newInline && newBtn) {
-        newInline.style.display = 'none';
-        newBtn.style.display = '';
-      }
       importScheduleFromLibrary();
     };
   }

@@ -19,31 +19,35 @@
     </div>
     <div class="library-body">
       <section class="library-home">
-        <div class="library-kicker">Schedule Workbook</div>
-        <h1 class="library-home-title">Open your schedule.</h1>
-        <p class="library-home-copy">Use one <strong>.schedule</strong> file for the whole workbook. Open it, edit it, save it back.</p>
-        <div class="library-home-actions">
-          <button class="btn btn-primary library-import-btn" id="libraryImportBtn">Open Schedule</button>
-          <button class="btn library-new-btn" id="libraryNewBtn">New Schedule File</button>
+        <div class="library-kicker">DaySchedule</div>
+        <h1 class="library-home-title">Open the workbook. Edit the day.</h1>
+        <p class="library-home-copy">One app. One <strong>.schedule</strong> file. No folder setup.</p>
+        <div class="library-start-grid">
+          <div class="library-start-card library-start-card-primary">
+            <div class="library-start-label">Existing workbook</div>
+            <div class="library-start-title">Open a schedule file</div>
+            <div class="library-start-copy">Pick the <strong>.schedule</strong> file you already have.</div>
+            <button class="btn btn-primary library-import-btn" id="libraryImportBtn">Open .schedule</button>
+          </div>
+          <div class="library-start-card">
+            <div class="library-start-label">New workbook</div>
+            <div class="library-start-title">Start fresh</div>
+            <div class="library-new-inline" id="libraryNewInline">
+              <input type="text" id="libraryNewName" value="New Schedule" aria-label="New schedule name" class="library-new-input">
+              <button class="btn library-new-btn" id="libraryNewBtn">Create</button>
+              <button class="btn library-new-confirm" id="libraryNewConfirm" hidden>Create</button>
+              <button class="btn" id="libraryNewCancel" hidden>Cancel</button>
+            </div>
+          </div>
         </div>
         <div class="library-home-rules">
-          <span class="library-home-rule">One app file</span>
-          <span class="library-home-rule">One .schedule file</span>
-          <span class="library-home-rule">Save when done</span>
+          <span class="library-home-rule">Open</span>
+          <span class="library-home-rule">Edit</span>
+          <span class="library-home-rule">Save .schedule</span>
         </div>
       </section>
 
-      <details id="libraryConnectPrompt" class="library-connect library-advanced" style="display:none;">
-        <summary class="library-advanced-summary">Advanced / legacy options</summary>
-        <div class="library-advanced-body">
-          <div class="library-connect-title">Legacy shared-folder mode</div>
-          <div class="library-connect-summary">For older team setups that still save separate JSON files in <code>app/data</code>. The normal path is opening a <code>.schedule</code> file.</div>
-          <div class="library-connect-actions">
-            <button class="btn" id="libraryConnectBtn">Connect Shared Folder</button>
-            <div class="library-connect-hint">Compatibility only.</div>
-          </div>
-        </div>
-      </details>
+      <div id="libraryConnectPrompt" class="library-hidden-legacy" style="display:none;"></div>
 
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
         This browser may need manual saves. Use <strong>Save .schedule</strong> before closing.
@@ -52,14 +56,9 @@
       <section class="library-stack">
         <div class="library-stack-head">
           <div>
-            <div class="library-stack-title">Recent and legacy schedules</div>
-            <div class="library-stack-desc">Schedules from an older shared folder appear here when connected.</div>
+            <div class="library-stack-title">Schedules</div>
+            <div class="library-stack-desc">Saved schedules appear here when an older data folder is connected.</div>
           </div>
-        </div>
-        <div class="library-new-inline" id="libraryNewInline" style="display:none;">
-          <input type="text" id="libraryNewName" placeholder="Schedule name (e.g., June Drill)" class="library-new-input">
-          <button class="btn btn-primary" id="libraryNewConfirm">Create</button>
-          <button class="btn" id="libraryNewCancel">Cancel</button>
         </div>
         <div class="library-list" id="libraryList"></div>
       </section>
@@ -141,8 +140,8 @@
             <div class="help-item-desc">Use <strong>Save .schedule</strong> before closing or sending the file.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Legacy shared folder</div>
-            <div class="help-item-desc">Use only if your team still works from separate shared JSON files.</div>
+            <div class="help-item-label">Workbook file</div>
+            <div class="help-item-desc">Keep the <strong>.schedule</strong> file wherever your team normally shares files.</div>
           </div>
         </div>
 
@@ -187,8 +186,8 @@
             <div class="help-item-desc">Use <strong>Customize</strong>.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Need old shared-folder mode?</div>
-            <div class="help-item-desc">Open <strong>Advanced / legacy options</strong> on the start screen.</div>
+            <div class="help-item-label">Where is Save?</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> from the editor save bar or More menu.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">When should I save?</div>

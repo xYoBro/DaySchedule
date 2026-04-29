@@ -139,26 +139,24 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
     assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Safari Draft');
     assert.equal(document.getElementById('editorAccessBar').hidden, false, 'local draft warning should stay visible');
-    assert(document.getElementById('editorAccessText').textContent.includes('Manual Export'));
-    assert(document.getElementById('editorAccessText').textContent.includes('scheduledata.js'));
-    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Manual Export');
+    assert(document.getElementById('editorAccessText').textContent.includes('.schedule'));
+    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Save .schedule');
     assert.equal(
       document.getElementById('toast').textContent,
       'Created Safari Draft as a local draft'
     );
   });
 
-  it('local draft warning persists after manual export and reminds the user to sync the file', async () => {
+  it('local draft save action persists after saving a .schedule file', async () => {
     resetUiHarnessState();
     setUserName('Tester');
     await createNewSchedule('Safari Draft');
     await wait(600);
 
-    const originalSaveDataFile = window.saveDataFile;
-    let exportCalls = 0;
-    window.saveDataFile = async () => {
-      exportCalls += 1;
-      notifyManualDraftExport();
+    const originalSaveScheduleWorkbookFile = window.saveScheduleWorkbookFile;
+    let saveCalls = 0;
+    window.saveScheduleWorkbookFile = async () => {
+      saveCalls += 1;
       return true;
     };
 
@@ -166,25 +164,26 @@ describe('UI Harness — app shell', () => {
       document.getElementById('editorManualExportBtn').click();
       await wait(0);
     } finally {
-      window.saveDataFile = originalSaveDataFile;
+      window.saveScheduleWorkbookFile = originalSaveScheduleWorkbookFile;
     }
 
-    assert.equal(exportCalls, 1, 'manual export action should stay available from the persistent warning');
+    assert.equal(saveCalls, 1, 'schedule save action should stay available from the persistent warning');
     assert.equal(document.getElementById('editorAccessBar').hidden, false, 'warning should remain visible after export');
-    assert(document.getElementById('editorAccessText').textContent.includes('Move'));
-    assert(document.getElementById('editorAccessText').textContent.includes('app/data'));
-    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Export Again');
+    assert(document.getElementById('editorAccessText').textContent.includes('Saved as a'));
+    assert(document.getElementById('editorAccessText').textContent.includes('.schedule'));
+    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Save Again');
   });
 
-  it('library presents the .schedule workbook path when folder access is unavailable', async () => {
+  it('library presents only the simple workbook actions when folder access is unavailable', async () => {
     resetUiHarnessState();
     showLibrary();
     await wait(0);
 
-    assert(
-      document.getElementById('libraryList').textContent.includes('.schedule'),
-      'library should point users to the workbook file path when no shared folder is connected'
-    );
+    assert.equal(document.getElementById('libraryImportBtn').textContent.trim(), 'Open Schedule');
+    assert.equal(document.getElementById('libraryNewBtn').textContent.trim(), 'Create');
+    assert.equal(document.getElementById('libraryNewName').value, 'New Schedule');
+    assert.equal(document.querySelector('.library-stack').style.display, 'none');
+    assert.equal(document.getElementById('libraryConnectPrompt').style.display, 'none');
   });
 
   it('home-screen import creates a shared schedule from exported JS when folder access is connected', async () => {

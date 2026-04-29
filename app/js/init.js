@@ -69,9 +69,6 @@
     if (days.length && !Store.getActiveDay()) Store.setActiveDay(days[0].id);
   }
 
-  // Show library with connect prompt
-  const prompt = document.getElementById('libraryConnectPrompt');
-  if (prompt) prompt.style.display = 'block';
   showLibrary();
 })();
 

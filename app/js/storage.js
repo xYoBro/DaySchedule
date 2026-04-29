@@ -498,11 +498,11 @@ function updateEditorAccessBar(status) {
     text = '<span class="editor-access-mode">Local Draft</span>'
       + '<span class="editor-access-message">'
       + (_manualDraftExported
-          ? 'Move <strong>scheduledata.js</strong> into shared <strong>app/data</strong> to sync it.'
-          : 'Use <strong>Manual Export</strong> to save <strong>scheduledata.js</strong>.')
+          ? 'Saved as a <strong>.schedule</strong> file. Save again after more edits.'
+          : 'Save this workbook as a <strong>.schedule</strong> file before closing.')
       + '</span>';
     actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
-      + (_manualDraftExported ? 'Export Again' : 'Manual Export')
+      + (_manualDraftExported ? 'Save Again' : 'Save .schedule')
       + '</button>';
     bar.className = 'editor-access-bar editor-access-local';
   } else if (status.state === 'mine' && status.lock) {
@@ -535,7 +535,12 @@ function updateEditorAccessBar(status) {
 
   const manualExportBtn = document.getElementById('editorManualExportBtn');
   if (manualExportBtn) {
-    manualExportBtn.onclick = () => saveDataFile();
+    manualExportBtn.onclick = async () => {
+      const saved = typeof saveScheduleWorkbookFile === 'function'
+        ? await saveScheduleWorkbookFile()
+        : await saveDataFile();
+      if (saved) notifyManualDraftExport();
+    };
     return;
   }
 
