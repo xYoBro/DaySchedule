@@ -88,7 +88,7 @@ describe('inspector — day sheet modal', () => {
     assert.equal(attendeesInput.value, 'Crew chiefs, AGE');
   });
 
-  it('rejects invalid quick-edit time ranges and restores the prior value', () => {
+  it('rejects invalid quick-edit time ranges and restores the prior value', async () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
@@ -108,6 +108,7 @@ describe('inspector — day sheet modal', () => {
     );
     endInput.value = '1100';
     endInput.dispatchEvent(new Event('blur'));
+    await wait(0);
 
     const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
     assert.equal(stored.endTime, '1400');

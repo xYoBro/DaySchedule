@@ -176,14 +176,14 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Export Again');
   });
 
-  it('library explains the local-draft fallback when folder access is unavailable', async () => {
+  it('library presents the .schedule workbook path when folder access is unavailable', async () => {
     resetUiHarnessState();
     showLibrary();
     await wait(0);
 
     assert(
-      document.getElementById('libraryList').textContent.includes('local draft'),
-      'library should explain the local-draft fallback when no shared folder is connected'
+      document.getElementById('libraryList').textContent.includes('.schedule'),
+      'library should point users to the workbook file path when no shared folder is connected'
     );
   });
 
@@ -275,7 +275,8 @@ describe('UI Harness — app shell', () => {
 
     endInput.value = '1000';
     endInput.blur();
-    await wait(20);
+    endInput.dispatchEvent(new Event('blur'));
+    await wait(160);
 
     const updated = Store.getEvents(dayId).find(item => item.id === evt.id);
     assert.equal(updated.startTime, '0900');
@@ -709,14 +710,14 @@ describe('UI Harness — app shell', () => {
     assert.equal(getUserName(), 'SrA Tester');
   });
 
-  it('uses an in-app start-here affordance instead of a separate handout', async () => {
+  it('uses a quiet in-app help affordance instead of a separate handout', async () => {
     resetUiHarnessState();
     showLibrary();
     await wait(0);
 
     const libraryHelpBtn = document.getElementById('libraryHelpBtn');
 
-    assert.equal(libraryHelpBtn.textContent, 'Start Here');
+    assert.equal(libraryHelpBtn.textContent, 'Help');
 
     libraryHelpBtn.click();
     await wait(0);

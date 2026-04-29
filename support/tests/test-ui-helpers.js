@@ -118,7 +118,7 @@ function resetUiHarnessState() {
   document.getElementById('libraryNewInline').style.display = 'none';
   document.getElementById('libraryNewBtn').style.display = '';
   document.getElementById('libraryNewName').value = '';
-  document.getElementById('libraryHelpBtn').textContent = 'Start Here';
+  document.getElementById('libraryHelpBtn').textContent = 'Help';
   document.getElementById('libraryHelpBtn').className = '';
   document.getElementById('editorThemeToggle').textContent = 'Theme';
   document.getElementById('tbTitle').value = '';

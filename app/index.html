@@ -13,44 +13,47 @@
     <div class="library-header">
       <div class="library-brand">Schedule Builder</div>
       <div class="library-header-actions">
-        <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Start Here</button>
+        <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Help</button>
         <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
       </div>
     </div>
     <div class="library-body">
       <section class="library-home">
-        <div class="library-kicker">Start</div>
-        <h1 class="library-home-title">Start a schedule.</h1>
-        <p class="library-home-copy">Import a file or start new. Team edits belong in the shared copy.</p>
+        <div class="library-kicker">Schedule Workbook</div>
+        <h1 class="library-home-title">Open your schedule.</h1>
+        <p class="library-home-copy">Use one <strong>.schedule</strong> file for the whole workbook. Open it, edit it, save it back.</p>
         <div class="library-home-actions">
-          <button class="btn library-import-btn" id="libraryImportBtn">Import File</button>
-          <button class="btn btn-primary library-new-btn" id="libraryNewBtn">New Schedule</button>
+          <button class="btn btn-primary library-import-btn" id="libraryImportBtn">Open Schedule</button>
+          <button class="btn library-new-btn" id="libraryNewBtn">New Schedule File</button>
         </div>
         <div class="library-home-rules">
-          <span class="library-home-rule">Shared copy</span>
-          <span class="library-home-rule">Wait for Saved</span>
+          <span class="library-home-rule">One app file</span>
+          <span class="library-home-rule">One .schedule file</span>
+          <span class="library-home-rule">Save when done</span>
         </div>
       </section>
 
-      <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
-        <div class="library-connect-title">Connect shared folder</div>
-        <div class="library-connect-summary">Pick the shared folder that stores your schedules. In most setups, that folder is <code>app/data</code>.</div>
-        <div class="library-connect-actions">
-          <button class="btn btn-primary" id="libraryConnectBtn">Connect Shared Folder</button>
-          <div class="library-connect-hint">One-time setup.</div>
+      <details id="libraryConnectPrompt" class="library-connect library-advanced" style="display:none;">
+        <summary class="library-advanced-summary">Advanced / legacy options</summary>
+        <div class="library-advanced-body">
+          <div class="library-connect-title">Legacy shared-folder mode</div>
+          <div class="library-connect-summary">For older team setups that still save separate JSON files in <code>app/data</code>. The normal path is opening a <code>.schedule</code> file.</div>
+          <div class="library-connect-actions">
+            <button class="btn" id="libraryConnectBtn">Connect Shared Folder</button>
+            <div class="library-connect-hint">Compatibility only.</div>
+          </div>
         </div>
-        <div class="library-connect-warn">Use the shared folder, not a download or personal copy.</div>
-      </div>
+      </details>
 
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
-        Chrome or Edge auto-saves. Other browsers use <strong>Save to File</strong>.
+        This browser may need manual saves. Use <strong>Save .schedule</strong> before closing.
       </div>
 
       <section class="library-stack">
         <div class="library-stack-head">
           <div>
-            <div class="library-stack-title">Schedules</div>
-            <div class="library-stack-desc">Open a schedule. Click <strong>Edit</strong> to change it.</div>
+            <div class="library-stack-title">Recent and legacy schedules</div>
+            <div class="library-stack-desc">Schedules from an older shared folder appear here when connected.</div>
           </div>
         </div>
         <div class="library-new-inline" id="libraryNewInline" style="display:none;">
@@ -126,20 +129,20 @@
         <div class="help-section">
           <div class="help-section-title">Core</div>
           <div class="help-item">
-            <div class="help-item-label">Shared copy</div>
-            <div class="help-item-desc">Do not edit from Downloads, a ZIP, or a personal backup.</div>
+            <div class="help-item-label">Open Schedule</div>
+            <div class="help-item-desc">Open the <strong>.schedule</strong> workbook you want to edit.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Edit</div>
             <div class="help-item-desc">Click <strong>Edit</strong> only when you are ready to change the schedule.</div>
           </div>
           <div class="help-item help-item-warn">
-            <div class="help-item-label">Saved</div>
-            <div class="help-item-desc">Hand off only after the badge says <strong>Saved</strong>.</div>
+            <div class="help-item-label">Save</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> before closing or sending the file.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Take Over</div>
-            <div class="help-item-desc">Use it only after confirming the other editor is done.</div>
+            <div class="help-item-label">Legacy shared folder</div>
+            <div class="help-item-desc">Use only if your team still works from separate shared JSON files.</div>
           </div>
         </div>
 
@@ -164,16 +167,16 @@
         <div class="help-section">
           <div class="help-section-title">FAQ</div>
           <div class="help-item">
-            <div class="help-item-label">Which folder?</div>
-            <div class="help-item-desc">Choose the shared folder with the saved schedules. In most setups that is <code>app/data</code>.</div>
+            <div class="help-item-label">What file do I open?</div>
+            <div class="help-item-desc">Open the <strong>.schedule</strong> file. That is the workbook.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Teams or SharePoint?</div>
-            <div class="help-item-desc">Sync the shared files to your computer first, then open DaySchedule from that synced folder.</div>
+            <div class="help-item-label">What is import for?</div>
+            <div class="help-item-desc">Use import only for old exports or outside data you want to bring into a workbook.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Can multiple people edit?</div>
-            <div class="help-item-desc">Safest answer: one editor at a time.</div>
+            <div class="help-item-desc">Safest answer: one person edits the workbook file at a time.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Audience vs Specific People?</div>
@@ -184,12 +187,12 @@
             <div class="help-item-desc">Use <strong>Customize</strong>.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Missing someone else&rsquo;s changes?</div>
-            <div class="help-item-desc">Return to the library and reopen the shared schedule.</div>
+            <div class="help-item-label">Need old shared-folder mode?</div>
+            <div class="help-item-desc">Open <strong>Advanced / legacy options</strong> on the start screen.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">When should I export a file?</div>
-            <div class="help-item-desc">Only for backup or when the browser cannot auto-save.</div>
+            <div class="help-item-label">When should I save?</div>
+            <div class="help-item-desc">Save the <strong>.schedule</strong> file before closing or handing it off.</div>
           </div>
         </div>
       </div>

@@ -84,15 +84,15 @@ async function refreshLibraryList() {
 
   if (!hasDirectoryAccess()) {
     const emptyMessage = hasFSAPI()
-      ? 'Connect the shared folder to see team schedules. Or import a file or start a local draft.'
-      : 'This browser cannot connect to the shared folder. Import a file or start a local draft.';
+      ? 'Open a .schedule file or start a new schedule file.'
+      : 'Open a .schedule file or start a local draft.';
     listEl.innerHTML = '<div class="library-empty">' + esc(emptyMessage) + '</div>';
     return;
   }
 
   const files = await listScheduleFiles();
   if (files.length === 0) {
-    listEl.innerHTML = '<div class="library-empty">No schedules yet. Import one or create one.</div>';
+    listEl.innerHTML = '<div class="library-empty">No legacy shared-folder schedules yet.</div>';
     return;
   }
 
@@ -520,13 +520,10 @@ function markHelpSeen() {
 }
 
 function syncHelpEntryPoints() {
-  const seen = hasSeenStartupHelp();
-  const label = seen ? 'Help' : 'Start Here';
-
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) {
-    libraryHelpBtn.textContent = label;
-    libraryHelpBtn.title = seen ? 'Help & shortcuts' : 'Start here';
+    libraryHelpBtn.textContent = 'Help';
+    libraryHelpBtn.title = 'Help & shortcuts';
   }
 }
 

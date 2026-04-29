@@ -829,6 +829,8 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     setTimeout(() => {
       const target = modal.querySelector('[data-event-id="' + focusInfo.eventId + '"][data-focus="' + focusInfo.field + '"]');
       if (target && target.focus) {
+        const active = document.activeElement;
+        if (active && active !== document.body && active !== target && modal.contains(active)) return;
         target.focus();
         if (target.select && target.tagName !== 'SELECT') target.select();
       }
@@ -884,16 +886,30 @@ function wireDayEventSheetModal(modal, dayId) {
       const focusInfo = input._daySheetNextFocus || null;
       input._daySheetNextFocus = null;
       input.value = snapToQuarter(input.value);
-      const nextFocused = e.relatedTarget || document.activeElement;
-      const movingBetweenTimeFields = !!(
-        nextFocused &&
-        nextFocused !== input &&
-        nextFocused.classList &&
-        nextFocused.classList.contains('day-sheet-time-input') &&
-        nextFocused.getAttribute('data-event-id') === eventId
+      const relatedTarget = e.relatedTarget;
+      const field = input.getAttribute('data-field');
+      const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
+      const startCandidate = startInput ? snapToQuarter(startInput.value) : '';
+      const endCandidate = endInput ? snapToQuarter(endInput.value) : '';
+      const stagePairedEndEdit = field === 'startTime'
+        && startCandidate
+        && endCandidate
+        && timeToMinutes(startCandidate) >= timeToMinutes(endCandidate);
+      const isSameRowTimeInput = (target) => !!(
+        target &&
+        target !== input &&
+        target.classList &&
+        target.classList.contains('day-sheet-time-input') &&
+        target.getAttribute('data-event-id') === eventId
       );
-      if (movingBetweenTimeFields) return;
-      commitDayEventSheetTimeRange(modal, dayId, eventId, { focusInfo });
+      if (isSameRowTimeInput(relatedTarget) || isSameRowTimeInput(document.activeElement)) return;
+      setTimeout(() => {
+        if (isSameRowTimeInput(document.activeElement)) return;
+        commitDayEventSheetTimeRange(modal, dayId, eventId, {
+          focusInfo,
+          allowStartTimeStaging: stagePairedEndEdit
+        });
+      }, stagePairedEndEdit ? 80 : 0);
     });
     input.addEventListener('keydown', (e) => {
       const fieldOrder = ['startTime', 'endTime', 'title', 'groupId', 'location'];
@@ -1056,6 +1072,21 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
   const updates = { startTime, endTime };
 
   if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
+    if (options && options.allowStartTimeStaging && startTime !== evt.startTime && endTime === evt.endTime) {
+      if (startInput) startInput.value = startTime;
+      if (endInput) endInput.value = endTime;
+      setTimeout(() => {
+        const current = getDayEventSheetTimeInputs(modal, eventId);
+        const currentStart = current.startInput ? snapToQuarter(current.startInput.value) : '';
+        const currentEnd = current.endInput ? snapToQuarter(current.endInput.value) : '';
+        if (currentStart === startTime && currentEnd === endTime) {
+          commitDayEventSheetTimeRange(modal, dayId, eventId, {
+            focusInfo: options.focusInfo
+          });
+        }
+      }, 140);
+      return;
+    }
     if (startInput) startInput.value = evt.startTime;
     if (endInput) endInput.value = evt.endTime;
     toast('End time must be after start time.');
