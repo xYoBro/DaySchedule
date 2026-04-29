@@ -30,6 +30,8 @@
 const EVENT_SELECTOR = '[data-event-id]';
 
 document.addEventListener('click', e => {
+  if (e.target.closest('.modal-overlay')) return;
+
   const concJump = e.target.closest('[data-conc-jump]');
   if (concJump) {
     const jumpTime = concJump.getAttribute('data-conc-jump');
@@ -74,7 +76,7 @@ document.addEventListener('click', e => {
   const hdr = e.target.closest('.hdr');
   if (hdr && !e.target.closest('.inspector')) {
     if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
-      toast('This schedule is read-only until you claim edit access.');
+      toast('Read-only. Click Edit.');
       return;
     }
     openSettingsModal();

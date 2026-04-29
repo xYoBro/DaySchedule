@@ -6,6 +6,7 @@
  *   refreshLibraryList()         — async — scans data/ and renders schedule list
  *   openSchedule(fileName)       — async — reads file, loads into Store, switches to editor
  *   createNewSchedule(name)      — async — creates file, loads empty schedule into editor
+ *   importScheduleFromLibrary()  — opens file picker, imports exported JS/JSON from home screen
  *   duplicateSchedule(fileName)  — async — copies file with collision avoidance, opens copy
  *   deleteSchedule(fileName)     — async — deletes file, refreshes list
  *   returnToLibrary()            — async — saves if dirty, resets Store, shows library
@@ -32,6 +33,7 @@
  *   #libraryConnectPrompt — connect folder prompt
  *   #libraryConnectBtn   — choose folder button
  *   #libraryNewBtn       — new schedule button
+ *   #libraryImportBtn    — import exported JS/JSON from home screen
  *   #libraryNewInline    — inline name input container
  *   #libraryNewName      — name input field
  *   #libraryNewConfirm   — create button
@@ -58,7 +60,6 @@
 
 let _contextMenuTarget = null;
 const HELP_SEEN_KEY = 'dayschedule_help_seen';
-const HELP_COACHMARK_DISMISSED_KEY = 'dayschedule_help_coachmark_dismissed';
 let _helpActiveTab = 'start';
 
 function showLibrary() {
@@ -83,15 +84,15 @@ async function refreshLibraryList() {
 
   if (!hasDirectoryAccess()) {
     const emptyMessage = hasFSAPI()
-      ? 'Connect the shared schedule folder to browse team schedules. If you need to keep working right now, you can still create a local draft and use Manual Export later.'
-      : 'This browser cannot connect to the shared schedule folder. You can still create a local draft and use Manual Export to save a copy.';
+      ? 'Connect the shared folder to see team schedules. Or import a file or start a local draft.'
+      : 'This browser cannot connect to the shared folder. Import a file or start a local draft.';
     listEl.innerHTML = '<div class="library-empty">' + esc(emptyMessage) + '</div>';
     return;
   }
 
   const files = await listScheduleFiles();
   if (files.length === 0) {
-    listEl.innerHTML = '<div class="library-empty">No schedules yet. Create one to get started.</div>';
+    listEl.innerHTML = '<div class="library-empty">No schedules yet. Import one or create one.</div>';
     return;
   }
 
@@ -106,14 +107,7 @@ async function refreshLibraryList() {
     const timeAgo = meta.lastSavedAt ? formatTimeAgo(meta.lastSavedAt) : '';
     const stats = meta.dayCount + (meta.dayCount === 1 ? ' day' : ' days') + ' \u00b7 '
       + meta.eventCount + (meta.eventCount === 1 ? ' event' : ' events');
-    const accessLine = lockStatus.state === 'mine'
-      ? 'You are editing'
-      : (lockStatus.state === 'locked' && lockStatus.lock
-          ? 'Locked by ' + (lockStatus.lock.ownerName || 'another editor')
-          : 'Available to edit');
-    const metaLine = [stats, timeAgo, accessLine].filter(Boolean).join(' \u00b7 ');
-    const badgeClass = meta.versionCount > 0 ? 'final' : 'draft';
-    const badgeText = meta.versionCount > 0 ? 'Final' : 'Draft';
+    const metaLine = [stats, timeAgo].filter(Boolean).join(' \u00b7 ');
     const accessBadgeClass = lockStatus.state === 'mine'
       ? 'editing'
       : (lockStatus.state === 'locked' ? 'locked' : 'available');
@@ -128,7 +122,6 @@ async function refreshLibraryList() {
     html += '</div>';
     html += '<div class="library-item-badges">';
     html += '<span class="library-item-badge library-item-access ' + accessBadgeClass + '">' + accessBadgeText + '</span>';
-    html += '<span class="library-item-badge ' + badgeClass + '">' + badgeText + '</span>';
     html += '</div>';
     html += '</div>';
   });
@@ -151,11 +144,10 @@ async function openSchedule(fileName) {
 
   if (!await ensureUserName()) return;
 
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
   Store.reset();
   Store.loadPersistedState(data.current);
   setCurrentScheduleFileData(data);
-  const days = Store.getDays();
-  if (days.length) Store.setActiveDay(days[0].id);
 
   setCurrentFile(fileName, data.lastSavedAt);
   hideLibrary();
@@ -172,6 +164,15 @@ async function createNewSchedule(name) {
   const fileName = slug + '.json';
   const userName = getUserName();
 
+  if (hasDirectoryAccess()) {
+    const existing = await readScheduleFile(fileName, { suppressErrors: true });
+    if (existing) {
+      toast('A schedule named ' + name + ' already exists.');
+      return;
+    }
+  }
+
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
   Store.reset();
   Store.setTitle(name);
   const state = Store.getPersistedState();
@@ -188,7 +189,7 @@ async function createNewSchedule(name) {
     renderActiveDay();
     renderInspector();
     sessionSave();
-    toast('Created ' + name + ' locally. Use Manual Export to save a copy.');
+    toast('Created ' + name + ' as a local draft');
     return;
   }
 
@@ -202,6 +203,111 @@ async function createNewSchedule(name) {
   renderActiveDay();
   renderInspector();
   toast('Created ' + name);
+}
+
+function getImportedScheduleBaseName(fileName, state) {
+  const stateTitle = state && state.title ? String(state.title).trim() : '';
+  if (stateTitle) return stateTitle;
+
+  const baseName = String(fileName || '')
+    .replace(/\.[^.]+$/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+
+  if (baseName && baseName.toLowerCase() !== 'scheduledata') return baseName;
+  return 'Imported Schedule';
+}
+
+async function getAvailableImportedScheduleName(baseName) {
+  const files = await listScheduleFiles();
+  const existing = new Set(files.map(file => file.fileName));
+
+  let candidateName = baseName;
+  let candidateFile = scheduleNameToSlug(candidateName) + '.json';
+  if (!existing.has(candidateFile)) return candidateName;
+
+  candidateName = baseName + ' (Imported)';
+  candidateFile = scheduleNameToSlug(candidateName) + '.json';
+  let counter = 2;
+  while (existing.has(candidateFile)) {
+    candidateName = baseName + ' (Imported ' + counter + ')';
+    candidateFile = scheduleNameToSlug(candidateName) + '.json';
+    counter++;
+  }
+  return candidateName;
+}
+
+async function openImportedLocalDraft(state, sourceFileName, importedName, sourceFileData) {
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
+  Store.reset();
+  const draftState = JSON.parse(JSON.stringify(state));
+  draftState.title = importedName;
+  Store.loadPersistedState(draftState);
+
+  setCurrentFile(null, null);
+  setCurrentScheduleFileData({
+    name: importedName,
+    current: Store.getPersistedState(),
+    versions: [],
+    activity: [],
+    theme: (sourceFileData && sourceFileData.theme) || state.theme || undefined,
+  });
+
+  hideLibrary();
+  if (typeof syncCurrentScheduleAccess === 'function') {
+    await syncCurrentScheduleAccess();
+  }
+  syncToolbarTitle();
+  renderActiveDay();
+  renderInspector();
+  sessionSave();
+  toast('Imported ' + sourceFileName + ' as a local draft');
+}
+
+async function importScheduleIntoLibrary(state, sourceFileName, importedName, sourceFileData) {
+  const uniqueName = await getAvailableImportedScheduleName(importedName);
+  const userName = getUserName();
+  const targetFile = scheduleNameToSlug(uniqueName) + '.json';
+
+  const importedState = JSON.parse(JSON.stringify(state));
+  importedState.title = uniqueName;
+  const fileData = buildScheduleFile(uniqueName, importedState, [], userName);
+  if (sourceFileData && sourceFileData.theme) fileData.theme = sourceFileData.theme;
+  const ok = await writeScheduleFile(targetFile, fileData);
+  if (!ok) {
+    toast('Failed to import ' + sourceFileName + '.');
+    return;
+  }
+
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
+  Store.reset();
+  Store.loadPersistedState(fileData.current);
+
+  setCurrentScheduleFileData(fileData);
+  setCurrentFile(targetFile, fileData.lastSavedAt);
+  hideLibrary();
+  await claimCurrentScheduleLock({ silent: true });
+  syncToolbarTitle();
+  renderActiveDay();
+  renderInspector();
+  toast('Imported ' + sourceFileName + ' as ' + uniqueName);
+}
+
+async function importScheduleFromLibrary() {
+  if (hasDirectoryAccess() && !getUserName()) {
+    if (!await ensureUserName()) return;
+  }
+
+  importDataFile({
+    onImported: async ({ fileName, state, fileData }) => {
+      const importedName = getImportedScheduleBaseName(fileName, state);
+      if (hasDirectoryAccess()) {
+        await importScheduleIntoLibrary(state, fileName, importedName, fileData);
+        return;
+      }
+      await openImportedLocalDraft(state, fileName, importedName, fileData);
+    },
+  });
 }
 
 async function duplicateSchedule(fileName) {
@@ -260,6 +366,7 @@ async function returnToLibrary() {
     if (!ok) return;
   }
   await releaseCurrentScheduleLock();
+  if (typeof clearUndoHistory === 'function') clearUndoHistory();
   setCurrentFile(null, null);
   Store.reset();
   setCurrentScheduleFileData(null);
@@ -336,6 +443,7 @@ function wireLibrary() {
   }
 
   const newBtn = document.getElementById('libraryNewBtn');
+  const importBtn = document.getElementById('libraryImportBtn');
   const newInline = document.getElementById('libraryNewInline');
   const newInput = document.getElementById('libraryNewName');
   const newConfirm = document.getElementById('libraryNewConfirm');
@@ -371,18 +479,19 @@ function wireLibrary() {
     };
   }
 
+  if (importBtn) {
+    importBtn.onclick = () => {
+      if (newInline && newBtn) {
+        newInline.style.display = 'none';
+        newBtn.style.display = '';
+      }
+      importScheduleFromLibrary();
+    };
+  }
+
   // Help button in library header
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) libraryHelpBtn.onclick = () => openHelpModal();
-
-  const floatingHelpBtn = document.getElementById('floatingHelpBtn');
-  if (floatingHelpBtn) floatingHelpBtn.onclick = () => openHelpModal();
-
-  const coachmarkOpenBtn = document.getElementById('helpCoachmarkOpenBtn');
-  if (coachmarkOpenBtn) coachmarkOpenBtn.onclick = () => openHelpModal({ tab: 'start' });
-
-  const coachmarkDismissBtn = document.getElementById('helpCoachmarkDismissBtn');
-  if (coachmarkDismissBtn) coachmarkDismissBtn.onclick = () => dismissHelpCoachmark();
 
   const themeToggle = document.getElementById('editorThemeToggle');
   if (themeToggle) {
@@ -408,40 +517,16 @@ function hasSeenStartupHelp() {
 
 function markHelpSeen() {
   localStorage.setItem(HELP_SEEN_KEY, '1');
-  localStorage.removeItem(HELP_COACHMARK_DISMISSED_KEY);
-}
-
-function isHelpCoachmarkDismissed() {
-  return localStorage.getItem(HELP_COACHMARK_DISMISSED_KEY) === '1';
-}
-
-function dismissHelpCoachmark() {
-  localStorage.setItem(HELP_COACHMARK_DISMISSED_KEY, '1');
-  syncHelpEntryPoints();
 }
 
 function syncHelpEntryPoints() {
-  const libraryVisible = document.getElementById('libraryView') && document.getElementById('libraryView').classList.contains('active');
-  const helpOpen = document.getElementById('helpModal') && document.getElementById('helpModal').classList.contains('active');
   const seen = hasSeenStartupHelp();
   const label = seen ? 'Help' : 'Start Here';
 
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) {
     libraryHelpBtn.textContent = label;
-    libraryHelpBtn.classList.toggle('attention', !seen);
-  }
-
-  const floatingHelpBtn = document.getElementById('floatingHelpBtn');
-  if (floatingHelpBtn) {
-    floatingHelpBtn.textContent = label;
-    floatingHelpBtn.classList.toggle('attention', !seen);
-    floatingHelpBtn.title = seen ? 'Help & shortcuts' : 'Start here';
-  }
-
-  const coachmark = document.getElementById('helpCoachmark');
-  if (coachmark) {
-    coachmark.hidden = !!(seen || isHelpCoachmarkDismissed() || helpOpen || !libraryVisible);
+    libraryHelpBtn.title = seen ? 'Help & shortcuts' : 'Start here';
   }
 }
 
@@ -475,7 +560,7 @@ function openHelpModal(options) {
   const wasSeen = hasSeenStartupHelp();
   const defaultTab = options && options.tab
     ? options.tab
-    : (wasSeen ? 'faq' : 'start');
+    : (wasSeen ? (_helpActiveTab || 'faq') : 'start');
   markHelpSeen();
   _helpActiveTab = defaultTab;
   overlay.classList.add('active');

@@ -32,6 +32,7 @@
         <button id="libraryConnectBtn">Connect Shared Folder</button>
       </div>
       <div id="libraryFallbackBanner" style="display:none;"></div>
+      <button id="libraryImportBtn">Import File</button>
       <button id="libraryNewBtn">New Schedule</button>
       <div id="libraryNewInline" style="display:none;">
         <input type="text" id="libraryNewName">
@@ -56,6 +57,7 @@
       <button id="overflowBtn">More</button>
       <div id="overflowDropdown">
         <button id="versionsMenuBtn">Versions</button>
+        <button id="saveScheduleFileBtn">Save .schedule</button>
         <button id="printBtn">Print</button>
         <button id="helpBtn">Help</button>
       </div>
@@ -78,18 +80,12 @@
 
   <div id="toast" class="toast"></div>
 
-  <div id="helpCoachmark" hidden>
-    <button id="helpCoachmarkOpenBtn">Open Help</button>
-    <button id="helpCoachmarkDismissBtn">Not now</button>
-  </div>
-  <button id="floatingHelpBtn">Start Here</button>
-
   <div class="modal-overlay" id="helpModal">
     <div class="modal">
       <div class="modal-tabs help-tabs">
-        <button class="modal-tab active" data-help-tab="start">Start Here</button>
+        <button class="modal-tab active" data-help-tab="start">Start</button>
         <button class="modal-tab" data-help-tab="faq">FAQ</button>
-        <button class="modal-tab" data-help-tab="tips">Tips &amp; Tricks</button>
+        <button class="modal-tab" data-help-tab="tips">Shortcuts</button>
       </div>
       <div class="help-tab-panel active" data-help-panel="start"></div>
       <div class="help-tab-panel" data-help-panel="faq"></div>

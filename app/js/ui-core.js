@@ -102,6 +102,10 @@ document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   const active = document.querySelector('.modal-overlay.active');
   if (!active) return;
+  if (active.id === 'staleWarningModal') {
+    e.preventDefault();
+    return;
+  }
   if (active.id === 'settingsModal' && typeof closeSettingsModal === 'function') {
     e.preventDefault();
     closeSettingsModal();

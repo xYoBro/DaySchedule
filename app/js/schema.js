@@ -6,6 +6,8 @@
  *   normalizeGroup(raw) → {id, name, scope, color} | null
  *   normalizeNote(raw)  → {id, category, text} | null
  *   normalizeDay(raw)   → {id, date, label, startTime, endTime, events[], notes[]} | null
+ *   extractSchedulePayload(raw) → {state, fileData}
+ *   normalizePersistedState(raw, options?) → persisted Store shape
  *
  * REQUIRES:
  *   utils.js     — generateId()
@@ -72,5 +74,37 @@ function normalizeDay(raw) {
     endTime:   normalizeTime(raw.endTime || '1630'),
     events:    Array.isArray(raw.events) ? raw.events.map(normalizeEvent).filter(Boolean) : [],
     notes:     Array.isArray(raw.notes) ? raw.notes.map(normalizeNote).filter(Boolean) : [],
+  };
+}
+
+function extractSchedulePayload(raw) {
+  if (raw && typeof raw === 'object' && raw.current && typeof raw.current === 'object') {
+    return { state: raw.current, fileData: raw };
+  }
+  return { state: raw, fileData: null };
+}
+
+function normalizePersistedState(raw, options) {
+  const opts = options || {};
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const days = Array.isArray(source.days) ? source.days.map(normalizeDay).filter(Boolean) : [];
+  if (opts.requireDays && !days.length) {
+    throw new Error('Invalid schedule file \u2014 no valid days found.');
+  }
+  const groups = Array.isArray(source.groups)
+    ? source.groups.map(normalizeGroup).filter(Boolean)
+    : JSON.parse(JSON.stringify(DEFAULT_GROUPS));
+  return {
+    title: source.title != null ? String(source.title) : '',
+    days,
+    groups,
+    logo: source.logo !== undefined ? source.logo : null,
+    footer: {
+      contact: source.footer && source.footer.contact ? String(source.footer.contact) : '',
+      poc: source.footer && source.footer.poc ? String(source.footer.poc) : '',
+      updated: source.footer && source.footer.updated ? String(source.footer.updated) : '',
+    },
+    activeDay: source.activeDay || null,
+    theme: source.theme || null,
   };
 }

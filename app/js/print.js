@@ -89,7 +89,9 @@ function printAllDays() {
 // is purely visual and does not change layout height, causing page overflow.
 
 function applyPrintScaling(forPrint) {
-  const pages = document.querySelectorAll('.print-page');
+  const pages = forPrint
+    ? document.querySelectorAll('.print-page')
+    : document.querySelectorAll('.page:not(.print-page)');
   if (pages.length) {
     pages.forEach(p => applyPrintScalingToPage(p, forPrint));
   } else {

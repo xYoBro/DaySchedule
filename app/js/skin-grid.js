@@ -30,12 +30,8 @@ function renderDayBody_grid(dayId) {
     return html;
   }
 
-  // Separate shared (main-scope/break) events from group-specific
-  const sharedEvents = events.filter(e => {
-    if (e.isBreak) return true;
-    const g = groups.find(gr => gr.id === e.groupId);
-    return g && g.scope === 'main';
-  });
+  // Separate shared/main-track events from group-specific events.
+  const sharedEvents = events.filter(e => isEventEffectiveMain(e, groups));
   const groupEvents = events.filter(e => !sharedEvents.includes(e));
 
   // Get groups that have events
@@ -70,9 +66,9 @@ function renderDayBody_grid(dayId) {
   for (let i = 0; i < timeSlots.length - 1; i++) {
     const slotStart = timeSlots[i];
 
-    // Check for shared event starting at this time
-    const shared = sharedEvents.find(e => e.startTime === slotStart);
-    if (shared) {
+    // Check for shared events starting at this time.
+    const sharedAtSlot = sharedEvents.filter(e => e.startTime === slotStart);
+    sharedAtSlot.forEach(shared => {
       const sharedExceptions = getSharedEventExceptions(shared, events, groups);
       const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
       const bannerClass = shared.isBreak ? 'grid-banner grid-banner-break' : 'grid-banner';
@@ -97,10 +93,10 @@ function renderDayBody_grid(dayId) {
       html += '</div>';
       html += '</div>';
       html += '</div>';
-    }
+    });
 
     const groupRow = renderGridRow(slotStart, activeGroups, groupEvents);
-    if (!shared || groupRow.hasGroupActivity) {
+    if (!sharedAtSlot.length || groupRow.hasGroupActivity) {
       html += groupRow.html;
     }
   }

@@ -36,6 +36,82 @@ describe('Storage — buildScheduleFile', () => {
   });
 });
 
+describe('Persistence — .schedule workbook format', () => {
+  function makeWorkbookFixture() {
+    const state = {
+      title: 'Workbook Drill',
+      days: [{
+        id: 'day_workbook',
+        date: '2026-07-11',
+        startTime: '0700',
+        endTime: '1630',
+        events: [{
+          id: 'evt_workbook',
+          title: 'Workbook Brief',
+          startTime: '0900',
+          endTime: '1000',
+          groupId: 'grp_all',
+          isMainEvent: true,
+        }],
+        notes: [],
+      }],
+      groups: DEFAULT_GROUPS,
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+      activeDay: 'day_workbook',
+      theme: { skin: 'grid', palette: 'airforce', customColors: null },
+    };
+    const fileData = buildScheduleFile('Workbook Drill', state, [{ name: 'Baseline', data: state }], 'Tester');
+    fileData.theme = state.theme;
+    return { state, fileData };
+  }
+
+  it('serializes a full schedule envelope into a .schedule workbook object', () => {
+    const fixture = makeWorkbookFixture();
+    const content = buildScheduleWorkbookContent(fixture.fileData);
+    const parsedJson = JSON.parse(content);
+
+    assert.equal(parsedJson.fileType, 'dayschedule');
+    assert.equal(parsedJson.schemaVersion, 1);
+    assert.equal(parsedJson.schedule.name, 'Workbook Drill');
+    assert.equal(parsedJson.schedule.versions.length, 1);
+    assert.equal(parsedJson.schedule.theme.skin, 'grid');
+  });
+
+  it('parses .schedule files without dropping theme, versions, or active day', () => {
+    const fixture = makeWorkbookFixture();
+    const parsed = parseScheduleWorkbookContent(buildScheduleWorkbookContent(fixture.fileData), 'workbook.schedule');
+
+    assert.equal(parsed.kind, 'schedule-workbook');
+    assert.equal(parsed.sourceFormat, 'schedule');
+    assert.equal(parsed.state.title, 'Workbook Drill');
+    assert.equal(parsed.state.activeDay, 'day_workbook');
+    assert.equal(parsed.fileData.versions[0].name, 'Baseline');
+    assert.equal(parsed.fileData.theme.palette, 'airforce');
+  });
+
+  it('parses legacy SAVED_STATE wrappers with trailing JavaScript safely', () => {
+    const fixture = makeWorkbookFixture();
+    const content = 'window.SAVED_STATE = ' + JSON.stringify(fixture.state) + ';\nwindow.after = true;';
+    const parsed = parseScheduleWorkbookContent(content, 'scheduledata.js');
+
+    assert.equal(parsed.kind, 'schedule-state');
+    assert.equal(parsed.sourceFormat, 'saved-state-js');
+    assert.equal(parsed.state.days.length, 1);
+    assert.equal(parsed.state.days[0].events[0].title, 'Workbook Brief');
+  });
+
+  it('rejects workbook files with no valid days', () => {
+    assert.throws(() => {
+      parseScheduleWorkbookContent(JSON.stringify({
+        fileType: 'dayschedule',
+        schemaVersion: 1,
+        schedule: { current: { title: 'Broken', days: [], groups: [] } },
+      }), 'broken.schedule');
+    });
+  });
+});
+
 describe('Storage — parseScheduleMeta', () => {
   it('extracts metadata without full data load', () => {
     const file = {

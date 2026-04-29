@@ -36,7 +36,7 @@ function renderDayBody_phases(dayId) {
 
   events.forEach(evt => {
     const group = groups.find(g => g.id === evt.groupId);
-    const isPhase = (group && group.scope === 'main') || evt.isBreak;
+    const isPhase = isEventEffectiveMain(evt, groups);
 
     if (isPhase) {
       currentPhase = {

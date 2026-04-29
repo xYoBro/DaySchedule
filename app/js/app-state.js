@@ -126,6 +126,14 @@ const Store = {
     if (g) Object.assign(g, updates);
   },
   removeGroup(id) {
+    _days.forEach(day => {
+      day.events.forEach(evt => {
+        if (evt.groupId === id) {
+          evt.groupId = '';
+          evt.isMainEvent = false;
+        }
+      });
+    });
     _groups = _groups.filter(g => g.id !== id);
   },
 
@@ -158,13 +166,14 @@ const Store = {
     }));
   },
   restore(snap) {
-    _title = snap.title || '';
-    _days = snap.days || [];
-    _groups = snap.groups || JSON.parse(JSON.stringify(DEFAULT_GROUPS));
-    _logo = snap.logo || null;
-    _footer = snap.footer || { contact: '', poc: '', updated: '' };
-    _activeDay = _days.find(d => d.id === snap.activeDay)
-      ? snap.activeDay
+    const state = snap || {};
+    _title = state.title != null ? state.title : '';
+    _days = Array.isArray(state.days) ? state.days : [];
+    _groups = Array.isArray(state.groups) ? state.groups : JSON.parse(JSON.stringify(DEFAULT_GROUPS));
+    _logo = state.logo !== undefined ? state.logo : null;
+    _footer = { contact: '', poc: '', updated: '', ...(state.footer || {}) };
+    _activeDay = _days.find(d => d.id === state.activeDay)
+      ? state.activeDay
       : (_days[0] ? _days[0].id : null);
   },
 
@@ -194,10 +203,16 @@ const Store = {
     return { title: _title, days: _days, groups: _groups, logo: _logo, footer: _footer };
   },
   loadPersistedState(state) {
-    if (state.title != null) _title = state.title;
-    if (state.days) _days = state.days;
-    if (state.groups) _groups = state.groups;
-    if (state.logo !== undefined) _logo = state.logo;
-    if (state.footer) _footer = state.footer;
+    const normalized = (typeof normalizePersistedState === 'function')
+      ? normalizePersistedState(state || {})
+      : (state || {});
+    _title = normalized.title != null ? normalized.title : '';
+    _days = Array.isArray(normalized.days) ? normalized.days : [];
+    _groups = Array.isArray(normalized.groups) ? normalized.groups : JSON.parse(JSON.stringify(DEFAULT_GROUPS));
+    _logo = normalized.logo !== undefined ? normalized.logo : null;
+    _footer = { contact: '', poc: '', updated: '', ...(normalized.footer || {}) };
+    _activeDay = _days.find(d => d.id === normalized.activeDay)
+      ? normalized.activeDay
+      : (_days[0] ? _days[0].id : null);
   },
 };

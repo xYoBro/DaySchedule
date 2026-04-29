@@ -298,6 +298,63 @@ describe('UI Harness — render and skins', () => {
     );
   });
 
+  it('grid skin renders every shared event that starts in the same slot', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'grid' });
+    Store.addEvent(seeded.day1.id, {
+      title: 'Commander Opening Remarks',
+      startTime: '0700',
+      endTime: '0715',
+      groupId: 'grp_all',
+      isMainEvent: true,
+    });
+
+    renderDay(seeded.day1.id);
+
+    assert(document.getElementById('scheduleContainer').textContent.includes('Formation'));
+    assert(document.getElementById('scheduleContainer').textContent.includes('Commander Opening Remarks'));
+    assert(
+      Array.from(document.querySelectorAll('#scheduleContainer .grid-banner[data-event-id]'))
+        .some(node => node.textContent.includes('Commander Opening Remarks')),
+      'the same-start commander remarks banner should render alongside formation'
+    );
+  });
+
+  it('highlighted limited-audience events render on the main track in every structured skin', () => {
+    ['grid', 'cards', 'phases'].forEach(skin => {
+      resetUiHarnessState();
+      const seeded = seedUiSchedule({ skin: skin });
+      const highlighted = Store.addEvent(seeded.day1.id, {
+        title: 'Commander-Highlighted SNCO Sync',
+        startTime: '1530',
+        endTime: '1600',
+        groupId: 'grp_snco',
+        isMainEvent: true,
+      });
+
+      renderDay(seeded.day1.id);
+
+      if (skin === 'grid') {
+        assert(
+          document.querySelector('.grid-banner[data-event-id="' + highlighted.id + '"]'),
+          'grid should place highlighted limited events in the shared banner track'
+        );
+      }
+      if (skin === 'cards') {
+        assert(
+          document.querySelector('.cards-shared-item[data-event-id="' + highlighted.id + '"]'),
+          'cards should place highlighted limited events in the shared timeline'
+        );
+      }
+      if (skin === 'phases') {
+        assert(
+          document.querySelector('.phase-header[data-event-id="' + highlighted.id + '"]'),
+          'phases should place highlighted limited events as phase headers'
+        );
+      }
+    });
+  });
+
   it('every layout exposes every sample event at least once', () => {
     resetUiHarnessState();
     loadSampleData();

@@ -134,9 +134,6 @@ function resetUiHarnessState() {
   document.getElementById('scheduleContainer').innerHTML = '';
   document.getElementById('inspectorPanel').innerHTML = '';
   document.getElementById('toast').textContent = '';
-  document.getElementById('floatingHelpBtn').textContent = 'Start Here';
-  document.getElementById('floatingHelpBtn').className = '';
-  document.getElementById('helpCoachmark').hidden = true;
   document.getElementById('previewPage').className = 'page';
 
   [

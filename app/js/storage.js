@@ -245,7 +245,7 @@ async function promptForDirectory() {
       if (fileCount === 0) verified = true;
     }
     if (!verified) {
-      toast("That doesn't look like the shared schedule folder. In most setups, choose the 'app/data' folder inside the shared DaySchedule copy.");
+      toast("Choose the shared DaySchedule 'app/data' folder.");
       return null;
     }
     // Confirm the user understands this must be the shared team folder
@@ -304,18 +304,17 @@ function showLockTakeoverConfirmation(lock) {
 
     const ownerName = lock.ownerName || 'another editor';
     const content = overlay.querySelector('.modal');
-    content.innerHTML = '<h2>Take over edit access?</h2>'
-      + '<p class="takeover-desc">This schedule is currently locked by <strong>' + esc(ownerName)
-      + '</strong> until <strong>' + esc(formatLockExpiry(lock.expiresAt))
-      + '</strong>. Use takeover only if that editor is unavailable or has already handed the schedule off.</p>'
+    content.innerHTML = '<h2>Take over editing?</h2>'
+      + '<p class="takeover-desc"><strong>' + esc(ownerName)
+      + '</strong> has it until <strong>' + esc(formatLockExpiry(lock.expiresAt))
+      + '</strong>.</p>'
       + '<div class="takeover-list">'
-      + '<div class="takeover-item takeover-warn">If ' + esc(ownerName) + ' is still editing, their unsaved work may be stranded when you take over.</div>'
-      + '<div class="takeover-item takeover-info">This action is intended for a lead or supervisor who needs to unblock the team.</div>'
+      + '<div class="takeover-item takeover-warn">If ' + esc(ownerName) + ' is still editing, recent work may be lost.</div>'
       + '</div>'
-      + '<label class="takeover-check"><input type="checkbox" id="takeoverAcknowledge"> I confirmed the current editor is unavailable or the handoff is complete.</label>'
+      + '<label class="takeover-check"><input type="checkbox" id="takeoverAcknowledge"> I confirmed they are done.</label>'
       + '<div class="modal-actions">'
       + '<button class="btn" id="takeoverCancelBtn">Cancel</button>'
-      + '<button class="btn btn-danger" id="takeoverConfirmBtn" disabled>Take Over Lock</button>'
+      + '<button class="btn btn-danger" id="takeoverConfirmBtn" disabled>Take Over</button>'
       + '</div>';
 
     const acknowledge = content.querySelector('#takeoverAcknowledge');
@@ -429,9 +428,9 @@ function formatLockExpiry(expiresAt) {
 
 function getLostLockMessage(status) {
   if (status && status.state === 'locked' && status.lock) {
-    return 'Edit lock was taken over by ' + (status.lock.ownerName || 'another editor') + '. DaySchedule switched to read-only.';
+    return 'Edit lock was taken over by ' + (status.lock.ownerName || 'another editor') + '. Read-only now.';
   }
-  return 'Edit lock is no longer active. Click Edit again to keep editing.';
+  return 'Edit lock is gone. Click Edit again.';
 }
 
 async function readScheduleLock(fileName) {
@@ -499,8 +498,8 @@ function updateEditorAccessBar(status) {
     text = '<span class="editor-access-mode">Local Draft</span>'
       + '<span class="editor-access-message">'
       + (_manualDraftExported
-          ? 'Manual export downloaded. It is still not synced yet. Put <strong>scheduledata.js</strong> into the shared DaySchedule <strong>app/data</strong> folder, then reopen it from the shared copy.'
-          : 'This schedule only exists in this browser right now. Use <strong>Manual Export</strong>, then put <strong>scheduledata.js</strong> into the shared DaySchedule <strong>app/data</strong> folder so the team can open it.')
+          ? 'Move <strong>scheduledata.js</strong> into shared <strong>app/data</strong> to sync it.'
+          : 'Use <strong>Manual Export</strong> to save <strong>scheduledata.js</strong>.')
       + '</span>';
     actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
       + (_manualDraftExported ? 'Export Again' : 'Manual Export')
@@ -508,22 +507,23 @@ function updateEditorAccessBar(status) {
     bar.className = 'editor-access-bar editor-access-local';
   } else if (status.state === 'mine' && status.lock) {
     text = '<span class="editor-access-mode">Editing</span>'
-      + '<span class="editor-access-message">You are editing as '
+      + '<span class="editor-access-message">Editing as '
       + esc(status.lock.ownerName || getUserName() || 'You')
-      + '. Lock refreshes automatically until ' + esc(formatLockExpiry(status.lock.expiresAt)) + '.</span>';
+      + '. Wait for <strong>Saved</strong>.</span>';
     actions = '<button class="btn" id="editorReleaseBtn">Done Editing</button>';
     bar.className = 'editor-access-bar editor-access-editing';
   } else if (status.state === 'locked' && status.lock) {
     text = '<span class="editor-access-mode">Locked by '
       + esc(status.lock.ownerName || 'another editor')
-      + '</span><span class="editor-access-message">Viewing only until '
-      + esc(formatLockExpiry(status.lock.expiresAt)) + '.</span>';
+      + '</span><span class="editor-access-message">Read-only until '
+      + esc(formatLockExpiry(status.lock.expiresAt))
+      + '.</span>';
     actions = '<button class="btn" id="editorRefreshLockBtn">Check Again</button>'
       + '<button class="btn btn-danger" id="editorTakeOverBtn">Take Over</button>';
     bar.className = 'editor-access-bar editor-access-readonly';
   } else {
     text = '<span class="editor-access-mode">Viewing</span>'
-      + '<span class="editor-access-message">This schedule is open in read-only mode. Click Edit to make changes.</span>';
+      + '<span class="editor-access-message">Read-only.</span>';
     actions = '<button class="btn btn-primary" id="editorClaimBtn">Edit</button>';
     bar.className = 'editor-access-bar editor-access-available';
   }
@@ -717,7 +717,7 @@ async function refreshCurrentScheduleLock() {
     applyCurrentScheduleAccess(status);
     if (typeof closeDayEventSheetModal === 'function') closeDayEventSheetModal();
     renderInspector();
-    toast('Could not refresh the edit lock. DaySchedule switched to read-only.');
+    toast('Could not refresh the edit lock. Read-only now.');
     return false;
   }
   _currentScheduleLock = current;
@@ -826,6 +826,11 @@ async function deleteScheduleFile(fileName) {
 
 async function renameScheduleFile(oldName, newName) {
   if (!_dirHandle || oldName === newName) return true;
+  const existingTarget = await readScheduleFile(newName, { suppressErrors: true });
+  if (existingTarget) {
+    toast('A schedule with that name already exists.');
+    return false;
+  }
   const data = await readScheduleFile(oldName);
   if (!data) return false;
   const wrote = await writeScheduleFile(newName, data);
@@ -889,7 +894,7 @@ async function saveCurrentSchedule() {
   fileData.current = state;
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
-  if (existing) fileData.name = state.title || fileData.name;
+  if (existing) fileData.name = state.title != null ? state.title : fileData.name;
   ensureActivityLog(fileData);
 
   // Sync theme from in-memory state (set by Appearance tab)
@@ -917,7 +922,7 @@ async function saveCurrentSchedule() {
 }
 
 function forceSave() {
-  if (!isCurrentScheduleEditable()) { toast('This schedule is read-only until you click Edit.'); return; }
+  if (!isCurrentScheduleEditable()) { toast('Read-only. Click Edit.'); return; }
   clearTimeout(_autosaveTimer);
   saveCurrentSchedule().then(ok => {
     if (ok) toast('Saved');
@@ -997,8 +1002,8 @@ function showStaleDataWarning(otherUser, otherTime, otherData) {
   content.innerHTML = '<h2>External Changes Detected</h2>'
     + '<p style="margin:12px 0;font-size:14px;color:#48484a;">' + esc(msg) + '</p>'
     + '<div class="modal-actions">'
-    + '<button class="btn" id="staleLoadBtn">Load theirs</button>'
-    + '<button class="btn btn-primary" id="staleOverwriteBtn">Overwrite</button>'
+    + '<button class="btn" id="staleLoadBtn">Load Latest</button>'
+    + '<button class="btn btn-primary" id="staleOverwriteBtn">Keep Mine</button>'
     + '</div>';
 
   overlay.classList.add('active');
@@ -1055,8 +1060,8 @@ function promptUserName() {
     const overlay = document.getElementById('userNameModal');
     if (!overlay) { resolve(''); return; }
     const content = overlay.querySelector('.modal');
-    content.innerHTML = '<h2>Welcome</h2>'
-      + '<p style="margin:12px 0;font-size:14px;color:#48484a;">What\'s your name? Use the real name your team will recognize. DaySchedule tags saves, versions, and takeovers with it.</p>'
+  content.innerHTML = '<h2>Welcome</h2>'
+      + '<p style="margin:12px 0;font-size:14px;color:#48484a;">Enter the name your team will recognize.</p>'
       + '<input type="text" id="userNameInput" placeholder="e.g., SrA Martinez" style="width:100%;padding:8px 12px;font-size:14px;border:1px solid #d2d2d7;border-radius:6px;">'
       + '<div class="modal-actions">'
       + '<button class="btn btn-primary" id="userNameDone">Continue</button>'
@@ -1143,6 +1148,7 @@ async function createVersion(versionName) {
       memFileData.versions = fileData.versions;
     }
     updateSaveIndicator('saved');
+    sessionSave({ skipDirty: true });
   }
   return ok;
 }
@@ -1194,6 +1200,7 @@ async function restoreVersion(versionIndex) {
     renderActiveDay();
     syncToolbarTitle();
     renderInspector();
+    sessionSave({ skipDirty: true });
   }
   return ok;
 }

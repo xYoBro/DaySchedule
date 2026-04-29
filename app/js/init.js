@@ -53,7 +53,7 @@
 
   if (handle) {
     // Check for SAVED_STATE migration
-    if (typeof SAVED_STATE !== 'undefined' && SAVED_STATE && SAVED_STATE.title) {
+    if (typeof SAVED_STATE !== 'undefined' && hasSavedScheduleState(SAVED_STATE)) {
       await migrateSavedState(SAVED_STATE);
     }
     showLibrary();
@@ -61,11 +61,9 @@
   }
 
   // No handle — check if we have legacy data to migrate
-  if (typeof SAVED_STATE !== 'undefined' && SAVED_STATE && SAVED_STATE.title) {
+  if (typeof SAVED_STATE !== 'undefined' && hasSavedScheduleState(SAVED_STATE)) {
     // Load into Store so user can see their data while we prompt for folder
     Store.loadPersistedState(SAVED_STATE);
-    const days = Store.getDays();
-    if (days.length) Store.setActiveDay(days[0].id);
   } else if (sessionLoad()) {
     const days = Store.getDays();
     if (days.length && !Store.getActiveDay()) Store.setActiveDay(days[0].id);
@@ -76,6 +74,10 @@
   if (prompt) prompt.style.display = 'block';
   showLibrary();
 })();
+
+function hasSavedScheduleState(state) {
+  return !!(state && Array.isArray(state.days));
+}
 
 async function migrateSavedState(savedState) {
   // Check if already migrated (a file with this title exists)
@@ -99,7 +101,7 @@ async function migrateSavedState(savedState) {
 
 async function legacyBoot() {
   // FSAPI not available — fall back to old behavior
-  if (typeof SAVED_STATE !== 'undefined' && SAVED_STATE && SAVED_STATE.title) {
+  if (typeof SAVED_STATE !== 'undefined' && hasSavedScheduleState(SAVED_STATE)) {
     Store.loadPersistedState(SAVED_STATE);
   } else if (!sessionLoad()) {
     loadSampleData();

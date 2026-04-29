@@ -66,6 +66,27 @@ describe('UI Harness — print', () => {
     }
   });
 
+  it('screen rerender scales the preview page after all-days print pages remain in the DOM', async () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'bands', dayCount: 2 });
+    let printCalls = 0;
+    const originalPrint = window.print;
+    window.print = () => { printCalls += 1; };
+
+    try {
+      printAllDays();
+      await wait(250);
+      const previewPage = document.getElementById('previewPage');
+      stubScrollHeight(previewPage, [2000, 2000, 2000, 2000]);
+      renderDay(seeded.day1.id);
+
+      assert.equal(printCalls, 1);
+      assert.equal(previewPage.dataset.printScaled, '1');
+    } finally {
+      window.print = originalPrint;
+    }
+  });
+
   it('removePrintScaling clears CSS vars and zoom state', () => {
     resetUiHarnessState();
 

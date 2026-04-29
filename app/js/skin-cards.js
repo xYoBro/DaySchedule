@@ -30,12 +30,8 @@ function renderDayBody_cards(dayId) {
     return html;
   }
 
-  // Separate shared (main-scope) events from group-specific
-  const sharedEvents = events.filter(e => {
-    if (e.isBreak) return true;
-    const g = groups.find(gr => gr.id === e.groupId);
-    return g && g.scope === 'main';
-  });
+  // Separate shared/main-track events from group-specific events.
+  const sharedEvents = events.filter(e => isEventEffectiveMain(e, groups));
   const groupEvents = events.filter(e => !sharedEvents.includes(e));
 
   // Get groups that have events

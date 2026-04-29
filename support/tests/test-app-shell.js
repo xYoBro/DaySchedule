@@ -1,4 +1,4 @@
-async function importUiJson(state, fileName) {
+async function importUiFile(triggerImport, state, fileName) {
   const originalCreateElement = document.createElement.bind(document);
   let importInput = null;
 
@@ -9,17 +9,29 @@ async function importUiJson(state, fileName) {
   };
 
   try {
-    importDataFile();
+    triggerImport();
     assert(importInput, 'import should create a file input');
+    const isJs = /\.js$/i.test(fileName || '');
+    const fileBody = isJs
+      ? '// Schedule Data — Auto-saved\nconst SAVED_STATE = ' + JSON.stringify(state, null, 2) + ';\n'
+      : JSON.stringify(state);
     Object.defineProperty(importInput, 'files', {
       configurable: true,
-      value: [new File([JSON.stringify(state)], fileName || 'import.json', { type: 'application/json' })],
+      value: [new File([fileBody], fileName || 'import.json', { type: isJs ? 'text/javascript' : 'application/json' })],
     });
     importInput.dispatchEvent(new Event('change'));
-    await wait(30);
+    await wait(160);
   } finally {
     document.createElement = originalCreateElement;
   }
+}
+
+async function importUiJson(state, fileName) {
+  return importUiFile(() => importDataFile(), state, fileName);
+}
+
+async function importUiFromLibrary(state, fileName) {
+  return importUiFile(() => document.getElementById('libraryImportBtn').click(), state, fileName);
 }
 
 describe('UI Harness — app shell', () => {
@@ -79,6 +91,37 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
   });
 
+  it('createNewSchedule does not overwrite an existing shared-folder file', async () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+    setUserName('Tester');
+
+    const originalState = {
+      title: 'Existing June Drill',
+      days: [{
+        id: 'day_existing',
+        date: '2026-06-01',
+        startTime: '0700',
+        endTime: '1630',
+        events: [],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    };
+    const originalFile = buildScheduleFile('Existing June Drill', originalState, [], 'Original Owner');
+    await writeScheduleFile('june-drill.json', originalFile);
+
+    await createNewSchedule('June Drill');
+
+    const saved = await readScheduleFile('june-drill.json');
+    assert.equal(saved.current.title, 'Existing June Drill');
+    assert.equal(saved.lastSavedBy, 'Original Owner');
+    assert(Store.getTitle() !== 'June Drill', 'collision should not switch the editor to a new schedule');
+    assert(getCurrentFileName() !== 'june-drill.json', 'collision should not claim the existing file');
+  });
+
   it('createNewSchedule falls back to a local draft when folder access is unavailable', async () => {
     resetUiHarnessState();
     setUserName('Tester');
@@ -96,11 +139,12 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
     assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Safari Draft');
     assert.equal(document.getElementById('editorAccessBar').hidden, false, 'local draft warning should stay visible');
-    assert(document.getElementById('editorAccessText').textContent.includes('app/data'));
+    assert(document.getElementById('editorAccessText').textContent.includes('Manual Export'));
+    assert(document.getElementById('editorAccessText').textContent.includes('scheduledata.js'));
     assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Manual Export');
     assert.equal(
       document.getElementById('toast').textContent,
-      'Created Safari Draft locally. Use Manual Export to save a copy.'
+      'Created Safari Draft as a local draft'
     );
   });
 
@@ -127,7 +171,7 @@ describe('UI Harness — app shell', () => {
 
     assert.equal(exportCalls, 1, 'manual export action should stay available from the persistent warning');
     assert.equal(document.getElementById('editorAccessBar').hidden, false, 'warning should remain visible after export');
-    assert(document.getElementById('editorAccessText').textContent.includes('still not synced yet'));
+    assert(document.getElementById('editorAccessText').textContent.includes('Move'));
     assert(document.getElementById('editorAccessText').textContent.includes('app/data'));
     assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Export Again');
   });
@@ -141,6 +185,101 @@ describe('UI Harness — app shell', () => {
       document.getElementById('libraryList').textContent.includes('local draft'),
       'library should explain the local-draft fallback when no shared folder is connected'
     );
+  });
+
+  it('home-screen import creates a shared schedule from exported JS when folder access is connected', async () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+    setUserName('Tester');
+    showLibrary();
+    await wait(0);
+
+    await importUiFromLibrary({
+      title: 'Imported From Export',
+      days: [{
+        id: 'day_imported',
+        date: '2026-05-01',
+        startTime: '0700',
+        endTime: '1630',
+        events: [{ title: 'Import Brief', startTime: '0900', endTime: '1000', groupId: 'grp_all', isMainEvent: true }],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    }, 'scheduledata.js');
+    await wait(40);
+
+    const files = UiMockFS.getFiles();
+    assert('imported-from-export.json' in files, 'import should create a shared schedule file');
+    assert.equal(Store.getTitle(), 'Imported From Export');
+    assert.equal(getCurrentFileName(), 'imported-from-export.json');
+    assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
+    assert(document.getElementById('editorAccessText').textContent.includes('Editing as'));
+  });
+
+  it('home-screen import opens a local draft when the shared folder is not connected', async () => {
+    resetUiHarnessState();
+    showLibrary();
+    await wait(0);
+
+    await importUiFromLibrary({
+      title: 'Offline Import',
+      days: [{
+        id: 'day_local_import',
+        date: '2026-05-02',
+        startTime: '0800',
+        endTime: '1700',
+        events: [{ title: 'Offline Brief', startTime: '1000', endTime: '1030', groupId: 'grp_all', isMainEvent: true }],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    }, 'scheduledata.js');
+    await wait(40);
+
+    assert.equal(Store.getTitle(), 'Offline Import');
+    assert.equal(getCurrentFileName(), null);
+    assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
+    assert.equal(document.getElementById('editorAccessBar').hidden, false);
+    assert(document.getElementById('editorAccessText').textContent.includes('Local Draft'));
+    assert.equal(document.getElementById('toast').textContent, 'Imported scheduledata.js as a local draft');
+  });
+
+  it('quick edit lets you change start and end before the row time range is validated', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    const seeded = await seedUiScheduleFile('Quick Edit Time Harness', { skin: 'bands' });
+    await openSchedule(seeded.fileName);
+    await claimCurrentScheduleLock({ silent: true });
+
+    const dayId = Store.getActiveDay();
+    const evt = Store.getEvents(dayId)[0];
+
+    openDayEventSheetModal({ eventId: evt.id, field: 'startTime' });
+    await wait(0);
+
+    const startSelector = '.day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="startTime"]';
+    const endSelector = '.day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="endTime"]';
+    const startInput = document.querySelector(startSelector);
+    const endInput = document.querySelector(endSelector);
+
+    startInput.focus();
+    startInput.value = '0900';
+    endInput.focus();
+    await wait(20);
+
+    assert.equal(startInput.value, '0900', 'start input should keep the staged time while the end time is being edited');
+    assert.equal(Store.getEvents(dayId).find(item => item.id === evt.id).startTime, evt.startTime, 'store should not commit the first time change yet');
+
+    endInput.value = '1000';
+    endInput.blur();
+    await wait(20);
+
+    const updated = Store.getEvents(dayId).find(item => item.id === evt.id);
+    assert.equal(updated.startTime, '0900');
+    assert.equal(updated.endTime, '1000');
   });
 
   it('renames the file only when the title edit is committed', async () => {
@@ -173,6 +312,42 @@ describe('UI Harness — app shell', () => {
     } finally {
       window.renameScheduleFile = originalRename;
     }
+  });
+
+  it('title rename does not overwrite an existing schedule file', async () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+    setUserName('Tester');
+    await createNewSchedule('Original Title');
+    const targetState = {
+      title: 'Taken Title',
+      days: [{
+        id: 'day_taken',
+        date: '2026-06-02',
+        startTime: '0700',
+        endTime: '1630',
+        events: [],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    };
+    const targetFile = buildScheduleFile('Taken Title', targetState, [], 'Target Owner');
+    await writeScheduleFile('taken-title.json', targetFile);
+
+    const titleInput = document.getElementById('tbTitle');
+    titleInput.value = 'Taken Title';
+    titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+    titleInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await wait(40);
+
+    const targetAfter = await readScheduleFile('taken-title.json');
+    const originalAfter = await readScheduleFile('original-title.json');
+    assert.equal(targetAfter.current.title, 'Taken Title');
+    assert.equal(targetAfter.lastSavedBy, 'Target Owner');
+    assert.equal(originalAfter.current.title, 'Original Title');
+    assert.equal(getCurrentFileName(), 'original-title.json');
   });
 
   it('returnToLibrary saves dirty state before resetting the editor', async () => {
@@ -222,9 +397,11 @@ describe('UI Harness — app shell', () => {
     assert.equal(Store.getTitle(), 'Version Harness');
     assert.equal(document.getElementById('versionModal').classList.contains('active'), false);
     assert.equal(versions.length, 2, 'restoring should create an auto-backup');
+    await wait(600);
+    assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Version Harness');
 
     await openVersionPanel();
-    assert(document.getElementById('versionModal').textContent.includes('Recent Activity'));
+    assert(document.getElementById('versionModal').textContent.includes('Recent'));
     assert(document.getElementById('versionModal').textContent.includes('Restored version "Draft Alpha"'));
   });
 
@@ -315,6 +492,23 @@ describe('UI Harness — app shell', () => {
     assert.equal(saved.title, 'Undo Baseline');
   });
 
+  it('undo history is cleared when switching schedules', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    const first = await seedUiScheduleFile('First Schedule', { skin: 'bands' });
+    await openSchedule(first.fileName);
+    saveUndoState();
+    Store.setTitle('First Schedule Edited');
+
+    const second = await seedUiScheduleFile('Second Schedule', { skin: 'grid' });
+    await openSchedule(second.fileName);
+
+    undo();
+
+    assert.equal(Store.getTitle(), 'Second Schedule');
+    assert.equal(getCurrentFileName(), 'second-schedule.json');
+  });
+
   it('loading external changes replaces file metadata and refreshes the editor UI', async () => {
     resetUiHarnessState();
     setUserName('Tester');
@@ -366,6 +560,52 @@ describe('UI Harness — app shell', () => {
     assert(document.getElementById('scheduleContainer').textContent.includes('Remote Formation'));
   });
 
+  it('stale-data warning cannot be dismissed without choosing load or overwrite', async () => {
+    resetUiHarnessState();
+
+    const remoteState = {
+      title: 'Remote Copy',
+      days: [{
+        id: 'day_remote',
+        date: '2026-04-20',
+        startTime: '0700',
+        endTime: '1630',
+        events: [],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    };
+    const otherData = buildScheduleFile('Remote Copy', remoteState, [], 'Remote User');
+
+    showStaleDataWarning('Remote User', otherData.lastSavedAt, otherData);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await wait(0);
+
+    assert(document.getElementById('staleWarningModal').classList.contains('active'));
+  });
+
+  it('clicking quick-edit rows does not change the preview selection', async () => {
+    resetUiHarnessState();
+    setUserName('Tester');
+    const seeded = await seedUiScheduleFile('Quick Edit Selection Harness', { skin: 'bands' });
+    await openSchedule(seeded.fileName);
+    await claimCurrentScheduleLock({ silent: true });
+
+    const events = Store.getEvents(Store.getActiveDay());
+    selectEntity('event', Store.getActiveDay(), events[0].id);
+    openDayEventSheetModal({ eventId: events[1].id, field: 'title' });
+    await wait(0);
+
+    const quickEditTitle = document.querySelector(
+      '#dayEventSheetModalContent [data-event-id="' + events[1].id + '"][data-field="title"]'
+    );
+    quickEditTitle.click();
+
+    assert.equal(_selection.entityId, events[0].id);
+  });
+
   it('filters invalid top-level imports and rejects invalid imported event ranges', async () => {
     resetUiHarnessState();
 
@@ -396,6 +636,39 @@ describe('UI Harness — app shell', () => {
     assert.equal(Store.getActiveDay(), 'day_valid');
     assert.equal(Store.getEvents('day_valid').length, 1);
     assert.equal(Store.getEvents('day_valid')[0].title, 'Valid Event');
+  });
+
+  it('home-screen import accepts first-party schedule envelopes without dropping theme metadata', async () => {
+    resetUiHarnessState();
+    installUiMockDir('data');
+    setUserName('Tester');
+    showLibrary();
+    await wait(0);
+
+    const importedState = {
+      title: 'Envelope Import',
+      days: [{
+        id: 'day_envelope',
+        date: '2026-05-03',
+        startTime: '0700',
+        endTime: '1630',
+        events: [{ title: 'Envelope Brief', startTime: '0900', endTime: '1000', groupId: 'grp_all', isMainEvent: true }],
+        notes: [],
+      }],
+      groups: Store.getGroups(),
+      logo: null,
+      footer: { contact: '', poc: '', updated: '' },
+    };
+    const envelope = buildScheduleFile('Envelope Import', importedState, [], 'Exporter');
+    envelope.theme = { skin: 'grid', palette: 'airforce', customColors: null };
+
+    await importUiFromLibrary(envelope, 'envelope.json');
+    await wait(40);
+
+    assert.equal(Store.getTitle(), 'Envelope Import');
+    assert.equal(getCurrentFileName(), 'envelope-import.json');
+    assert.equal(getCurrentScheduleFileData().theme.skin, 'grid');
+    assert.equal(getCurrentScheduleFileData().theme.palette, 'airforce');
   });
 
   it('shows a clear error when an import has no valid days', async () => {
@@ -441,17 +714,15 @@ describe('UI Harness — app shell', () => {
     showLibrary();
     await wait(0);
 
-    const floatingBtn = document.getElementById('floatingHelpBtn');
-    const coachmark = document.getElementById('helpCoachmark');
+    const libraryHelpBtn = document.getElementById('libraryHelpBtn');
 
-    assert.equal(floatingBtn.textContent, 'Start Here');
-    assert.equal(coachmark.hidden, false, 'coachmark should appear on first library launch');
+    assert.equal(libraryHelpBtn.textContent, 'Start Here');
 
-    floatingBtn.click();
+    libraryHelpBtn.click();
     await wait(0);
 
-    assert(document.getElementById('helpModal').classList.contains('active'), 'floating help should open the in-app help modal');
-    assert(document.querySelector('[data-help-tab="start"]').classList.contains('active'), 'help should open on the Start Here tab');
+    assert(document.getElementById('helpModal').classList.contains('active'), 'library help should open the in-app help modal');
+    assert(document.querySelector('[data-help-tab="start"]').classList.contains('active'), 'help should open on the Start tab');
 
     document.querySelector('[data-help-tab="faq"]').click();
     await wait(0);
@@ -461,10 +732,9 @@ describe('UI Harness — app shell', () => {
     document.getElementById('helpCloseBtn').click();
     await wait(0);
 
-    assert.equal(floatingBtn.textContent, 'Help');
-    assert.equal(coachmark.hidden, true, 'coachmark should stay hidden after help is opened once');
+    assert.equal(libraryHelpBtn.textContent, 'Help');
 
-    floatingBtn.click();
+    libraryHelpBtn.click();
     await wait(0);
     assert(document.querySelector('[data-help-tab="faq"]').classList.contains('active'), 'after onboarding is seen, help should reopen on FAQ');
     document.getElementById('helpCloseBtn').click();
@@ -532,6 +802,34 @@ describe('UI Harness — app shell', () => {
     assert.equal(printCalls, 1);
     assert.equal(undoCalls, 1, 'undo should ignore text input targets');
     assert.equal(redoCalls, 1);
+  });
+
+  it('editor surfaces expose portable .schedule save without replacing autosave', async () => {
+    resetUiHarnessState();
+
+    let saveScheduleCalls = 0;
+    const originalSaveScheduleWorkbookFile = window.saveScheduleWorkbookFile;
+    window.saveScheduleWorkbookFile = () => {
+      saveScheduleCalls += 1;
+      return Promise.resolve(true);
+    };
+
+    try {
+      document.getElementById('saveScheduleFileBtn').click();
+
+      openSettingsModal();
+      await wait(0);
+      const settingsBtn = document.getElementById('settings-save-schedule-file');
+      assert(settingsBtn, 'settings should expose the portable schedule save action');
+      assert.equal(settingsBtn.textContent, 'Save .schedule');
+      settingsBtn.click();
+      await wait(0);
+    } finally {
+      window.saveScheduleWorkbookFile = originalSaveScheduleWorkbookFile;
+      closeSettingsModal();
+    }
+
+    assert.equal(saveScheduleCalls, 2);
   });
 
   it('loadSampleData and migrateSavedState cover init shell helpers', async () => {

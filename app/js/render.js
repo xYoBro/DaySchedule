@@ -51,7 +51,7 @@ const SKIN_RENDERERS = {
 let _currentScheduleFileData = null;
 function setCurrentScheduleFileData(data) { _currentScheduleFileData = data; }
 function getCurrentScheduleFileData() {
-  if (!_currentScheduleFileData && Store.getTitle()) {
+  if (!_currentScheduleFileData && (Store.getTitle() || Store.getDays().length)) {
     _currentScheduleFileData = {
       name: Store.getTitle(),
       current: Store.getPersistedState(),
@@ -96,7 +96,7 @@ function renderHeader(day) {
   const footer = Store.getFooter();
   const dateStr = day.date ? formatDateDisplay(day.date) : '';
 
-  let html = '<div class="hdr" title="Click to customize this schedule">';
+  let html = '<div class="hdr" title="Customize schedule">';
   html += '<div class="hdr-text">';
   html += '<div class="hdr-title">' + esc(Store.getTitle()) + '</div>';
   html += '<div class="hdr-sub">' + esc(dateStr) + ' &ensp;\u2014&ensp; ' + esc(dayLabel) + '</div>';
