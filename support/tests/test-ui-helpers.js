@@ -92,6 +92,9 @@ function resetUiHarnessState() {
   _currentFileName = null;
   _lastKnownSavedAt = null;
   _dirty = false;
+  _scheduleWorkbookHandle = null;
+  _scheduleWorkbookData = null;
+  _workbookSearchText = '';
   _manualDraftExported = false;
   _selection = { type: null, dayId: null, entityId: null };
   _expandedDayId = null;
@@ -115,13 +118,17 @@ function resetUiHarnessState() {
   document.getElementById('libraryList').innerHTML = '';
   document.getElementById('libraryConnectPrompt').style.display = 'none';
   document.getElementById('libraryFallbackBanner').style.display = 'none';
-  document.getElementById('libraryNewInline').style.display = 'none';
+  const libraryStack = document.querySelector('.library-stack');
+  if (libraryStack) libraryStack.style.display = '';
+  document.getElementById('libraryNewInline').style.display = '';
   document.getElementById('libraryNewBtn').style.display = '';
-  document.getElementById('libraryNewName').value = '';
-  document.getElementById('libraryHelpBtn').textContent = 'Start Here';
+  document.getElementById('libraryNewName').value = 'New Schedule';
+  document.getElementById('libraryHelpBtn').textContent = 'Help';
   document.getElementById('libraryHelpBtn').className = '';
   document.getElementById('editorThemeToggle').textContent = 'Theme';
   document.getElementById('tbTitle').value = '';
+  document.getElementById('workbookSwitchBtn').hidden = true;
+  document.getElementById('workbookSwitchLabel').textContent = '1 schedule';
   document.getElementById('saveIndicator').textContent = '';
   document.getElementById('saveIndicator').className = 'save-status';
   const accessBar = document.getElementById('editorAccessBar');
@@ -134,9 +141,6 @@ function resetUiHarnessState() {
   document.getElementById('scheduleContainer').innerHTML = '';
   document.getElementById('inspectorPanel').innerHTML = '';
   document.getElementById('toast').textContent = '';
-  document.getElementById('floatingHelpBtn').textContent = 'Start Here';
-  document.getElementById('floatingHelpBtn').className = '';
-  document.getElementById('helpCoachmark').hidden = true;
   document.getElementById('previewPage').className = 'page';
 
   [
@@ -145,6 +149,7 @@ function resetUiHarnessState() {
     'staleWarningModal',
     'userNameModal',
     'versionModal',
+    'workbookModal',
     'settingsModal',
     'dayEventSheetModal',
   ].forEach(id => {

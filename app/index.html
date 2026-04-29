@@ -13,45 +13,55 @@
     <div class="library-header">
       <div class="library-brand">Schedule Builder</div>
       <div class="library-header-actions">
-        <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Start Here</button>
+        <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Help</button>
         <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
       </div>
     </div>
     <div class="library-body">
-      <div id="libraryConnectPrompt" class="library-connect" style="display:none;">
-        <div class="library-connect-icon">&#x1F4C1;</div>
-        <div class="library-connect-title">Connect the shared schedule folder</div>
-        <div class="library-connect-summary">Use the same shared DaySchedule copy as the rest of your team. DaySchedule remembers this connection for this browser.</div>
-        <div class="library-connect-steps">
-          <div class="library-connect-step">
-            <div class="library-connect-step-num">1</div>
-            <div class="library-connect-step-text">Open the <strong>shared DaySchedule copy</strong> your team uses on this computer. If your team reaches it through SharePoint or Teams, use the shared copy there instead of a personal download.</div>
+      <section class="library-home">
+        <div class="library-kicker">DaySchedule</div>
+        <h1 class="library-home-title">Open the workbook. Edit the day.</h1>
+        <p class="library-home-copy">One app. One <strong>.schedule</strong> file. No folder setup.</p>
+        <div class="library-start-grid">
+          <div class="library-start-card library-start-card-primary">
+            <div class="library-start-label">Existing workbook</div>
+            <div class="library-start-title">Open a schedule file</div>
+            <div class="library-start-copy">Pick the <strong>.schedule</strong> file you already have.</div>
+            <button class="btn btn-primary library-import-btn" id="libraryImportBtn">Open .schedule</button>
           </div>
-          <div class="library-connect-step">
-            <div class="library-connect-step-num">2</div>
-            <div class="library-connect-step-text">Launch DaySchedule from that shared copy.</div>
-          </div>
-          <div class="library-connect-step">
-            <div class="library-connect-step-num">3</div>
-            <div class="library-connect-step-text">Click the button below and choose the folder where schedule files live. In most shared copies, this is <code>app/data</code>.</div>
+          <div class="library-start-card">
+            <div class="library-start-label">New workbook</div>
+            <div class="library-start-title">Start fresh</div>
+            <div class="library-new-inline" id="libraryNewInline">
+              <input type="text" id="libraryNewName" value="New Schedule" aria-label="New schedule name" class="library-new-input">
+              <button class="btn library-new-btn" id="libraryNewBtn">Create</button>
+              <button class="btn library-new-confirm" id="libraryNewConfirm" hidden>Create</button>
+              <button class="btn" id="libraryNewCancel" hidden>Cancel</button>
+            </div>
           </div>
         </div>
-        <button class="btn btn-primary" id="libraryConnectBtn">Connect Shared Folder</button>
-        <div class="library-connect-hint">First-time setup only. After that, open the same shared copy whenever you need to edit.</div>
-        <div class="library-connect-warn">Do not work from a downloaded, zipped, or personal copy. Changes made there stay local and can drift from the team copy.</div>
-        <div class="library-connect-local">If you are not sure which shared copy is correct, ask your team lead or admin before editing.</div>
-        <div class="library-connect-help">Need a refresher? Click <strong>Start Here</strong> in the lower-right corner any time.</div>
-      </div>
+        <div class="library-home-rules">
+          <span class="library-home-rule">Open</span>
+          <span class="library-home-rule">Edit</span>
+          <span class="library-home-rule">Save .schedule</span>
+        </div>
+      </section>
+
+      <div id="libraryConnectPrompt" class="library-hidden-legacy" style="display:none;"></div>
+
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
-        Auto-save requires Chrome or Edge. In other browsers, DaySchedule falls back to manual <strong>Save to File</strong>.
+        This browser may need manual saves. Use <strong>Save .schedule</strong> before closing.
       </div>
-      <button class="btn btn-primary library-new-btn" id="libraryNewBtn">+ New Schedule</button>
-      <div class="library-new-inline" id="libraryNewInline" style="display:none;">
-        <input type="text" id="libraryNewName" placeholder="Schedule name (e.g., June Drill)" class="library-new-input">
-        <button class="btn btn-primary" id="libraryNewConfirm">Create</button>
-        <button class="btn" id="libraryNewCancel">Cancel</button>
-      </div>
-      <div class="library-list" id="libraryList"></div>
+
+      <section class="library-stack">
+        <div class="library-stack-head">
+          <div>
+            <div class="library-stack-title">Schedules</div>
+            <div class="library-stack-desc">Saved schedules appear here when an older data folder is connected.</div>
+          </div>
+        </div>
+        <div class="library-list" id="libraryList"></div>
+      </section>
     </div>
   </div>
 
@@ -63,14 +73,20 @@
       <div class="tb-brand">Schedule Builder</div>
       <div class="tb-sep"></div>
       <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title">
+      <button class="workbook-switch-btn" id="workbookSwitchBtn" type="button" hidden>
+        <span id="workbookSwitchLabel">1 schedule</span>
+        <span class="workbook-switch-caret">▾</span>
+      </button>
       <span class="save-status" id="saveIndicator"></span>
       <div class="tb-sep"></div>
       <div class="day-tabs" id="dayTabs"></div>
     </div>
     <div class="toolbar-right">
-      <button class="btn btn-primary" id="addEventBtn">+ Event</button>
-      <button class="btn" id="addNoteBtn">+ Note</button>
-      <button class="btn" id="addDayBtn">+ Day</button>
+      <div class="tb-create-group" aria-label="Add schedule item">
+        <button class="btn tb-create-btn" id="addDayBtn">+ Day</button>
+        <button class="btn tb-create-btn" id="addEventBtn">+ Event</button>
+        <button class="btn tb-create-btn" id="addNoteBtn">+ Note</button>
+      </div>
       <button class="btn" id="daySheetBtn">Quick Edit</button>
       <div class="tb-sep"></div>
       <button class="btn" id="customizeBtn">Customize</button>
@@ -78,6 +94,7 @@
         <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions">&#x2026;</button>
         <div class="tb-overflow-dropdown" id="overflowDropdown">
           <button class="tb-overflow-item" id="versionsMenuBtn">Versions</button>
+          <button class="tb-overflow-item" id="saveScheduleFileBtn">Save .schedule</button>
           <button class="tb-overflow-item" id="printBtn">Print</button>
           <button class="tb-overflow-item" id="helpBtn">Help</button>
         </div>
@@ -103,76 +120,50 @@
   <!-- Toast -->
   <div id="toast" class="toast"></div>
 
-  <div class="help-coachmark" id="helpCoachmark" hidden>
-    <div class="help-coachmark-title">Start Here</div>
-    <div class="help-coachmark-desc">Open the shared copy, connect the shared folder once, use your real name, and wait for <strong>Saved</strong> before handing the schedule off.</div>
-    <div class="help-coachmark-actions">
-      <button class="btn btn-primary" id="helpCoachmarkOpenBtn">Open Help</button>
-      <button class="btn" id="helpCoachmarkDismissBtn">Not now</button>
-    </div>
-  </div>
-  <button class="floating-help-btn" id="floatingHelpBtn" title="Help &amp; shortcuts">Start Here</button>
-
   <!-- Help Modal -->
   <div class="modal-overlay" id="helpModal">
     <div class="modal help-modal">
-      <h2>Schedule Builder</h2>
+      <h2>Help</h2>
       <div class="modal-tabs help-tabs">
-        <button class="modal-tab active" data-help-tab="start">Start Here</button>
+        <button class="modal-tab active" data-help-tab="start">Start</button>
         <button class="modal-tab" data-help-tab="faq">FAQ</button>
-        <button class="modal-tab" data-help-tab="tips">Tips &amp; Tricks</button>
+        <button class="modal-tab" data-help-tab="tips">Shortcuts</button>
       </div>
 
       <div class="help-tab-panel active" data-help-panel="start">
         <div class="help-section">
-          <div class="help-section-title">Start Here</div>
+          <div class="help-section-title">Core</div>
           <div class="help-item">
-            <div class="help-item-label">0. Use your real name</div>
-            <div class="help-item-desc">The first time you edit, DaySchedule asks for your name. Use the real name your team will recognize, because saves, versions, and takeovers are tagged with it.</div>
+            <div class="help-item-label">Open Schedule</div>
+            <div class="help-item-desc">Open the <strong>.schedule</strong> workbook you want to edit.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">1. Open the shared copy</div>
-            <div class="help-item-desc">Always open DaySchedule from the shared team copy, not from Downloads, Desktop, email, or a ZIP.</div>
+            <div class="help-item-label">Edit</div>
+            <div class="help-item-desc">Click <strong>Edit</strong> only when you are ready to change the schedule.</div>
+          </div>
+          <div class="help-item help-item-warn">
+            <div class="help-item-label">Save</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> before closing or sending the file.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">2. Connect once</div>
-            <div class="help-item-desc">On first launch, click <strong>Connect Shared Folder</strong> and choose the folder where the saved schedules live. In most setups, that folder is <code>app/data</code>.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">3. If your team uses Microsoft Teams</div>
-            <div class="help-item-desc">Open the team or channel <strong>Files</strong> tab, click <strong>Sync</strong>, wait for the shared folder to appear on your computer, then open the shared DaySchedule copy from that synced folder. Sync matters because DaySchedule saves directly into the shared folder. If you open a downloaded file instead, you create a separate copy that your team will not see.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">4. Edit the schedule</div>
-            <div class="help-item-desc">Open a schedule, click <strong>Edit</strong> if it opens read-only, then use <strong>Quick Edit</strong> like a worksheet. Click a row to edit the extra fields below, or double-click a row to open full event details.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">5. Let Audience place the event</div>
-            <div class="help-item-desc">In <strong>Quick Edit</strong> and <strong>Event Details</strong>, <strong>Audience</strong> means the group or section this event belongs to. <strong>Primary</strong> audiences go to the main track automatically. <strong>Supporting</strong> or unassigned events stay in the side track unless you turn on <strong>Main Track</strong>.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">6. Use Specific People when names matter</div>
-            <div class="help-item-desc"><strong>Specific People</strong> is for named people. Use it when an event is only for a few named people, or when a few named people need something different from the main audience. In <strong>Quick Edit</strong>, those extra fields stay together in the selected-row editor at the bottom instead of repeating on every row.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">7. Save and hand off cleanly</div>
-            <div class="help-item-desc">Every change auto-saves after you pause. Watch for <strong>Saved</strong> in the toolbar, then click <strong>Done Editing</strong> before handing the schedule to someone else.</div>
+            <div class="help-item-label">Workbook file</div>
+            <div class="help-item-desc">Keep the <strong>.schedule</strong> file wherever your team normally shares files.</div>
           </div>
         </div>
 
         <div class="help-section">
-          <div class="help-section-title">Shared Editing</div>
+          <div class="help-section-title">Where Things Live</div>
           <div class="help-item">
-            <div class="help-item-label">One editor at a time</div>
-            <div class="help-item-desc">Recommended team workflow: one person edits a schedule at a time. Click <strong>Edit</strong>, make your changes, wait for <strong>Saved</strong>, then click <strong>Done Editing</strong> before handing it off.</div>
+            <div class="help-item-label">Quick Edit</div>
+            <div class="help-item-desc">Fast row edits for one day.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Take over only when needed</div>
-            <div class="help-item-desc">If the current editor is unavailable and the team needs immediate access, a lead can use <strong>Take Over</strong>. That action should only be used after confirming the handoff or that the current editor is no longer working.</div>
+            <div class="help-item-label">Customize</div>
+            <div class="help-item-desc">Title, logo, layout, colors, and audiences.</div>
           </div>
-          <div class="help-item help-item-warn">
-            <div class="help-item-label">Avoid personal copies</div>
-            <div class="help-item-desc">If you edit a downloaded or personal copy, your changes stay there. Other people will keep working from the shared copy, and the two versions can drift apart.</div>
+          <div class="help-item">
+            <div class="help-item-label">More</div>
+            <div class="help-item-desc">Versions, Print, and Help.</div>
           </div>
         </div>
       </div>
@@ -181,75 +172,39 @@
         <div class="help-section">
           <div class="help-section-title">FAQ</div>
           <div class="help-item">
-            <div class="help-item-label">Where should I open DaySchedule from?</div>
-            <div class="help-item-desc">Open it from the shared team copy every time. If your team reaches it through SharePoint or Teams, use that shared copy on your computer instead of downloading a separate copy.</div>
+            <div class="help-item-label">What file do I open?</div>
+            <div class="help-item-desc">Open the <strong>.schedule</strong> file. That is the workbook.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">What folder do I pick?</div>
-            <div class="help-item-desc">Choose the folder where the schedule JSON files live. In most DaySchedule copies, that is <code>app/data</code>. If your team packaged it differently, choose the folder that already contains the saved schedules.</div>
+            <div class="help-item-label">What is import for?</div>
+            <div class="help-item-desc">Use import only for old exports or outside data you want to bring into a workbook.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Can multiple people edit the same schedule at once?</div>
-            <div class="help-item-desc">The safest workflow is no. Have one person edit at a time per schedule, then hand off after the save indicator shows <strong>Saved</strong>.</div>
+            <div class="help-item-label">Can multiple people edit?</div>
+            <div class="help-item-desc">Safest answer: one person edits the workbook file at a time.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">What if the last editor stepped away?</div>
-            <div class="help-item-desc">Edit access uses a lease. If the last editor stops refreshing it, the lock expires automatically and the next person can click <strong>Edit</strong>. If the team lead needs in sooner, they can use <strong>Take Over</strong> after confirming the current editor is unavailable.</div>
+            <div class="help-item-label">Audience vs Specific People?</div>
+            <div class="help-item-desc"><strong>Audience</strong> is the group. <strong>Specific People</strong> is for named people.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Where do I change the logo or look?</div>
-            <div class="help-item-desc">Use <strong>Customize</strong> in the toolbar. That is where title, unit logo, layout, colors, and audiences live.</div>
+            <div class="help-item-label">Where do I change the look?</div>
+            <div class="help-item-desc">Use <strong>Customize</strong>.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Can different days use different layouts?</div>
-            <div class="help-item-desc">Not currently. Layout is schedule-wide, so switching to Bands, Grid, Cards, or Phases changes the full schedule.</div>
+            <div class="help-item-label">Where is Save?</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> from the editor save bar or More menu.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">Why did Main Track change when I changed Audience?</div>
-            <div class="help-item-desc">That is expected. A <strong>Primary</strong> audience automatically places the event in the main track. A <strong>Supporting</strong> or unassigned event stays out of the main track unless you turn on <strong>Main Track</strong> as an override.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">What is the difference between Audience and Specific People?</div>
-            <div class="help-item-desc"><strong>Audience</strong> is the group, section, or shop the event belongs to. <strong>Specific People</strong> is for named people, either by themselves or inside that audience.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">What if I do not see someone else&rsquo;s changes?</div>
-            <div class="help-item-desc">Confirm you opened the shared copy, not a personal one. Then return to the library and reopen the schedule so DaySchedule reloads the latest file.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">What browser should I use?</div>
-            <div class="help-item-desc">Use Chrome or Edge for the full auto-save experience. Other browsers can still open the app, but saving falls back to manual <strong>Save to File</strong>.</div>
+            <div class="help-item-label">When should I save?</div>
+            <div class="help-item-desc">Save the <strong>.schedule</strong> file before closing or handing it off.</div>
           </div>
         </div>
       </div>
 
       <div class="help-tab-panel" data-help-panel="tips">
         <div class="help-section">
-          <div class="help-section-title">Tips &amp; Tricks</div>
-          <div class="help-item">
-            <div class="help-item-label">Customize the schedule</div>
-            <div class="help-item-desc">Use <strong>Customize</strong> to change the title, unit logo, layout, colors, audiences, and export options.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">Versions</div>
-            <div class="help-item-desc">Use <strong>Versions</strong> from the <strong>...</strong> menu to save named snapshots such as &ldquo;Draft for Review.&rdquo; You can always restore a previous version, and the current state is auto-backed up first.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">Crowded days</div>
-            <div class="help-item-desc">Use <strong>Bands</strong> for presentation, but switch to <strong>Grid</strong> or <strong>Cards</strong> to validate crowded days before publishing. Layout applies to the whole schedule, not one day at a time.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">Duplicate a schedule</div>
-            <div class="help-item-desc">Right-click a schedule in the library to duplicate it. Great for starting next month from this month&rsquo;s template.</div>
-          </div>
-          <div class="help-item">
-            <div class="help-item-label">Audiences</div>
-            <div class="help-item-desc"><strong>Primary</strong> audiences automatically place their events in the main track. <strong>Supporting</strong> audiences appear as concurrent side items unless you turn on <strong>Main Track</strong> for a specific event.</div>
-          </div>
-        </div>
-
-        <div class="help-section">
-          <div class="help-section-title">Keyboard Shortcuts</div>
+          <div class="help-section-title">Keyboard</div>
           <div class="help-shortcuts">
             <div class="help-shortcut">
               <div class="help-shortcut-keys"><kbd>Ctrl</kbd><span class="help-shortcut-plus">+</span><kbd>S</kbd></div>
@@ -284,15 +239,15 @@
   <!-- Sync Confirmation Modal -->
   <div class="modal-overlay" id="syncConfirmModal">
     <div class="modal sync-confirm-modal">
-      <h2>Confirm: Is this the shared team folder?</h2>
-      <p class="sync-confirm-desc">The folder you just picked should be the shared DaySchedule copy your team edits together. If you select a personal or downloaded copy, your changes will stay local.</p>
+      <h2>Use this shared folder?</h2>
+      <p class="sync-confirm-desc">Pick the shared folder everyone uses. Not a personal copy.</p>
       <div class="sync-confirm-check">
-        <div class="sync-confirm-item sync-confirm-good">This is the shared team copy that everyone should use</div>
-        <div class="sync-confirm-item sync-confirm-bad">This is a personal, downloaded, or backup copy</div>
+        <div class="sync-confirm-item sync-confirm-good">Shared team folder</div>
+        <div class="sync-confirm-item sync-confirm-bad">Downloaded or personal copy</div>
       </div>
       <div class="modal-actions">
-        <button class="btn" id="syncConfirmNo">Go back</button>
-        <button class="btn btn-primary" id="syncConfirmYes">Yes, this is the shared folder</button>
+        <button class="btn" id="syncConfirmNo">Back</button>
+        <button class="btn btn-primary" id="syncConfirmYes">Use Shared Folder</button>
       </div>
     </div>
   </div>
@@ -315,6 +270,11 @@
   <!-- Version Panel Modal -->
   <div class="modal-overlay" id="versionModal">
     <div class="modal"></div>
+  </div>
+
+  <!-- Workbook Schedules Modal -->
+  <div class="modal-overlay" id="workbookModal">
+    <div class="modal workbook-modal"></div>
   </div>
 
   <!-- Customize Modal -->
@@ -343,6 +303,7 @@
   <script src="js/library.js"></script>
   <script src="js/versions.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/workbook-ui.js"></script>
   <script src="js/print.js"></script>
   <script src="js/events.js"></script>
   <script src="js/inspector.js"></script>

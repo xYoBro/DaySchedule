@@ -23,7 +23,7 @@
     <div class="library-header">
       <div>Schedule Builder</div>
       <div class="library-header-actions">
-        <button id="libraryHelpBtn">Start Here</button>
+        <button id="libraryHelpBtn">Help</button>
         <button id="editorThemeToggle">Theme</button>
       </div>
     </div>
@@ -32,30 +32,39 @@
         <button id="libraryConnectBtn">Connect Shared Folder</button>
       </div>
       <div id="libraryFallbackBanner" style="display:none;"></div>
-      <button id="libraryNewBtn">New Schedule</button>
-      <div id="libraryNewInline" style="display:none;">
-        <input type="text" id="libraryNewName">
-        <button id="libraryNewConfirm">Create</button>
-        <button id="libraryNewCancel">Cancel</button>
+      <button id="libraryImportBtn">Open .schedule</button>
+      <div id="libraryNewInline">
+        <input type="text" id="libraryNewName" value="New Schedule">
+        <button id="libraryNewBtn">Create</button>
+        <button id="libraryNewConfirm" hidden>Create</button>
+        <button id="libraryNewCancel" hidden>Cancel</button>
       </div>
-      <div id="libraryList"></div>
+      <section class="library-stack">
+        <div id="libraryList"></div>
+      </section>
     </div>
   </div>
 
   <div class="toolbar">
     <button id="tbBack">Back</button>
     <input type="text" id="tbTitle" value="">
+    <button id="workbookSwitchBtn" type="button" hidden>
+      <span id="workbookSwitchLabel">1 schedule</span>
+    </button>
     <span id="saveIndicator" class="save-status"></span>
     <div id="dayTabs"></div>
-    <button id="addEventBtn">+ Event</button>
-    <button id="addNoteBtn">+ Note</button>
-    <button id="addDayBtn">+ Day</button>
+    <div class="tb-create-group">
+      <button id="addDayBtn">+ Day</button>
+      <button id="addEventBtn">+ Event</button>
+      <button id="addNoteBtn">+ Note</button>
+    </div>
     <button id="daySheetBtn">Quick Edit</button>
     <button id="customizeBtn">Customize</button>
     <div id="overflowMenu">
       <button id="overflowBtn">More</button>
       <div id="overflowDropdown">
         <button id="versionsMenuBtn">Versions</button>
+        <button id="saveScheduleFileBtn">Save .schedule</button>
         <button id="printBtn">Print</button>
         <button id="helpBtn">Help</button>
       </div>
@@ -78,18 +87,12 @@
 
   <div id="toast" class="toast"></div>
 
-  <div id="helpCoachmark" hidden>
-    <button id="helpCoachmarkOpenBtn">Open Help</button>
-    <button id="helpCoachmarkDismissBtn">Not now</button>
-  </div>
-  <button id="floatingHelpBtn">Start Here</button>
-
   <div class="modal-overlay" id="helpModal">
     <div class="modal">
       <div class="modal-tabs help-tabs">
-        <button class="modal-tab active" data-help-tab="start">Start Here</button>
+        <button class="modal-tab active" data-help-tab="start">Start</button>
         <button class="modal-tab" data-help-tab="faq">FAQ</button>
-        <button class="modal-tab" data-help-tab="tips">Tips &amp; Tricks</button>
+        <button class="modal-tab" data-help-tab="tips">Shortcuts</button>
       </div>
       <div class="help-tab-panel active" data-help-panel="start"></div>
       <div class="help-tab-panel" data-help-panel="faq"></div>
@@ -115,6 +118,10 @@
 
   <div class="modal-overlay" id="versionModal">
     <div class="modal"></div>
+  </div>
+
+  <div class="modal-overlay" id="workbookModal">
+    <div class="modal workbook-modal"></div>
   </div>
 
   <div class="modal-overlay" id="settingsModal">
@@ -143,6 +150,7 @@
   <script src="../../app/js/library.js"></script>
   <script src="../../app/js/versions.js"></script>
   <script src="../../app/js/render.js"></script>
+  <script src="../../app/js/workbook-ui.js"></script>
   <script src="../../app/js/print.js"></script>
   <script src="../../app/js/events.js"></script>
   <script src="../../app/js/inspector.js"></script>

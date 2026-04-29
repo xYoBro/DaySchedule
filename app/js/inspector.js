@@ -107,48 +107,51 @@ function renderScheduleSetup(panel) {
   const readOnly = typeof isCurrentScheduleEditable === 'function' ? !isCurrentScheduleEditable() : false;
   const disabledAttr = readOnly ? ' disabled' : '';
 
-  let html = '<h3>Days</h3>';
+  let html = '';
   if (readOnly) {
-    html += '<div class="insp-readonly-note">Read-only view. Click <strong>Edit</strong> above to make changes.</div>';
+    html += '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>';
   }
 
-  // Days — accordion
-  html += '<div class="insp-day-accordion">';
-  days.forEach((day, i) => {
-    const shortDate = day.date ? formatDateShort(day.date) : 'Day ' + (i + 1);
-    const timeRange = day.startTime + '–' + day.endTime;
-    const isExpanded = day.id === (_expandedDayId || '');
-    html += '<div class="insp-day-item" data-day-id="' + esc(day.id) + '">';
-    // Collapsed header — always visible
-    html += '<div class="insp-day-header' + (isExpanded ? ' expanded' : '') + '">';
-    html += '<span class="insp-day-arrow">' + (isExpanded ? '▾' : '▸') + '</span>';
-    html += '<span class="insp-day-summary">';
-    html += '<strong>' + esc(shortDate) + '</strong>';
-    html += '<span class="insp-day-times">' + esc(timeRange) + '</span>';
-    html += '</span>';
-    html += '</div>';
-    // Expanded body — only shown when active
-    if (isExpanded) {
-      html += '<div class="insp-day-body">';
-      html += '<label>Date</label>';
-      html += '<input type="date" class="insp-day-date" value="' + esc(day.date) + '"' + disabledAttr + '>';
-      html += '<div class="field-row">';
-      html += '<div><label>Start</label><input type="text" class="insp-day-start" value="' + esc(day.startTime) + '" placeholder="0700"' + disabledAttr + '></div>';
-      html += '<div><label>End</label><input type="text" class="insp-day-end" value="' + esc(day.endTime) + '" placeholder="1630"' + disabledAttr + '></div>';
-      html += '</div>';
-      html += '<label>Label</label>';
-      html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Sat, Mar 15)"' + disabledAttr + '>';
-      html += '<button class="btn insp-day-duplicate" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Duplicate Day</button>';
-      if (days.length > 1) {
-        html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Remove Day</button>';
-      }
-      html += '</div>';
-    }
-    html += '</div>';
-  });
+  html += '<div class="insp-section-head">';
+  html += '<h3>Days</h3>';
   html += '</div>';
 
-  html += '<p class="insp-hint" style="margin-top:12px;">Use Quick Edit for fast row changes, or click an event or note on the schedule for detailed editing here.</p>';
+  if (!days.length) {
+    html += '<div class="empty-state"><strong>No days yet.</strong> Click <strong>+ Day</strong>.</div>';
+  } else {
+    html += '<div class="insp-day-accordion">';
+    days.forEach((day, i) => {
+      const shortDate = day.date ? formatDateShort(day.date) : 'Day ' + (i + 1);
+      const timeRange = day.startTime + '–' + day.endTime;
+      const isExpanded = day.id === (_expandedDayId || '');
+      html += '<div class="insp-day-item" data-day-id="' + esc(day.id) + '">';
+      html += '<div class="insp-day-header' + (isExpanded ? ' expanded' : '') + '">';
+      html += '<span class="insp-day-arrow">' + (isExpanded ? '▾' : '▸') + '</span>';
+      html += '<span class="insp-day-summary">';
+      html += '<strong>' + esc(shortDate) + '</strong>';
+      html += '<span class="insp-day-times">' + esc(timeRange) + '</span>';
+      html += '</span>';
+      html += '</div>';
+      if (isExpanded) {
+        html += '<div class="insp-day-body">';
+        html += '<label>Date</label>';
+        html += '<input type="date" class="insp-day-date" value="' + esc(day.date) + '"' + disabledAttr + '>';
+        html += '<div class="field-row">';
+        html += '<div><label>Start</label><input type="text" class="insp-day-start" value="' + esc(day.startTime) + '" placeholder="0700"' + disabledAttr + '></div>';
+        html += '<div><label>End</label><input type="text" class="insp-day-end" value="' + esc(day.endTime) + '" placeholder="1630"' + disabledAttr + '></div>';
+        html += '</div>';
+        html += '<label>Label</label>';
+        html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Sat, Mar 15)"' + disabledAttr + '>';
+        html += '<button class="btn insp-day-duplicate" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Duplicate Day</button>';
+        if (days.length > 1) {
+          html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Remove Day</button>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+  }
 
   panel.innerHTML = html;
   wireScheduleSetup(panel);
@@ -156,6 +159,7 @@ function renderScheduleSetup(panel) {
 
 function wireScheduleSetup(panel) {
   const editable = typeof isCurrentScheduleEditable === 'function' ? isCurrentScheduleEditable() : true;
+
   // Day accordion headers — toggle expand/collapse
   panel.querySelectorAll('.insp-day-header').forEach(header => {
     header.addEventListener('click', () => {
@@ -213,6 +217,10 @@ function wireScheduleSetup(panel) {
 // ── Settings Modal ────────────────────────────────────────────────────────
 
 function openSettingsModal() {
+  if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+    toast('Read-only. Click Edit.');
+    return;
+  }
   const modal = document.getElementById('settingsModalContent');
   renderSettingsModal(modal);
   document.getElementById('settingsModal').classList.add('active');
@@ -231,12 +239,11 @@ function renderSettingsModal(modal) {
   const currentTheme = getScheduleTheme(getCurrentScheduleFileData() && getCurrentScheduleFileData().theme);
 
   let html = '<h2>Customize Schedule</h2>';
-  html += '<p class="settings-summary">Choose what you want to change: basics, look, audiences, or advanced export options.</p>';
   html += '<div class="settings-tabs" role="tablist" aria-label="Customize sections">';
   html += renderSettingsTab('basics', 'Basics');
   html += renderSettingsTab('look', 'Look');
   html += renderSettingsTab('audiences', 'Audiences');
-  html += renderSettingsTab('advanced', 'Advanced');
+  html += renderSettingsTab('advanced', 'Export');
   html += '</div>';
 
   html += '<div class="settings-panel-group">';
@@ -300,7 +307,7 @@ function renderSettingsModal(modal) {
   html += '<section class="settings-panel' + (_settingsActiveTab === 'audiences' ? ' active' : '') + '" data-settings-panel="audiences">';
   html += '<div class="settings-section">';
   html += '<div class="settings-section-title">Audiences</div>';
-  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Use audiences to decide where events land on the schedule. Primary audiences go to the main track automatically. Supporting audiences stay in the side track unless a specific event is promoted.</p>';
+  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Primary shows in the main track.</p>';
   groups.forEach(g => {
     html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
     html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
@@ -309,18 +316,24 @@ function renderSettingsModal(modal) {
     html += '<button class="insp-group-remove">&times;</button>';
     html += '</div>';
   });
-  html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Group</button>';
+  html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Audience</button>';
   html += '</div>';
   html += '</section>';
 
   html += '<section class="settings-panel' + (_settingsActiveTab === 'advanced' ? ' active' : '') + '" data-settings-panel="advanced">';
   html += '<div class="settings-section">';
-  html += '<div class="settings-section-title">Advanced</div>';
-  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:10px;">Only use manual export when browser auto-save is unavailable or a lead asks for a backup file.</p>';
+  html += '<div class="settings-section-title">Export</div>';
+  html += '<div class="settings-export-row">';
+  html += '<div class="settings-export-copy">';
+  html += '<div class="settings-export-label">Schedule File</div>';
+  html += '<div class="settings-export-hint">Portable full schedule file with theme, versions, and activity.</div>';
+  html += '</div>';
+  html += '<button class="btn settings-export-btn" id="settings-save-schedule-file">Save .schedule</button>';
+  html += '</div>';
   html += '<div class="settings-export-row">';
   html += '<div class="settings-export-copy">';
   html += '<div class="settings-export-label">Manual File Export</div>';
-  html += '<div class="settings-export-hint">Only use this when browser auto-save is unavailable or a lead asks for a manual backup file.</div>';
+  html += '<div class="settings-export-hint">Backup only, or use it when auto-save is unavailable.</div>';
   html += '</div>';
   html += '<button class="btn settings-export-btn" id="settings-save-file">Manual Export</button>';
   html += '</div>';
@@ -415,13 +428,6 @@ function wireSettingsModal(modal) {
       const isMain = scopeBtn.classList.contains('main');
       const newScope = isMain ? 'limited' : 'main';
       Store.updateGroup(groupId, { scope: newScope });
-      Store.getDays().forEach(day => {
-        Store.getEvents(day.id)
-          .filter(evt => evt.groupId === groupId)
-          .forEach(evt => {
-            Store.updateEvent(day.id, evt.id, { isMainEvent: newScope === 'main' });
-          });
-      });
       scopeBtn.classList.toggle('main', !isMain);
       scopeBtn.textContent = isMain ? 'Supporting' : 'Primary';
       renderActiveDay();
@@ -484,6 +490,11 @@ function wireSettingsModal(modal) {
   const saveFileBtn = modal.querySelector('#settings-save-file');
   if (saveFileBtn) {
     saveFileBtn.addEventListener('click', () => saveDataFile());
+  }
+
+  const saveScheduleFileBtn = modal.querySelector('#settings-save-schedule-file');
+  if (saveScheduleFileBtn) {
+    saveScheduleFileBtn.addEventListener('click', () => saveScheduleWorkbookFile());
   }
 
   // Done button
@@ -570,12 +581,12 @@ function getDefaultNewDayDate() {
 
 function openDayEventSheetModal(focusInfo) {
   if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
-    toast('This schedule is read-only until you click Edit.');
+    toast('Read-only. Click Edit.');
     return;
   }
   const dayId = Store.getActiveDay();
   if (!dayId) {
-    toast('Add a day first');
+    toast('Add a day first.');
     return;
   }
   const modal = document.getElementById('dayEventSheetModalContent');
@@ -603,15 +614,13 @@ function getDayEventSheetContext(dayId) {
 
   const { mainBands } = classifyEvents(events, groups);
   const overlapMap = {};
-  let overlapCount = 0;
   mainBands.forEach(band => {
     if (band.overlappingMain && band.overlappingMain.length > 0) {
       overlapMap[band.event.id] = band.overlappingMain.map(evt => evt.title);
-      overlapCount += 1;
     }
   });
 
-  return { day, dayIndex, events, groups, groupMap, overlapMap, overlapCount };
+  return { day, dayIndex, events, groups, groupMap, overlapMap };
 }
 
 function getDaySheetTrackStatus(evt, group) {
@@ -624,27 +633,27 @@ function getDaySheetTrackStatus(evt, group) {
   }
   if (group && group.scope === 'main') {
     return {
-      label: 'Main via audience',
+      label: 'Main',
       tone: 'primary',
       title: 'The selected Primary audience automatically places this event in the main track.'
     };
   }
   if (evt.isMainEvent) {
     return {
-      label: 'Main override',
+      label: 'Main Override',
       tone: 'override',
       title: 'This supporting or unassigned event is manually shown in the main track.'
     };
   }
   if (group && group.scope === 'limited') {
     return {
-      label: 'Side via audience',
+      label: 'Side',
       tone: 'supporting',
       title: 'Supporting audiences stay in the side track unless Main Track is turned on.'
     };
   }
   return {
-    label: 'Needs audience',
+    label: 'No Audience',
     tone: 'none',
     title: 'Choose an audience to place this event automatically, or turn on Main Track manually.'
   };
@@ -668,7 +677,6 @@ function buildDaySheetDetailPanel(ctx, eventId) {
 
   let html = '<div class="day-sheet-detail-bar">';
   html += '<div class="day-sheet-detail-summary">';
-  html += '<div class="day-sheet-detail-kicker">Selected Row</div>';
   html += '<div class="day-sheet-detail-heading">' + esc(evt.title || 'Untitled event') + '</div>';
   html += '<div class="day-sheet-detail-meta">';
   html += '<span class="day-sheet-detail-meta-item">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>';
@@ -680,7 +688,7 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += '</div>';
   html += '</div>';
   html += '<div class="day-sheet-detail-actions">';
-  html += '<button class="btn" id="daySheetOpenDetails" data-event-id="' + esc(evt.id) + '">Full Details</button>';
+  html += '<button class="btn" id="daySheetOpenDetails" data-event-id="' + esc(evt.id) + '">Details</button>';
   html += '<button class="btn btn-danger" id="daySheetDeleteSelected" data-event-id="' + esc(evt.id) + '" data-delete-label="Delete">Delete</button>';
   html += '</div>';
   html += '</div>';
@@ -688,7 +696,7 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += '<div class="day-sheet-detail-grid">';
   html += '<label class="day-sheet-detail-field">';
   html += '<span class="day-sheet-detail-label">Specific people</span>';
-  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="Optional named people">';
+  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="Optional">';
   html += '</label>';
   html += '<label class="day-sheet-detail-field">';
   html += '<span class="day-sheet-detail-label">POC</span>';
@@ -696,13 +704,12 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += '</label>';
   html += '<label class="day-sheet-detail-field day-sheet-detail-wide">';
   html += '<span class="day-sheet-detail-label">Notes</span>';
-  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description" value="' + esc(evt.description) + '" placeholder="Instructions, details, or uniform notes">';
+  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description" value="' + esc(evt.description) + '" placeholder="Optional">';
   html += '</label>';
   html += '</div>';
   if (overlapNames.length > 0) {
     html += '<p class="day-sheet-details-hint">Overlap warning: ' + esc(overlapNames.join(', ')) + ' share this time block.</p>';
   }
-  html += '<p class="day-sheet-detail-tip">Click a row to edit these fields below. Double-click a row to open the full event editor.</p>';
   return html;
 }
 
@@ -736,9 +743,6 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   if (ctx.day.label && ctx.day.date) subtitleBits.push(formatDateShort(ctx.day.date));
   subtitleBits.push(ctx.day.startTime + '\u2013' + ctx.day.endTime);
   subtitleBits.push(ctx.events.length + (ctx.events.length === 1 ? ' event' : ' events'));
-  if (ctx.overlapCount) {
-    subtitleBits.push(ctx.overlapCount + (ctx.overlapCount === 1 ? ' overlap warning' : ' overlap warnings'));
-  }
 
   let html = '<div class="day-sheet-shell">';
   html += '<div class="day-sheet-header">';
@@ -748,15 +752,14 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<p class="day-sheet-subtitle">' + esc(subtitleBits.join(' • ')) + '</p>';
   html += '</div>';
   html += '<div class="day-sheet-header-actions">';
-  html += '<button class="btn btn-primary" id="daySheetAddEvent">+ Event</button>';
+  html += '<button class="btn btn-primary" id="daySheetAddEvent">Add Event</button>';
   html += '<button class="btn" id="daySheetClose">Close</button>';
   html += '</div>';
   html += '</div>';
-  html += '<div class="day-sheet-guide">Click a row to edit extra fields below. Double-click a row for full details. <strong>Audience</strong> places events automatically; <strong>Main</strong> only overrides.</div>';
 
   if (!ctx.events.length) {
     html += '<div class="day-sheet-table-wrap">';
-    html += '<div class="day-sheet-empty"><strong>No events on this day yet.</strong>Add one here to start building the schedule, or keep using the standard + Event flow.</div>';
+    html += '<div class="day-sheet-empty"><strong>No events yet.</strong> Add one here or use <strong>Add Event</strong>.</div>';
     html += '</div>';
     html += '</div>';
     modal.innerHTML = html;
@@ -790,7 +793,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="endTime" data-focus="endTime" value="' + esc(evt.endTime) + '" maxlength="4" placeholder="0800"></td>';
     html += '<td><input type="text" class="day-sheet-title-input" data-event-id="' + esc(evt.id) + '" data-field="title" data-focus="title" value="' + esc(evt.title) + '"></td>';
     html += '<td><select class="day-sheet-group-select" data-event-id="' + esc(evt.id) + '" data-focus="groupId">';
-    html += '<option value="">-- None --</option>';
+    html += '<option value="">No audience</option>';
     ctx.groups.forEach(g => {
       html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>';
     });
@@ -826,6 +829,8 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     setTimeout(() => {
       const target = modal.querySelector('[data-event-id="' + focusInfo.eventId + '"][data-focus="' + focusInfo.field + '"]');
       if (target && target.focus) {
+        const active = document.activeElement;
+        if (active && active !== document.body && active !== target && modal.contains(active)) return;
         target.focus();
         if (target.select && target.tagName !== 'SELECT') target.select();
       }
@@ -876,21 +881,35 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = input.getAttribute('data-event-id');
       syncDaySheetSelectionUI(modal, dayId, eventId);
     });
-    input.addEventListener('blur', () => {
+    input.addEventListener('blur', (e) => {
       const eventId = input.getAttribute('data-event-id');
-      const field = input.getAttribute('data-field');
       const focusInfo = input._daySheetNextFocus || null;
       input._daySheetNextFocus = null;
-      const snapped = snapToQuarter(input.value);
-      const updates = { [field]: snapped };
-      if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
-        const evt = Store.getEvents(dayId).find(item => item.id === eventId);
-        if (evt) input.value = evt[field];
-        toast('End time must be after start time.');
-        return;
-      }
-      input.value = snapped;
-      commitDayEventSheetUpdate(dayId, eventId, updates, { rerenderModal: true, checkConflict: true, focusInfo });
+      input.value = snapToQuarter(input.value);
+      const relatedTarget = e.relatedTarget;
+      const field = input.getAttribute('data-field');
+      const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
+      const startCandidate = startInput ? snapToQuarter(startInput.value) : '';
+      const endCandidate = endInput ? snapToQuarter(endInput.value) : '';
+      const stagePairedEndEdit = field === 'startTime'
+        && startCandidate
+        && endCandidate
+        && timeToMinutes(startCandidate) >= timeToMinutes(endCandidate);
+      const isSameRowTimeInput = (target) => !!(
+        target &&
+        target !== input &&
+        target.classList &&
+        target.classList.contains('day-sheet-time-input') &&
+        target.getAttribute('data-event-id') === eventId
+      );
+      if (isSameRowTimeInput(relatedTarget) || isSameRowTimeInput(document.activeElement)) return;
+      setTimeout(() => {
+        if (isSameRowTimeInput(document.activeElement)) return;
+        commitDayEventSheetTimeRange(modal, dayId, eventId, {
+          focusInfo,
+          allowStartTimeStaging: stagePairedEndEdit
+        });
+      }, stagePairedEndEdit ? 80 : 0);
     });
     input.addEventListener('keydown', (e) => {
       const fieldOrder = ['startTime', 'endTime', 'title', 'groupId', 'location'];
@@ -940,15 +959,10 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = select.getAttribute('data-event-id');
       const currentEvent = Store.getEvents(dayId).find(e => e.id === eventId);
       if (!currentEvent) return;
-      const oldGroup = Store.getGroup(currentEvent.groupId);
       const newGroup = Store.getGroup(select.value);
-      const oldScope = oldGroup ? oldGroup.scope : 'limited';
-      const newScope = newGroup ? newGroup.scope : 'limited';
       const updates = { groupId: select.value };
       if (!newGroup) {
         updates.isMainEvent = false;
-      } else if (oldScope !== newScope) {
-        updates.isMainEvent = newScope === 'main';
       }
       commitDayEventSheetUpdate(dayId, eventId, updates, {
         rerenderModal: true,
@@ -1041,6 +1055,53 @@ function commitDayEventSheetUpdate(dayId, eventId, updates, options) {
   }
 }
 
+function getDayEventSheetTimeInputs(modal, eventId) {
+  return {
+    startInput: modal.querySelector('.day-sheet-time-input[data-event-id="' + eventId + '"][data-field="startTime"]'),
+    endInput: modal.querySelector('.day-sheet-time-input[data-event-id="' + eventId + '"][data-field="endTime"]'),
+  };
+}
+
+function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
+  const evt = Store.getEvents(dayId).find(item => item.id === eventId);
+  if (!evt) return;
+
+  const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
+  const startTime = startInput ? snapToQuarter(startInput.value) : evt.startTime;
+  const endTime = endInput ? snapToQuarter(endInput.value) : evt.endTime;
+  const updates = { startTime, endTime };
+
+  if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
+    if (options && options.allowStartTimeStaging && startTime !== evt.startTime && endTime === evt.endTime) {
+      if (startInput) startInput.value = startTime;
+      if (endInput) endInput.value = endTime;
+      setTimeout(() => {
+        const current = getDayEventSheetTimeInputs(modal, eventId);
+        const currentStart = current.startInput ? snapToQuarter(current.startInput.value) : '';
+        const currentEnd = current.endInput ? snapToQuarter(current.endInput.value) : '';
+        if (currentStart === startTime && currentEnd === endTime) {
+          commitDayEventSheetTimeRange(modal, dayId, eventId, {
+            focusInfo: options.focusInfo
+          });
+        }
+      }, 140);
+      return;
+    }
+    if (startInput) startInput.value = evt.startTime;
+    if (endInput) endInput.value = evt.endTime;
+    toast('End time must be after start time.');
+    return;
+  }
+
+  if (startInput) startInput.value = startTime;
+  if (endInput) endInput.value = endTime;
+  commitDayEventSheetUpdate(dayId, eventId, updates, {
+    rerenderModal: true,
+    checkConflict: true,
+    focusInfo: options && options.focusInfo
+  });
+}
+
 // ── Face 2: Event Inspector ────────────────────────────────────────────────
 
 function renderEventInspector(panel, dayId, eventId) {
@@ -1049,13 +1110,14 @@ function renderEventInspector(panel, dayId, eventId) {
 
   const groups = Store.getGroups();
   const evtGroup = Store.getGroup(evt.groupId);
+  const groupIsMain = evtGroup && evtGroup.scope === 'main';
   const readOnly = typeof isCurrentScheduleEditable === 'function' ? !isCurrentScheduleEditable() : false;
   const textReadOnly = readOnly ? ' readonly' : '';
   const disabledAttr = readOnly ? ' disabled' : '';
 
-  let html = '<div class="insp-header"><h3 style="margin:0;">Event Details</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
+  let html = '<div class="insp-header"><h3 style="margin:0;">Event</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
   if (readOnly) {
-    html += '<div class="insp-readonly-note">Read-only view. Click <strong>Edit</strong> above before changing this event.</div>';
+    html += '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>';
   }
 
   // Check for main-on-main overlaps
@@ -1081,6 +1143,17 @@ function renderEventInspector(panel, dayId, eventId) {
     html += '</div>';
   }
 
+  const trackLabel = evt.isBreak
+    ? 'Break'
+    : (groupIsMain
+        ? 'Main'
+        : (evt.isMainEvent ? 'Main Override' : (evtGroup ? 'Side' : 'No Audience')));
+  html += '<div class="insp-summary-pills">';
+  html += '<span class="insp-summary-pill insp-summary-pill-accent">' + esc(evt.startTime + '–' + evt.endTime) + '</span>';
+  html += '<span class="insp-summary-pill">' + esc(evtGroup ? evtGroup.name : 'No audience') + '</span>';
+  html += '<span class="insp-summary-pill">' + esc(trackLabel) + '</span>';
+  html += '</div>';
+
   // Title
   html += '<label>Title</label>';
   html += '<input type="text" id="insp-evt-title" value="' + esc(evt.title) + '"' + textReadOnly + '>';
@@ -1094,40 +1167,35 @@ function renderEventInspector(panel, dayId, eventId) {
   // Group
   html += '<label>Audience</label>';
   html += '<select id="insp-evt-group"' + disabledAttr + '>';
-  html += '<option value="">-- None --</option>';
+  html += '<option value="">No audience</option>';
   groups.forEach(g => {
     html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>';
   });
   html += '</select>';
-  html += '<p class="insp-hint">Use <strong>Audience</strong> for the group or section this event belongs to. Primary audiences automatically place this event in the main track. Supporting or unassigned events stay in the side track unless you turn on <strong>Main Track</strong> below.</p>';
 
   // Specific People
   html += '<label>Specific People</label>';
-  html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="e.g. SrA Snuffy, MSgt Yoda"' + textReadOnly + '>';
-  html += '<p class="insp-hint">Optional named people. Use this when an event is only for a few named people, or when a few named people need something different from the selected audience. In tight spaces, names truncate with a footnote in Notes.</p>';
+  html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="Optional names"' + textReadOnly + '>';
 
   // Description
-  html += '<label>Description</label>';
+  html += '<label>Notes</label>';
   html += '<textarea id="insp-evt-desc"' + textReadOnly + '>' + esc(evt.description) + '</textarea>';
 
   // Location + POC
   html += '<label>Location</label>';
   html += '<input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '"' + textReadOnly + '>';
-  html += '<label>Point of Contact</label>';
+  html += '<label>POC</label>';
   html += '<input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '"' + textReadOnly + '>';
 
   // Break toggle
   html += '<div class="insp-toggle-section">';
-  html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + disabledAttr + '> This is a break</label>';
-  html += '<p class="insp-hint">Breaks (lunch, travel) appear muted on the schedule.</p>';
+  html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + disabledAttr + '> Break</label>';
   html += '</div>';
 
   // Highlight override — only show if group scope is limited
-  const groupIsMain = evtGroup && evtGroup.scope === 'main';
   if (!groupIsMain && !evt.isBreak) {
     html += '<div class="insp-toggle-section">';
-    html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-main"' + (evt.isMainEvent ? ' checked' : '') + disabledAttr + '> Show this in the main track</label>';
-    html += '<p class="insp-hint">Use this only when a supporting or unassigned event still needs to appear in the main track.</p>';
+    html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-main"' + (evt.isMainEvent ? ' checked' : '') + disabledAttr + '> Main Track</label>';
     html += '</div>';
   }
 
@@ -1184,16 +1252,10 @@ function wireEventInspector(panel, dayId, eventId) {
   if (groupSelect) {
     groupSelect.addEventListener('change', () => {
       saveUndoState();
-      const oldGroup = Store.getGroup(Store.getEvents(dayId).find(e => e.id === eventId).groupId);
       const newGroup = Store.getGroup(groupSelect.value);
-      const oldScope = oldGroup ? oldGroup.scope : 'limited';
-      const newScope = newGroup ? newGroup.scope : 'limited';
       const updates = { groupId: groupSelect.value };
-      // Reset isMainEvent when: crossing scope boundary, or clearing the group
       if (!newGroup) {
         updates.isMainEvent = false; // no group = never main
-      } else if (oldScope !== newScope) {
-        updates.isMainEvent = newScope === 'main';
       }
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
@@ -1223,9 +1285,9 @@ function renderNoteInspector(panel, dayId, noteId) {
   const textReadOnly = readOnly ? ' readonly' : '';
   const disabledAttr = readOnly ? ' disabled' : '';
 
-  let html = '<div class="insp-header"><h3 style="margin:0;">Note Details</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
+  let html = '<div class="insp-header"><h3 style="margin:0;">Note</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
   if (readOnly) {
-    html += '<div class="insp-readonly-note">Read-only view. Click <strong>Edit</strong> above before changing this note.</div>';
+    html += '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>';
   }
 
   html += '<label>Category</label>';
@@ -1341,20 +1403,20 @@ function wireToolbar() {
   if (addBtn) addBtn.onclick = () => {
     const dayId = Store.getActiveDay();
     if (dayId) openAddEvent(dayId);
-    else toast('Add a day first');
+    else toast('Add a day first.');
   };
 
   const addNoteBtn = document.getElementById('addNoteBtn');
   if (addNoteBtn) addNoteBtn.onclick = () => {
     const dayId = Store.getActiveDay();
     if (dayId) openAddNote(dayId);
-    else toast('Add a day first');
+    else toast('Add a day first.');
   };
 
   const addDayBtn = document.getElementById('addDayBtn');
   if (addDayBtn) addDayBtn.onclick = () => {
     if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
-      toast('This schedule is read-only until you click Edit.');
+      toast('Read-only. Click Edit.');
       return;
     }
     saveUndoState();
@@ -1396,6 +1458,9 @@ function wireToolbar() {
   const versionsMenuBtn = document.getElementById('versionsMenuBtn');
   if (versionsMenuBtn) versionsMenuBtn.onclick = () => { overflowMenu.classList.remove('open'); openVersionPanel(); };
 
+  const saveScheduleFileBtn = document.getElementById('saveScheduleFileBtn');
+  if (saveScheduleFileBtn) saveScheduleFileBtn.onclick = () => { overflowMenu.classList.remove('open'); saveScheduleWorkbookFile(); };
+
   // Help button in overflow
   const helpBtn = document.getElementById('helpBtn');
   if (helpBtn) helpBtn.onclick = () => { overflowMenu.classList.remove('open'); openHelpModal(); };
@@ -1414,8 +1479,18 @@ function wireToolbar() {
       const oldFile = getCurrentFileName();
       if (!oldFile || !hasDirectoryAccess()) return;
       const newFile = scheduleNameToSlug(tbTitle.value.trim()) + '.json';
-      if (newFile !== oldFile && await renameScheduleFile(oldFile, newFile)) {
-        setCurrentFile(newFile, getLastSavedAt());
+      if (newFile !== oldFile) {
+        const renamed = await renameScheduleFile(oldFile, newFile);
+        if (renamed) {
+          setCurrentFile(newFile, getLastSavedAt());
+        } else {
+          const oldData = await readScheduleFile(oldFile, { suppressErrors: true });
+          const restoredTitle = oldData && oldData.current ? oldData.current.title : Store.getTitle();
+          Store.setTitle(restoredTitle);
+          tbTitle.value = restoredTitle;
+          renderActiveDay();
+          sessionSave({ skipDirty: true });
+        }
       }
     });
   }
@@ -1452,13 +1527,14 @@ function wireToolbar() {
 function syncToolbarTitle() {
   const tbTitle = document.getElementById('tbTitle');
   if (tbTitle) tbTitle.value = Store.getTitle();
+  if (typeof renderWorkbookSwitcher === 'function') renderWorkbookSwitcher();
 }
 
 // ── Add event / note ───────────────────────────────────────────────────────
 
 function openAddEvent(dayId) {
   if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
-    toast('This schedule is read-only until you click Edit.');
+    toast('Read-only. Click Edit.');
     return;
   }
   saveUndoState();
@@ -1480,7 +1556,7 @@ function openAddEvent(dayId) {
 
 function openAddNote(dayId) {
   if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
-    toast('This schedule is read-only until you click Edit.');
+    toast('Read-only. Click Edit.');
     return;
   }
   saveUndoState();

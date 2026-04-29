@@ -88,7 +88,7 @@ describe('inspector — day sheet modal', () => {
     assert.equal(attendeesInput.value, 'Crew chiefs, AGE');
   });
 
-  it('rejects invalid quick-edit time ranges and restores the prior value', () => {
+  it('rejects invalid quick-edit time ranges and restores the prior value', async () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
@@ -108,6 +108,7 @@ describe('inspector — day sheet modal', () => {
     );
     endInput.value = '1100';
     endInput.dispatchEvent(new Event('blur'));
+    await wait(0);
 
     const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
     assert.equal(stored.endTime, '1400');
@@ -130,19 +131,15 @@ describe('inspector — day sheet modal', () => {
 
     openDayEventSheetModal();
 
-    const help = document.querySelector('#dayEventSheetModalContent .day-sheet-guide');
     const autoLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-cell-note');
     const statusBadge = document.querySelector('#dayEventSheetModalContent .day-sheet-badge-track');
     const specificPeopleLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-detail-label');
+    const detailsBtn = document.querySelector('#daySheetOpenDetails');
 
-    assert(help.textContent.includes('Audience'));
-    assert(help.textContent.includes('Main'));
-    assert(help.textContent.includes('Double-click'));
     assert.equal(autoLabel.textContent.trim(), 'Auto');
-    assert.equal(statusBadge.textContent.trim(), 'Main via audience');
+    assert.equal(statusBadge.textContent.trim(), 'Main');
     assert.equal(specificPeopleLabel.textContent.trim(), 'Specific people');
-    assert(!document.querySelector('#dayEventSheetModalContent .day-sheet-expand'), 'quick edit should not require row expansion');
-    assert(!document.querySelector('#dayEventSheetModalContent .day-sheet-open-editor'), 'quick edit should not include a secondary details path');
+    assert.equal(detailsBtn.textContent.trim(), 'Details');
   });
 
   it('opens the full event editor from quick edit', () => {
@@ -166,7 +163,7 @@ describe('inspector — day sheet modal', () => {
     assert.equal(_selection.type, 'event');
     assert.equal(_selection.dayId, day.id);
     assert.equal(_selection.entityId, evt.id);
-    assert(document.getElementById('inspectorPanel').textContent.includes('Event Details'));
+    assert(document.getElementById('inspectorPanel').textContent.includes('Event'));
   });
 });
 
@@ -193,7 +190,7 @@ describe('inspector — settings and event details copy', () => {
     assert(firstLabel !== secondLabel, 'toggling should swap the label');
   });
 
-  it('reclassifies existing events when an audience switches from Primary to Supporting', () => {
+  it('preserves highlighted limited-event overrides when an audience switches from Primary to Supporting', () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
@@ -215,7 +212,7 @@ describe('inspector — settings and event details copy', () => {
 
     const updated = Store.getEvents(day.id).find(item => item.id === evt.id);
     assert.equal(Store.getGroup('grp_flight').scope, 'limited');
-    assert.equal(updated.isMainEvent, false);
+    assert.equal(updated.isMainEvent, true);
   });
 
   it('explains main-track placement in event details', () => {
@@ -237,9 +234,8 @@ describe('inspector — settings and event details copy', () => {
     const text = panel.textContent;
 
     assert(text.includes('Audience'));
-    assert(text.includes('Primary audiences automatically place this event in the main track'));
     assert(text.includes('Specific People'));
-    assert(text.includes('Show this in the main track'));
+    assert(text.includes('Main Track'));
   });
 
   it('rejects invalid full-editor time ranges and restores the previous value', () => {

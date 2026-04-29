@@ -56,6 +56,12 @@ DaySchedule remembers that folder connection for the current browser.
 - Use Chrome or Edge for full auto-save support.
 - Other browsers can still open the app, but saving falls back to manual `Save to File`.
 
+## Single-File App Shell
+
+Run `python3 tools/build-single-html.py` to create `dist/DaySchedule.html`.
+The generated file is only the launchable app shell. Operational schedule data
+should stay in `.schedule` files or shared `app/data` JSON files.
+
 ## Recommended Team Rollout
 
 If you are publishing this for a unit or shop, keep the workflow simple:

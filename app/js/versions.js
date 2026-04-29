@@ -45,18 +45,13 @@ async function renderVersionPanel(modal) {
 
   let html = '<h2>Versions</h2>';
 
-  // Working copy info
-  html += '<div class="version-working">';
-  html += '<div class="version-working-label">Working Copy</div>';
-  html += '<div class="version-working-title">Current edits</div>';
   const lastSavedAt = getLastSavedAt();
   const lastSaved = lastSavedAt ? formatTimeAgo(lastSavedAt) : 'not yet saved';
-  html += '<div class="version-working-meta">Auto-saved ' + esc(lastSaved) + '</div>';
-  html += '</div>';
+  html += '<div class="version-working">Current copy • Saved ' + esc(lastSaved) + '</div>';
 
   // Save as version
   if (!editable) {
-    html += '<div class="version-readonly-note">Read-only mode. Click Edit above before saving or restoring versions.</div>';
+    html += '<div class="version-readonly-note">Read-only. Click Edit.</div>';
   } else if (_versionSaveMode) {
     html += '<div class="version-save-inline">';
     html += '<input type="text" class="version-save-input" id="versionNameInput" placeholder="Version name (e.g., Draft for Review)">';
@@ -64,12 +59,11 @@ async function renderVersionPanel(modal) {
     html += '<button class="btn" id="versionSaveCancel" style="font-size:12px;">Cancel</button>';
     html += '</div>';
   } else {
-    html += '<button class="version-save-btn" id="versionSaveBtn">Save as Version\u2026</button>';
-    html += '<div class="version-save-hint">Stamp the current state with a name</div>';
+    html += '<button class="version-save-btn" id="versionSaveBtn">Save Version\u2026</button>';
   }
 
   if (activity.length > 0) {
-    html += '<div class="version-list-label">Recent Activity</div>';
+    html += '<div class="version-list-label">Recent</div>';
     activity.forEach(item => {
       const time = item.at ? new Date(item.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
       const by = item.user ? 'by ' + esc(item.user) : '';
@@ -82,7 +76,7 @@ async function renderVersionPanel(modal) {
 
   // Version list
   if (versions.length > 0) {
-    html += '<div class="version-list-label">Saved Versions</div>';
+    html += '<div class="version-list-label">Saved</div>';
     versions.forEach(v => {
       const time = v.savedAt ? new Date(v.savedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
       const by = v.savedBy ? 'by ' + esc(v.savedBy) : '';
