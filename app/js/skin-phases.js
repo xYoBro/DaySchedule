@@ -66,12 +66,10 @@ function renderDayBody_phases(dayId) {
       html += '<div class="phase-block' + (isBreak ? ' phase-break' : '') + '">';
       html += '<div class="phase-header" data-event-id="' + esc(evt.id) + '">';
       html += '<div class="phase-name">' + esc(evt.title) + '</div>';
-      if (!isBreak) {
-        const meta = ['<span class="phase-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];
-        if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
-        if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
-        html += '<div class="phase-meta-line">' + meta.join('<span class="phase-meta-sep">\u00b7</span>') + '</div>';
-      }
+      const meta = ['<span class="phase-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];
+      if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
+      if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
+      html += '<div class="phase-meta-line">' + meta.join('<span class="phase-meta-sep">\u00b7</span>') + '</div>';
       if (evt.description && !isBreak) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
       }

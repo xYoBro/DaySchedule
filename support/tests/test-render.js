@@ -318,6 +318,37 @@ describe('UI Harness — render and skins', () => {
         .some(node => node.textContent.includes('Commander Opening Remarks')),
       'the same-start commander remarks banner should render alongside formation'
     );
+    assert.equal(
+      Array.from(document.querySelectorAll('#scheduleContainer .grid-slot > .grid-time-col'))
+        .filter(node => node.textContent.trim() === '0700').length,
+      1,
+      'same-start shared banners should stay grouped under one visible time row'
+    );
+  });
+
+  it('grid skin stacks overlapping events in a group lane instead of hiding the later event', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'grid' });
+    const overlap = Store.addEvent(seeded.day1.id, {
+      title: 'Second Qualification Block',
+      startTime: '0845',
+      endTime: '0945',
+      description: 'Intentional overlap to verify lane stacking.',
+      location: 'Range 2',
+      groupId: 'grp_chiefs',
+    });
+
+    renderDay(seeded.day1.id);
+
+    assert(
+      document.querySelector('.grid-cell[data-event-id="' + overlap.id + '"]'),
+      'the later overlapping event should still render as a selectable grid cell'
+    );
+    assert(
+      Array.from(document.querySelectorAll('#scheduleContainer .grid-cell-stack'))
+        .some(node => node.textContent.includes('Weapons Qualification') && node.textContent.includes('Second Qualification Block')),
+      'overlapping lane events should be visibly stacked together at the later start time'
+    );
   });
 
   it('highlighted limited-audience events render on the main track in every structured skin', () => {

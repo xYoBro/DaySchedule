@@ -38,11 +38,12 @@ function renderDayBody_cards(dayId) {
   const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId).filter(Boolean))];
   const activeGroups = activeGroupIds.map(id => groups.find(g => g.id === id)).filter(Boolean);
 
-  let html = '';
+  let html = '<div class="cards-schedule">';
 
   // Shared timeline banner
   if (sharedEvents.length > 0) {
     html += '<div class="cards-shared">';
+    html += '<div class="cards-section-label">Main track</div>';
     sharedEvents.forEach(e => {
       const sharedExceptions = getSharedEventExceptions(e, events, groups);
       const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
@@ -68,37 +69,41 @@ function renderDayBody_cards(dayId) {
 
   // Group cards — 2 columns for ≤4 groups, 3 for more
   const colCount = activeGroups.length <= 4 ? 2 : 3;
-  html += '<div class="cards-grid cards-cols-' + colCount + '">';
-  activeGroups.forEach(g => {
-    const gEvents = groupEvents.filter(e => e.groupId === g.id)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+  if (activeGroups.length > 0) {
+    html += '<div class="cards-grid cards-cols-' + colCount + '">';
+    activeGroups.forEach(g => {
+      const gEvents = groupEvents.filter(e => e.groupId === g.id)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-    html += '<div class="cards-card" style="border-top:3px solid ' + esc(g.color) + ';">';
-    html += '<div class="cards-card-header" style="color:' + esc(g.color) + ';">' + esc(g.name) + '</div>';
+      html += '<div class="cards-card" style="border-top:3px solid ' + esc(g.color) + ';">';
+      html += '<div class="cards-card-header" style="color:' + esc(g.color) + ';">' + esc(g.name) + '</div>';
 
-    gEvents.forEach(evt => {
-      html += '<div class="cards-event" data-event-id="' + esc(evt.id) + '">';
-      html += '<div class="cards-event-head">';
-      html += '<div class="cards-event-title">' + esc(evt.title) + '</div>';
-      html += '<div class="cards-event-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
-      html += '</div>';
-      const meta = [];
-      if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
-      if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
-      if (meta.length > 0) {
-        html += '<div class="cards-event-meta">' + meta.join('<span class="cards-meta-sep">\u00b7</span>') + '</div>';
+      gEvents.forEach(evt => {
+        html += '<div class="cards-event" data-event-id="' + esc(evt.id) + '">';
+        html += '<div class="cards-event-head">';
+        html += '<div class="cards-event-title">' + esc(evt.title) + '</div>';
+        html += '<div class="cards-event-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
+        html += '</div>';
+        const meta = [];
+        if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
+        if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
+        if (meta.length > 0) {
+          html += '<div class="cards-event-meta">' + meta.join('<span class="cards-meta-sep">\u00b7</span>') + '</div>';
+        }
+        if (evt.description) html += '<div class="cards-event-detail">' + esc(evt.description) + '</div>';
+        if (evt.attendees) html += '<div class="cards-event-detail">WHO: ' + esc(evt.attendees) + '</div>';
+        html += '</div>';
+      });
+
+      if (gEvents.length === 0) {
+        html += '<div class="cards-event-empty">No events assigned</div>';
       }
-      if (evt.description) html += '<div class="cards-event-detail">' + esc(evt.description) + '</div>';
-      if (evt.attendees) html += '<div class="cards-event-detail">WHO: ' + esc(evt.attendees) + '</div>';
+
       html += '</div>';
     });
-
-    if (gEvents.length === 0) {
-      html += '<div class="cards-event-empty">No events assigned</div>';
-    }
-
     html += '</div>';
-  });
+  }
+
   html += '</div>';
 
   if (notes.length > 0) html += renderNotes(notes);
