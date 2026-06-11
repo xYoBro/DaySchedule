@@ -71,6 +71,7 @@
 │   │   ├── library.js          ← schedule library home screen, CRUD, context menu
 │   │   ├── versions.js         ← version panel UI
 │   │   ├── render.js           ← renderDay() dispatcher, shared renderers, dagger footnote state
+│   │   ├── workbook-ui.js      ← workbook switcher UI (multi-schedule navigation; persistence.js owns data)
 │   │   ├── print.js            ← print layout engine, adaptive scaling
 │   │   ├── events.js           ← click handlers, keyboard shortcuts
 │   │   ├── inspector.js        ← inspector panel, settings modal, toolbar wiring
@@ -106,7 +107,7 @@ Scripts load via `<script>` tags in index.html. Order matters — dependencies m
 3. **Theme layer:** themes.js
 4. **Skin renderers:** skin-band.js → skin-grid.js → skin-cards.js → skin-phases.js
 5. **UI layer:** library.js → versions.js
-6. **Core rendering:** render.js → print.js
+6. **Core rendering:** render.js → workbook-ui.js → print.js
 7. **Interaction:** events.js → inspector.js
 8. **Data + Init:** data/scheduledata.js → init.js (must be last)
 
@@ -126,6 +127,28 @@ export. Named versions are embedded in each schedule's JSON file.
 
 Three-tier loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
 (legacy migration) → `sessionStorage` (crash recovery) → sample data.
+
+### Data Locality (hard requirement)
+The app must remain **zero-egress**: schedule data may be sensitive, and nothing ever
+leaves the user's machine. Deployment model is one-way — GitHub Pages serves the static
+files, the browser downloads them, and all data stays local (FSAPI files on disk,
+IndexedDB, sessionStorage).
+
+Enforced three ways — keep all of them intact:
+1. **CSP meta tag** in `app/index.html`: `connect-src 'none'` makes the browser refuse
+   all outbound requests (fetch/XHR/WebSocket/beacon), `img-src` allows only local/data:/
+   blob: sources, `form-action 'none'` blocks form posts. The build script rewrites
+   script-src/style-src to `'unsafe-inline'` for the bundled dist file and **fails the
+   build** if the CSP tag is missing.
+2. **No external resources**: no CDNs, no web fonts, no analytics, no network APIs
+   anywhere in app code. All `<script>`/`<link>` references are relative paths.
+3. **Git hygiene**: `*.schedule` and `app/data/*.json` are gitignored — the repo is
+   public and is the Pages site, so committed data is published data. The build script
+   independently refuses to bundle operational data into the app shell.
+
+Adding any feature that needs the network requires explicitly revisiting this section.
+Verification: use the app with networking disabled (airplane mode) — everything must
+work identically; DevTools Network tab shows nothing after initial page load.
 
 ### Print Layout System
 The print system renders schedules as horizontal band layouts. Events are organized into three visual tiers based on duration and importance. Concurrent event detection identifies overlapping time ranges and stacks them into rows. Adaptive scaling adjusts band heights and font sizes to fit the available page area, ensuring the schedule prints cleanly without manual intervention.

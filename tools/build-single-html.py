@@ -22,6 +22,17 @@ LINK_RE = re.compile(r'<link\s+rel="stylesheet"\s+href="([^"]+)"\s*>')
 SCRIPT_RE = re.compile(r'<script\s+src="([^"]+)"></script>')
 SAVED_STATE_RE = re.compile(r"\bSAVED_STATE\s*=\s*(.+?)\s*;", re.DOTALL)
 SAFE_SAVED_STATE_RE = re.compile(r"^(?:null|\{\s*\})$")
+CSP_META_RE = re.compile(
+    r'<meta\s+http-equiv="Content-Security-Policy"\s+content="[^"]*">'
+)
+# The bundled build inlines all scripts/styles, so 'self' no longer applies;
+# connect-src 'none' (no outbound network, ever) is the part that must survive.
+DIST_CSP = (
+    '<meta http-equiv="Content-Security-Policy" content="'
+    "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; "
+    "img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'"
+    '">'
+)
 
 
 def read_text(path: Path) -> str:
@@ -68,8 +79,19 @@ def bundle_scripts(html: str) -> str:
     return SCRIPT_RE.sub(replace, html)
 
 
+def rewrite_csp(html: str) -> str:
+    rewritten, count = CSP_META_RE.subn(DIST_CSP, html)
+    if count != 1:
+        raise ValueError(
+            "Expected exactly one Content-Security-Policy meta tag in app/index.html "
+            f"(found {count}). The data-locality guarantee must not be removed."
+        )
+    return rewritten
+
+
 def main() -> None:
     html = read_text(INDEX)
+    html = rewrite_csp(html)
     html = bundle_styles(html)
     html = bundle_scripts(html)
     DIST.mkdir(parents=True, exist_ok=True)

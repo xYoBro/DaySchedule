@@ -9,3 +9,7 @@ __pycache__/
 app/Schedule.zip
 output/
 support/docs/app-code-review-2026-04-14.md
+
+# Operational schedule data must never reach the public repo / GitHub Pages
+*.schedule
+app/data/*.json
