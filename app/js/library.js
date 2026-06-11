@@ -96,10 +96,27 @@ function readSessionDraftState() {
   return null;
 }
 
+// The action behind the Continue/Reopen button. Set by renderLibraryContinueCard
+// and invoked through a delegated listener wired once in wireLibrary() — a
+// per-render `onclick` assignment proved fragile (render races / clobbering),
+// and a swallowed click here looks like a dead button to the user.
+let _libraryContinueAction = null;
+
+async function runLibraryContinueAction() {
+  if (typeof _libraryContinueAction !== 'function') return;
+  try {
+    await _libraryContinueAction();
+  } catch (err) {
+    console.error('Continue failed:', err);
+    toast('Couldn’t continue: ' + (err && err.message ? err.message : 'unexpected error') + '. Use Open .schedule instead.', 5500);
+  }
+}
+
 async function renderLibraryContinueCard() {
   const strip = document.getElementById('libraryContinueStrip');
   if (!strip) return;
   strip.hidden = true;
+  _libraryContinueAction = null;
   if (hasDirectoryAccess()) return; // directory mode has its own schedule list
 
   const labelEl = document.getElementById('libraryContinueLabel');
@@ -120,7 +137,7 @@ async function renderLibraryContinueCard() {
     titleEl.textContent = sessionState.title || 'Untitled workbook';
     metaEl.textContent = parts.join(' · ');
     btn.textContent = 'Continue';
-    btn.onclick = async () => {
+    _libraryContinueAction = async () => {
       // Same workbook as the remembered file? Reattach its handle so
       // auto-save writes back to it (the click is the permission gesture).
       if (record && sessionState.workbookFileName === record.name
@@ -147,7 +164,7 @@ async function renderLibraryContinueCard() {
     const savedAt = formatWorkbookSavedAt(record.savedAt);
     metaEl.textContent = savedAt ? 'Last saved ' + savedAt : 'Pick up where you stopped';
     btn.textContent = 'Reopen';
-    btn.onclick = async () => {
+    _libraryContinueAction = async () => {
       const opened = typeof openScheduleWorkbookFromHandle === 'function'
         ? await openScheduleWorkbookFromHandle(record.handle)
         : false;
@@ -595,6 +612,15 @@ function wireLibrary() {
   const helpVersionValue = document.getElementById('helpVersionValue');
   if (helpVersionValue && typeof APP_VERSION !== 'undefined') {
     helpVersionValue.textContent = APP_VERSION;
+  }
+
+  // Continue card: delegated, wired once — the button's content re-renders,
+  // the listener never does.
+  const continueStrip = document.getElementById('libraryContinueStrip');
+  if (continueStrip) {
+    continueStrip.addEventListener('click', (e) => {
+      if (e.target.closest('#libraryContinueBtn')) runLibraryContinueAction();
+    });
   }
 
   const themeToggle = document.getElementById('editorThemeToggle');
