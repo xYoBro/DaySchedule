@@ -7,7 +7,7 @@
        network requests (fetch/XHR/WebSocket/beacon), even if future code tries one.
        The build script rewrites script-src/style-src for the inlined dist build. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
-  <title>Schedule Builder</title>
+  <title>DaySchedule</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/constants.js"></script>
 </head>
@@ -15,7 +15,7 @@
   <!-- Library View -->
   <div class="library-view" id="libraryView">
     <div class="library-header">
-      <div class="library-brand">Schedule Builder</div>
+      <div class="library-brand">DaySchedule</div>
       <div class="library-header-actions">
         <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Help</button>
         <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
@@ -23,9 +23,17 @@
     </div>
     <div class="library-body">
       <section class="library-home">
-        <div class="library-kicker">DaySchedule</div>
         <h1 class="library-home-title">Open the workbook. Edit the day.</h1>
-        <p class="library-home-copy">One app. One <strong>.schedule</strong> file. No folder setup.</p>
+        <p class="library-home-copy">One app. One <strong>.schedule</strong> workbook file. No folder setup.</p>
+        <p class="library-home-privacy">Everything stays on this computer &mdash; nothing is uploaded or shared.</p>
+        <div class="library-continue-strip" id="libraryContinueStrip" hidden>
+          <div class="library-continue-info">
+            <div class="library-start-label" id="libraryContinueLabel">Continue where you left off</div>
+            <div class="library-continue-title" id="libraryContinueTitle"></div>
+            <div class="library-continue-meta" id="libraryContinueMeta"></div>
+          </div>
+          <button class="btn btn-primary library-continue-btn" id="libraryContinueBtn">Continue</button>
+        </div>
         <div class="library-start-grid">
           <div class="library-start-card library-start-card-primary">
             <div class="library-start-label">Existing workbook</div>
@@ -54,7 +62,9 @@
       <div id="libraryConnectPrompt" class="library-hidden-legacy" style="display:none;"></div>
 
       <div id="libraryFallbackBanner" class="library-fallback" style="display:none;">
-        This browser may need manual saves. Use <strong>Save .schedule</strong> before closing.
+        In this browser, each save downloads a fresh copy of your workbook to the
+        <strong>Downloads</strong> folder. Keep the newest copy &mdash; that file is your workbook.
+        Use <strong>Save .schedule</strong> before closing.
       </div>
 
       <section class="library-stack">
@@ -74,7 +84,7 @@
     <div class="toolbar-left">
       <button class="tb-back" id="tbBack" title="Back to library">&larr;</button>
       <div class="tb-sep"></div>
-      <div class="tb-brand">Schedule Builder</div>
+      <div class="tb-brand">DaySchedule</div>
       <div class="tb-sep"></div>
       <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title">
       <button class="workbook-switch-btn" id="workbookSwitchBtn" type="button" hidden>
@@ -178,6 +188,18 @@
           <div class="help-item">
             <div class="help-item-label">What file do I open?</div>
             <div class="help-item-desc">Open the <strong>.schedule</strong> file. That is the workbook.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">Where is my workbook saved?</div>
+            <div class="help-item-desc">On this computer, in the folder you picked when you saved it. The start screen offers to reopen your last workbook, so you usually don&rsquo;t need to find the file yourself.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">I closed without saving &mdash; is my work gone?</div>
+            <div class="help-item-desc">The app warns you before closing with unsaved changes. Once a workbook has been saved to a <strong>.schedule</strong> file, later edits save to that file automatically.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">Is my data private?</div>
+            <div class="help-item-desc">Yes. Everything runs and stays on this computer &mdash; the app never uploads or shares anything, and the browser is blocked from sending data out. Don&rsquo;t take our word for it: turn off Wi&#8209;Fi and the app works exactly the same.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">What is import for?</div>

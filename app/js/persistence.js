@@ -10,6 +10,9 @@
  *   importDataFile()   — opens file picker, parses JS/JSON, loads into Store
  *   buildScheduleWorkbookContent(fileData?) — serializes a .schedule workbook JSON file
  *   parseScheduleWorkbookContent(text, fileName?) — parses .schedule/JSON/legacy JS wrappers
+ *   clearScheduleWorkbookTarget() — detach workbook handle + data (must run before Start fresh)
+ *   openScheduleWorkbookFromHandle(handle) → Promise<boolean> — reopen remembered file (Continue card)
+ *   adoptScheduleWorkbookHandle(handle) → Promise<boolean> — reattach handle to a session draft
  *
  * REQUIRES:
  *   app-state.js — Store.snapshot(), Store.restore(), Store.getPersistedState(),
@@ -89,6 +92,11 @@ function buildSerializableState() {
   if (typeof getCurrentScheduleFileData === 'function') {
     const fileData = getCurrentScheduleFileData();
     if (fileData && fileData.theme) state.theme = fileData.theme;
+  }
+  // Lets the Continue card verify a session draft belongs to the remembered
+  // .schedule file before reattaching its handle.
+  if (_scheduleWorkbookHandle && _scheduleWorkbookHandle.name) {
+    state.workbookFileName = _scheduleWorkbookHandle.name;
   }
   return state;
 }
@@ -199,6 +207,81 @@ function hasScheduleWorkbookHandle() {
 
 function getScheduleWorkbookFileName() {
   return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : '';
+}
+
+// Detach the current workbook file. Must run before "Start fresh" — otherwise
+// the new workbook inherits the previous file's handle and the next save
+// silently overwrites that file.
+function clearScheduleWorkbookTarget() {
+  _scheduleWorkbookHandle = null;
+  _scheduleWorkbookData = null;
+}
+
+async function ensureWorkbookHandlePermission(handle, silent) {
+  if (!handle) return false;
+  if (typeof handle.queryPermission !== 'function') return true;
+  try {
+    let perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm === 'prompt' && !silent && typeof handle.requestPermission === 'function') {
+      perm = await handle.requestPermission({ mode: 'readwrite' });
+    }
+    return perm === 'granted';
+  } catch (e) {
+    return false;
+  }
+}
+
+const FIRST_SAVE_NOTE_KEY = 'dayschedule_first_save_noted';
+function showFirstSaveNoteOnce(fileName) {
+  try {
+    if (localStorage.getItem(FIRST_SAVE_NOTE_KEY) === '1') return false;
+    localStorage.setItem(FIRST_SAVE_NOTE_KEY, '1');
+  } catch (e) {
+    return false;
+  }
+  toast('Saved ' + fileName + '. Your workbook is a file on this computer — nothing is uploaded. Reopen it from the start screen anytime.', 8000);
+  return true;
+}
+
+// Reopen a remembered workbook file without a picker (Continue card path).
+// The caller's click is the user gesture the permission prompt needs.
+async function openScheduleWorkbookFromHandle(handle) {
+  if (!handle || typeof handle.getFile !== 'function') return false;
+  const granted = await ensureWorkbookHandlePermission(handle, false);
+  if (!granted) {
+    toast('Permission was declined — use Open .schedule to pick the file instead.', 4500);
+    return false;
+  }
+  let file;
+  try {
+    file = await handle.getFile();
+  } catch (err) {
+    if (typeof clearWorkbookFileRecord === 'function') clearWorkbookFileRecord();
+    toast('Couldn’t find ' + (handle.name || 'the workbook file') + ' — it may have been moved or renamed. Use Open .schedule to find it.', 5500);
+    return false;
+  }
+  try {
+    const content = await file.text();
+    const parsed = parseScheduleWorkbookContent(content, file.name || handle.name);
+    _scheduleWorkbookHandle = handle;
+    _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
+    loadParsedScheduleData(parsed);
+    return true;
+  } catch (err) {
+    toast('Couldn’t open ' + (handle.name || 'the workbook file') + ': ' + err.message, 5500);
+    return false;
+  }
+}
+
+// Reattach the remembered handle to the in-memory session draft (no file read
+// — the draft is newer than the file). Used when a session draft and the
+// remembered file are the same workbook.
+async function adoptScheduleWorkbookHandle(handle) {
+  if (!handle || typeof handle.createWritable !== 'function') return false;
+  const granted = await ensureWorkbookHandlePermission(handle, false);
+  if (!granted) return false;
+  _scheduleWorkbookHandle = handle;
+  return true;
 }
 
 function getScheduleWorkbookSnapshot(options) {
@@ -401,6 +484,15 @@ async function saveScheduleWorkbookFile(options) {
     if (window.showSaveFilePicker) {
       try {
         let handle = opts.reuseHandle === false ? null : _scheduleWorkbookHandle;
+        if (handle) {
+          // A handle restored from IndexedDB starts in 'prompt' state; silent
+          // auto-saves must not pop a permission dialog mid-edit.
+          const granted = await ensureWorkbookHandlePermission(handle, opts.silent);
+          if (!granted) {
+            if (opts.requireHandle) return false;
+            handle = null;
+          }
+        }
         if (!handle && opts.requireHandle) return false;
         if (!handle) {
           handle = await window.showSaveFilePicker({
@@ -414,11 +506,22 @@ async function saveScheduleWorkbookFile(options) {
         const writable = await handle.createWritable();
         await writable.write(content);
         await writable.close();
-        if (opts.reuseHandle !== false) _scheduleWorkbookHandle = handle;
+        if (opts.reuseHandle !== false) {
+          _scheduleWorkbookHandle = handle;
+          if (typeof saveWorkbookFileRecord === 'function') {
+            saveWorkbookFileRecord({
+              handle,
+              name: handle.name || suggestedName,
+              savedAt: new Date().toISOString(),
+            });
+          }
+        }
         _scheduleWorkbookData = JSON.parse(content);
         sessionSave({ skipDirty: true });
         if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
-        if (!opts.silent) toast('Saved ' + (handle.name || suggestedName));
+        if (!opts.silent && !showFirstSaveNoteOnce(handle.name || suggestedName)) {
+          toast('Saved ' + (handle.name || suggestedName));
+        }
         return true;
       } catch (err) {
         if (err.name === 'AbortError') return false;
@@ -438,7 +541,9 @@ async function saveScheduleWorkbookFile(options) {
     _scheduleWorkbookData = JSON.parse(content);
     sessionSave({ skipDirty: true });
     if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
-    if (!opts.silent) toast('Downloaded ' + suggestedName);
+    if (!opts.silent && !showFirstSaveNoteOnce(suggestedName)) {
+      toast('Downloaded ' + suggestedName + ' to your Downloads folder — keep the newest copy.', 4500);
+    }
     return true;
   } finally {
     _saveInProgress = false;
@@ -585,6 +690,13 @@ async function openScheduleWorkbookFile(options) {
       const content = await file.text();
       const parsed = parseScheduleWorkbookContent(content, file.name || handle.name);
       _scheduleWorkbookHandle = handle;
+      if (typeof saveWorkbookFileRecord === 'function') {
+        saveWorkbookFileRecord({
+          handle,
+          name: file.name || handle.name || SCHEDULE_WORKBOOK_DEFAULT_FILENAME,
+          savedAt: new Date(file.lastModified || Date.now()).toISOString(),
+        });
+      }
       _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
       if (opts && typeof opts.onImported === 'function') {
         await opts.onImported({

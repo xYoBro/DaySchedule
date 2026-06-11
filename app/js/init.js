@@ -35,6 +35,16 @@
   if (typeof wireWorkbookUi === 'function') wireWorkbookUi();
   applyEditorTheme(getEditorTheme());
 
+  // Last line of defense against losing unsaved work on tab close. Auto-save
+  // clears the dirty flag within 2s, so this only fires for genuinely
+  // unsaved changes (e.g. a draft never saved to a .schedule file).
+  window.addEventListener('beforeunload', (e) => {
+    if (typeof isDirty === 'function' && isDirty()) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   // Check FSAPI support
   if (!hasFSAPI()) {
     const banner = document.getElementById('libraryFallbackBanner');

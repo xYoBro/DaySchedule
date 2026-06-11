@@ -81,13 +81,13 @@ function closeModal(id) {
 }
 
 let _toastTimer = null;
-function toast(msg) {
+function toast(msg, duration) {
   const t = document.getElementById('toast');
   if (!t) return;
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), duration || 2200);
 }
 
 function closeDropdowns() {

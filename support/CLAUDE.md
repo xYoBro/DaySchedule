@@ -62,13 +62,13 @@
 │   │   ├── schema.js           ← normalizeEvent, normalizeGroup, normalizeNote, normalizeDay
 │   │   ├── data-helpers.js     ← eventsOverlap, classifyEvents, computeDuration
 │   │   ├── persistence.js      ← session storage, undo/redo
-│   │   ├── storage.js          ← FSAPI directory access, IndexedDB handle, auto-save, versions
+│   │   ├── storage.js          ← FSAPI directory access, IndexedDB handles (dir + workbook file), auto-save, versions
 │   │   ├── themes.js           ← palette definitions, CSS var application, editor chrome toggle
 │   │   ├── skin-band.js        ← band skin: horizontal time bands + concurrent
 │   │   ├── skin-grid.js        ← grid skin: time × groups matrix
 │   │   ├── skin-cards.js       ← cards skin: group detail panels
 │   │   ├── skin-phases.js      ← phases skin: phase-based field exercises
-│   │   ├── library.js          ← schedule library home screen, CRUD, context menu
+│   │   ├── library.js          ← start screen (Continue card, open/create), library CRUD, context menu, help modal
 │   │   ├── versions.js         ← version panel UI
 │   │   ├── render.js           ← renderDay() dispatcher, shared renderers, dagger footnote state
 │   │   ├── workbook-ui.js      ← workbook switcher UI (multi-schedule navigation; persistence.js owns data)
@@ -117,13 +117,24 @@ Note: skin files and render.js have a mutual runtime dependency (skins call rend
 All app state flows through the `Store` object in `app-state.js`. The Store holds the schedule's days, events, groups, notes, and UI state (active day, selected event, undo/redo stacks). Backward-compatible `window` property aliases allow existing code to read/write globals — these proxy to Store internals via `Object.defineProperty`.
 
 ### Data Persistence
-Schedule library with file-per-schedule JSON storage in `data/`. Uses File System Access API
-`showDirectoryPicker()` to get read/write access to the `data/` folder. Directory handle is
-persisted in IndexedDB across browser sessions. Auto-save (2-second debounce) writes after
-every edit. Ctrl+S forces immediate save. sessionStorage runs underneath as crash recovery.
+Primary mode is the **workbook flow**: one `.schedule` JSON file the user picks via
+`showSaveFilePicker()`/`showOpenFilePicker()`. Once a file handle is attached, auto-save
+(2-second debounce) writes every edit back to it. The handle (+ name/savedAt) is persisted
+in IndexedDB (`DayScheduleDB`, key `workbookFile`) so the start screen can offer the
+**Continue card**: session draft (priority — newest state, and the only route back into an
+unsaved draft) → remembered file handle ("Welcome back · Reopen") → hidden. Permission is
+re-requested lazily; silent auto-saves never pop a permission prompt. "Start fresh" must
+call `clearScheduleWorkbookTarget()` — a stale handle would silently overwrite the
+previously opened file.
+
+Safety nets: sessionStorage crash recovery underneath every edit; a `beforeunload` warning
+when `isDirty()`; a one-time first-save note (localStorage `dayschedule_first_save_noted`)
+telling users their workbook is a local file. Legacy directory mode (shared `data/` folder
+via `showDirectoryPicker()`) still exists behind `hasDirectoryAccess()`.
 
 Fallback: browsers without FSAPI (Safari, Firefox) run in legacy mode with download-based
-export. Named versions are embedded in each schedule's JSON file.
+export (each save downloads a fresh copy; the fallback banner says so plainly). Named
+versions are embedded in each schedule's JSON file.
 
 Three-tier loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
 (legacy migration) → `sessionStorage` (crash recovery) → sample data.

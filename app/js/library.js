@@ -69,6 +69,98 @@ function showLibrary() {
   closeContextMenu();
   syncHelpEntryPoints();
   refreshLibraryList();
+  renderLibraryContinueCard();
+}
+
+// ── Continue card ───────────────────────────────────────────────────────────
+// Non-technical users shouldn't have to know where their .schedule file lives.
+// Priority: in-memory session draft (newest state, also the only way back into
+// an unsaved draft) → workbook file remembered in IndexedDB → hidden.
+
+function formatWorkbookSavedAt(iso) {
+  if (!iso) return '';
+  const then = new Date(iso);
+  if (isNaN(then.getTime())) return '';
+  const days = Math.floor((Date.now() - then.getTime()) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return days + ' days ago';
+  return then.toLocaleDateString();
+}
+
+function readSessionDraftState() {
+  try {
+    const state = JSON.parse(sessionStorage.getItem('schedule_state') || 'null');
+    if (state && Array.isArray(state.days) && state.days.length) return state;
+  } catch (e) { /* corrupt session data — ignore */ }
+  return null;
+}
+
+async function renderLibraryContinueCard() {
+  const strip = document.getElementById('libraryContinueStrip');
+  if (!strip) return;
+  strip.hidden = true;
+  if (hasDirectoryAccess()) return; // directory mode has its own schedule list
+
+  const labelEl = document.getElementById('libraryContinueLabel');
+  const titleEl = document.getElementById('libraryContinueTitle');
+  const metaEl = document.getElementById('libraryContinueMeta');
+  const btn = document.getElementById('libraryContinueBtn');
+  if (!labelEl || !titleEl || !metaEl || !btn) return;
+
+  const sessionState = readSessionDraftState();
+  const record = typeof loadWorkbookFileRecord === 'function' ? await loadWorkbookFileRecord() : null;
+
+  if (sessionState) {
+    const eventCount = sessionState.days.reduce((n, d) => n + ((d.events && d.events.length) || 0), 0);
+    const dayCount = sessionState.days.length;
+    const parts = [dayCount + (dayCount === 1 ? ' day' : ' days'), eventCount + (eventCount === 1 ? ' event' : ' events')];
+    parts.push(sessionState.workbookFileName ? sessionState.workbookFileName : 'not saved to a file yet');
+    labelEl.textContent = 'Continue where you left off';
+    titleEl.textContent = sessionState.title || 'Untitled workbook';
+    metaEl.textContent = parts.join(' · ');
+    btn.textContent = 'Continue';
+    btn.onclick = async () => {
+      // Same workbook as the remembered file? Reattach its handle so
+      // auto-save writes back to it (the click is the permission gesture).
+      if (record && sessionState.workbookFileName === record.name
+          && typeof hasScheduleWorkbookHandle === 'function' && !hasScheduleWorkbookHandle()
+          && typeof adoptScheduleWorkbookHandle === 'function') {
+        await adoptScheduleWorkbookHandle(record.handle);
+      }
+      if (!Store.getDays().length) sessionLoad();
+      const days = Store.getDays();
+      if (days.length && !Store.getActiveDay()) Store.setActiveDay(days[0].id);
+      hideLibrary();
+      if (typeof syncCurrentScheduleAccess === 'function') await syncCurrentScheduleAccess();
+      syncToolbarTitle();
+      renderActiveDay();
+      renderInspector();
+    };
+    strip.hidden = false;
+    return;
+  }
+
+  if (record) {
+    labelEl.textContent = 'Welcome back';
+    titleEl.textContent = record.name || 'Your workbook';
+    const savedAt = formatWorkbookSavedAt(record.savedAt);
+    metaEl.textContent = savedAt ? 'Last saved ' + savedAt : 'Pick up where you stopped';
+    btn.textContent = 'Reopen';
+    btn.onclick = async () => {
+      const opened = typeof openScheduleWorkbookFromHandle === 'function'
+        ? await openScheduleWorkbookFromHandle(record.handle)
+        : false;
+      if (!opened) {
+        renderLibraryContinueCard(); // record may have been cleared (file moved)
+        return;
+      }
+      hideLibrary();
+      if (typeof syncCurrentScheduleAccess === 'function') await syncCurrentScheduleAccess();
+      toast('Opened ' + (record.name || 'workbook'));
+    };
+    strip.hidden = false;
+  }
 }
 
 function hideLibrary() {
@@ -173,6 +265,7 @@ async function createNewSchedule(name) {
   }
 
   if (typeof clearUndoHistory === 'function') clearUndoHistory();
+  if (typeof clearScheduleWorkbookTarget === 'function') clearScheduleWorkbookTarget();
   Store.reset();
   Store.setTitle(name);
   const state = Store.getPersistedState();

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   Schedule Builder — Master Stylesheet
+   DaySchedule — Master Stylesheet
    Print band layout (from approved mockup v20) + Screen editing UI
    ══════════════════════════════════════════════════════════════ */
 
@@ -2285,6 +2285,11 @@ body {
 .library-home-copy strong {
   color: #101828;
 }
+.library-home-privacy {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #667085;
+}
 .library-home-rules {
   display: flex;
   flex-wrap: wrap;
@@ -2309,6 +2314,33 @@ body {
   border-radius: 6px;
   font-size: 0.92em;
 }
+.library-continue-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 26px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--app-accent), 0.35);
+  background: rgba(var(--app-accent), 0.06);
+}
+.library-continue-title {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #101828;
+}
+.library-continue-meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #667085;
+}
+.library-continue-btn {
+  flex-shrink: 0;
+}
+
 .library-start-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
@@ -3078,12 +3110,15 @@ body {
 [data-editor-theme="dark"] .library-connect-title,
 [data-editor-theme="dark"] .library-stack-title,
 [data-editor-theme="dark"] .library-start-title,
+[data-editor-theme="dark"] .library-continue-title,
 [data-editor-theme="dark"] .library-item-name,
 [data-editor-theme="dark"] .help-callout-title,
 [data-editor-theme="dark"] .help-card-title {
   color: #f5f7ff;
 }
 [data-editor-theme="dark"] .library-home-copy,
+[data-editor-theme="dark"] .library-home-privacy,
+[data-editor-theme="dark"] .library-continue-meta,
 [data-editor-theme="dark"] .library-stack-desc,
 [data-editor-theme="dark"] .library-connect-summary,
 [data-editor-theme="dark"] .library-connect-hint,

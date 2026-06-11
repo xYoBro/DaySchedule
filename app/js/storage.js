@@ -12,6 +12,11 @@
  *   hasDirectoryAccess()      → boolean
  *   hasFSAPI()                → boolean               — true if showDirectoryPicker exists
  *
+ * EXPORTS — Workbook file memory (Continue card):
+ *   saveWorkbookFileRecord({handle, name, savedAt}) → Promise<boolean> — remember last .schedule file
+ *   loadWorkbookFileRecord()  → Promise<record|null> — validated record or null
+ *   clearWorkbookFileRecord() → Promise<boolean>
+ *
  * EXPORTS — File I/O:
  *   listScheduleFiles()                → Promise<Array<meta>>  — scans data/ for .json files
  *   readScheduleFile(fileName)         → Promise<object|null>
@@ -90,6 +95,7 @@ const STORAGE_DB_NAME = 'DayScheduleDB';
 const STORAGE_DB_VERSION = 1;
 const STORAGE_STORE_NAME = 'handles';
 const STORAGE_HANDLE_KEY = 'dataDir';
+const STORAGE_WORKBOOK_KEY = 'workbookFile';
 const AUTOSAVE_DELAY = 2000;
 const LOCK_LEASE_MS = 20 * 60 * 1000;
 const LOCK_REFRESH_MS = 60 * 1000;
@@ -223,6 +229,57 @@ async function loadDirectoryHandle() {
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });
+}
+
+// ── IndexedDB — workbook file handle persistence ───────────────────────────
+// Remembers the last .schedule file across browser sessions so the start
+// screen can offer "Reopen <name>" instead of a cold file picker.
+// Record shape: { handle: FileSystemFileHandle, name: string, savedAt: string }
+
+async function saveWorkbookFileRecord(record) {
+  try {
+    const db = await _openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE_STORE_NAME, 'readwrite');
+      tx.objectStore(STORAGE_STORE_NAME).put(record, STORAGE_WORKBOOK_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {
+    console.warn('Could not remember workbook file:', e);
+    return false;
+  }
+}
+
+async function loadWorkbookFileRecord() {
+  try {
+    const db = await _openDB();
+    const record = await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE_STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORAGE_STORE_NAME).get(STORAGE_WORKBOOK_KEY);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+    if (!record || !record.handle || typeof record.handle.getFile !== 'function') return null;
+    return record;
+  } catch (e) {
+    console.warn('Could not load remembered workbook file:', e);
+    return null;
+  }
+}
+
+async function clearWorkbookFileRecord() {
+  try {
+    const db = await _openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE_STORE_NAME, 'readwrite');
+      tx.objectStore(STORAGE_STORE_NAME).delete(STORAGE_WORKBOOK_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {
+    return false;
+  }
 }
 
 // ── Directory access ───────────────────────────────────────────────────────
