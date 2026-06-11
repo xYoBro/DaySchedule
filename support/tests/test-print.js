@@ -66,7 +66,7 @@ describe('UI Harness — print', () => {
     }
   });
 
-  it('screen rerender scales the preview page after all-days print pages remain in the DOM', async () => {
+  it('screen rerender compresses the preview page but never zooms it', async () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'bands', dayCount: 2 });
     let printCalls = 0;
@@ -81,7 +81,15 @@ describe('UI Harness — print', () => {
       renderDay(seeded.day1.id);
 
       assert.equal(printCalls, 1);
-      assert.equal(previewPage.dataset.printScaled, '1');
+      // Compression stages apply to the preview page (not the print pages)…
+      assert(previewPage.style.getPropertyValue('--notes-fs') !== '', 'compression vars should target the preview page');
+      // …but the screen path must never hit the zoom fallback: the page
+      // stretches to the content height instead of shrinking content below
+      // readability (bands positions events absolutely, so the page cannot
+      // grow on its own).
+      assert.equal(previewPage.dataset.printScaled, undefined);
+      assert.equal(previewPage.style.zoom, '');
+      assert.equal(previewPage.style.minHeight, '2000px', 'screen page should stretch to the measured content height');
     } finally {
       window.print = originalPrint;
     }

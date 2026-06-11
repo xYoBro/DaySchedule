@@ -132,6 +132,27 @@
     <div class="modal" id="dayEventSheetModalContent"></div>
   </div>
 
+  <script>
+  // Native-dialog guard: any test that reaches a real picker, print, or
+  // alert/confirm dialog would freeze a headless browser. Log and no-op
+  // instead so a missing stub fails visibly rather than hanging the run.
+  (function () {
+    ['print', 'alert', 'confirm', 'prompt'].forEach(name => {
+      window[name] = function (...args) {
+        console.warn('Native dialog blocked by test guard: ' + name, String(args[0] || ''));
+        return name === 'confirm' ? true : undefined;
+      };
+    });
+    ['showSaveFilePicker', 'showOpenFilePicker', 'showDirectoryPicker'].forEach(name => {
+      if (window[name]) {
+        window[name] = function () {
+          console.warn('Native dialog blocked by test guard: ' + name);
+          return Promise.reject(new DOMException('blocked by test guard', 'AbortError'));
+        };
+      }
+    });
+  })();
+  </script>
   <script src="test-runner-async.js"></script>
 
   <script src="../../app/js/constants.js"></script>

@@ -590,6 +590,13 @@ function wireLibrary() {
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) libraryHelpBtn.onclick = () => openHelpModal();
 
+  // Build stamp in the Help modal — distinguishes a stale distributed copy
+  // from the current build when debugging user reports.
+  const helpVersionValue = document.getElementById('helpVersionValue');
+  if (helpVersionValue && typeof APP_VERSION !== 'undefined') {
+    helpVersionValue.textContent = APP_VERSION;
+  }
+
   const themeToggle = document.getElementById('editorThemeToggle');
   if (themeToggle) {
     themeToggle.textContent = getEditorTheme() === 'dark' ? '\u2600' : '\u263E';

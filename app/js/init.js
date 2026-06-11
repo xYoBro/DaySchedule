@@ -22,7 +22,9 @@
  *
  * BOOT FLOW:
  *   1. wireToolbar() + wireLibrary() — always, sets up UI event handlers
- *   2. hasFSAPI()? → No: legacyBoot() (old editor mode with fallback banner)
+ *   2. hasFSAPI()? → No: legacyBoot() (restores saved/session data into the
+ *      editor; shows the start screen when there is nothing to restore —
+ *      sample data is never auto-loaded)
  *   3. restoreDirectoryHandle()? → Yes: migrate SAVED_STATE if present, showLibrary()
  *   4. No handle: load legacy data into Store, show connect prompt + library
  * ──────────────────────────────────────────────────────────────────────────── */
@@ -38,12 +40,17 @@
   // Last line of defense against losing unsaved work on tab close. Auto-save
   // clears the dirty flag within 2s, so this only fires for genuinely
   // unsaved changes (e.g. a draft never saved to a .schedule file).
-  window.addEventListener('beforeunload', (e) => {
-    if (typeof isDirty === 'function' && isDirty()) {
-      e.preventDefault();
-      e.returnValue = '';
-    }
-  });
+  // Skipped under automation (navigator.webdriver): the native "Leave site?"
+  // dialog freezes headless browsers — test runs leave dirty state, then any
+  // scripted navigation deadlocks the renderer.
+  if (!navigator.webdriver) {
+    window.addEventListener('beforeunload', (e) => {
+      if (typeof isDirty === 'function' && isDirty()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
 
   // Check FSAPI support
   if (!hasFSAPI()) {
@@ -112,7 +119,11 @@ async function legacyBoot() {
   if (typeof SAVED_STATE !== 'undefined' && hasSavedScheduleState(SAVED_STATE)) {
     Store.loadPersistedState(SAVED_STATE);
   } else if (!sessionLoad()) {
-    loadSampleData();
+    // Nothing to restore — show the start screen. Never auto-load sample
+    // data into an editable schedule: users mistook it for their own work
+    // and saved it into real workbook files.
+    showLibrary();
+    return;
   }
 
   const days = Store.getDays();

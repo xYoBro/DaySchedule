@@ -2301,6 +2301,14 @@ body {
   font-size: 13px;
   color: #667085;
 }
+.help-modal-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+.help-version {
+  font-size: 11px;
+  color: #98a2b3;
+}
 .library-home-rules {
   display: flex;
   flex-wrap: wrap;
@@ -3982,6 +3990,7 @@ body {
  *   Repo:   https://github.com/xYoBro/DaySchedule
  *
  * EXPORTS (all const):
+ *   APP_VERSION           — string                            'dev' in source; build date in dist
  *   DEFAULT_GROUPS        — Array<{id, name, scope, color}>  Default audience groups
  *   DEFAULT_COLOR_PALETTE — Array<string>                    Hex colors for new groups
  *   TIME_INCREMENT        — number (15)                      Minutes per time snap unit
@@ -3993,7 +4002,13 @@ body {
  *   app-state.js  — DEFAULT_GROUPS for Store reset, DEFAULT_COLOR_PALETTE for new groups
  *   print.js      — LAYOUT_TARGETS for adaptive print scaling
  *   inspector.js  — TIME_INCREMENT (indirectly via snapToQuarter)
+ *   library.js    — APP_VERSION shown in the Help modal
  * ──────────────────────────────────────────────────────────────────────────── */
+
+// Stamped with the build date by tools/build-single-html.py; 'dev' when
+// running from source. Lets anyone tell a stale distributed copy from the
+// current build (Help modal shows it).
+const APP_VERSION = '2026-06-11';
 
 const DEFAULT_GROUPS = [
   { id: 'grp_all',     name: 'All Personnel', scope: 'main',    color: '#2558a8' },
@@ -4281,7 +4296,8 @@ const LAYOUT_TARGETS = {
         </div>
       </div>
 
-      <div class="modal-actions">
+      <div class="modal-actions help-modal-actions">
+        <span class="help-version">DaySchedule build: <span id="helpVersionValue">dev</span></span>
         <button class="btn" id="helpCloseBtn">Close</button>
       </div>
     </div>
@@ -8901,6 +8917,13 @@ function wireLibrary() {
   const libraryHelpBtn = document.getElementById('libraryHelpBtn');
   if (libraryHelpBtn) libraryHelpBtn.onclick = () => openHelpModal();
 
+  // Build stamp in the Help modal — distinguishes a stale distributed copy
+  // from the current build when debugging user reports.
+  const helpVersionValue = document.getElementById('helpVersionValue');
+  if (helpVersionValue && typeof APP_VERSION !== 'undefined') {
+    helpVersionValue.textContent = APP_VERSION;
+  }
+
   const themeToggle = document.getElementById('editorThemeToggle');
   if (themeToggle) {
     themeToggle.textContent = getEditorTheme() === 'dark' ? '\u2600' : '\u263E';
@@ -9577,7 +9600,8 @@ function printAllDays() {
 }
 
 // ── Print Scaling ──────────────────────────────────────────────────────────
-// Three-stage bottom-up CSS compression, then zoom fallback.
+// Three-stage bottom-up CSS compression, then zoom fallback (print only —
+// on screen the page grows taller instead of zooming below readability).
 // Measures at print width (8.2in) for accurate overflow detection.
 // Uses zoom (not transform:scale) because zoom affects actual layout flow —
 // the print engine sees the zoomed dimensions for pagination. transform:scale
@@ -9703,23 +9727,25 @@ function applyPrintScalingToPage(page, forPrint) {
 
   if (contentH <= maxH) return;
 
-  // Final fallback: zoom shrinks actual layout dimensions.
+  // Screen: never zoom — stretch the page to the content height instead.
+  // (Bands positions events absolutely, so the page cannot grow on its own.)
+  // Microscopic-but-fits is worse than a tall, readable page; the density
+  // warning already steers users to Grid/Cards/Phases. Print still zooms.
+  if (!forPrint) {
+    page.style.minHeight = contentH + 'px';
+    return;
+  }
+
+  // Final fallback (print only): zoom shrinks actual layout dimensions.
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
   let scale = maxH / contentH;
   page.style.zoom = scale;
   page.dataset.printScaled = '1';
 
-  if (forPrint) {
-    // For print: force min-height:0 so the stylesheet's 11in floor doesn't
-    // reassert at the zoomed size (11in * 0.95 = 10.45in can still overflow).
-    page.style.minHeight = '0';
-  } else {
-    // For screen: zoom shrinks the entire element including its min-height.
-    // Compensate so the card still appears as 11in visually.
-    // e.g. zoom=0.96 → min-height = 11in/0.96 = 11.458in → renders as 11in.
-    page.style.minHeight = (11 / scale) + 'in';
-  }
+  // Force min-height:0 so the stylesheet's 11in floor doesn't reassert at
+  // the zoomed size (11in * 0.95 = 10.45in can still overflow).
+  page.style.minHeight = '0';
 
   // Browser zoom rounding can leave the final rendered box a few pixels taller
   // than scrollHeight predicted. Re-measure the actual box and correct once.
@@ -9728,7 +9754,6 @@ function applyPrintScalingToPage(page, forPrint) {
   if (renderedHeight > maxH) {
     scale = scale * (maxH / renderedHeight) * 0.995;
     page.style.zoom = scale;
-    if (!forPrint) page.style.minHeight = (11 / scale) + 'in';
   }
 }
 
@@ -9741,11 +9766,11 @@ function removePrintScaling(page) {
   ];
   props.forEach(p => page.style.removeProperty(p));
 
-  if (page.dataset.printScaled) {
-    page.style.removeProperty('zoom');
-    page.style.removeProperty('min-height');
-    delete page.dataset.printScaled;
-  }
+  // zoom and inline min-height only ever come from scaling (the print zoom
+  // fallback or the screen grow path), so always clear them.
+  page.style.removeProperty('zoom');
+  page.style.removeProperty('min-height');
+  delete page.dataset.printScaled;
 }
 
 // Auto-scale on any print trigger (Cmd+P, browser menu, etc.)
@@ -11548,7 +11573,9 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
  *
  * BOOT FLOW:
  *   1. wireToolbar() + wireLibrary() — always, sets up UI event handlers
- *   2. hasFSAPI()? → No: legacyBoot() (old editor mode with fallback banner)
+ *   2. hasFSAPI()? → No: legacyBoot() (restores saved/session data into the
+ *      editor; shows the start screen when there is nothing to restore —
+ *      sample data is never auto-loaded)
  *   3. restoreDirectoryHandle()? → Yes: migrate SAVED_STATE if present, showLibrary()
  *   4. No handle: load legacy data into Store, show connect prompt + library
  * ──────────────────────────────────────────────────────────────────────────── */
@@ -11564,12 +11591,17 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
   // Last line of defense against losing unsaved work on tab close. Auto-save
   // clears the dirty flag within 2s, so this only fires for genuinely
   // unsaved changes (e.g. a draft never saved to a .schedule file).
-  window.addEventListener('beforeunload', (e) => {
-    if (typeof isDirty === 'function' && isDirty()) {
-      e.preventDefault();
-      e.returnValue = '';
-    }
-  });
+  // Skipped under automation (navigator.webdriver): the native "Leave site?"
+  // dialog freezes headless browsers — test runs leave dirty state, then any
+  // scripted navigation deadlocks the renderer.
+  if (!navigator.webdriver) {
+    window.addEventListener('beforeunload', (e) => {
+      if (typeof isDirty === 'function' && isDirty()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  }
 
   // Check FSAPI support
   if (!hasFSAPI()) {
@@ -11638,7 +11670,11 @@ async function legacyBoot() {
   if (typeof SAVED_STATE !== 'undefined' && hasSavedScheduleState(SAVED_STATE)) {
     Store.loadPersistedState(SAVED_STATE);
   } else if (!sessionLoad()) {
-    loadSampleData();
+    // Nothing to restore — show the start screen. Never auto-load sample
+    // data into an editable schedule: users mistook it for their own work
+    // and saved it into real workbook files.
+    showLibrary();
+    return;
   }
 
   const days = Store.getDays();

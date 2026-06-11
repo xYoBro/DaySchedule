@@ -8,6 +8,7 @@ files, not inside the launchable app shell.
 
 from __future__ import annotations
 
+import datetime
 import re
 from pathlib import Path
 
@@ -69,11 +70,29 @@ def bundle_styles(html: str) -> str:
     return LINK_RE.sub(replace, html)
 
 
+def stamp_app_version(rel_path: str, source: str) -> str:
+    if rel_path != "js/constants.js":
+        return source
+    build_date = datetime.date.today().isoformat()
+    stamped, count = re.subn(
+        r"const APP_VERSION = 'dev';",
+        f"const APP_VERSION = '{build_date}';",
+        source,
+    )
+    if count != 1:
+        raise ValueError(
+            "Expected exactly one APP_VERSION = 'dev' in js/constants.js "
+            f"(found {count}). The build stamp must not be removed."
+        )
+    return stamped
+
+
 def bundle_scripts(html: str) -> str:
     def replace(match: re.Match[str]) -> str:
         rel_path = match.group(1)
         source = read_text(APP_DIR / rel_path)
         assert_safe_data_placeholder(rel_path, source)
+        source = stamp_app_version(rel_path, source)
         return f"<script>\n{source}\n</script>"
 
     return SCRIPT_RE.sub(replace, html)

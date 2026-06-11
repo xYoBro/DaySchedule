@@ -82,7 +82,8 @@ function printAllDays() {
 }
 
 // ── Print Scaling ──────────────────────────────────────────────────────────
-// Three-stage bottom-up CSS compression, then zoom fallback.
+// Three-stage bottom-up CSS compression, then zoom fallback (print only —
+// on screen the page grows taller instead of zooming below readability).
 // Measures at print width (8.2in) for accurate overflow detection.
 // Uses zoom (not transform:scale) because zoom affects actual layout flow —
 // the print engine sees the zoomed dimensions for pagination. transform:scale
@@ -208,23 +209,25 @@ function applyPrintScalingToPage(page, forPrint) {
 
   if (contentH <= maxH) return;
 
-  // Final fallback: zoom shrinks actual layout dimensions.
+  // Screen: never zoom — stretch the page to the content height instead.
+  // (Bands positions events absolutely, so the page cannot grow on its own.)
+  // Microscopic-but-fits is worse than a tall, readable page; the density
+  // warning already steers users to Grid/Cards/Phases. Print still zooms.
+  if (!forPrint) {
+    page.style.minHeight = contentH + 'px';
+    return;
+  }
+
+  // Final fallback (print only): zoom shrinks actual layout dimensions.
   // zoom affects layout flow (unlike transform:scale which is visual-only),
   // so the print engine sees the zoomed box size for pagination.
   let scale = maxH / contentH;
   page.style.zoom = scale;
   page.dataset.printScaled = '1';
 
-  if (forPrint) {
-    // For print: force min-height:0 so the stylesheet's 11in floor doesn't
-    // reassert at the zoomed size (11in * 0.95 = 10.45in can still overflow).
-    page.style.minHeight = '0';
-  } else {
-    // For screen: zoom shrinks the entire element including its min-height.
-    // Compensate so the card still appears as 11in visually.
-    // e.g. zoom=0.96 → min-height = 11in/0.96 = 11.458in → renders as 11in.
-    page.style.minHeight = (11 / scale) + 'in';
-  }
+  // Force min-height:0 so the stylesheet's 11in floor doesn't reassert at
+  // the zoomed size (11in * 0.95 = 10.45in can still overflow).
+  page.style.minHeight = '0';
 
   // Browser zoom rounding can leave the final rendered box a few pixels taller
   // than scrollHeight predicted. Re-measure the actual box and correct once.
@@ -233,7 +236,6 @@ function applyPrintScalingToPage(page, forPrint) {
   if (renderedHeight > maxH) {
     scale = scale * (maxH / renderedHeight) * 0.995;
     page.style.zoom = scale;
-    if (!forPrint) page.style.minHeight = (11 / scale) + 'in';
   }
 }
 
@@ -246,11 +248,11 @@ function removePrintScaling(page) {
   ];
   props.forEach(p => page.style.removeProperty(p));
 
-  if (page.dataset.printScaled) {
-    page.style.removeProperty('zoom');
-    page.style.removeProperty('min-height');
-    delete page.dataset.printScaled;
-  }
+  // zoom and inline min-height only ever come from scaling (the print zoom
+  // fallback or the screen grow path), so always clear them.
+  page.style.removeProperty('zoom');
+  page.style.removeProperty('min-height');
+  delete page.dataset.printScaled;
 }
 
 // Auto-scale on any print trigger (Cmd+P, browser menu, etc.)

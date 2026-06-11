@@ -2290,6 +2290,14 @@ body {
   font-size: 13px;
   color: #667085;
 }
+.help-modal-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+.help-version {
+  font-size: 11px;
+  color: #98a2b3;
+}
 .library-home-rules {
   display: flex;
   flex-wrap: wrap;

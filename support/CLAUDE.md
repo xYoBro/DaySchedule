@@ -37,6 +37,12 @@
 - Prefer simple direct solutions over clever abstractions
 - A fix should make the code simpler. If it adds complexity, the problem is not yet understood
 - After two failed fix attempts on the same bug, stop and use the cupertino agent to investigate
+- `python3 -m http.server` sends no cache headers, so browsers heuristically cache app
+  JS/CSS for a long time — after editing, hard-reload (Cmd+Shift+R) or serve on a fresh
+  port, or you will debug stale code. (The single-file dist build sidesteps this.)
+- Native dialogs (file pickers, print, beforeunload) freeze headless/automated browsers.
+  runner-ui.html has a guard that no-ops them with a console warning; the app's
+  beforeunload guard is skipped under `navigator.webdriver` for the same reason.
 
 ## UI/UX Standards
 - Minimum touch target: 44x44px
@@ -78,10 +84,9 @@
 │   │   └── init.js             ← boot flow, migration, sample data (loads last)
 │   └── data/
 │       └── scheduledata.js     ← externalized state (SAVED_STATE)
-└── support/                    ← docs, tests, distribution copies
+└── support/                    ← docs and tests
     ├── CLAUDE.md
     ├── LICENSE
-    ├── RSD Schedule/           ← distribution copy
     ├── tests/
     │   ├── runner.html         ← open in browser to run all tests
     │   ├── test-runner.js      ← minimal assertion library
@@ -136,8 +141,15 @@ Fallback: browsers without FSAPI (Safari, Firefox) run in legacy mode with downl
 export (each save downloads a fresh copy; the fallback banner says so plainly). Named
 versions are embedded in each schedule's JSON file.
 
-Three-tier loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
-(legacy migration) → `sessionStorage` (crash recovery) → sample data.
+Loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
+(legacy migration) → `sessionStorage` (crash recovery) → **start screen, empty**.
+Sample data is never auto-loaded into an editable schedule (users mistook it for their
+own work and saved it into real workbook files); `loadSampleData()` exists for tests only.
+
+`APP_VERSION` in constants.js is `'dev'` in source; the build script stamps the build
+date into dist (fail-loud guard, like the CSP rewrite). The Help modal displays it —
+first question for any bug report, since stale distributed copies are the most common
+cause of "the buttons don't work" reports.
 
 ### Data Locality (hard requirement)
 The app must remain **zero-egress**: schedule data may be sensitive, and nothing ever
@@ -163,6 +175,13 @@ work identically; DevTools Network tab shows nothing after initial page load.
 
 ### Print Layout System
 The print system renders schedules as horizontal band layouts. Events are organized into three visual tiers based on duration and importance. Concurrent event detection identifies overlapping time ranges and stacks them into rows. Adaptive scaling adjusts band heights and font sizes to fit the available page area, ensuring the schedule prints cleanly without manual intervention.
+
+Dense-day behavior diverges by medium: **print** uses the three compression stages then a
+zoom fallback to fit the paper; **screen** uses the compression stages then stretches the
+page to the content height (`min-height = contentH`) — never zoom. Bands positions events
+absolutely, so the page cannot grow on its own; microscopic-but-fits is worse than a tall,
+readable page. The bands density warning (with working skin-switch buttons) steers users
+to Grid/Cards/Phases for dense days.
 
 ## Known Issues
 <!-- Track recurring bugs or browser quirks here so agents can reference them -->
