@@ -681,6 +681,23 @@ function wireHelpModal(overlay) {
   setHelpTab(_helpActiveTab || 'start');
 }
 
+function renderHelpErrorLog() {
+  const container = document.getElementById('helpErrorLog');
+  if (!container) return;
+  const log = typeof getAppErrorLog === 'function' ? getAppErrorLog() : [];
+  if (!log.length) {
+    container.innerHTML = '<div class="help-error-empty">No errors recorded on this browser.</div>';
+    return;
+  }
+  container.innerHTML = log.slice(0, 5).map(entry => {
+    const when = entry.at ? new Date(entry.at).toLocaleString() : '';
+    return '<div class="help-error-item">'
+      + '<div class="help-error-meta">' + esc(when) + (entry.source ? ' · ' + esc(entry.source) : '') + '</div>'
+      + '<div class="help-error-message">' + esc(entry.message) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
 function openHelpModal(options) {
   const overlay = document.getElementById('helpModal');
   if (!overlay) return;
@@ -693,6 +710,7 @@ function openHelpModal(options) {
   overlay.classList.add('active');
   syncHelpEntryPoints();
   wireHelpModal(overlay);
+  renderHelpErrorLog();
 }
 
 function closeHelpModal() {

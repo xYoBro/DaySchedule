@@ -63,7 +63,7 @@
 │   ├── js/
 │   │   ├── constants.js        ← default groups, color palette, layout targets
 │   │   ├── app-state.js        ← Store object + global state
-│   │   ├── utils.js            ← generateId, esc, timeToMinutes, formatDuration
+│   │   ├── utils.js            ← generateId, esc, timeToMinutes, formatDuration, local error log
 │   │   ├── ui-core.js          ← modal, toast, dropdown primitives
 │   │   ├── schema.js           ← normalizeEvent, normalizeGroup, normalizeNote, normalizeDay
 │   │   ├── data-helpers.js     ← eventsOverlap, classifyEvents, computeDuration
@@ -88,17 +88,23 @@
     ├── CLAUDE.md
     ├── LICENSE
     ├── tests/
-    │   ├── runner.html         ← open in browser to run all tests
+    │   ├── runner.html         ← open in browser to run unit tests
     │   ├── test-runner.js      ← minimal assertion library
-    │   ├── test-utils.js       ← utility function tests
-    │   ├── test-schema.js      ← schema normalization tests
+    │   ├── test-utils.js       ← utility function tests (incl. esc/error-log)
+    │   ├── test-schema.js      ← schema normalization + sanitization tests
     │   ├── test-data-helpers.js ← overlap detection, classification tests
     │   ├── test-store.js       ← Store state management tests
-    │   ├── test-storage.js     ← storage layer tests
-    │   ├── test-themes.js     ← theme system tests
+    │   ├── test-storage.js     ← storage layer + workbook parse tests
+    │   ├── test-themes.js      ← theme system + whitelist tests
+    │   ├── test-inspector.js   ← inspector panel tests
     │   ├── runner-integration.html ← async integration test runner
     │   ├── test-runner-async.js    ← async-aware test framework
-    │   └── test-integration.js     ← integration tests (save/load/version/theme)
+    │   ├── test-integration.js     ← integration tests (save/load/version/locks/core flow)
+    │   ├── runner-ui.html          ← UI harness runner (loads the real app shell)
+    │   ├── test-ui-helpers.js      ← UI harness helpers
+    │   ├── test-app-shell.js       ← app-shell flow tests
+    │   ├── test-render.js          ← renderer tests
+    │   └── test-print.js           ← print layout tests
     └── docs/
         └── superpowers/
             ├── specs/           ← design specifications
@@ -139,7 +145,18 @@ via `showDirectoryPicker()`) still exists behind `hasDirectoryAccess()`.
 
 Fallback: browsers without FSAPI (Safari, Firefox) run in legacy mode with download-based
 export (each save downloads a fresh copy; the fallback banner says so plainly). Named
-versions are embedded in each schedule's JSON file.
+versions are embedded in each schedule's JSON file. In workbook mode the version backend
+is the in-memory envelope (`getCurrentScheduleFileData()`), persisted through
+`saveScheduleWorkbookFile`; in directory mode it is the schedule's own `.json` file.
+`createVersion`/`restoreVersion`/`getVersions` branch on `_currentFileName` — both modes
+must keep working.
+
+Untrusted-input boundary: everything read from disk goes through
+`normalizePersistedState` (schema.js) — entity ids sanitized to `[A-Za-z0-9_-]`, group
+colors must be hex, logo must be a `data:image/` URL, event times validated (`HHMM`,
+minutes ≤ 59, end > start, no cross-midnight) — and theme values are whitelisted in
+`getScheduleTheme` (themes.js). Dropped events are reported via toast on load. Keep both
+layers intact when adding fields.
 
 Loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
 (legacy migration) → `sessionStorage` (crash recovery) → **start screen, empty**.
@@ -178,11 +195,31 @@ The print system renders schedules as horizontal band layouts. Events are organi
 
 Dense-day behavior diverges by medium: **print** uses the three compression stages then a
 zoom fallback to fit the paper; **screen** uses the compression stages then stretches the
-page to the content height (`min-height = contentH`) — never zoom. Bands positions events
-absolutely, so the page cannot grow on its own; microscopic-but-fits is worse than a tall,
-readable page. The bands density warning (with working skin-switch buttons) steers users
-to Grid/Cards/Phases for dense days.
+page to the content height (`min-height = contentH`) — never zoom. The `.page` element has
+a fixed design height, so without the stretch the content would clip; microscopic-but-fits
+is worse than a tall, readable page. The bands density warning (with working skin-switch
+buttons) steers users to Grid/Cards/Phases for dense days. The three compression stages
+tune band-skin CSS vars only — for Grid/Cards/Phases, print compression is effectively
+notes-shrink then zoom. `afterprint` empties `#printContainer` (the print stylesheet
+forces it visible, so stale pages there would be printed by a later browser-menu print).
 
 ## Known Issues
 <!-- Track recurring bugs or browser quirks here so agents can reference them -->
-- (none yet)
+- Legacy directory mode is orphaned: the "Connect Shared Folder" button was deliberately
+  removed (commit 5dfadec), so `promptForDirectory()` has no reachable caller on a fresh
+  profile. The lock/library code stays for browsers with a previously persisted handle.
+  Deciding whether to delete that code path or re-expose the button is an open product
+  decision — do not resurrect or remove it casually.
+- `snapToQuarter` (inspector.js) turns unparseable event-time typos into "0000" rather
+  than rejecting them; the range check usually catches it, but the silent zeroing is
+  confusing. Day-field inputs validate properly (wireDayField); event inputs still snap.
+- The `data-palette="custom"` option in Customize → Look has no UI for setting
+  `customColors`, so selecting it just falls back to the classic palette.
+- Phases skin attaches tasks to "the most recent phase in array order", not by time
+  overlap — a task can appear under a phase it doesn't overlap. Bands/Grid group by
+  actual overlap. Divergence is by-design-ish but unreviewed.
+- Cards/Phases show overlapping events without any conflict indication (Bands and Grid
+  surface them). Overlaps themselves are allowed by design.
+- Editor undo/redo, versions, and locks are gated on `isCurrentScheduleEditable()`;
+  the keyboard shortcuts route through the same functions. Keep new mutation paths
+  behind the same gate.

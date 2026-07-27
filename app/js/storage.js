@@ -738,6 +738,25 @@ async function takeOverCurrentScheduleLock(options) {
           memFileData.lastSavedBy = userName;
           memFileData.activity = fileData.activity;
         }
+        // The taker was viewing read-only and may be looking at stale data.
+        // The disk copy is the source of truth at takeover — without this
+        // reload, the next auto-save would overwrite everything the previous
+        // editor saved with the taker's stale Store, and the stale-data check
+        // (disarmed by _lastKnownSavedAt = now above) would never fire.
+        if (fileData.current && typeof fileData.current === 'object') {
+          Store.loadPersistedState(fileData.current);
+          const days = Store.getDays();
+          if (!days.find(day => day.id === Store.getActiveDay())) {
+            Store.setActiveDay(days[0] ? days[0].id : null);
+          }
+          if (typeof setCurrentScheduleFileData === 'function') {
+            setCurrentScheduleFileData(JSON.parse(JSON.stringify(fileData)));
+          }
+          _dirty = false;
+          renderActiveDay();
+          syncToolbarTitle();
+          renderInspector();
+        }
       }
     }
   }
@@ -844,6 +863,19 @@ async function listScheduleFiles() {
   }
   files.sort((a, b) => (b.lastSavedAt || '').localeCompare(a.lastSavedAt || ''));
   return files;
+}
+
+// Distinguishes "file is missing" from "file exists but couldn't be read" —
+// readScheduleFile returns null for both, and callers that rebuild files
+// must not treat a transient read failure as a missing file.
+async function scheduleFileExists(fileName) {
+  if (!_dirHandle) return false;
+  try {
+    await _dirHandle.getFileHandle(fileName);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function readScheduleFile(fileName, options) {
@@ -958,6 +990,15 @@ async function saveCurrentSchedule() {
   const state = Store.getPersistedState();
   const existing = await readScheduleFile(_currentFileName);
 
+  // A file that exists but can't be read (sync-client lock, corruption) must
+  // not be rebuilt from scratch — that would silently wipe its versions and
+  // activity log. Pause the save instead; auto-save retries on the next edit.
+  if (!existing && await scheduleFileExists(_currentFileName)) {
+    updateSaveIndicator('dirty');
+    toast('Could not read ' + _currentFileName + ' — save paused, nothing was overwritten. Try again shortly; if this keeps happening, check the file in the shared folder.', 7000);
+    return false;
+  }
+
   // Stale-data detection
   if (existing && _lastKnownSavedAt && existing.lastSavedAt !== _lastKnownSavedAt) {
     updateSaveIndicator('dirty');
@@ -1038,7 +1079,10 @@ function isDirty() {
 }
 
 function getLastSavedAt() {
-  return _lastKnownSavedAt;
+  if (_lastKnownSavedAt) return _lastKnownSavedAt;
+  // Workbook mode never sets _lastKnownSavedAt; the envelope carries it.
+  const fileData = getWorkbookFileData();
+  return fileData && fileData.lastSavedAt ? fileData.lastSavedAt : null;
 }
 
 function notifyManualDraftExport() {
@@ -1201,10 +1245,75 @@ function promptUserName() {
 }
 
 // ── Version management ─────────────────────────────────────────────────────
+// Two backends: directory mode reads/writes the schedule's own .json file;
+// workbook mode (the primary flow — no directory) works against the
+// in-memory .schedule envelope and persists via saveScheduleWorkbookFile.
+
+function getWorkbookFileData() {
+  return typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+}
+
+async function persistWorkbookVersions() {
+  if (typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()
+      && typeof saveScheduleWorkbookFile === 'function') {
+    const saved = await saveScheduleWorkbookFile({ silent: true, requireHandle: true });
+    if (saved) return true;
+  }
+  // No writable file right now — the version already lives in the envelope;
+  // the normal save flow (auto-save retry / Save .schedule) carries it, and
+  // marking dirty makes the indicator tell the truth in the meantime.
+  sessionSave();
+  return true;
+}
+
+async function createWorkbookVersion(versionName) {
+  const fileData = getWorkbookFileData();
+  if (!fileData) return false;
+  const now = new Date().toISOString();
+  const userName = getUserName() || '';
+  if (!Array.isArray(fileData.versions)) fileData.versions = [];
+  fileData.versions.unshift({
+    name: versionName,
+    savedBy: userName,
+    savedAt: now,
+    data: JSON.parse(JSON.stringify(Store.getPersistedState())),
+  });
+  appendActivity(fileData, 'version_saved', versionName, userName, now);
+  fileData.lastSavedAt = now;
+  if (userName) fileData.lastSavedBy = userName;
+  return persistWorkbookVersions();
+}
+
+async function restoreWorkbookVersion(versionIndex) {
+  const fileData = getWorkbookFileData();
+  if (!fileData || !Array.isArray(fileData.versions) || !fileData.versions[versionIndex]) return false;
+  const target = fileData.versions[versionIndex];
+  const now = new Date().toISOString();
+  const userName = getUserName() || '';
+  fileData.versions.unshift({
+    name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
+    savedBy: userName,
+    savedAt: now,
+    data: JSON.parse(JSON.stringify(Store.getPersistedState())),
+  });
+  fileData.current = JSON.parse(JSON.stringify(target.data));
+  fileData.lastSavedAt = now;
+  if (userName) fileData.lastSavedBy = userName;
+  appendActivity(fileData, 'version_restored', target.name, userName, now);
+  Store.loadPersistedState(fileData.current);
+  const days = Store.getDays();
+  if (!days.find(day => day.id === Store.getActiveDay())) {
+    Store.setActiveDay(days[0] ? days[0].id : null);
+  }
+  renderActiveDay();
+  syncToolbarTitle();
+  renderInspector();
+  return persistWorkbookVersions();
+}
 
 async function createVersion(versionName) {
   if (!isCurrentScheduleEditable()) return false;
-  if (!_currentFileName || !_dirHandle) return false;
+  if (!_currentFileName || !_dirHandle) return createWorkbookVersion(versionName);
   const userName = await ensureUserName();
   if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
@@ -1247,7 +1356,7 @@ async function createVersion(versionName) {
 
 async function restoreVersion(versionIndex) {
   if (!isCurrentScheduleEditable()) return false;
-  if (!_currentFileName || !_dirHandle) return false;
+  if (!_currentFileName || !_dirHandle) return restoreWorkbookVersion(versionIndex);
   const userName = await ensureUserName();
   if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
@@ -1298,8 +1407,9 @@ async function restoreVersion(versionIndex) {
 }
 
 async function getVersions() {
-  if (!_currentFileName || !_dirHandle) return [];
-  const fileData = await readScheduleFile(_currentFileName);
+  const fileData = (!_currentFileName || !_dirHandle)
+    ? getWorkbookFileData()
+    : await readScheduleFile(_currentFileName);
   if (!fileData) return [];
   return (fileData.versions || []).map((v, i) => ({
     index: i,
@@ -1310,8 +1420,9 @@ async function getVersions() {
 }
 
 async function getRecentActivity() {
-  if (!_currentFileName || !_dirHandle) return [];
-  const fileData = await readScheduleFile(_currentFileName);
+  const fileData = (!_currentFileName || !_dirHandle)
+    ? getWorkbookFileData()
+    : await readScheduleFile(_currentFileName);
   if (!fileData) return [];
   return (fileData.activity || []).slice(0, 5).map(entry => ({
     text: formatActivityText(entry),

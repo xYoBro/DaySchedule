@@ -183,6 +183,21 @@ function getOverlappingSharedEvents(evt, events, groupsOrMap) {
   return buildOverlapInfo(overlaps, groupMap);
 }
 
+// Lane skins (Grid, Cards) key their columns by group. Events with no group,
+// or whose group was deleted, still need a lane — Store.removeGroup orphans
+// events to groupId '', and silently disappearing from two of the four skins
+// is the worst possible outcome.
+const UNASSIGNED_LANE_GROUP = { id: '', name: 'Unassigned', scope: 'limited', color: '#8a8a8e' };
+
+function resolveLaneEvents(groupEvents, groups) {
+  const known = new Set((groups || []).map(g => g.id));
+  return (groupEvents || []).map(evt =>
+    evt.groupId && !known.has(evt.groupId)
+      ? Object.assign({}, evt, { groupId: '' })
+      : evt
+  );
+}
+
 function classifyEvents(events, groups) {
   const groupMap = getGroupMap(groups);
 

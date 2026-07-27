@@ -53,3 +53,19 @@ describe('Themes — SKIN_NAMES and PALETTE_NAMES', () => {
     assert.equal(PALETTE_NAMES.length, 5);
   });
 });
+
+describe('Themes — getScheduleTheme whitelisting', () => {
+  it('falls back to bands for unknown or injected skin values', () => {
+    assert.equal(getScheduleTheme({ skin: 'x"><img src=x onerror=alert(1)>' }).skin, 'bands');
+    assert.equal(getScheduleTheme({ skin: 'constructor' }).skin, 'bands');
+  });
+  it('falls back to classic for unknown palettes but allows custom', () => {
+    assert.equal(getScheduleTheme({ palette: 'neon' }).palette, 'classic');
+    assert.equal(getScheduleTheme({ palette: 'custom' }).palette, 'custom');
+  });
+  it('drops non-hex custom colors and keeps valid ones', () => {
+    const theme = getScheduleTheme({ customColors: { accent: 'url(evil)', bg: '#ffffff' } });
+    assert.equal(theme.customColors.accent, undefined);
+    assert.equal(theme.customColors.bg, '#ffffff');
+  });
+});

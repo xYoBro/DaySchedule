@@ -5,7 +5,7 @@
  *   minutesToTime(m)       — 450 → "0730"
  *   formatDuration(min)    — 90 → "1.5 hrs", 30 → "30 min"
  *   generateId(prefix)     — "evt" → "evt_lx1abc_k9f2z" (unique)
- *   esc(s)                 — HTML-escapes &, <, >, "
+ *   esc(s)                 — HTML-escapes &, <, >, ", '
  *   getContrastingTextColor(bgColor) — "#ffee88" → "#1d1d1f" or "#ffffff"
  *
  * REQUIRES: nothing
@@ -31,6 +31,7 @@ function minutesToTime(m) {
 }
 
 function formatDuration(minutes) {
+  if (!Number.isFinite(minutes) || minutes < 0) return '';
   if (minutes < 60) return minutes + ' min';
   const hrs = minutes / 60;
   return (hrs === Math.floor(hrs) ? hrs : hrs.toFixed(1)) + (hrs === 1 ? ' hr' : ' hrs');
@@ -43,8 +44,50 @@ function generateId(prefix) {
 function esc(s) {
   if (s == null) return '';
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+// ── Local error log ────────────────────────────────────────────────────────
+// Zero-egress diagnostics: uncaught errors land in a small localStorage ring
+// buffer that the Help modal shows next to the build stamp, so a user bug
+// report can say what actually failed. Nothing leaves the machine.
+
+const ERROR_LOG_KEY = 'dayschedule_error_log';
+const ERROR_LOG_MAX = 20;
+
+function getAppErrorLog() {
+  try {
+    const log = JSON.parse(localStorage.getItem(ERROR_LOG_KEY));
+    return Array.isArray(log) ? log : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function logAppError(kind, message, source) {
+  try {
+    const log = getAppErrorLog();
+    log.unshift({
+      at: new Date().toISOString(),
+      kind: kind,
+      message: String(message == null ? 'Unknown error' : message).slice(0, 500),
+      source: String(source || '').slice(0, 200),
+    });
+    if (log.length > ERROR_LOG_MAX) log.length = ERROR_LOG_MAX;
+    localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(log));
+  } catch (e) {
+    console.warn('Could not record error to the local log:', e);
+  }
+}
+
+window.addEventListener('error', e => {
+  logAppError('error', e.message, (e.filename || '') + (e.lineno ? ':' + e.lineno : ''));
+});
+
+window.addEventListener('unhandledrejection', e => {
+  const reason = e.reason;
+  logAppError('promise', reason && reason.message ? reason.message : reason, '');
+});
 
 function getContrastingTextColor(bgColor) {
   const fallback = '#1d1d1f';

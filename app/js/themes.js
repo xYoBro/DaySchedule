@@ -94,11 +94,32 @@ const SKIN_LABELS = {
   phases: { name: 'Phases', desc: 'Field exercises' },
 };
 
+// File-supplied theme values are untrusted (they bypass event/group
+// normalization), and skin lands in HTML class strings while colors land in
+// CSS custom properties — whitelist everything here, the one funnel every
+// consumer reads through.
+const THEME_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+function sanitizeCustomColors(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const colors = {};
+  let any = false;
+  Object.keys(PALETTES.classic).forEach(key => {
+    const value = typeof raw[key] === 'string' ? raw[key].trim() : '';
+    if (THEME_COLOR_RE.test(value)) {
+      colors[key] = value;
+      any = true;
+    }
+  });
+  return any ? colors : null;
+}
+
 function getScheduleTheme(t) {
+  const palette = t && t.palette;
   return {
-    skin: (t && t.skin) || 'bands',
-    palette: (t && t.palette) || 'classic',
-    customColors: (t && t.customColors) || null,
+    skin: (t && SKIN_NAMES.indexOf(t.skin) !== -1) ? t.skin : 'bands',
+    palette: (palette === 'custom' || PALETTE_NAMES.indexOf(palette) !== -1) ? palette : 'classic',
+    customColors: sanitizeCustomColors(t && t.customColors),
   };
 }
 

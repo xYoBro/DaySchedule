@@ -30,13 +30,16 @@ function renderDayBody_cards(dayId) {
     return html;
   }
 
-  // Separate shared/main-track events from group-specific events.
+  // Separate shared/main-track events from group-specific events. Orphaned
+  // and ungrouped events are routed to an "Unassigned" card so they render.
   const sharedEvents = events.filter(e => isEventEffectiveMain(e, groups));
-  const groupEvents = events.filter(e => !sharedEvents.includes(e));
+  const groupEvents = resolveLaneEvents(events.filter(e => !sharedEvents.includes(e)), groups);
 
   // Get groups that have events
-  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId).filter(Boolean))];
-  const activeGroups = activeGroupIds.map(id => groups.find(g => g.id === id)).filter(Boolean);
+  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId))];
+  const activeGroups = activeGroupIds
+    .map(id => id === '' ? UNASSIGNED_LANE_GROUP : groups.find(g => g.id === id))
+    .filter(Boolean);
 
   let html = '<div class="cards-schedule">';
 

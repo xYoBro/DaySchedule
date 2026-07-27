@@ -19,6 +19,14 @@ function renderWorkbookSwitcher() {
   const label = document.getElementById('workbookSwitchLabel');
   if (!btn || !label) return;
 
+  // Legacy directory-library mode: each schedule is its own .json file, and
+  // switching/creating here would auto-save the other schedule's state into
+  // the currently open file. The switcher is workbook-only.
+  if (typeof getCurrentFileName === 'function' && getCurrentFileName()) {
+    btn.hidden = true;
+    return;
+  }
+
   if (!Store.getTitle() && !Store.getDays().length) {
     btn.hidden = true;
     return;
@@ -131,6 +139,9 @@ function renderWorkbookModal() {
 }
 
 function openWorkbookModal() {
+  // Same guard as renderWorkbookSwitcher — never expose workbook switching
+  // while a directory-library file is open.
+  if (typeof getCurrentFileName === 'function' && getCurrentFileName()) return;
   const overlay = document.getElementById('workbookModal');
   if (!overlay) return;
   renderWorkbookModal();

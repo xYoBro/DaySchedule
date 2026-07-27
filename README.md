@@ -1,125 +1,82 @@
 # DaySchedule
 
-DaySchedule is a browser-based schedule builder designed to run from a shared folder. It is meant for teams that need a simple shared workflow without deploying a traditional web app.
+DaySchedule is a browser-based day-schedule builder. It runs entirely in your browser — no server, no accounts, and no network access. Your schedule data never leaves your computer.
 
-Licensed under the MIT License. See [LICENSE](/Users/adknott/Code/DaySchedule/LICENSE).
+Licensed under the MIT License. See [LICENSE](LICENSE).
 
-## Recommended Setup
+## How Your Data Is Stored
 
-Use one shared master copy of the full DaySchedule folder.
+Everything lives in one **`.schedule` file** (a workbook) that you save on your own computer or a shared drive. One workbook file can hold many schedules — use the schedule switcher in the toolbar to move between them.
 
-- Keep the full app together, including the `app` folder and the schedule storage folder.
-- Have everyone open the same shared copy every time.
-- If your organization reaches that shared copy through SharePoint, Teams, or another shared location, treat that shared copy as the source of truth.
-- Do not email ZIPs around, copy the folder to personal desktops, or let multiple "master" copies exist.
+- **Chrome and Edge:** after you save once, DaySchedule auto-saves every edit back to your `.schedule` file (watch for `Saved` in the toolbar). The start screen offers a **Continue** card to reopen your last workbook.
+- **Safari and Firefox:** auto-save to a file isn't supported by the browser. Each save downloads a fresh copy of the `.schedule` file — keep the newest one.
 
-## First-Time Setup
+A session backup underneath every edit protects against crashes and accidental tab closes, and the app warns you before closing with unsaved work.
 
-1. Open the shared DaySchedule copy your team uses on your computer.
-2. Launch DaySchedule from that shared copy.
-3. Click `Connect Shared Folder`.
-4. Choose the folder where schedule files live.
-   In most DaySchedule copies, this is `app/data`.
-5. Confirm that you selected the shared team folder, not a personal or downloaded copy.
-6. When prompted for your name, use the real name your team will recognize.
+## First-Time Use
 
-If your team reaches DaySchedule through Microsoft Teams, open the team or channel `Files` tab, click `Sync`, wait for the shared folder to appear on your computer, then open DaySchedule from that synced folder. Sync matters because DaySchedule saves directly into the shared folder. A download creates a separate copy that other people will not see.
+1. Open `index.html` (or the single-file `DaySchedule.html`) in Chrome or Edge.
+2. Click **Create** to start a new schedule, or **Open .schedule** to open an existing workbook file.
+3. Build your day: `+ Day`, `+ Event`, `+ Note`. `Quick Edit` works like a dense worksheet — one row per event, with a selected-row editor for extra fields.
+4. Save when prompted. After the first save, edits auto-save; wait for `Saved` in the toolbar before closing or handing off.
 
-DaySchedule remembers that folder connection for the current browser.
+`Audience` means the group or section an event belongs to. `Primary` audiences go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`. `Specific People` is for named people who need something different from the main audience.
 
-## Daily Use
+## Working as a Team
 
-1. Open the same shared DaySchedule copy.
-2. Open the schedule you need from the library.
-3. If the schedule opens in read-only mode, click `Edit`.
-   When you are finished, click `Done Editing` to hand it off clearly.
-4. Make your changes.
-   `Quick Edit` works like a dense worksheet: one row per event, with a selected-row editor at the bottom for the extra fields.
-   Click a row to edit those extra fields, or double-click a row to jump straight into full event details.
-   `Audience` means the group or section this event belongs to. `Primary` audiences go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`.
-   `Specific People` is for named people. Use it when an event is only for a few named people, or when a few named people need something different from the main audience.
-5. Wait for `Saved` in the toolbar before handing off to the next person.
-6. Return to the library when you are done.
+DaySchedule has no server, so there is no real-time collaboration. The safe workflow for a shared `.schedule` file (SharePoint, Teams-synced folder, network drive):
 
-## Shared Editing Rules
+- **One editor at a time.** Agree on who has the file, edit, wait for `Saved`, hand off.
+- Before major changes, open **Versions** (under `More`) and save a named version — restoring creates an automatic backup of the current state first.
+- If two people edit the same file at once, the last save wins and the other person's changes are lost. Nothing in the app can prevent that — the rule has to be human.
+- If you reach the file through Teams/SharePoint, use the **synced** folder on your computer. A downloaded copy is a separate file that nobody else sees.
 
-- One editor at a time per schedule is the safest workflow.
-- Existing schedules may open in read-only mode until someone clicks `Edit`.
-- Before handing a schedule to someone else, wait for the save indicator to show `Saved`.
-- If a lead must unblock a schedule before the current lock expires, they can use `Take Over` after confirming the current editor is unavailable.
-- For major updates, use `Versions` first so there is a named checkpoint.
-- Never edit from a downloaded, zipped, backup, or personal copy.
-- If you are not sure which copy is correct, stop and ask your team lead or admin before editing.
+### Legacy shared-folder mode
 
-## Browser Guidance
+Earlier DaySchedule versions supported a shared `app/data` folder with per-schedule files, edit locks, and Take Over. That mode still works in browsers that already have the folder connected, but new setups can no longer connect to it — the workbook flow above replaced it. The locks it used are advisory (they rely on folder sync being fast), so the one-editor-at-a-time rule applies there too.
 
-- Use Chrome or Edge for full auto-save support.
-- Other browsers can still open the app, but saving falls back to manual `Save to File`.
+## Layouts
 
-## Single-File App Shell
+Four layouts render the same data: **Bands** (main track + concurrent events), **Grid** (time × groups), **Cards** (per-group panels), and **Phases** (long block exercises). Layout applies to the whole schedule. On crowded days, Bands shows a density note with one-click switches — Grid or Cards are usually easier to check for conflicts.
 
-Run `python3 tools/build-single-html.py` to create `dist/DaySchedule.html`.
-The generated file is only the launchable app shell. Operational schedule data
-should stay in `.schedule` files or shared `app/data` JSON files.
+Overlapping events are **allowed by design** (concurrent training is the normal case). Bands surfaces them as "Also Happening" and exception notes; Grid warns when events in the same group's lane overlap. Cards and Phases simply show all events.
 
-## Recommended Team Rollout
+## Printing
 
-If you are publishing this for a unit or shop, keep the workflow simple:
+Use the in-app **Print** button or `Ctrl/Cmd+P`. Every day prints on its own page, auto-scaled to fit. Very dense days print smaller to fit the paper — if a page is hard to read, switch layouts or split the day.
 
-- Make one shared DaySchedule folder the official team copy.
-- Use SharePoint as the source of truth if that is your approved shared location.
-- Use Teams as the doorway if that is how your people find the shared copy.
-- Tell users there is one entry point: open `index.html` from the shared copy, then use the in-app `Start Here` / `Help` button for setup and reminders.
-- Tell everyone to keep opening the same shared copy on their computer after the first setup.
+## If Something Breaks
 
-The user-facing rule should be simple:
+Open **Help → Shortcuts**. The bottom shows the build stamp and a local log of recent errors — include both in any bug report. The log stays on your computer.
 
-`Open the shared copy. Edit there. Wait for Saved. Hand off.`
+The most common cause of "buttons don't work" is a stale copy of the app. Compare the build stamp with the current release before anything else.
 
-## FAQ
+## Known Limitations
 
-### Where should I open DaySchedule from?
+- **Single-day events only.** An event cannot cross midnight (e.g., 2200–0100). The editor rejects such ranges, and files containing them load with a notice that those events were skipped.
+- **Not a calendar.** There are no time zones, no recurrence, no reminders. Times are plain 24-hour wall-clock labels (`0730`), and every day is built explicitly.
+- **No multi-editor protection in the workbook flow.** A shared `.schedule` file is last-writer-wins. One editor at a time; save Versions before big changes.
+- **Legacy-mode locks are advisory.** Two people clicking `Edit` within a slow folder-sync window can both succeed. `Take Over` reloads the file from disk, but work the other editor hadn't saved is lost.
+- **Full auto-save needs Chrome or Edge.** Safari and Firefox fall back to download-based saving.
+- **Versions live inside the workbook file.** Versions created before the first save of a new draft exist only in the session backup until the file is saved.
+- **Crash recovery has a size limit.** Very large logos can exceed browser session-storage quota; if that happens the crash backup stops updating (a warning is logged to the browser console).
+- **Dense-day printing trades size for fit.** Print always fits the paper, even if that means small text. On screen the page grows taller instead.
+- **No enforcement, by design.** There are no accounts and no server: anyone who can open the file can edit it. The app is zero-egress — a strict Content-Security-Policy blocks all network traffic, which is also why it works fully offline.
 
-Open it from the shared team copy every time. If you reached it through SharePoint or Teams, use that shared copy on your computer instead of downloading a separate copy.
+## Building the Single-File App Shell
 
-### What folder should I pick when the app asks to connect?
+```bash
+python3 tools/build-single-html.py
+```
 
-Choose the folder where the schedule files live. In most DaySchedule copies, that is `app/data`. If your team packaged it differently, choose the folder that already contains the saved schedule files.
+This creates `dist/DaySchedule.html` — the whole app in one file, stamped with the build date (shown in Help). The generated file is only the app shell; schedule data stays in your `.schedule` files. The build fails loudly if the zero-egress CSP tag is missing.
 
-### Can multiple people edit the same schedule at once?
+## Tests
 
-The recommended workflow is no. Have one person edit at a time per schedule, then hand off after the toolbar shows `Saved`.
+Open these in a browser (serve the repo root, e.g. `python3 -m http.server`):
 
-### Why did Main Track change when I changed Audience?
+- `support/tests/runner.html` — unit tests (utilities, schema validation, data helpers, store)
+- `support/tests/runner-integration.html` — storage/persistence integration tests (in-memory FSAPI mock)
+- `support/tests/runner-ui.html` — UI harness (renderers, app-shell flows, print behavior)
 
-That is expected. `Primary` audiences automatically place the event in the main track. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track` as an override.
-
-### What is the difference between Audience and Specific People?
-
-`Audience` is the group, section, or shop the event belongs to. `Specific People` is for named people, either by themselves or inside that audience.
-
-### What if I do not see someone else's changes?
-
-First confirm that you opened the shared copy, not a personal one. Then return to the library and reopen the schedule so the app reloads the latest file.
-
-### What if I accidentally worked from a personal copy?
-
-Do not keep editing there. Go back to the shared copy, compare what changed, and move the updates over carefully. If the personal copy contains major changes, save a version or create a duplicate before merging anything into the shared copy.
-
-### What if someone is out of office and the team still needs to update the schedule?
-
-DaySchedule uses a lease-style lock. If someone closes the app or stops refreshing the lock, it expires automatically after a timeout. Once it expires, the next person can open the schedule and click `Edit`.
-
-If the team lead or supervisor needs access sooner, they can use `Take Over` from the read-only banner. That should only be used after confirming that the current editor is unavailable or no longer working in the file.
-
-### Can different days use different layouts?
-
-Not currently. Layout is schedule-wide, so switching to Bands, Grid, Cards, or Phases changes the full schedule.
-
-### What should I do on extremely crowded days?
-
-Use `Bands` for the presentation view, then switch to `Grid` or `Cards` to sanity-check crowded overlapping schedules before you hand them off or print them.
-
-## Future Improvement
-
-If this project stays on a shared-folder model, the next useful improvements should come from real-world user testing: where people hesitate, which layouts they switch to on crowded days, and where handoffs still create confusion.
+Note: `python3 -m http.server` sends no cache headers, so browsers cache the app JS aggressively. After editing, serve on a fresh port or hard-reload — otherwise you are testing stale code.

@@ -2950,6 +2950,47 @@ body {
 [data-editor-theme="dark"] .help-shortcut-plus {
   color: #b8b8cb;
 }
+.help-error-intro {
+  font-size: 12px;
+  color: #48484a;
+  margin: 0 0 8px;
+}
+.help-error-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.help-error-empty {
+  font-size: 12px;
+  color: #86868b;
+}
+.help-error-item {
+  padding: 6px 8px;
+  background: #f8f8fa;
+  border: 1px solid #f0f0f2;
+  border-radius: 6px;
+}
+.help-error-meta {
+  font-size: 10px;
+  color: #86868b;
+  margin-bottom: 2px;
+}
+.help-error-message {
+  font-size: 11px;
+  font-family: ui-monospace, Menlo, monospace;
+  color: #48484a;
+  word-break: break-word;
+}
+[data-editor-theme="dark"] .help-error-intro,
+[data-editor-theme="dark"] .help-error-message {
+  color: #b8b8cb;
+}
+[data-editor-theme="dark"] .help-error-item {
+  background: #252545;
+  border-color: #333355;
+}
 
 /* ══════════════════════════════════════════════════════════════
    VERSION PANEL

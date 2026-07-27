@@ -50,3 +50,35 @@ describe('utils — getContrastingTextColor', () => {
     assert.equal(getContrastingTextColor('#ff0'), '#1d1d1f');
   });
 });
+
+describe('utils — esc attribute contexts', () => {
+  it('escapes single quotes', () => {
+    assert.equal(esc("O'Neil"), 'O&#39;Neil');
+  });
+});
+
+describe('utils — formatDuration guards', () => {
+  it('returns empty string for NaN', () => {
+    assert.equal(formatDuration(NaN), '');
+  });
+  it('returns empty string for negative durations', () => {
+    assert.equal(formatDuration(-15), '');
+  });
+});
+
+describe('utils — local error log', () => {
+  it('records errors newest-first and survives a round trip', () => {
+    localStorage.removeItem('dayschedule_error_log');
+    logAppError('error', 'first failure', 'a.js:1');
+    logAppError('error', 'second failure', 'b.js:2');
+    const log = getAppErrorLog();
+    assert.equal(log.length, 2);
+    assert.equal(log[0].message, 'second failure');
+    assert.equal(log[1].source, 'a.js:1');
+    localStorage.removeItem('dayschedule_error_log');
+  });
+  it('returns an empty array when nothing is recorded', () => {
+    localStorage.removeItem('dayschedule_error_log');
+    assert.deepEqual(getAppErrorLog(), []);
+  });
+});

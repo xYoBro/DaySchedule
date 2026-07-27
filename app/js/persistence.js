@@ -64,6 +64,13 @@ function clearUndoHistory() {
 }
 
 function undo() {
+  // Read-only viewers must not mutate the Store: markDirty() no-ops for them,
+  // so an undone state would never save yet silently becomes the state a
+  // later "Edit + save" writes over the file.
+  if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+    toast('Read-only. Click Edit.');
+    return;
+  }
   if (!_undoStack.length) return;
   _redoStack.push(Store.snapshot());
   Store.restore(_undoStack.pop());
@@ -75,6 +82,10 @@ function undo() {
 }
 
 function redo() {
+  if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+    toast('Read-only. Click Edit.');
+    return;
+  }
   if (!_redoStack.length) return;
   _undoStack.push(Store.snapshot());
   Store.restore(_redoStack.pop());
@@ -106,7 +117,11 @@ function sessionSave(options) {
   _sessionSaveTimer = setTimeout(() => {
     try {
       sessionStorage.setItem('schedule_state', JSON.stringify(buildSerializableState()));
-    } catch (e) { /* ignore quota errors */ }
+    } catch (e) {
+      // Usually quota (a large logo can exceed sessionStorage limits). The
+      // crash-recovery net is dead while this happens — leave a record.
+      console.warn('Crash-recovery backup failed; unsaved work will not survive a crash:', e);
+    }
   }, 500);
   // Trigger auto-save if connected
   if ((!options || !options.skipDirty) && typeof markDirty === 'function') markDirty();
@@ -129,7 +144,9 @@ function sessionLoad() {
       }
       return true;
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn('Could not restore the session draft:', e);
+  }
   return false;
 }
 
@@ -479,6 +496,18 @@ async function saveScheduleWorkbookFile(options) {
   _saveInProgress = true;
   try {
     const suggestedName = opts.suggestedName || getScheduleWorkbookSuggestedName();
+    // Stamp the live envelope before serializing — otherwise every workbook
+    // save carries the schedule's creation-time lastSavedAt forever and the
+    // switcher/Versions panel report stale times.
+    if (!opts.content) {
+      const memFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+      if (memFileData && (!opts.fileData || opts.fileData === memFileData)) {
+        memFileData.lastSavedAt = new Date().toISOString();
+        if (typeof getUserName === 'function' && getUserName()) {
+          memFileData.lastSavedBy = getUserName();
+        }
+      }
+    }
     const content = opts.content || buildScheduleWorkbookContent(opts.fileData);
 
     if (window.showSaveFilePicker) {
@@ -626,6 +655,18 @@ function parseScheduleWorkbookContent(content, fileName) {
     throw new Error('Invalid schedule file \u2014 no days array found.');
   }
   const state = normalizePersistedState(payload.state, { requireDays: true });
+
+  // Normalization silently filters events with missing titles or invalid
+  // times — tell the user instead of letting data vanish without a trace.
+  const rawEventCount = payload.state.days.reduce(
+    (n, d) => n + (d && Array.isArray(d.events) ? d.events.length : 0), 0);
+  const keptEventCount = state.days.reduce((n, d) => n + d.events.length, 0);
+  const droppedEventCount = rawEventCount - keptEventCount;
+  if (droppedEventCount > 0 && typeof toast === 'function') {
+    toast('Skipped ' + droppedEventCount + (droppedEventCount === 1 ? ' event' : ' events')
+      + ' with missing or invalid data (title or times). Everything else loaded normally.', 6500);
+  }
+
   if (payload.fileData && payload.fileData.theme && !state.theme) state.theme = payload.fileData.theme;
   const fileData = payload.fileData
     ? cloneScheduleData(payload.fileData)
@@ -656,6 +697,7 @@ function parseScheduleWorkbookContent(content, fileName) {
     state,
     fileData,
     workbookData,
+    droppedEventCount,
   };
 }
 

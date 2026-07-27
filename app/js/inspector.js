@@ -528,16 +528,40 @@ function wireFooterField(panel, selector, key) {
 function wireDayField(item, selector, dayId, field, nullable) {
   const input = item.querySelector(selector);
   if (!input) return;
+  const isTimeField = field === 'startTime' || field === 'endTime';
   const eventType = input.type === 'date' ? 'change' : 'input';
   input.addEventListener(eventType, () => {
-    saveUndoState();
     const val = input.value.trim();
+    if (isTimeField) {
+      // Day times seed new-event defaults; committing raw keystrokes let
+      // garbage like "abc" produce "NaNNaN" event times downstream.
+      const normalized = normalizeTime(val);
+      if (!isValidScheduleTime(normalized)) return;
+      saveUndoState();
+      Store.updateDay(dayId, { [field]: normalized });
+      renderActiveDay();
+      sessionSave();
+      return;
+    }
+    saveUndoState();
     Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
     renderActiveDay();
     sessionSave();
     // Re-render inspector when date changes (reorders accordion)
     if (field === 'date') renderInspector();
   });
+  if (isTimeField) {
+    input.addEventListener('blur', () => {
+      const day = Store.getDay(dayId);
+      const normalized = normalizeTime(input.value.trim());
+      if (!isValidScheduleTime(normalized)) {
+        input.value = (day && day[field]) || '';
+        toast('Times use 24-hour HHMM, e.g. 0730.');
+      } else if (normalized !== input.value.trim()) {
+        input.value = normalized;
+      }
+    });
+  }
 }
 
 function formatDateShort(dateStr) {
@@ -850,8 +874,13 @@ function wireDayEventSheetModal(modal, dayId) {
       const defaultGroup = groups.find(g => g.scope === 'main') || groups[0];
       const day = Store.getDay(dayId);
       const events = Store.getEvents(dayId);
-      const startTime = events.length ? events[events.length - 1].endTime : ((day && day.startTime) || '0800');
-      const endTime = minutesToTime(Math.min(timeToMinutes(startTime) + 60, (23 * 60) + 45));
+      let startMin = timeToMinutes(events.length ? events[events.length - 1].endTime : ((day && day.startTime) || '0800'));
+      if (!Number.isFinite(startMin)) startMin = 8 * 60;
+      // Clamp below the 2345 end cap so end > start even when the last
+      // event already runs to the end of the day.
+      startMin = Math.min(startMin, (23 * 60) + 45 - TIME_INCREMENT);
+      const startTime = minutesToTime(startMin);
+      const endTime = minutesToTime(Math.min(startMin + 60, (23 * 60) + 45));
       const evt = Store.addEvent(dayId, {
         title: 'New Event',
         startTime,

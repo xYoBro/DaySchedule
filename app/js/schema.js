@@ -21,22 +21,49 @@ function normalizeTime(t) {
   return String(t || '').replace(':', '').padStart(4, '0');
 }
 
+// Entity ids are interpolated into attribute selectors ('[data-event-id="…"]'),
+// so they must stay in a safe charset. Stripping (not regenerating) keeps
+// references consistent: a day id and the activeDay pointing at it sanitize
+// to the same string.
+function sanitizeEntityId(raw, prefix) {
+  const id = String(raw == null ? '' : raw).replace(/[^A-Za-z0-9_-]/g, '');
+  return id || generateId(prefix);
+}
+
+function sanitizeEntityRef(raw) {
+  return String(raw == null ? '' : raw).replace(/[^A-Za-z0-9_-]/g, '');
+}
+
+const SAFE_HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+// "HHMM", minutes 00-59, within a single day. "2400" is a valid *end* time
+// (end-of-day); the end>start check in normalizeEvent keeps it out of starts.
+function isValidScheduleTime(hhmm) {
+  if (!/^\d{4}$/.test(hhmm)) return false;
+  if (parseInt(hhmm.slice(2, 4), 10) > 59) return false;
+  return timeToMinutes(hhmm) <= 1440;
+}
+
 function normalizeEvent(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const title = (raw.title || '').trim();
   if (!title) return null;
   const startTime = normalizeTime(raw.startTime);
   const endTime = normalizeTime(raw.endTime);
+  // Rejects malformed times (which would render as "NaN hrs" and sort
+  // arbitrarily) and cross-midnight ranges (the day model is a 0000-2400
+  // axis; every renderer assumes end > start within one day).
+  if (!isValidScheduleTime(startTime) || !isValidScheduleTime(endTime)) return null;
   if (timeToMinutes(endTime) <= timeToMinutes(startTime)) return null;
   return {
-    id:          raw.id || generateId('evt'),
+    id:          sanitizeEntityId(raw.id, 'evt'),
     title,
     startTime,
     endTime,
     description: (raw.description || '').trim(),
     location:    (raw.location || '').trim(),
     poc:         (raw.poc || '').trim(),
-    groupId:     raw.groupId || '',
+    groupId:     sanitizeEntityRef(raw.groupId),
     attendees:   (raw.attendees || '').trim(),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
@@ -45,11 +72,13 @@ function normalizeEvent(raw) {
 
 function normalizeGroup(raw) {
   if (!raw || typeof raw !== 'object') return null;
+  const color = typeof raw.color === 'string' ? raw.color.trim() : '';
   return {
-    id:    raw.id || generateId('grp'),
+    id:    sanitizeEntityId(raw.id, 'grp'),
     name:  (raw.name || 'Unnamed Group').trim(),
     scope: raw.scope === 'main' ? 'main' : 'limited',
-    color: raw.color || DEFAULT_COLOR_PALETTE[0],
+    // Colors land inside style="…" attributes; only plain hex passes.
+    color: SAFE_HEX_COLOR_RE.test(color) ? color : DEFAULT_COLOR_PALETTE[0],
   };
 }
 
@@ -58,7 +87,7 @@ function normalizeNote(raw) {
   const text = (raw.text || '').trim();
   if (!text) return null;
   return {
-    id:       raw.id || generateId('note'),
+    id:       sanitizeEntityId(raw.id, 'note'),
     category: (raw.category || '').trim(),
     text,
   };
@@ -66,12 +95,14 @@ function normalizeNote(raw) {
 
 function normalizeDay(raw) {
   if (!raw || typeof raw !== 'object') return null;
+  const startTime = normalizeTime(raw.startTime || '0700');
+  const endTime = normalizeTime(raw.endTime || '1630');
   return {
-    id:        raw.id || generateId('day'),
+    id:        sanitizeEntityId(raw.id, 'day'),
     date:      raw.date || '',
     label:     raw.label || null,
-    startTime: normalizeTime(raw.startTime || '0700'),
-    endTime:   normalizeTime(raw.endTime || '1630'),
+    startTime: isValidScheduleTime(startTime) ? startTime : '0700',
+    endTime:   isValidScheduleTime(endTime) ? endTime : '1630',
     events:    Array.isArray(raw.events) ? raw.events.map(normalizeEvent).filter(Boolean) : [],
     notes:     Array.isArray(raw.notes) ? raw.notes.map(normalizeNote).filter(Boolean) : [],
   };
@@ -98,13 +129,28 @@ function normalizePersistedState(raw, options) {
     title: source.title != null ? String(source.title) : '',
     days,
     groups,
-    logo: source.logo !== undefined ? source.logo : null,
+    // The logo goes straight into an <img src>; only inline image data is legal.
+    logo: typeof source.logo === 'string' && /^data:image\//.test(source.logo) ? source.logo : null,
     footer: {
       contact: source.footer && source.footer.contact ? String(source.footer.contact) : '',
       poc: source.footer && source.footer.poc ? String(source.footer.poc) : '',
       updated: source.footer && source.footer.updated ? String(source.footer.updated) : '',
     },
-    activeDay: source.activeDay || null,
-    theme: source.theme || null,
+    activeDay: sanitizeEntityRef(source.activeDay) || null,
+    theme: normalizeScheduleTheme(source.theme),
   };
+}
+
+// Shape-level check only: keeps the three known keys as the right types.
+// Value whitelisting (skin/palette names, hex colors) lives in
+// getScheduleTheme (themes.js), the one funnel every consumer reads through.
+function normalizeScheduleTheme(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const theme = {};
+  if (typeof raw.skin === 'string') theme.skin = raw.skin;
+  if (typeof raw.palette === 'string') theme.palette = raw.palette;
+  if (raw.customColors && typeof raw.customColors === 'object' && !Array.isArray(raw.customColors)) {
+    theme.customColors = raw.customColors;
+  }
+  return (theme.skin || theme.palette || theme.customColors) ? theme : null;
 }

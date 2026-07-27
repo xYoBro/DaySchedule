@@ -168,3 +168,27 @@ describe('Storage — parseScheduleMeta', () => {
     assert.equal(meta.lastSavedBy, 'Tester');
   });
 });
+
+describe('Persistence — dropped-event reporting', () => {
+  it('reports how many events were dropped during normalization', () => {
+    const content = JSON.stringify({
+      days: [{
+        id: 'd1',
+        events: [
+          { title: 'Good', startTime: '0800', endTime: '0900' },
+          { title: 'Bad times', startTime: 'garbage', endTime: 'junk' },
+          { startTime: '0900', endTime: '1000' },
+        ],
+      }],
+    });
+    const parsed = parseScheduleWorkbookContent(content, 'x.json');
+    assert.equal(parsed.droppedEventCount, 2);
+    assert.equal(parsed.state.days[0].events.length, 1);
+  });
+  it('reports zero drops for a clean file', () => {
+    const content = JSON.stringify({
+      days: [{ id: 'd1', events: [{ title: 'Good', startTime: '0800', endTime: '0900' }] }],
+    });
+    assert.equal(parseScheduleWorkbookContent(content, 'x.json').droppedEventCount, 0);
+  });
+});

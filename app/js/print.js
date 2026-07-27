@@ -58,7 +58,7 @@ function printAllDays() {
   const savedActiveDay = Store.getActiveDay();
   days.forEach(day => {
     Store.setActiveDay(day.id);
-    html += '<div class="page print-page skin-' + theme.skin + '">';
+    html += '<div class="page print-page skin-' + esc(theme.skin) + '">';
     html += renderHeader(day);
     html += renderer(day.id);
     html += renderFooter();
@@ -262,6 +262,11 @@ window.addEventListener('beforeprint', () => {
 
 // Clean up scaling after print so screen view is unaffected
 window.addEventListener('afterprint', () => {
+  // Empty the print container: the print stylesheet forces it visible
+  // (display:block !important), so stale pages left here would be printed —
+  // with pre-edit data — by any later browser-menu File→Print.
+  const printContainer = document.getElementById('printContainer');
+  if (printContainer) printContainer.innerHTML = '';
   const activeDay = Store.getActiveDay();
   if (activeDay) renderDay(activeDay);
 });

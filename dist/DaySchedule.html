@@ -2961,6 +2961,47 @@ body {
 [data-editor-theme="dark"] .help-shortcut-plus {
   color: #b8b8cb;
 }
+.help-error-intro {
+  font-size: 12px;
+  color: #48484a;
+  margin: 0 0 8px;
+}
+.help-error-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.help-error-empty {
+  font-size: 12px;
+  color: #86868b;
+}
+.help-error-item {
+  padding: 6px 8px;
+  background: #f8f8fa;
+  border: 1px solid #f0f0f2;
+  border-radius: 6px;
+}
+.help-error-meta {
+  font-size: 10px;
+  color: #86868b;
+  margin-bottom: 2px;
+}
+.help-error-message {
+  font-size: 11px;
+  font-family: ui-monospace, Menlo, monospace;
+  color: #48484a;
+  word-break: break-word;
+}
+[data-editor-theme="dark"] .help-error-intro,
+[data-editor-theme="dark"] .help-error-message {
+  color: #b8b8cb;
+}
+[data-editor-theme="dark"] .help-error-item {
+  background: #252545;
+  border-color: #333355;
+}
 
 /* ══════════════════════════════════════════════════════════════
    VERSION PANEL
@@ -4008,7 +4049,7 @@ body {
 // Stamped with the build date by tools/build-single-html.py; 'dev' when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = '2026-06-11';
+const APP_VERSION = '2026-07-27';
 
 const DEFAULT_GROUPS = [
   { id: 'grp_all',     name: 'All Personnel', scope: 'main',    color: '#2558a8' },
@@ -4293,6 +4334,11 @@ const LAYOUT_TARGETS = {
               <span>Close panels</span>
             </div>
           </div>
+        </div>
+        <div class="help-section">
+          <div class="help-section-title">Recent errors</div>
+          <p class="help-error-intro">If something breaks, include the build stamp below and the newest lines here in your report. This log stays on this computer.</p>
+          <div class="help-error-log" id="helpErrorLog"></div>
         </div>
       </div>
 
@@ -4584,7 +4630,7 @@ const Store = {
  *   minutesToTime(m)       — 450 → "0730"
  *   formatDuration(min)    — 90 → "1.5 hrs", 30 → "30 min"
  *   generateId(prefix)     — "evt" → "evt_lx1abc_k9f2z" (unique)
- *   esc(s)                 — HTML-escapes &, <, >, "
+ *   esc(s)                 — HTML-escapes &, <, >, ", '
  *   getContrastingTextColor(bgColor) — "#ffee88" → "#1d1d1f" or "#ffffff"
  *
  * REQUIRES: nothing
@@ -4610,6 +4656,7 @@ function minutesToTime(m) {
 }
 
 function formatDuration(minutes) {
+  if (!Number.isFinite(minutes) || minutes < 0) return '';
   if (minutes < 60) return minutes + ' min';
   const hrs = minutes / 60;
   return (hrs === Math.floor(hrs) ? hrs : hrs.toFixed(1)) + (hrs === 1 ? ' hr' : ' hrs');
@@ -4622,8 +4669,50 @@ function generateId(prefix) {
 function esc(s) {
   if (s == null) return '';
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+// ── Local error log ────────────────────────────────────────────────────────
+// Zero-egress diagnostics: uncaught errors land in a small localStorage ring
+// buffer that the Help modal shows next to the build stamp, so a user bug
+// report can say what actually failed. Nothing leaves the machine.
+
+const ERROR_LOG_KEY = 'dayschedule_error_log';
+const ERROR_LOG_MAX = 20;
+
+function getAppErrorLog() {
+  try {
+    const log = JSON.parse(localStorage.getItem(ERROR_LOG_KEY));
+    return Array.isArray(log) ? log : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function logAppError(kind, message, source) {
+  try {
+    const log = getAppErrorLog();
+    log.unshift({
+      at: new Date().toISOString(),
+      kind: kind,
+      message: String(message == null ? 'Unknown error' : message).slice(0, 500),
+      source: String(source || '').slice(0, 200),
+    });
+    if (log.length > ERROR_LOG_MAX) log.length = ERROR_LOG_MAX;
+    localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(log));
+  } catch (e) {
+    console.warn('Could not record error to the local log:', e);
+  }
+}
+
+window.addEventListener('error', e => {
+  logAppError('error', e.message, (e.filename || '') + (e.lineno ? ':' + e.lineno : ''));
+});
+
+window.addEventListener('unhandledrejection', e => {
+  const reason = e.reason;
+  logAppError('promise', reason && reason.message ? reason.message : reason, '');
+});
 
 function getContrastingTextColor(bgColor) {
   const fallback = '#1d1d1f';
@@ -4818,22 +4907,49 @@ function normalizeTime(t) {
   return String(t || '').replace(':', '').padStart(4, '0');
 }
 
+// Entity ids are interpolated into attribute selectors ('[data-event-id="…"]'),
+// so they must stay in a safe charset. Stripping (not regenerating) keeps
+// references consistent: a day id and the activeDay pointing at it sanitize
+// to the same string.
+function sanitizeEntityId(raw, prefix) {
+  const id = String(raw == null ? '' : raw).replace(/[^A-Za-z0-9_-]/g, '');
+  return id || generateId(prefix);
+}
+
+function sanitizeEntityRef(raw) {
+  return String(raw == null ? '' : raw).replace(/[^A-Za-z0-9_-]/g, '');
+}
+
+const SAFE_HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+// "HHMM", minutes 00-59, within a single day. "2400" is a valid *end* time
+// (end-of-day); the end>start check in normalizeEvent keeps it out of starts.
+function isValidScheduleTime(hhmm) {
+  if (!/^\d{4}$/.test(hhmm)) return false;
+  if (parseInt(hhmm.slice(2, 4), 10) > 59) return false;
+  return timeToMinutes(hhmm) <= 1440;
+}
+
 function normalizeEvent(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const title = (raw.title || '').trim();
   if (!title) return null;
   const startTime = normalizeTime(raw.startTime);
   const endTime = normalizeTime(raw.endTime);
+  // Rejects malformed times (which would render as "NaN hrs" and sort
+  // arbitrarily) and cross-midnight ranges (the day model is a 0000-2400
+  // axis; every renderer assumes end > start within one day).
+  if (!isValidScheduleTime(startTime) || !isValidScheduleTime(endTime)) return null;
   if (timeToMinutes(endTime) <= timeToMinutes(startTime)) return null;
   return {
-    id:          raw.id || generateId('evt'),
+    id:          sanitizeEntityId(raw.id, 'evt'),
     title,
     startTime,
     endTime,
     description: (raw.description || '').trim(),
     location:    (raw.location || '').trim(),
     poc:         (raw.poc || '').trim(),
-    groupId:     raw.groupId || '',
+    groupId:     sanitizeEntityRef(raw.groupId),
     attendees:   (raw.attendees || '').trim(),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
@@ -4842,11 +4958,13 @@ function normalizeEvent(raw) {
 
 function normalizeGroup(raw) {
   if (!raw || typeof raw !== 'object') return null;
+  const color = typeof raw.color === 'string' ? raw.color.trim() : '';
   return {
-    id:    raw.id || generateId('grp'),
+    id:    sanitizeEntityId(raw.id, 'grp'),
     name:  (raw.name || 'Unnamed Group').trim(),
     scope: raw.scope === 'main' ? 'main' : 'limited',
-    color: raw.color || DEFAULT_COLOR_PALETTE[0],
+    // Colors land inside style="…" attributes; only plain hex passes.
+    color: SAFE_HEX_COLOR_RE.test(color) ? color : DEFAULT_COLOR_PALETTE[0],
   };
 }
 
@@ -4855,7 +4973,7 @@ function normalizeNote(raw) {
   const text = (raw.text || '').trim();
   if (!text) return null;
   return {
-    id:       raw.id || generateId('note'),
+    id:       sanitizeEntityId(raw.id, 'note'),
     category: (raw.category || '').trim(),
     text,
   };
@@ -4863,12 +4981,14 @@ function normalizeNote(raw) {
 
 function normalizeDay(raw) {
   if (!raw || typeof raw !== 'object') return null;
+  const startTime = normalizeTime(raw.startTime || '0700');
+  const endTime = normalizeTime(raw.endTime || '1630');
   return {
-    id:        raw.id || generateId('day'),
+    id:        sanitizeEntityId(raw.id, 'day'),
     date:      raw.date || '',
     label:     raw.label || null,
-    startTime: normalizeTime(raw.startTime || '0700'),
-    endTime:   normalizeTime(raw.endTime || '1630'),
+    startTime: isValidScheduleTime(startTime) ? startTime : '0700',
+    endTime:   isValidScheduleTime(endTime) ? endTime : '1630',
     events:    Array.isArray(raw.events) ? raw.events.map(normalizeEvent).filter(Boolean) : [],
     notes:     Array.isArray(raw.notes) ? raw.notes.map(normalizeNote).filter(Boolean) : [],
   };
@@ -4895,15 +5015,30 @@ function normalizePersistedState(raw, options) {
     title: source.title != null ? String(source.title) : '',
     days,
     groups,
-    logo: source.logo !== undefined ? source.logo : null,
+    // The logo goes straight into an <img src>; only inline image data is legal.
+    logo: typeof source.logo === 'string' && /^data:image\//.test(source.logo) ? source.logo : null,
     footer: {
       contact: source.footer && source.footer.contact ? String(source.footer.contact) : '',
       poc: source.footer && source.footer.poc ? String(source.footer.poc) : '',
       updated: source.footer && source.footer.updated ? String(source.footer.updated) : '',
     },
-    activeDay: source.activeDay || null,
-    theme: source.theme || null,
+    activeDay: sanitizeEntityRef(source.activeDay) || null,
+    theme: normalizeScheduleTheme(source.theme),
   };
+}
+
+// Shape-level check only: keeps the three known keys as the right types.
+// Value whitelisting (skin/palette names, hex colors) lives in
+// getScheduleTheme (themes.js), the one funnel every consumer reads through.
+function normalizeScheduleTheme(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const theme = {};
+  if (typeof raw.skin === 'string') theme.skin = raw.skin;
+  if (typeof raw.palette === 'string') theme.palette = raw.palette;
+  if (raw.customColors && typeof raw.customColors === 'object' && !Array.isArray(raw.customColors)) {
+    theme.customColors = raw.customColors;
+  }
+  return (theme.skin || theme.palette || theme.customColors) ? theme : null;
 }
 
 </script>
@@ -5091,6 +5226,21 @@ function getOverlappingSharedEvents(evt, events, groupsOrMap) {
     eventsOverlap(evt, other)
   );
   return buildOverlapInfo(overlaps, groupMap);
+}
+
+// Lane skins (Grid, Cards) key their columns by group. Events with no group,
+// or whose group was deleted, still need a lane — Store.removeGroup orphans
+// events to groupId '', and silently disappearing from two of the four skins
+// is the worst possible outcome.
+const UNASSIGNED_LANE_GROUP = { id: '', name: 'Unassigned', scope: 'limited', color: '#8a8a8e' };
+
+function resolveLaneEvents(groupEvents, groups) {
+  const known = new Set((groups || []).map(g => g.id));
+  return (groupEvents || []).map(evt =>
+    evt.groupId && !known.has(evt.groupId)
+      ? Object.assign({}, evt, { groupId: '' })
+      : evt
+  );
 }
 
 function classifyEvents(events, groups) {
@@ -5291,6 +5441,13 @@ function clearUndoHistory() {
 }
 
 function undo() {
+  // Read-only viewers must not mutate the Store: markDirty() no-ops for them,
+  // so an undone state would never save yet silently becomes the state a
+  // later "Edit + save" writes over the file.
+  if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+    toast('Read-only. Click Edit.');
+    return;
+  }
   if (!_undoStack.length) return;
   _redoStack.push(Store.snapshot());
   Store.restore(_undoStack.pop());
@@ -5302,6 +5459,10 @@ function undo() {
 }
 
 function redo() {
+  if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+    toast('Read-only. Click Edit.');
+    return;
+  }
   if (!_redoStack.length) return;
   _undoStack.push(Store.snapshot());
   Store.restore(_redoStack.pop());
@@ -5333,7 +5494,11 @@ function sessionSave(options) {
   _sessionSaveTimer = setTimeout(() => {
     try {
       sessionStorage.setItem('schedule_state', JSON.stringify(buildSerializableState()));
-    } catch (e) { /* ignore quota errors */ }
+    } catch (e) {
+      // Usually quota (a large logo can exceed sessionStorage limits). The
+      // crash-recovery net is dead while this happens — leave a record.
+      console.warn('Crash-recovery backup failed; unsaved work will not survive a crash:', e);
+    }
   }, 500);
   // Trigger auto-save if connected
   if ((!options || !options.skipDirty) && typeof markDirty === 'function') markDirty();
@@ -5356,7 +5521,9 @@ function sessionLoad() {
       }
       return true;
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    console.warn('Could not restore the session draft:', e);
+  }
   return false;
 }
 
@@ -5706,6 +5873,18 @@ async function saveScheduleWorkbookFile(options) {
   _saveInProgress = true;
   try {
     const suggestedName = opts.suggestedName || getScheduleWorkbookSuggestedName();
+    // Stamp the live envelope before serializing — otherwise every workbook
+    // save carries the schedule's creation-time lastSavedAt forever and the
+    // switcher/Versions panel report stale times.
+    if (!opts.content) {
+      const memFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+      if (memFileData && (!opts.fileData || opts.fileData === memFileData)) {
+        memFileData.lastSavedAt = new Date().toISOString();
+        if (typeof getUserName === 'function' && getUserName()) {
+          memFileData.lastSavedBy = getUserName();
+        }
+      }
+    }
     const content = opts.content || buildScheduleWorkbookContent(opts.fileData);
 
     if (window.showSaveFilePicker) {
@@ -5853,6 +6032,18 @@ function parseScheduleWorkbookContent(content, fileName) {
     throw new Error('Invalid schedule file \u2014 no days array found.');
   }
   const state = normalizePersistedState(payload.state, { requireDays: true });
+
+  // Normalization silently filters events with missing titles or invalid
+  // times — tell the user instead of letting data vanish without a trace.
+  const rawEventCount = payload.state.days.reduce(
+    (n, d) => n + (d && Array.isArray(d.events) ? d.events.length : 0), 0);
+  const keptEventCount = state.days.reduce((n, d) => n + d.events.length, 0);
+  const droppedEventCount = rawEventCount - keptEventCount;
+  if (droppedEventCount > 0 && typeof toast === 'function') {
+    toast('Skipped ' + droppedEventCount + (droppedEventCount === 1 ? ' event' : ' events')
+      + ' with missing or invalid data (title or times). Everything else loaded normally.', 6500);
+  }
+
   if (payload.fileData && payload.fileData.theme && !state.theme) state.theme = payload.fileData.theme;
   const fileData = payload.fileData
     ? cloneScheduleData(payload.fileData)
@@ -5883,6 +6074,7 @@ function parseScheduleWorkbookContent(content, fileName) {
     state,
     fileData,
     workbookData,
+    droppedEventCount,
   };
 }
 
@@ -6772,6 +6964,25 @@ async function takeOverCurrentScheduleLock(options) {
           memFileData.lastSavedBy = userName;
           memFileData.activity = fileData.activity;
         }
+        // The taker was viewing read-only and may be looking at stale data.
+        // The disk copy is the source of truth at takeover — without this
+        // reload, the next auto-save would overwrite everything the previous
+        // editor saved with the taker's stale Store, and the stale-data check
+        // (disarmed by _lastKnownSavedAt = now above) would never fire.
+        if (fileData.current && typeof fileData.current === 'object') {
+          Store.loadPersistedState(fileData.current);
+          const days = Store.getDays();
+          if (!days.find(day => day.id === Store.getActiveDay())) {
+            Store.setActiveDay(days[0] ? days[0].id : null);
+          }
+          if (typeof setCurrentScheduleFileData === 'function') {
+            setCurrentScheduleFileData(JSON.parse(JSON.stringify(fileData)));
+          }
+          _dirty = false;
+          renderActiveDay();
+          syncToolbarTitle();
+          renderInspector();
+        }
       }
     }
   }
@@ -6878,6 +7089,19 @@ async function listScheduleFiles() {
   }
   files.sort((a, b) => (b.lastSavedAt || '').localeCompare(a.lastSavedAt || ''));
   return files;
+}
+
+// Distinguishes "file is missing" from "file exists but couldn't be read" —
+// readScheduleFile returns null for both, and callers that rebuild files
+// must not treat a transient read failure as a missing file.
+async function scheduleFileExists(fileName) {
+  if (!_dirHandle) return false;
+  try {
+    await _dirHandle.getFileHandle(fileName);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 async function readScheduleFile(fileName, options) {
@@ -6992,6 +7216,15 @@ async function saveCurrentSchedule() {
   const state = Store.getPersistedState();
   const existing = await readScheduleFile(_currentFileName);
 
+  // A file that exists but can't be read (sync-client lock, corruption) must
+  // not be rebuilt from scratch — that would silently wipe its versions and
+  // activity log. Pause the save instead; auto-save retries on the next edit.
+  if (!existing && await scheduleFileExists(_currentFileName)) {
+    updateSaveIndicator('dirty');
+    toast('Could not read ' + _currentFileName + ' — save paused, nothing was overwritten. Try again shortly; if this keeps happening, check the file in the shared folder.', 7000);
+    return false;
+  }
+
   // Stale-data detection
   if (existing && _lastKnownSavedAt && existing.lastSavedAt !== _lastKnownSavedAt) {
     updateSaveIndicator('dirty');
@@ -7072,7 +7305,10 @@ function isDirty() {
 }
 
 function getLastSavedAt() {
-  return _lastKnownSavedAt;
+  if (_lastKnownSavedAt) return _lastKnownSavedAt;
+  // Workbook mode never sets _lastKnownSavedAt; the envelope carries it.
+  const fileData = getWorkbookFileData();
+  return fileData && fileData.lastSavedAt ? fileData.lastSavedAt : null;
 }
 
 function notifyManualDraftExport() {
@@ -7235,10 +7471,75 @@ function promptUserName() {
 }
 
 // ── Version management ─────────────────────────────────────────────────────
+// Two backends: directory mode reads/writes the schedule's own .json file;
+// workbook mode (the primary flow — no directory) works against the
+// in-memory .schedule envelope and persists via saveScheduleWorkbookFile.
+
+function getWorkbookFileData() {
+  return typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+}
+
+async function persistWorkbookVersions() {
+  if (typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()
+      && typeof saveScheduleWorkbookFile === 'function') {
+    const saved = await saveScheduleWorkbookFile({ silent: true, requireHandle: true });
+    if (saved) return true;
+  }
+  // No writable file right now — the version already lives in the envelope;
+  // the normal save flow (auto-save retry / Save .schedule) carries it, and
+  // marking dirty makes the indicator tell the truth in the meantime.
+  sessionSave();
+  return true;
+}
+
+async function createWorkbookVersion(versionName) {
+  const fileData = getWorkbookFileData();
+  if (!fileData) return false;
+  const now = new Date().toISOString();
+  const userName = getUserName() || '';
+  if (!Array.isArray(fileData.versions)) fileData.versions = [];
+  fileData.versions.unshift({
+    name: versionName,
+    savedBy: userName,
+    savedAt: now,
+    data: JSON.parse(JSON.stringify(Store.getPersistedState())),
+  });
+  appendActivity(fileData, 'version_saved', versionName, userName, now);
+  fileData.lastSavedAt = now;
+  if (userName) fileData.lastSavedBy = userName;
+  return persistWorkbookVersions();
+}
+
+async function restoreWorkbookVersion(versionIndex) {
+  const fileData = getWorkbookFileData();
+  if (!fileData || !Array.isArray(fileData.versions) || !fileData.versions[versionIndex]) return false;
+  const target = fileData.versions[versionIndex];
+  const now = new Date().toISOString();
+  const userName = getUserName() || '';
+  fileData.versions.unshift({
+    name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
+    savedBy: userName,
+    savedAt: now,
+    data: JSON.parse(JSON.stringify(Store.getPersistedState())),
+  });
+  fileData.current = JSON.parse(JSON.stringify(target.data));
+  fileData.lastSavedAt = now;
+  if (userName) fileData.lastSavedBy = userName;
+  appendActivity(fileData, 'version_restored', target.name, userName, now);
+  Store.loadPersistedState(fileData.current);
+  const days = Store.getDays();
+  if (!days.find(day => day.id === Store.getActiveDay())) {
+    Store.setActiveDay(days[0] ? days[0].id : null);
+  }
+  renderActiveDay();
+  syncToolbarTitle();
+  renderInspector();
+  return persistWorkbookVersions();
+}
 
 async function createVersion(versionName) {
   if (!isCurrentScheduleEditable()) return false;
-  if (!_currentFileName || !_dirHandle) return false;
+  if (!_currentFileName || !_dirHandle) return createWorkbookVersion(versionName);
   const userName = await ensureUserName();
   if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
@@ -7281,7 +7582,7 @@ async function createVersion(versionName) {
 
 async function restoreVersion(versionIndex) {
   if (!isCurrentScheduleEditable()) return false;
-  if (!_currentFileName || !_dirHandle) return false;
+  if (!_currentFileName || !_dirHandle) return restoreWorkbookVersion(versionIndex);
   const userName = await ensureUserName();
   if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
@@ -7332,8 +7633,9 @@ async function restoreVersion(versionIndex) {
 }
 
 async function getVersions() {
-  if (!_currentFileName || !_dirHandle) return [];
-  const fileData = await readScheduleFile(_currentFileName);
+  const fileData = (!_currentFileName || !_dirHandle)
+    ? getWorkbookFileData()
+    : await readScheduleFile(_currentFileName);
   if (!fileData) return [];
   return (fileData.versions || []).map((v, i) => ({
     index: i,
@@ -7344,8 +7646,9 @@ async function getVersions() {
 }
 
 async function getRecentActivity() {
-  if (!_currentFileName || !_dirHandle) return [];
-  const fileData = await readScheduleFile(_currentFileName);
+  const fileData = (!_currentFileName || !_dirHandle)
+    ? getWorkbookFileData()
+    : await readScheduleFile(_currentFileName);
   if (!fileData) return [];
   return (fileData.activity || []).slice(0, 5).map(entry => ({
     text: formatActivityText(entry),
@@ -7469,11 +7772,32 @@ const SKIN_LABELS = {
   phases: { name: 'Phases', desc: 'Field exercises' },
 };
 
+// File-supplied theme values are untrusted (they bypass event/group
+// normalization), and skin lands in HTML class strings while colors land in
+// CSS custom properties — whitelist everything here, the one funnel every
+// consumer reads through.
+const THEME_COLOR_RE = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+
+function sanitizeCustomColors(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const colors = {};
+  let any = false;
+  Object.keys(PALETTES.classic).forEach(key => {
+    const value = typeof raw[key] === 'string' ? raw[key].trim() : '';
+    if (THEME_COLOR_RE.test(value)) {
+      colors[key] = value;
+      any = true;
+    }
+  });
+  return any ? colors : null;
+}
+
 function getScheduleTheme(t) {
+  const palette = t && t.palette;
   return {
-    skin: (t && t.skin) || 'bands',
-    palette: (t && t.palette) || 'classic',
-    customColors: (t && t.customColors) || null,
+    skin: (t && SKIN_NAMES.indexOf(t.skin) !== -1) ? t.skin : 'bands',
+    palette: (palette === 'custom' || PALETTE_NAMES.indexOf(palette) !== -1) ? palette : 'classic',
+    customColors: sanitizeCustomColors(t && t.customColors),
   };
 }
 
@@ -7893,13 +8217,16 @@ function renderDayBody_grid(dayId) {
     return html;
   }
 
-  // Separate shared/main-track events from group-specific events.
+  // Separate shared/main-track events from group-specific events. Orphaned
+  // and ungrouped events are routed to an "Unassigned" lane so they render.
   const sharedEvents = events.filter(e => isEventEffectiveMain(e, groups));
-  const groupEvents = events.filter(e => !sharedEvents.includes(e));
+  const groupEvents = resolveLaneEvents(events.filter(e => !sharedEvents.includes(e)), groups);
 
   // Get groups that have events
-  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId).filter(Boolean))];
-  const activeGroups = activeGroupIds.map(id => groups.find(g => g.id === id)).filter(Boolean);
+  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId))];
+  const activeGroups = activeGroupIds
+    .map(id => id === '' ? UNASSIGNED_LANE_GROUP : groups.find(g => g.id === id))
+    .filter(Boolean);
 
   // Time rows are keyed by event starts. Boundaries caused duplicate-looking
   // rows when several main-track events shared the same start time.
@@ -8121,13 +8448,16 @@ function renderDayBody_cards(dayId) {
     return html;
   }
 
-  // Separate shared/main-track events from group-specific events.
+  // Separate shared/main-track events from group-specific events. Orphaned
+  // and ungrouped events are routed to an "Unassigned" card so they render.
   const sharedEvents = events.filter(e => isEventEffectiveMain(e, groups));
-  const groupEvents = events.filter(e => !sharedEvents.includes(e));
+  const groupEvents = resolveLaneEvents(events.filter(e => !sharedEvents.includes(e)), groups);
 
   // Get groups that have events
-  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId).filter(Boolean))];
-  const activeGroups = activeGroupIds.map(id => groups.find(g => g.id === id)).filter(Boolean);
+  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId))];
+  const activeGroups = activeGroupIds
+    .map(id => id === '' ? UNASSIGNED_LANE_GROUP : groups.find(g => g.id === id))
+    .filter(Boolean);
 
   let html = '<div class="cards-schedule">';
 
@@ -9008,6 +9338,23 @@ function wireHelpModal(overlay) {
   setHelpTab(_helpActiveTab || 'start');
 }
 
+function renderHelpErrorLog() {
+  const container = document.getElementById('helpErrorLog');
+  if (!container) return;
+  const log = typeof getAppErrorLog === 'function' ? getAppErrorLog() : [];
+  if (!log.length) {
+    container.innerHTML = '<div class="help-error-empty">No errors recorded on this browser.</div>';
+    return;
+  }
+  container.innerHTML = log.slice(0, 5).map(entry => {
+    const when = entry.at ? new Date(entry.at).toLocaleString() : '';
+    return '<div class="help-error-item">'
+      + '<div class="help-error-meta">' + esc(when) + (entry.source ? ' · ' + esc(entry.source) : '') + '</div>'
+      + '<div class="help-error-message">' + esc(entry.message) + '</div>'
+      + '</div>';
+  }).join('');
+}
+
 function openHelpModal(options) {
   const overlay = document.getElementById('helpModal');
   if (!overlay) return;
@@ -9020,6 +9367,7 @@ function openHelpModal(options) {
   overlay.classList.add('active');
   syncHelpEntryPoints();
   wireHelpModal(overlay);
+  renderHelpErrorLog();
 }
 
 function closeHelpModal() {
@@ -9402,6 +9750,14 @@ function renderWorkbookSwitcher() {
   const label = document.getElementById('workbookSwitchLabel');
   if (!btn || !label) return;
 
+  // Legacy directory-library mode: each schedule is its own .json file, and
+  // switching/creating here would auto-save the other schedule's state into
+  // the currently open file. The switcher is workbook-only.
+  if (typeof getCurrentFileName === 'function' && getCurrentFileName()) {
+    btn.hidden = true;
+    return;
+  }
+
   if (!Store.getTitle() && !Store.getDays().length) {
     btn.hidden = true;
     return;
@@ -9514,6 +9870,9 @@ function renderWorkbookModal() {
 }
 
 function openWorkbookModal() {
+  // Same guard as renderWorkbookSwitcher — never expose workbook switching
+  // while a directory-library file is open.
+  if (typeof getCurrentFileName === 'function' && getCurrentFileName()) return;
   const overlay = document.getElementById('workbookModal');
   if (!overlay) return;
   renderWorkbookModal();
@@ -9602,7 +9961,7 @@ function printAllDays() {
   const savedActiveDay = Store.getActiveDay();
   days.forEach(day => {
     Store.setActiveDay(day.id);
-    html += '<div class="page print-page skin-' + theme.skin + '">';
+    html += '<div class="page print-page skin-' + esc(theme.skin) + '">';
     html += renderHeader(day);
     html += renderer(day.id);
     html += renderFooter();
@@ -9806,6 +10165,11 @@ window.addEventListener('beforeprint', () => {
 
 // Clean up scaling after print so screen view is unaffected
 window.addEventListener('afterprint', () => {
+  // Empty the print container: the print stylesheet forces it visible
+  // (display:block !important), so stale pages left here would be printed —
+  // with pre-edit data — by any later browser-menu File→Print.
+  const printContainer = document.getElementById('printContainer');
+  if (printContainer) printContainer.innerHTML = '';
   const activeDay = Store.getActiveDay();
   if (activeDay) renderDay(activeDay);
 });
@@ -10471,16 +10835,40 @@ function wireFooterField(panel, selector, key) {
 function wireDayField(item, selector, dayId, field, nullable) {
   const input = item.querySelector(selector);
   if (!input) return;
+  const isTimeField = field === 'startTime' || field === 'endTime';
   const eventType = input.type === 'date' ? 'change' : 'input';
   input.addEventListener(eventType, () => {
-    saveUndoState();
     const val = input.value.trim();
+    if (isTimeField) {
+      // Day times seed new-event defaults; committing raw keystrokes let
+      // garbage like "abc" produce "NaNNaN" event times downstream.
+      const normalized = normalizeTime(val);
+      if (!isValidScheduleTime(normalized)) return;
+      saveUndoState();
+      Store.updateDay(dayId, { [field]: normalized });
+      renderActiveDay();
+      sessionSave();
+      return;
+    }
+    saveUndoState();
     Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
     renderActiveDay();
     sessionSave();
     // Re-render inspector when date changes (reorders accordion)
     if (field === 'date') renderInspector();
   });
+  if (isTimeField) {
+    input.addEventListener('blur', () => {
+      const day = Store.getDay(dayId);
+      const normalized = normalizeTime(input.value.trim());
+      if (!isValidScheduleTime(normalized)) {
+        input.value = (day && day[field]) || '';
+        toast('Times use 24-hour HHMM, e.g. 0730.');
+      } else if (normalized !== input.value.trim()) {
+        input.value = normalized;
+      }
+    });
+  }
 }
 
 function formatDateShort(dateStr) {
@@ -10793,8 +11181,13 @@ function wireDayEventSheetModal(modal, dayId) {
       const defaultGroup = groups.find(g => g.scope === 'main') || groups[0];
       const day = Store.getDay(dayId);
       const events = Store.getEvents(dayId);
-      const startTime = events.length ? events[events.length - 1].endTime : ((day && day.startTime) || '0800');
-      const endTime = minutesToTime(Math.min(timeToMinutes(startTime) + 60, (23 * 60) + 45));
+      let startMin = timeToMinutes(events.length ? events[events.length - 1].endTime : ((day && day.startTime) || '0800'));
+      if (!Number.isFinite(startMin)) startMin = 8 * 60;
+      // Clamp below the 2345 end cap so end > start even when the last
+      // event already runs to the end of the day.
+      startMin = Math.min(startMin, (23 * 60) + 45 - TIME_INCREMENT);
+      const startTime = minutesToTime(startMin);
+      const endTime = minutesToTime(Math.min(startMin + 60, (23 * 60) + 45));
       const evt = Store.addEvent(dayId, {
         title: 'New Event',
         startTime,

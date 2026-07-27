@@ -21,6 +21,11 @@ const MockFS = (() => {
 
   function reset() { _files = {}; }
   function getFiles() { return JSON.parse(JSON.stringify(_files)); }
+  // Overwrites a file with raw (typically invalid) content so tests can
+  // simulate "exists but unreadable" without going through writeScheduleFile.
+  function corruptFile(fileName, content) {
+    _files[fileName] = content !== undefined ? content : '{corrupt';
+  }
 
   function createMockWritable(fileName) {
     let _buffer = '';
@@ -75,7 +80,7 @@ const MockFS = (() => {
     };
   }
 
-  return { reset, getFiles, createMockDirHandle, createMockFileHandle };
+  return { reset, getFiles, corruptFile, createMockDirHandle, createMockFileHandle };
 })();
 
 // ── Test helpers ──────────────────────────────────────────────────────────
@@ -701,5 +706,136 @@ describe('Integration — Theme System', () => {
         assert(PALETTES[name][key] !== undefined, name + ' missing ' + key);
       });
     });
+  });
+});
+
+describe('Integration — Workbook Versions (no directory)', () => {
+  function installWorkbookFileData() {
+    const fileData = {
+      name: Store.getTitle() || 'Workbook Test',
+      current: Store.getPersistedState(),
+      versions: [],
+      activity: [],
+      lastSavedAt: '2026-05-01T00:00:00.000Z',
+    };
+    window.getCurrentScheduleFileData = function() { return fileData; };
+    return fileData;
+  }
+  function removeWorkbookFileData() {
+    window.getCurrentScheduleFileData = function() { return null; };
+  }
+
+  it('createVersion works in the primary workbook flow', async () => {
+    resetTestState();
+    setUserName('Tester');
+    Store.setTitle('Workbook Versions');
+    Store.addDay({ date: '2026-05-10' });
+    const fileData = installWorkbookFileData();
+
+    const ok = await createVersion('Draft v1');
+    assert(ok, 'createVersion should succeed in workbook mode');
+    assert.equal(fileData.versions.length, 1);
+    assert.equal(fileData.versions[0].name, 'Draft v1');
+
+    const versions = await getVersions();
+    assert.equal(versions.length, 1);
+    assert.equal(versions[0].name, 'Draft v1');
+
+    const activity = await getRecentActivity();
+    assert.equal(activity[0].text, 'Saved version "Draft v1"');
+
+    removeWorkbookFileData();
+  });
+
+  it('restoreVersion restores data and creates an auto-backup in workbook mode', async () => {
+    resetTestState();
+    setUserName('Tester');
+    Store.setTitle('Original Title');
+    Store.addDay({ date: '2026-05-10' });
+    const fileData = installWorkbookFileData();
+
+    await createVersion('Checkpoint');
+    Store.setTitle('Changed Title');
+
+    const ok = await restoreVersion(0);
+    assert(ok, 'restoreVersion should succeed in workbook mode');
+    assert.equal(Store.getTitle(), 'Original Title');
+    assert.equal(fileData.versions.length, 2, 'auto-backup + checkpoint');
+    assert(fileData.versions[0].name.indexOf('Auto-backup') === 0, 'newest version is the auto-backup');
+
+    removeWorkbookFileData();
+  });
+
+  it('getLastSavedAt falls back to the workbook envelope', () => {
+    resetTestState();
+    const fileData = installWorkbookFileData();
+    assert.equal(getLastSavedAt(), fileData.lastSavedAt);
+    removeWorkbookFileData();
+  });
+});
+
+describe('Integration — Read-only guards', () => {
+  it('undo is blocked while the schedule is read-only', () => {
+    resetTestState();
+    clearUndoHistory();
+    Store.setTitle('First');
+    saveUndoState();
+    _undoPending = false;
+    Store.setTitle('Second');
+
+    _currentFileName = 'locked.json';
+    _editorReadOnly = true;
+    undo();
+    assert.equal(Store.getTitle(), 'Second', 'undo must not mutate a read-only schedule');
+
+    _currentFileName = null;
+    clearUndoHistory();
+  });
+});
+
+describe('Integration — Core event flow (create → edit → delete)', () => {
+  it('round-trips create, edit, and delete through file save/load', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Tester');
+
+    Store.setTitle('Flow Test');
+    const day = Store.addDay({ date: '2026-06-01' });
+    Store.addEvent(day.id, { title: 'Briefing', startTime: '0800', endTime: '0900' });
+    const fileData = buildScheduleFile('Flow Test', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('flow-test.json', fileData);
+    setCurrentFile('flow-test.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+
+    const evtId = Store.getEvents(day.id)[0].id;
+    Store.updateEvent(day.id, evtId, { title: 'Morning Briefing', endTime: '0930' });
+    assert(await saveCurrentSchedule(), 'save after edit should succeed');
+    let onDisk = await readScheduleFile('flow-test.json');
+    assert.equal(onDisk.current.days[0].events[0].title, 'Morning Briefing');
+    assert.equal(onDisk.current.days[0].events[0].endTime, '0930');
+
+    Store.removeEvent(day.id, evtId);
+    assert(await saveCurrentSchedule(), 'save after delete should succeed');
+    onDisk = await readScheduleFile('flow-test.json');
+    assert.equal(onDisk.current.days[0].events.length, 0);
+  });
+
+  it('pauses the save when the file exists but is unreadable, preserving it', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Tester');
+
+    Store.setTitle('Guard Test');
+    Store.addDay({ date: '2026-06-01' });
+    const fileData = buildScheduleFile('Guard Test', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('guard-test.json', fileData);
+    setCurrentFile('guard-test.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+
+    MockFS.corruptFile('guard-test.json');
+    _dirty = true;
+    const ok = await saveCurrentSchedule();
+    assert.equal(ok, false, 'save must pause instead of rebuilding the file');
+    assert.equal(MockFS.getFiles()['guard-test.json'], '{corrupt', 'unreadable file must not be overwritten');
   });
 });
