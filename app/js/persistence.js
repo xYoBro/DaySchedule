@@ -692,7 +692,7 @@ async function saveScheduleWorkbookFile(options) {
     triggerDownload(blob, suggestedName);
     _scheduleWorkbookData = JSON.parse(content);
     sessionSave({ skipDirty: true });
-    if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+    if (typeof markScheduleWorkbookDownloaded === 'function') markScheduleWorkbookDownloaded();
     if (!opts.silent && !showFirstSaveNoteOnce(suggestedName, true)) {
       toast('Downloaded ' + suggestedName + ' to your Downloads folder — keep the newest copy.', 4500);
     }

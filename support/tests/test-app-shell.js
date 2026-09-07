@@ -1091,6 +1091,60 @@ describe('UI Harness — app shell', () => {
   });
 });
 
+describe('Download-fallback save is labelled honestly', () => {
+  it('shows Downloaded (not Saved) when the browser has no save picker', async () => {
+    resetUiHarnessState();
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    Store.addEvent(day.id, { title: 'Formation', startTime: '0800', endTime: '0900', groupId: 'grp_all' });
+    Store.setTitle('Safari Draft');
+    _dirty = true;
+    updateSaveIndicator('dirty');
+
+    const originalSaveFilePicker = window.showSaveFilePicker;
+    const originalTriggerDownload = window.triggerDownload;
+    const downloads = [];
+    window.showSaveFilePicker = undefined;
+    window.triggerDownload = (blob, name) => { downloads.push(name); };
+    try {
+      const ok = await saveScheduleWorkbookFile({ silent: true });
+      assert.equal(ok, true);
+    } finally {
+      window.showSaveFilePicker = originalSaveFilePicker;
+      window.triggerDownload = originalTriggerDownload;
+    }
+
+    assert.equal(downloads.length, 1, 'the fallback must download exactly one copy');
+    const indicator = document.getElementById('saveIndicator');
+    assert.equal(indicator.textContent, 'Downloaded');
+    assert(indicator.classList.contains('save-downloaded'));
+    assert(!indicator.classList.contains('save-saved'), 'must not be styled as a file save');
+    assert(indicator.title.length > 0, 'the label explains itself on hover');
+    assert.equal(isDirty(), false, 'the copy is on disk, so the close warning stands down');
+  });
+});
+
+describe('+ Note inserts an empty note, not a placeholder string', () => {
+  it('stores empty text, focuses the text field, and renders a print-hidden stub', () => {
+    resetUiHarnessState();
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    Store.setActiveDay(day.id);
+    renderActiveDay();
+
+    openAddNote(day.id);
+
+    const notes = Store.getNotes(day.id);
+    assert.equal(notes.length, 1);
+    assert.equal(notes[0].text, '', 'no placeholder text may reach the data');
+    assert.equal(document.activeElement && document.activeElement.id, 'insp-note-text');
+    const stub = document.querySelector('#scheduleContainer .notes-list li.note-empty');
+    assert(stub, 'the empty note is still clickable on screen');
+    assert.equal(stub.getAttribute('data-note-id'), notes[0].id);
+    assert(!document.getElementById('scheduleContainer').textContent.includes('(enter note text)'));
+    assert.equal(normalizeNote(notes[0]), null, 'an untouched empty note is dropped on the next load');
+    selectEntity(null);
+  });
+});
+
 describe('Boot isolation', () => {
   it('runBootStep logs a failing step instead of throwing, and does not block later steps', () => {
     localStorage.removeItem('dayschedule_error_log');

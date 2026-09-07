@@ -186,7 +186,11 @@ snapshot it before serializing and re-mark dirty if edits landed during the writ
 failed write to an attached handle detaches the handle (keeping `_scheduleWorkbookData`)
 and says so — it must never fall through to a Downloads copy labelled "Saved". Downloads go
 through `triggerDownload` (anchor attached, blob URL revoked on a timer — a synchronous
-revoke can abort Safari/Firefox's only save path).
+revoke can abort Safari/Firefox's only save path) and end in
+`markScheduleWorkbookDownloaded()`, which shows a persistent **Downloaded** indicator
+(with a hover explanation) instead of "Saved" — the opened file is untouched on that path.
+`forceSave` (Ctrl/Cmd+S) calls `saveScheduleWorkbookFile()` non-silently so the save path
+reports its own outcome; don't add a caller-side "Saved" toast.
 
 Blank-required-field rule: normalization must never delete a record because a required
 field is momentarily empty — the editor writes `''` to the Store on every keystroke, so a
@@ -194,7 +198,9 @@ reload mid-edit used to erase the event. `normalizeEvent` keeps a blank title as
 `Untitled event`; `normalizeNote` keeps a note that still has a category and drops only a
 fully empty one. On the editor side `wireRequiredTextField` (inspector.js) restores the last
 non-empty value on blur with a toast, and time inputs revert (not snap to `0000`) on empty
-or unparseable text via `isUsableTimeEntry`. Logo uploads are refused when not an image or
+or unparseable text via `isUsableTimeEntry`. `+ Note` inserts an *empty* note and focuses
+the text field — never a placeholder string (it printed); `renderNotes` shows an untouched
+empty note as a print-hidden `.note-empty` stub. Logo uploads are refused when not an image or
 over `LOGO_MAX_BYTES` (2 MB) — the logo is inlined into the file and the sessionStorage
 crash backup.
 

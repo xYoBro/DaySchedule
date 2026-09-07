@@ -9,7 +9,7 @@ Licensed under the MIT License. See [LICENSE](LICENSE).
 Everything lives in one **`.schedule` file** (a workbook) that you save on your own computer or a shared drive. One workbook file can hold many schedules — use the schedule switcher in the toolbar to move between them.
 
 - **Chrome and Edge:** after you save once, DaySchedule auto-saves every edit back to your `.schedule` file (watch for `Saved` in the toolbar). The start screen offers a **Continue** card to reopen your last workbook.
-- **Safari and Firefox:** auto-save to a file isn't supported by the browser. Each save downloads a fresh copy of the `.schedule` file — keep the newest one.
+- **Safari and Firefox:** auto-save to a file isn't supported by the browser. Each save downloads a fresh copy of the `.schedule` file and the toolbar shows `Downloaded` (not `Saved`) — keep the newest copy; the file you opened is unchanged.
 
 A session backup underneath every edit protects against crashes and accidental tab closes, and the app warns you before closing with unsaved work.
 

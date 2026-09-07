@@ -1429,7 +1429,7 @@ function renderNoteInspector(panel, dayId, noteId) {
   html += '<input type="text" id="insp-note-cat" value="' + esc(note.category) + '" placeholder="e.g., Medical, TDY"' + textReadOnly + '>';
 
   html += '<label for="insp-note-text">Text</label>';
-  html += '<textarea id="insp-note-text"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
+  html += '<textarea id="insp-note-text" placeholder="Type the note"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
 
   html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-note-delete"' + disabledAttr + '>Delete Note</button></div>';
 
@@ -1730,10 +1730,14 @@ function openAddNote(dayId) {
     return;
   }
   saveUndoState();
-  const note = Store.addNote(dayId, { category: '', text: '(enter note text)' });
+  // Empty, not a placeholder string: "(enter note text)" was real data that
+  // printed if the user never replaced it.
+  const note = Store.addNote(dayId, { category: '', text: '' });
   sessionSave();
   renderActiveDay();
   selectEntity('note', dayId, note.id);
+  const textInput = document.getElementById('insp-note-text');
+  if (textInput) textInput.focus();
 }
 
 // ── Time input helpers ─────────────────────────────────────────────────────

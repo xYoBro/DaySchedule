@@ -1068,12 +1068,10 @@ function forceSave() {
   if (!Store.getTitle() && !Store.getDays().length) { toast('Nothing to save yet.'); return; }
   clearTimeout(_autosaveTimer);
   if (!_currentFileName && typeof saveScheduleWorkbookFile === 'function') {
-    saveScheduleWorkbookFile({ silent: true }).then(ok => {
-      if (ok) {
-        if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
-        toast('Saved');
-      }
-    });
+    // Not silent: the save path sets the indicator and toasts its own
+    // outcome ("Saved X" vs "Downloaded X…"). A caller-side "Saved" toast
+    // here used to misreport the download fallback.
+    saveScheduleWorkbookFile();
     return;
   }
   saveCurrentSchedule().then(ok => {
@@ -1123,6 +1121,16 @@ function markScheduleWorkbookSaved() {
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 
+// Download fallback (Safari/Firefox, or a declined picker): a copy went to
+// Downloads, the file the user opened is untouched. The work is on disk, so
+// the close warning stands down — but the label must not say "Saved".
+function markScheduleWorkbookDownloaded() {
+  _dirty = false;
+  _manualDraftExported = true;
+  updateSaveIndicator('downloaded');
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
+}
+
 // ── Save indicator ─────────────────────────────────────────────────────────
 
 let _savedFadeTimer = null;
@@ -1132,6 +1140,7 @@ function updateSaveIndicator(state) {
   if (!el) return;
   clearTimeout(_savedFadeTimer);
   el.className = 'save-status';
+  el.removeAttribute('title');
 
   if (state === 'dirty') {
     el.textContent = 'Unsaved';
@@ -1142,6 +1151,12 @@ function updateSaveIndicator(state) {
   } else if (state === 'disconnected') {
     el.textContent = 'Not connected';
     el.classList.add('save-disconnected');
+  } else if (state === 'downloaded') {
+    // Stays visible (no fade): the reminder that this browser can't write
+    // back to the opened file is the whole point.
+    el.textContent = 'Downloaded';
+    el.title = 'This browser can’t save back to the opened file. A copy went to your Downloads folder — keep the newest one.';
+    el.classList.add('save-downloaded');
   } else {
     el.textContent = 'Saved';
     el.classList.add('save-saved');

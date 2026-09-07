@@ -628,6 +628,7 @@ body {
   padding: 1px 0;
 }
 .notes-list li strong { font-weight: 700; color: var(--sch-text-secondary); }
+.notes-list li.note-empty { color: var(--sch-text-secondary); font-style: italic; }
 .dagger-list {
   list-style: none;
   margin-top: 4px;
@@ -2687,6 +2688,11 @@ body {
   background: #fff5f5;
   cursor: pointer;
 }
+.save-status.save-downloaded {
+  color: #2558a8;
+  background: #eaf1fb;
+  cursor: help;
+}
 @keyframes save-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .tb-back {
   background: none;
@@ -3948,6 +3954,7 @@ body {
   #printContainer { display: block !important; }
   /* Editor-only advice with skin-switch buttons — never on a printed page. */
   .band-view-note { display: none !important; }
+  .notes-list li.note-empty { display: none !important; }
   /* Group tags, lane headers and the logo are backgrounds; with Chrome's
      default "Background graphics" off they printed white-on-white. */
   .page, .page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -4352,7 +4359,7 @@ const LAYOUT_TARGETS = {
           </div>
           <div class="help-item">
             <div class="help-item-label">I closed without saving &mdash; is my work gone?</div>
-            <div class="help-item-desc">The app warns you before closing with unsaved changes. In Chrome and Edge, once a workbook has been saved to a <strong>.schedule</strong> file, later edits save to that file automatically. In Safari and Firefox there is no auto-save &mdash; use <strong>Save .schedule</strong> and keep the newest download.</div>
+            <div class="help-item-desc">The app warns you before closing with unsaved changes. In Chrome and Edge, once a workbook has been saved to a <strong>.schedule</strong> file, later edits save to that file automatically. In Safari and Firefox there is no auto-save &mdash; use <strong>Save .schedule</strong>, watch for <strong>Downloaded</strong> in the toolbar, and keep the newest download (the file you opened is not changed).</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Is my data private?</div>
@@ -6150,7 +6157,7 @@ async function saveScheduleWorkbookFile(options) {
     triggerDownload(blob, suggestedName);
     _scheduleWorkbookData = JSON.parse(content);
     sessionSave({ skipDirty: true });
-    if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
+    if (typeof markScheduleWorkbookDownloaded === 'function') markScheduleWorkbookDownloaded();
     if (!opts.silent && !showFirstSaveNoteOnce(suggestedName, true)) {
       toast('Downloaded ' + suggestedName + ' to your Downloads folder — keep the newest copy.', 4500);
     }
@@ -7517,12 +7524,10 @@ function forceSave() {
   if (!Store.getTitle() && !Store.getDays().length) { toast('Nothing to save yet.'); return; }
   clearTimeout(_autosaveTimer);
   if (!_currentFileName && typeof saveScheduleWorkbookFile === 'function') {
-    saveScheduleWorkbookFile({ silent: true }).then(ok => {
-      if (ok) {
-        if (typeof markScheduleWorkbookSaved === 'function') markScheduleWorkbookSaved();
-        toast('Saved');
-      }
-    });
+    // Not silent: the save path sets the indicator and toasts its own
+    // outcome ("Saved X" vs "Downloaded X…"). A caller-side "Saved" toast
+    // here used to misreport the download fallback.
+    saveScheduleWorkbookFile();
     return;
   }
   saveCurrentSchedule().then(ok => {
@@ -7572,6 +7577,16 @@ function markScheduleWorkbookSaved() {
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 
+// Download fallback (Safari/Firefox, or a declined picker): a copy went to
+// Downloads, the file the user opened is untouched. The work is on disk, so
+// the close warning stands down — but the label must not say "Saved".
+function markScheduleWorkbookDownloaded() {
+  _dirty = false;
+  _manualDraftExported = true;
+  updateSaveIndicator('downloaded');
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
+}
+
 // ── Save indicator ─────────────────────────────────────────────────────────
 
 let _savedFadeTimer = null;
@@ -7581,6 +7596,7 @@ function updateSaveIndicator(state) {
   if (!el) return;
   clearTimeout(_savedFadeTimer);
   el.className = 'save-status';
+  el.removeAttribute('title');
 
   if (state === 'dirty') {
     el.textContent = 'Unsaved';
@@ -7591,6 +7607,12 @@ function updateSaveIndicator(state) {
   } else if (state === 'disconnected') {
     el.textContent = 'Not connected';
     el.classList.add('save-disconnected');
+  } else if (state === 'downloaded') {
+    // Stays visible (no fade): the reminder that this browser can't write
+    // back to the opened file is the whole point.
+    el.textContent = 'Downloaded';
+    el.title = 'This browser can’t save back to the opened file. A copy went to your Downloads folder — keep the newest one.';
+    el.classList.add('save-downloaded');
   } else {
     el.textContent = 'Saved';
     el.classList.add('save-saved');
@@ -10023,6 +10045,13 @@ function renderNotes(notes) {
   html += '<div class="notes-label">Notes</div>';
   html += '<ul class="notes-list">';
   notes.forEach(n => {
+    if (!n.text && !n.category) {
+      // Freshly added, nothing typed yet. Visible on screen so it can be
+      // clicked back into; hidden in print (see @media print) and dropped
+      // by normalizeNote on the next load.
+      html += '<li data-note-id="' + esc(n.id) + '" class="note-empty"><em>Empty note</em></li>';
+      return;
+    }
     html += '<li data-note-id="' + esc(n.id) + '">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</li>';
@@ -12088,7 +12117,7 @@ function renderNoteInspector(panel, dayId, noteId) {
   html += '<input type="text" id="insp-note-cat" value="' + esc(note.category) + '" placeholder="e.g., Medical, TDY"' + textReadOnly + '>';
 
   html += '<label for="insp-note-text">Text</label>';
-  html += '<textarea id="insp-note-text"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
+  html += '<textarea id="insp-note-text" placeholder="Type the note"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
 
   html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-note-delete"' + disabledAttr + '>Delete Note</button></div>';
 
@@ -12389,10 +12418,14 @@ function openAddNote(dayId) {
     return;
   }
   saveUndoState();
-  const note = Store.addNote(dayId, { category: '', text: '(enter note text)' });
+  // Empty, not a placeholder string: "(enter note text)" was real data that
+  // printed if the user never replaced it.
+  const note = Store.addNote(dayId, { category: '', text: '' });
   sessionSave();
   renderActiveDay();
   selectEntity('note', dayId, note.id);
+  const textInput = document.getElementById('insp-note-text');
+  if (textInput) textInput.focus();
 }
 
 // ── Time input helpers ─────────────────────────────────────────────────────

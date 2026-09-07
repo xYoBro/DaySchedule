@@ -116,6 +116,13 @@ function renderNotes(notes) {
   html += '<div class="notes-label">Notes</div>';
   html += '<ul class="notes-list">';
   notes.forEach(n => {
+    if (!n.text && !n.category) {
+      // Freshly added, nothing typed yet. Visible on screen so it can be
+      // clicked back into; hidden in print (see @media print) and dropped
+      // by normalizeNote on the next load.
+      html += '<li data-note-id="' + esc(n.id) + '" class="note-empty"><em>Empty note</em></li>';
+      return;
+    }
     html += '<li data-note-id="' + esc(n.id) + '">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</li>';
