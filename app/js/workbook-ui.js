@@ -42,10 +42,9 @@ function getFilteredWorkbookEntries() {
   const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
   const query = _workbookSearchText.trim().toLowerCase();
   if (!query) return entries;
-  return entries.filter(entry => {
-    return String(entry.name || '').toLowerCase().includes(query)
-      || String(entry.lastSavedAt || '').toLowerCase().includes(query);
-  });
+  // Names only: matching the hidden ISO timestamp meant any digit, 't', 'z',
+  // '-' or ':' matched nearly every schedule.
+  return entries.filter(entry => String(entry.name || '').toLowerCase().includes(query));
 }
 
 function renderWorkbookModal() {
@@ -71,8 +70,8 @@ function renderWorkbookModal() {
     + '<button class="btn" id="workbookNewBtn">New Blank</button>'
     + '<button class="btn btn-primary" id="workbookDuplicateBtn">Duplicate Current</button>'
     + '</div>'
-    + '<input type="search" id="workbookSearch" class="workbook-search" value="' + esc(_workbookSearchText) + '" placeholder="Search 60+ schedules..." aria-label="Search schedules">'
-    + '<div class="workbook-count">' + filtered.length + ' of ' + entries.length + ' schedules</div>'
+    + '<input type="search" id="workbookSearch" class="workbook-search" value="' + esc(_workbookSearchText) + '" placeholder="Search schedules" aria-label="Search schedules">'
+    + '<div class="workbook-count">' + filtered.length + ' of ' + entries.length + (entries.length === 1 ? ' schedule' : ' schedules') + '</div>'
     + '<div class="workbook-list">';
 
   if (!filtered.length) {
@@ -97,11 +96,16 @@ function renderWorkbookModal() {
   if (search) {
     search.addEventListener('input', () => {
       _workbookSearchText = search.value;
+      // The re-render replaces this input; restore the caret where it was,
+      // not at the end, so editing mid-word doesn't jump.
+      const caretStart = search.selectionStart;
+      const caretEnd = search.selectionEnd;
       renderWorkbookModal();
       const nextSearch = document.getElementById('workbookSearch');
       if (nextSearch) {
         nextSearch.focus();
-        nextSearch.setSelectionRange(nextSearch.value.length, nextSearch.value.length);
+        const len = nextSearch.value.length;
+        nextSearch.setSelectionRange(Math.min(caretStart, len), Math.min(caretEnd, len));
       }
     });
   }
@@ -113,7 +117,10 @@ function renderWorkbookModal() {
   if (newBtn) {
     newBtn.onclick = () => {
       const input = document.getElementById('workbookNewName');
-      const name = input && input.value.trim() ? input.value.trim() : 'New Schedule';
+      const typed = input ? input.value.trim() : '';
+      // The shared name box is prefilled with "<Active> Copy" for Duplicate;
+      // an untouched box must not name a blank schedule after the active one.
+      const name = typed && typed !== defaultName ? typed : 'New Schedule';
       if (typeof createScheduleInWorkbook === 'function') createScheduleInWorkbook(name, { duplicate: false });
       closeWorkbookModal();
     };

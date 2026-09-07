@@ -1090,3 +1090,63 @@ describe('UI Harness — app shell', () => {
     assert.equal(files[0].name, 'Migrated Schedule');
   });
 });
+
+describe('Boot isolation', () => {
+  it('runBootStep logs a failing step instead of throwing, and does not block later steps', () => {
+    localStorage.removeItem('dayschedule_error_log');
+    let laterStepRan = false;
+
+    runBootStep('deliberateTestFailure', () => { throw new Error('boom'); });
+    runBootStep('laterStep', () => { laterStepRan = true; });
+
+    assert(laterStepRan, 'a later boot step must still run after an earlier one throws');
+    const log = getAppErrorLog();
+    assert(log.some(e => e.source === 'boot:deliberateTestFailure' && e.message === 'boom'),
+      'the failure should be recorded in the local error log');
+    localStorage.removeItem('dayschedule_error_log');
+  });
+});
+
+describe('Quick Edit — invalid end time is reverted', () => {
+  it('rejects an end before the start, restores the prior value and says why', async () => {
+    resetUiHarnessState();
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, { title: 'Aircraft Launch Sim', startTime: '1200', endTime: '1400', groupId: 'grp_chiefs' });
+    Store.setActiveDay(day.id);
+    renderActiveDay();
+    openDayEventSheetModal();
+    await wait(60);
+
+    const endInput = document.querySelector('#dayEventSheetModalContent .day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="endTime"]');
+    assert(endInput, 'end input should be rendered');
+    endInput.value = '1100';
+    endInput.dispatchEvent(new Event('blur'));
+    // The row commit is deferred by a setTimeout(0) in the blur handler.
+    await wait(60);
+
+    const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
+    assert.equal(stored.endTime, '1400', 'invalid end must not be committed');
+    const refreshed = document.querySelector('#dayEventSheetModalContent .day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="endTime"]');
+    assert.equal(refreshed.value, '1400', 'input must show the restored value');
+    assert.equal(document.getElementById('toast').textContent, 'End time must be after start time.');
+    closeDayEventSheetModal();
+  });
+
+  it('reverts a blank or unparseable time instead of snapping it to midnight', async () => {
+    resetUiHarnessState();
+    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
+    const evt = Store.addEvent(day.id, { title: 'Formation', startTime: '0800', endTime: '0900', groupId: 'grp_all' });
+    Store.setActiveDay(day.id);
+    renderActiveDay();
+    openDayEventSheetModal();
+    await wait(60);
+
+    const startInput = document.querySelector('#dayEventSheetModalContent .day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="startTime"]');
+    startInput.value = '';
+    startInput.dispatchEvent(new Event('blur'));
+    await wait(60);
+    assert.equal(Store.getEvents(day.id).find(e => e.id === evt.id).startTime, '0800', 'blank must not become 0000');
+    assert.equal(document.getElementById('toast').textContent, 'Times use 24-hour HHMM, e.g. 0730.');
+    closeDayEventSheetModal();
+  });
+});

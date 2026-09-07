@@ -17,7 +17,7 @@ function renderDayBody_phases(dayId) {
   const day = Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
-  const events = day.events.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const events = day.events.slice().sort(compareBandOrder);
   const notes = Store.getNotes(dayId);
 
   clearDaggerFootnotes();
@@ -70,6 +70,15 @@ function renderDayBody_phases(dayId) {
       if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
       if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
       html += '<div class="phase-meta-line">' + meta.join('<span class="phase-meta-sep">\u00b7</span>') + '</div>';
+      // Phase headers are main-track events; keep their audience tag and
+      // named people as Bands does \u2014 a handout without WHO is missing data.
+      const phaseGroup = evt.groupId ? (groups.find(g => g.id === evt.groupId) || null) : null;
+      if (phaseGroup || evt.attendees) {
+        html += '<div class="phase-meta-line phase-who">';
+        if (phaseGroup) html += '<span class="skin-group-tag" style="background:' + esc(phaseGroup.color) + ';color:' + esc(getContrastingTextColor(phaseGroup.color)) + ';">' + esc(phaseGroup.name) + '</span>';
+        if (evt.attendees) html += '<span>WHO: ' + esc(evt.attendees) + '</span>';
+        html += '</div>';
+      }
       if (evt.description && !isBreak) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
       }

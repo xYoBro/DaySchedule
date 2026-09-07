@@ -11,9 +11,17 @@ describe('schema — normalizeEvent', () => {
     assert.equal(e.endTime, '0800');
   });
 
-  it('rejects event without title', () => {
+  // Contract change: a blank title used to drop the event on reload/open,
+  // which silently deleted records mid-edit. It is now preserved as Untitled.
+  it('keeps an event without a title as "Untitled event"', () => {
     const e = normalizeEvent({ startTime: '0700', endTime: '0800', groupId: 'grp_all' });
-    assert.equal(e, null);
+    assert(e !== null, 'event must survive normalization');
+    assert.equal(e.title, 'Untitled event');
+  });
+
+  it('keeps a whitespace-only title as "Untitled event"', () => {
+    const e = normalizeEvent({ title: '   ', startTime: '0700', endTime: '0800' });
+    assert.equal(e.title, 'Untitled event');
   });
 
   it('sets isBreak for break events', () => {
@@ -64,9 +72,16 @@ describe('schema — normalizeNote', () => {
     assert(n.id.startsWith('note'), 'should generate id');
   });
 
-  it('rejects note without text', () => {
+  // Contract change: a note whose text is momentarily cleared keeps its
+  // category instead of vanishing on reload; only a fully empty note is dropped.
+  it('keeps a note that has a category but no text', () => {
     const n = normalizeNote({ category: 'TDY' });
-    assert.equal(n, null);
+    assert(n !== null, 'category-only note must survive');
+    assert.equal(n.text, '');
+  });
+
+  it('rejects a note with neither text nor category', () => {
+    assert.equal(normalizeNote({}), null);
   });
 });
 
@@ -125,5 +140,17 @@ describe('schema — untrusted field sanitization', () => {
     assert.equal(state.theme.skin, 'grid');
     assert.equal(state.theme.palette, undefined);
     assert.equal(state.theme.junk, undefined);
+  });
+});
+
+describe('schema — notes survive a cleared text field', () => {
+  it('keeps a note that still has a category', () => {
+    const n = normalizeNote({ category: 'Uniform', text: '' });
+    assert(n !== null, 'category-only note must survive');
+    assert.equal(n.category, 'Uniform');
+    assert.equal(n.text, '');
+  });
+  it('drops a note with neither category nor text', () => {
+    assert.equal(normalizeNote({ category: '  ', text: '' }), null);
   });
 });

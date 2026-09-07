@@ -17,7 +17,7 @@ function renderDayBody_grid(dayId) {
   const day = Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
-  const events = day.events.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const events = day.events.slice().sort(compareBandOrder);
   const notes = Store.getNotes(dayId);
 
   clearDaggerFootnotes();
@@ -114,6 +114,15 @@ function renderGridBanner(shared, events, groups) {
   if (shared.poc) bannerMeta.push('<span>POC: ' + esc(shared.poc) + '</span>');
   if (bannerMeta.length > 0) {
     html += '<div class="grid-banner-meta">' + bannerMeta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
+  }
+  // Main-track events kept their audience tag and named people in Bands but
+  // lost both here \u2014 on a printed handout those are the point.
+  const bannerGroup = (groups || []).find(g => g.id === shared.groupId) || null;
+  if (bannerGroup || shared.attendees) {
+    html += '<div class="grid-banner-meta grid-banner-who">';
+    if (bannerGroup) html += '<span class="skin-group-tag" style="background:' + esc(bannerGroup.color) + ';color:' + esc(getContrastingTextColor(bannerGroup.color)) + ';">' + esc(bannerGroup.name) + '</span>';
+    if (shared.attendees) html += '<span>WHO: ' + esc(shared.attendees) + '</span>';
+    html += '</div>';
   }
   if (shared.description) html += '<div class="grid-banner-desc">' + esc(shared.description) + '</div>';
   if (exceptionNote) {

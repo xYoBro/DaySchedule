@@ -45,7 +45,7 @@
             <div class="library-start-label">New workbook</div>
             <div class="library-start-title">Start fresh</div>
             <div class="library-new-inline" id="libraryNewInline">
-              <input type="text" id="libraryNewName" value="New Schedule" aria-label="New schedule name" class="library-new-input">
+              <input type="text" id="libraryNewName" value="" placeholder="New Schedule" aria-label="New schedule name" class="library-new-input">
               <button class="btn library-new-btn" id="libraryNewBtn">Create</button>
               <button class="btn library-new-confirm" id="libraryNewConfirm" hidden>Create</button>
               <button class="btn" id="libraryNewCancel" hidden>Cancel</button>
@@ -91,7 +91,7 @@
         <span id="workbookSwitchLabel">1 schedule</span>
         <span class="workbook-switch-caret">▾</span>
       </button>
-      <span class="save-status" id="saveIndicator"></span>
+      <span class="save-status" id="saveIndicator" role="status" aria-live="polite"></span>
       <div class="tb-sep"></div>
       <div class="day-tabs" id="dayTabs"></div>
     </div>
@@ -132,7 +132,7 @@
   </div>
 
   <!-- Toast -->
-  <div id="toast" class="toast"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <!-- Help Modal -->
   <div class="modal-overlay" id="helpModal">
@@ -148,12 +148,12 @@
         <div class="help-section">
           <div class="help-section-title">Core</div>
           <div class="help-item">
-            <div class="help-item-label">Open Schedule</div>
-            <div class="help-item-desc">Open the <strong>.schedule</strong> workbook you want to edit.</div>
+            <div class="help-item-label">Open .schedule</div>
+            <div class="help-item-desc">Open the <strong>.schedule</strong> workbook you want to edit, or use <strong>Create</strong> to start a new one.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Edit</div>
-            <div class="help-item-desc">Click <strong>Edit</strong> only when you are ready to change the schedule.</div>
+            <div class="help-item-desc">Click any event or note on the page to edit it, or use <strong>Quick Edit</strong> for a whole day at once. Once the workbook is saved, changes save automatically (Chrome and Edge).</div>
           </div>
           <div class="help-item help-item-warn">
             <div class="help-item-label">Save</div>
@@ -191,19 +191,19 @@
           </div>
           <div class="help-item">
             <div class="help-item-label">Where is my workbook saved?</div>
-            <div class="help-item-desc">On this computer, in the folder you picked when you saved it. The start screen offers to reopen your last workbook, so you usually don&rsquo;t need to find the file yourself.</div>
+            <div class="help-item-desc">On this computer, in the folder you picked when you saved it. In Chrome and Edge the start screen offers to reopen your last workbook. In Safari and Firefox each save downloads a fresh copy instead &mdash; keep the newest one and open it with <strong>Open .schedule</strong>.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">I closed without saving &mdash; is my work gone?</div>
-            <div class="help-item-desc">The app warns you before closing with unsaved changes. Once a workbook has been saved to a <strong>.schedule</strong> file, later edits save to that file automatically.</div>
+            <div class="help-item-desc">The app warns you before closing with unsaved changes. In Chrome and Edge, once a workbook has been saved to a <strong>.schedule</strong> file, later edits save to that file automatically. In Safari and Firefox there is no auto-save &mdash; use <strong>Save .schedule</strong> and keep the newest download.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Is my data private?</div>
             <div class="help-item-desc">Yes. Everything runs and stays on this computer &mdash; the app never uploads or shares anything, and the browser is blocked from sending data out. Don&rsquo;t take our word for it: turn off Wi&#8209;Fi and the app works exactly the same.</div>
           </div>
           <div class="help-item">
-            <div class="help-item-label">What is import for?</div>
-            <div class="help-item-desc">Use import only for old exports or outside data you want to bring into a workbook.</div>
+            <div class="help-item-label">Can I open an older export (scheduledata.js)?</div>
+            <div class="help-item-desc">Yes &mdash; use <strong>Open .schedule</strong> and pick the .js or .json file. It opens as a workbook you can then save as a <strong>.schedule</strong> file.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Can multiple people edit?</div>
@@ -219,7 +219,7 @@
           </div>
           <div class="help-item">
             <div class="help-item-label">Where is Save?</div>
-            <div class="help-item-desc">Use <strong>Save .schedule</strong> from the editor save bar or More menu.</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> in the bar under the toolbar, or open the <strong>&hellip;</strong> menu (top right). Once a file is attached the bar button reads <strong>Save Now</strong>.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">When should I save?</div>

@@ -839,3 +839,109 @@ describe('Integration — Core event flow (create → edit → delete)', () => {
     assert.equal(MockFS.getFiles()['guard-test.json'], '{corrupt', 'unreadable file must not be overwritten');
   });
 });
+
+describe('Integration — cleared title never writes a nameless file', () => {
+  it('falls back to the existing file name when the title is blank', async () => {
+    resetTestState();
+    installMockDir('data');
+    setUserName('Tester');
+    Store.setTitle('Named Schedule');
+    Store.addDay({ date: '2026-06-01' });
+    const fileData = buildScheduleFile('Named Schedule', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('named.json', fileData);
+    setCurrentFile('named.json', fileData.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+
+    Store.setTitle('   ');
+    assert(await saveCurrentSchedule(), 'save should still succeed');
+    const onDisk = await readScheduleFile('named.json');
+    assert.equal(onDisk.name, 'Named Schedule', 'file name must not become blank');
+  });
+});
+
+describe('Integration — reattaching a remembered handle', () => {
+  it('refuses a handle whose file no longer exists', async () => {
+    resetTestState();
+    const deadHandle = {
+      name: 'gone.schedule',
+      queryPermission() { return Promise.resolve('granted'); },
+      createWritable() { return Promise.resolve({ write() {}, close() {} }); },
+      getFile() { return Promise.reject(new Error('NotFoundError')); },
+    };
+    const ok = await adoptScheduleWorkbookHandle(deadHandle);
+    assert.equal(ok, false);
+    assert.equal(hasScheduleWorkbookHandle(), false, 'dead handle must not be adopted');
+  });
+  it('adopts a handle whose file still exists', async () => {
+    resetTestState();
+    const liveContent = JSON.stringify({ title: 'Live', groups: [], days: [{ id: 'd1', events: [], notes: [] }] });
+    const liveHandle = {
+      name: 'live.schedule',
+      queryPermission() { return Promise.resolve('granted'); },
+      createWritable() { return Promise.resolve({ write() {}, close() {} }); },
+      getFile() { return Promise.resolve({ name: 'live.schedule', text() { return Promise.resolve(liveContent); } }); },
+    };
+    const ok = await adoptScheduleWorkbookHandle(liveHandle);
+    assert.equal(ok, true);
+    clearScheduleWorkbookTarget();
+  });
+});
+
+describe('Integration — Continue reattach keeps sibling schedules and versions', () => {
+  it('brings the whole workbook and the active envelope identity back when a remembered handle is adopted', async () => {
+    resetTestState();
+    clearScheduleWorkbookTarget();
+    Store.setTitle('Alpha');
+    Store.addDay({ date: '2026-06-01' });
+    window.getCurrentScheduleFileData = function() {
+      return { id: 'alpha', name: 'Alpha', current: Store.getPersistedState(), versions: [], activity: [] };
+    };
+    let captured = null;
+    window.setCurrentScheduleFileData = function(d) { captured = d; };
+    const file = {
+      fileType: 'dayschedule', schemaVersion: 1, activeScheduleId: 'alpha',
+      schedules: [
+        { id: 'alpha', name: 'Alpha', current: { title: 'Alpha', days: [{ id: 'd1', events: [], notes: [] }], groups: [] },
+          versions: [{ name: 'V1', savedAt: '2026-01-01T00:00:00Z', data: { title: 'Alpha', days: [] } }], activity: [] },
+        { id: 'bravo', name: 'Bravo', current: { title: 'Bravo', days: [{ id: 'd2', events: [], notes: [] }], groups: [] }, versions: [], activity: [] },
+        { id: 'charlie', name: 'Charlie', current: { title: 'Charlie', days: [{ id: 'd3', events: [], notes: [] }], groups: [] }, versions: [], activity: [] },
+      ],
+    };
+    const handle = {
+      name: 'ops.schedule',
+      queryPermission() { return Promise.resolve('granted'); },
+      createWritable() { return Promise.resolve({ write() {}, close() {} }); },
+      getFile() { return Promise.resolve({ name: 'ops.schedule', text() { return Promise.resolve(JSON.stringify(file)); } }); },
+    };
+    const ok = await adoptScheduleWorkbookHandle(handle);
+    assert(ok, 'adopt should succeed');
+    const snapshot = getScheduleWorkbookSnapshot({ includeCurrent: false });
+    assert.equal(snapshot.schedules.length, 3, 'sibling schedules must be back in memory');
+    assert(captured && captured.id === 'alpha', 'active envelope identity must be restored');
+    assert.equal(captured.versions.length, 1, 'named versions must be restored');
+    assert.equal(captured.current.title, 'Alpha', 'the draft stays the working content');
+    clearScheduleWorkbookTarget();
+    window.getCurrentScheduleFileData = function() { return null; };
+    delete window.setCurrentScheduleFileData;
+  });
+});
+
+describe('Integration — opening a file resets undo', () => {
+  it('Ctrl+Z right after opening cannot blank the schedule', () => {
+    resetTestState();
+    clearUndoHistory();
+    clearScheduleWorkbookTarget();
+    Store.setTitle('Before');
+    saveUndoState();
+    _undoPending = false;
+    const parsed = parseScheduleWorkbookContent(JSON.stringify({
+      title: 'Opened', groups: [],
+      days: [{ id: 'd', events: [{ title: 'E', startTime: '0800', endTime: '0900' }], notes: [] }],
+    }), 'x.json');
+    loadParsedScheduleData(parsed);
+    undo();
+    assert.equal(Store.getTitle(), 'Opened', 'undo must not revert to the pre-open state');
+    clearScheduleWorkbookTarget();
+    clearUndoHistory();
+  });
+});

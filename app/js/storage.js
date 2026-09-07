@@ -247,6 +247,7 @@ async function saveWorkbookFileRecord(record) {
     });
   } catch (e) {
     console.warn('Could not remember workbook file:', e);
+    if (typeof logAppError === 'function') logAppError('error', 'Could not remember workbook file: ' + String(e && e.message || e), 'indexeddb');
     return false;
   }
 }
@@ -264,6 +265,7 @@ async function loadWorkbookFileRecord() {
     return record;
   } catch (e) {
     console.warn('Could not load remembered workbook file:', e);
+    if (typeof logAppError === 'function') logAppError('error', 'Could not load remembered workbook file: ' + String(e && e.message || e), 'indexeddb');
     return null;
   }
 }
@@ -744,6 +746,7 @@ async function takeOverCurrentScheduleLock(options) {
         // editor saved with the taker's stale Store, and the stale-data check
         // (disarmed by _lastKnownSavedAt = now above) would never fire.
         if (fileData.current && typeof fileData.current === 'object') {
+          if (typeof clearUndoHistory === 'function') clearUndoHistory();
           Store.loadPersistedState(fileData.current);
           const days = Store.getDays();
           if (!days.find(day => day.id === Store.getActiveDay())) {
@@ -964,6 +967,8 @@ function markDirty() {
   _autosaveTimer = setTimeout(() => autoSave(), AUTOSAVE_DELAY);
 }
 
+let _autosaveFailureNotified = false;
+
 async function autoSave() {
   if (!_dirty) return;
   if (!_currentFileName && typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) {
@@ -971,7 +976,19 @@ async function autoSave() {
     const saved = typeof saveScheduleWorkbookFile === 'function'
       ? await saveScheduleWorkbookFile({ silent: true, requireHandle: true })
       : false;
-    if (!saved) updateSaveIndicator('dirty');
+    if (!saved) {
+      updateSaveIndicator('dirty');
+      // Silent auto-saves never prompt for permission and never toast, so a
+      // handle that needs re-authorising (or a file that vanished) would leave
+      // "Unsaved" on screen forever with no explanation. Say it once.
+      if (!_autosaveFailureNotified) {
+        _autosaveFailureNotified = true;
+        const fileName = typeof getScheduleWorkbookFileName === 'function' ? getScheduleWorkbookFileName() : '';
+        toast('Auto-save is paused — click Save .schedule to save now' + (fileName ? ' (it may ask permission for ' + fileName + ')' : '') + '.', 7000);
+      }
+    } else {
+      _autosaveFailureNotified = false;
+    }
     return;
   }
   if (!_currentFileName || !_dirHandle) return;
@@ -1011,7 +1028,9 @@ async function saveCurrentSchedule() {
   fileData.current = state;
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
-  if (existing) fileData.name = state.title != null ? state.title : fileData.name;
+  // A cleared title must not write a nameless file (it rendered as a blank
+  // row in the library, as if the schedule had vanished).
+  if (existing) fileData.name = state.title && state.title.trim() ? state.title : (fileData.name || 'Untitled Schedule');
   ensureActivityLog(fileData);
 
   // Sync theme from in-memory state (set by Appearance tab)
@@ -1020,9 +1039,9 @@ async function saveCurrentSchedule() {
     fileData.theme = memFileData.theme;
   }
 
+  const editsWhenBuilt = typeof getEditSequence === 'function' ? getEditSequence() : 0;
   const ok = await writeScheduleFile(_currentFileName, fileData);
   if (ok) {
-    _dirty = false;
     _lastKnownSavedAt = now;
     // Keep in-memory reference in sync with what was written
     if (memFileData) {
@@ -1030,8 +1049,14 @@ async function saveCurrentSchedule() {
       memFileData.lastSavedBy = userName;
       memFileData.activity = fileData.activity;
     }
-    updateSaveIndicator('saved');
     sessionSave({ skipDirty: true });
+    if (typeof getEditSequence === 'function' && getEditSequence() !== editsWhenBuilt) {
+      // Edits landed during the write; disk is already behind. Save again.
+      markDirty();
+    } else {
+      _dirty = false;
+      updateSaveIndicator('saved');
+    }
   } else {
     updateSaveIndicator('dirty');
   }
@@ -1040,6 +1065,7 @@ async function saveCurrentSchedule() {
 
 function forceSave() {
   if (!isCurrentScheduleEditable()) { toast('Read-only. Click Edit.'); return; }
+  if (!Store.getTitle() && !Store.getDays().length) { toast('Nothing to save yet.'); return; }
   clearTimeout(_autosaveTimer);
   if (!_currentFileName && typeof saveScheduleWorkbookFile === 'function') {
     saveScheduleWorkbookFile({ silent: true }).then(ok => {
@@ -1146,6 +1172,9 @@ function showStaleDataWarning(otherUser, otherTime, otherData) {
 
   content.querySelector('#staleLoadBtn').onclick = () => {
     overlay.classList.remove('active');
+    // The old undo stack would let one Ctrl+Z re-apply this tab's stale copy
+    // over the other editor's changes without tripping the stale check again.
+    if (typeof clearUndoHistory === 'function') clearUndoHistory();
     Store.loadPersistedState(otherData.current);
     if (typeof setCurrentScheduleFileData === 'function') {
       setCurrentScheduleFileData(JSON.parse(JSON.stringify(otherData)));
@@ -1174,12 +1203,14 @@ function showStaleDataWarning(otherUser, otherTime, otherData) {
 
 const USER_NAME_KEY = 'dayschedule_user_name';
 
+// localStorage throws when a hosting page or browser setting blocks site
+// storage; a name lookup must never take a save down with it.
 function getUserName() {
-  return localStorage.getItem(USER_NAME_KEY) || '';
+  try { return localStorage.getItem(USER_NAME_KEY) || ''; } catch (e) { return ''; }
 }
 
 function setUserName(name) {
-  localStorage.setItem(USER_NAME_KEY, (name || '').trim());
+  try { localStorage.setItem(USER_NAME_KEY, (name || '').trim()); } catch (e) { console.warn('Could not remember the user name:', e); }
 }
 
 function hasUserName() {
@@ -1253,11 +1284,20 @@ function getWorkbookFileData() {
   return typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
 }
 
+let _lastVersionWrittenToFile = false;
+
+// True when the most recent createVersion/restoreVersion reached the file;
+// false when it only lives in memory + the session draft until the next save.
+function lastVersionWasWritten() {
+  return _lastVersionWrittenToFile;
+}
+
 async function persistWorkbookVersions() {
+  _lastVersionWrittenToFile = false;
   if (typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()
       && typeof saveScheduleWorkbookFile === 'function') {
     const saved = await saveScheduleWorkbookFile({ silent: true, requireHandle: true });
-    if (saved) return true;
+    if (saved) { _lastVersionWrittenToFile = true; return true; }
   }
   // No writable file right now — the version already lives in the envelope;
   // the normal save flow (auto-save retry / Save .schedule) carries it, and
@@ -1296,6 +1336,8 @@ async function restoreWorkbookVersion(versionIndex) {
     savedAt: now,
     data: JSON.parse(JSON.stringify(Store.getPersistedState())),
   });
+  // A restore is an undoable step of its own (and must clear stale redo).
+  if (typeof saveUndoState === 'function') saveUndoState();
   fileData.current = JSON.parse(JSON.stringify(target.data));
   fileData.lastSavedAt = now;
   if (userName) fileData.lastSavedBy = userName;
@@ -1376,6 +1418,8 @@ async function restoreVersion(versionIndex) {
   };
   fileData.versions.unshift(backup);
 
+  // A restore is an undoable step of its own (and must clear stale redo).
+  if (typeof saveUndoState === 'function') saveUndoState();
   fileData.current = JSON.parse(JSON.stringify(target.data));
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = new Date().toISOString();

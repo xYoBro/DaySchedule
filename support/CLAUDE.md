@@ -84,12 +84,21 @@
 │   │   └── init.js             ← boot flow, migration, sample data (loads last)
 │   └── data/
 │       └── scheduledata.js     ← externalized state (SAVED_STATE)
+├── tools/
+│   ├── build-single-html.py    ← bundles app/ into dist/DaySchedule.html (fail-loud CSP guard)
+│   ├── build-sharepoint-embed.py ← transforms dist/DaySchedule.html into dist/DaySchedule.sharepoint.html
+│   │                              (a <div>+<script> embed for a SharePoint Embed/Script Editor web part;
+│   │                              run build-single-html.py first — this reads dist/DaySchedule.html)
+│   └── sharepoint-host-check.html ← paste-the-widget-in harness for re-verifying the embed build
+│                                     (a fake host page with its own conflicting CSS)
 └── support/                    ← docs and tests
     ├── CLAUDE.md
     ├── LICENSE
     ├── tests/
     │   ├── runner.html         ← open in browser to run unit tests
-    │   ├── test-runner.js      ← minimal assertion library
+    │   ├── test-runner.js      ← minimal assertion library (SYNC: an async test fails
+    │   │                          loudly here — put anything that awaits in runner-ui /
+    │   │                          runner-integration; a rejected promise used to count as a pass)
     │   ├── test-utils.js       ← utility function tests (incl. esc/error-log)
     │   ├── test-schema.js      ← schema normalization + sanitization tests
     │   ├── test-data-helpers.js ← overlap detection, classification tests
@@ -158,6 +167,37 @@ minutes ≤ 59, end > start, no cross-midnight) — and theme values are whiteli
 `getScheduleTheme` (themes.js). Dropped events are reported via toast on load. Keep both
 layers intact when adding fields.
 
+Workbook load rule: `parseScheduleWorkbookContent` requires at least one valid day only
+for loose JSON that is *not* a workbook (`requireDays: !isWorkbook`). The app itself writes
+workbooks whose active schedule has no days yet (Start fresh → Save, switcher New Blank);
+refusing those made the whole file — sibling schedules included — unopenable.
+
+Session-draft identity: `buildSerializableState` stores `workbookScheduleId` (the active
+envelope's id) and `sessionLoad` restores it onto the rebuilt fileData. Reattaching a
+remembered handle (`adoptScheduleWorkbookHandle`, the Continue card) reads and parses the
+file, restores `_scheduleWorkbookData` (all sibling schedules) and merges the draft onto the
+matching envelope so its id/versions/activity survive — without this the first auto-save
+after a reload rewrote the file as a one-schedule workbook with no versions. Leaving the
+editor (`returnToLibrary`) calls `discardSessionDraft()` + `clearScheduleWorkbookTarget()`;
+the Continue card then offers "Welcome back · Reopen", which reads the file.
+
+Save integrity: `sessionSave` bumps an edit sequence (`getEditSequence()`); both save paths
+snapshot it before serializing and re-mark dirty if edits landed during the write. A
+failed write to an attached handle detaches the handle (keeping `_scheduleWorkbookData`)
+and says so — it must never fall through to a Downloads copy labelled "Saved". Downloads go
+through `triggerDownload` (anchor attached, blob URL revoked on a timer — a synchronous
+revoke can abort Safari/Firefox's only save path).
+
+Blank-required-field rule: normalization must never delete a record because a required
+field is momentarily empty — the editor writes `''` to the Store on every keystroke, so a
+reload mid-edit used to erase the event. `normalizeEvent` keeps a blank title as
+`Untitled event`; `normalizeNote` keeps a note that still has a category and drops only a
+fully empty one. On the editor side `wireRequiredTextField` (inspector.js) restores the last
+non-empty value on blur with a toast, and time inputs revert (not snap to `0000`) on empty
+or unparseable text via `isUsableTimeEntry`. Logo uploads are refused when not an image or
+over `LOGO_MAX_BYTES` (2 MB) — the logo is inlined into the file and the sessionStorage
+crash backup.
+
 Loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
 (legacy migration) → `sessionStorage` (crash recovery) → **start screen, empty**.
 Sample data is never auto-loaded into an editable schedule (users mistook it for their
@@ -223,3 +263,26 @@ forces it visible, so stale pages there would be printed by a later browser-menu
 - Editor undo/redo, versions, and locks are gated on `isCurrentScheduleEditable()`;
   the keyboard shortcuts route through the same functions. Keep new mutation paths
   behind the same gate.
+- Workbook mode has no way to delete a schedule from a `.schedule` file: the switcher
+  modal (workbook-ui.js) only offers New Blank / Duplicate / open. A mistaken or test
+  schedule is permanent unless the whole workbook is abandoned via Start fresh. Open
+  product decision — each `.workbook-item` is itself a `<button>`, so a delete affordance
+  means restructuring the row, not just adding a button inside it.
+- Print zoom has no readability floor (print.js `scale = maxH / contentH`): a very dense
+  day in Grid/Cards/Phases — where the three compression stages only tune band-skin
+  CSS vars — prints "fitted" but tiny. Open decision: warn, clamp and overflow, or leave.
+- Quick Edit's Escape closes the whole sheet (committing the pending cell) rather than
+  cancelling the cell edit, and the Audience `<select>` re-focuses itself after its
+  re-render. Both are conventions worth a product call, not defects.
+- The Quick Edit checkboxes are 16px (the UI/UX standard says 44px targets); enlarging
+  them makes every row taller in a deliberately dense sheet. Decision pending.
+- init.js's boot IIFE runs its top-level steps (`wireToolbar`, `wireLibrary`,
+  `wireWorkbookUi`, `applyEditorTheme`) through `runBootStep()`, which catches and
+  logs instead of letting one throw abort every step after it; the IIFE's promise also
+  has a `.catch` that logs, lands on the start screen, and toasts — a boot failure must
+  never leave the default shell on screen with nothing wired and nothing said. Added after a
+  SharePoint embed deployment reported most buttons inert except one — a hosting
+  page can deny things the standalone app never has to think about (e.g.
+  partitioned/blocked storage access for embedded content), and one such failure
+  must not silently leave unrelated buttons unwired with no visible error. Route
+  any new top-level boot step through `runBootStep()` too.

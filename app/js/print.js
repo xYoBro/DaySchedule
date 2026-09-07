@@ -71,13 +71,20 @@ function printAllDays() {
   const previewArea = document.querySelector('.preview-area');
 
   setTimeout(() => {
-    if (previewArea) previewArea.style.display = 'none';
-    printContainer.style.display = 'block';
-    applyPrintScaling(true);
-    window.print();
-    // Restore screen view after print
-    printContainer.style.display = 'none';
-    if (previewArea) previewArea.style.display = '';
+    try {
+      if (previewArea) previewArea.style.display = 'none';
+      printContainer.style.display = 'block';
+      applyPrintScaling(true);
+      window.print();
+    } catch (err) {
+      console.error('Print failed:', err);
+      if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'print');
+      toast('Couldn’t open the print dialog. Try your browser’s File → Print.', 6000);
+    } finally {
+      // Restore screen view whether or not printing worked
+      printContainer.style.display = 'none';
+      if (previewArea) previewArea.style.display = '';
+    }
   }, 200);
 }
 

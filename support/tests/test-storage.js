@@ -134,13 +134,22 @@ describe('Persistence — .schedule workbook format', () => {
     assert.equal(parsed.state.days[0].events[0].title, 'Workbook Brief');
   });
 
-  it('rejects workbook files with no valid days', () => {
+  // Contract change: the app itself writes workbooks whose active schedule has
+  // no days yet (Start fresh → Save, switcher New Blank); refusing them made
+  // the whole file, siblings included, unopenable.
+  it('opens a workbook whose active schedule has no days yet', () => {
+    const parsed = parseScheduleWorkbookContent(JSON.stringify({
+      fileType: 'dayschedule',
+      schemaVersion: 1,
+      schedule: { current: { title: 'Fresh', days: [], groups: [] } },
+    }), 'fresh.schedule');
+    assert.equal(parsed.state.title, 'Fresh');
+    assert.equal(parsed.state.days.length, 0);
+  });
+
+  it('still rejects loose JSON that is not a workbook and has no valid days', () => {
     assert.throws(() => {
-      parseScheduleWorkbookContent(JSON.stringify({
-        fileType: 'dayschedule',
-        schemaVersion: 1,
-        schedule: { current: { title: 'Broken', days: [], groups: [] } },
-      }), 'broken.schedule');
+      parseScheduleWorkbookContent(JSON.stringify({ title: 'Broken', days: [null], groups: [] }), 'broken.json');
     });
   });
 });
@@ -182,8 +191,11 @@ describe('Persistence — dropped-event reporting', () => {
       }],
     });
     const parsed = parseScheduleWorkbookContent(content, 'x.json');
-    assert.equal(parsed.droppedEventCount, 2);
-    assert.equal(parsed.state.days[0].events.length, 1);
+    // Only the unparseable-times event is dropped; a missing title is
+    // preserved as "Untitled event" rather than silently deleting the record.
+    assert.equal(parsed.droppedEventCount, 1);
+    assert.equal(parsed.state.days[0].events.length, 2);
+    assert.equal(parsed.state.days[0].events[1].title, 'Untitled event');
   });
   it('reports zero drops for a clean file', () => {
     const content = JSON.stringify({

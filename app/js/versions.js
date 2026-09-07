@@ -46,8 +46,12 @@ async function renderVersionPanel(modal) {
   let html = '<h2>Versions</h2>';
 
   const lastSavedAt = getLastSavedAt();
-  const lastSaved = lastSavedAt ? formatTimeAgo(lastSavedAt) : 'not yet saved';
-  html += '<div class="version-working">Current copy • Saved ' + esc(lastSaved) + '</div>';
+  // A draft that has never reached a file has an envelope timestamp from its
+  // creation — "Saved just now" would be false.
+  const neverSaved = typeof getCurrentFileName === 'function' && !getCurrentFileName()
+    && typeof hasScheduleWorkbookHandle === 'function' && !hasScheduleWorkbookHandle();
+  const lastSaved = (!neverSaved && lastSavedAt) ? 'Saved ' + formatTimeAgo(lastSavedAt) : 'not saved to a file yet';
+  html += '<div class="version-working">Current copy • ' + esc(lastSaved) + '</div>';
 
   // Save as version
   if (!editable) {
@@ -124,11 +128,16 @@ function wireVersionPanel(modal) {
       if (!name) { nameInput.focus(); return; }
       const ok = await createVersion(name);
       if (ok) {
-        toast('Version saved: ' + name);
+        if (typeof lastVersionWasWritten === 'function' && typeof getCurrentFileName === 'function'
+            && !getCurrentFileName() && !lastVersionWasWritten()) {
+          toast('Version "' + name + '" kept in this session — click Save .schedule to write it to the file.', 6000);
+        } else {
+          toast('Version saved: ' + name);
+        }
         _versionSaveMode = false;
         renderVersionPanel(modal);
       } else {
-        toast('Failed to save version.');
+        toast('Couldn’t save the version — the file may be read-only or missing. Use Save .schedule, then try again.', 6000);
       }
     };
 

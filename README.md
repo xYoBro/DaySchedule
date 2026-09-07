@@ -56,6 +56,8 @@ The most common cause of "buttons don't work" is a stale copy of the app. Compar
 - **Single-day events only.** An event cannot cross midnight (e.g., 2200–0100). The editor rejects such ranges, and files containing them load with a notice that those events were skipped.
 - **Not a calendar.** There are no time zones, no recurrence, no reminders. Times are plain 24-hour wall-clock labels (`0730`), and every day is built explicitly.
 - **No multi-editor protection in the workbook flow.** A shared `.schedule` file is last-writer-wins. One editor at a time; save Versions before big changes.
+- **Schedules inside a workbook can't be deleted yet.** The workbook switcher can create, duplicate, and open schedules but not remove one. To drop an unwanted schedule, use **Start fresh** for a new workbook or leave it in place.
+- **Logos must be image files under 2 MB.** The logo is stored inside the `.schedule` file itself (and in the crash-recovery backup), so larger files are refused with a message.
 - **Legacy-mode locks are advisory.** Two people clicking `Edit` within a slow folder-sync window can both succeed. `Take Over` reloads the file from disk, but work the other editor hadn't saved is lost.
 - **Full auto-save needs Chrome or Edge.** Safari and Firefox fall back to download-based saving.
 - **Versions live inside the workbook file.** Versions created before the first save of a new draft exist only in the session backup until the file is saved.

@@ -100,25 +100,34 @@ document.addEventListener('click', e => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
+  // Caps Lock makes e.key 'P' — the shortcut must not silently hand the
+  // keystroke to the browser's own print/save dialogs.
+  const key = typeof e.key === 'string' ? e.key.toLowerCase() : '';
+  const libraryView = document.getElementById('libraryView');
+  const onStartScreen = !!(libraryView && libraryView.classList.contains('active'));
   // Cmd/Ctrl+P — print all days
-  if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
+  if ((e.metaKey || e.ctrlKey) && key === 'p') {
     e.preventDefault();
+    if (onStartScreen) { toast('Open a schedule first.'); return; }
     printAllDays();
     return;
   }
   // Cmd/Ctrl+S — save immediately
-  if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+  if ((e.metaKey || e.ctrlKey) && key === 's') {
     e.preventDefault();
+    // On the start screen a save would append an empty schedule to the
+    // last-opened workbook.
+    if (onStartScreen) { toast('Nothing to save yet — open or create a schedule first.'); return; }
     forceSave();
     return;
   }
   // Undo/Redo
-  if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+  if ((e.metaKey || e.ctrlKey) && key === 'z' && !e.shiftKey) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     e.preventDefault();
     undo();
   }
-  if ((e.metaKey || e.ctrlKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+  if ((e.metaKey || e.ctrlKey) && ((key === 'z' && e.shiftKey) || key === 'y')) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     e.preventDefault();
     redo();

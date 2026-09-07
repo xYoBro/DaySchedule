@@ -21,7 +21,10 @@
  * LOAD ORDER: Must be the LAST script loaded. Depends on all other modules.
  *
  * BOOT FLOW:
- *   1. wireToolbar() + wireLibrary() — always, sets up UI event handlers
+ *   1. wireToolbar() + wireLibrary() — always, sets up UI event handlers.
+ *      Each runs through runBootStep(), which catches and logs rather than
+ *      letting one throw (e.g. a hosting page denying storage access) abort
+ *      the rest of boot and leave unrelated buttons silently unwired.
  *   2. hasFSAPI()? → No: legacyBoot() (restores saved/session data into the
  *      editor; shows the start screen when there is nothing to restore —
  *      sample data is never auto-loaded)
@@ -31,11 +34,25 @@
 
 /* ── init.js ── Application bootstrap ──────────────────────────────────────── */
 
+// Each wiring step owns a distinct set of buttons. Without isolation, one
+// throwing (a missing element, a storage call denied by a hosting page's
+// permissions) would abort the whole boot IIFE and silently skip every
+// wiring call after it — leaving unrelated, otherwise-fine buttons inert
+// with no visible error.
+function runBootStep(name, fn) {
+  try {
+    fn();
+  } catch (e) {
+    console.error('Boot step failed: ' + name, e);
+    if (typeof logAppError === 'function') logAppError('error', String(e && e.message || e), 'boot:' + name);
+  }
+}
+
 (async function init() {
-  wireToolbar();
-  wireLibrary();
-  if (typeof wireWorkbookUi === 'function') wireWorkbookUi();
-  applyEditorTheme(getEditorTheme());
+  runBootStep('wireToolbar', wireToolbar);
+  runBootStep('wireLibrary', wireLibrary);
+  if (typeof wireWorkbookUi === 'function') runBootStep('wireWorkbookUi', wireWorkbookUi);
+  runBootStep('applyEditorTheme', () => applyEditorTheme(getEditorTheme()));
 
   // Last line of defense against losing unsaved work on tab close. Auto-save
   // clears the dirty flag within 2s, so this only fires for genuinely
@@ -72,7 +89,12 @@
   if (handle) {
     // Check for SAVED_STATE migration
     if (typeof SAVED_STATE !== 'undefined' && hasSavedScheduleState(SAVED_STATE)) {
-      await migrateSavedState(SAVED_STATE);
+      try {
+        await migrateSavedState(SAVED_STATE);
+      } catch (e) {
+        console.error('Boot step failed: migrateSavedState', e);
+        if (typeof logAppError === 'function') logAppError('error', String(e && e.message || e), 'boot:migrateSavedState');
+      }
     }
     showLibrary();
     return;
@@ -88,7 +110,15 @@
   }
 
   showLibrary();
-})();
+})().catch((e) => {
+  // Anything the steps above didn't catch would otherwise leave the default
+  // shell on screen (editor chrome, no library, nothing wired) with only a
+  // devtools rejection to explain it. Log it and land on the start screen.
+  console.error('Boot failed', e);
+  if (typeof logAppError === 'function') logAppError('error', String(e && e.message || e), 'boot');
+  try { showLibrary(); } catch (inner) { console.error('Could not show the start screen', inner); }
+  toast('Something went wrong while starting up. Open Help → Shortcuts to see the error, then reload.', 8000);
+});
 
 function hasSavedScheduleState(state) {
   return !!(state && Array.isArray(state.days));
@@ -131,6 +161,9 @@ async function legacyBoot() {
     Store.setActiveDay(days[0].id);
   }
 
+  // Say so explicitly rather than relying on the stylesheet's default
+  // (library hidden, editor shown) happening to match this branch.
+  if (typeof hideLibrary === 'function') hideLibrary();
   if (typeof syncCurrentScheduleAccess === 'function') {
     await syncCurrentScheduleAccess();
   }

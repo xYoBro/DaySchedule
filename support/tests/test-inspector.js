@@ -88,33 +88,9 @@ describe('inspector — day sheet modal', () => {
     assert.equal(attendeesInput.value, 'Crew chiefs, AGE');
   });
 
-  it('rejects invalid quick-edit time ranges and restores the prior value', async () => {
-    mountInspectorFixture();
-
-    const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
-    const evt = Store.addEvent(day.id, {
-      title: 'Aircraft Launch Sim',
-      startTime: '1200',
-      endTime: '1400',
-      groupId: 'grp_chiefs',
-    });
-    Store.setActiveDay(day.id);
-
-    selectEntity('event', day.id, evt.id);
-    openDayEventSheetModal();
-
-    const endInput = document.querySelector(
-      '#dayEventSheetModalContent .day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="endTime"]'
-    );
-    endInput.value = '1100';
-    endInput.dispatchEvent(new Event('blur'));
-    await wait(0);
-
-    const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
-    assert.equal(stored.endTime, '1400');
-    assert.equal(endInput.value, '1400');
-    assert.equal(document.getElementById('toast').textContent, 'End time must be after start time.');
-  });
+  // The invalid-range revert test lives in test-app-shell.js: the row's blur
+  // commit is deferred (setTimeout), so it needs the async runner. Under this
+  // synchronous runner it "passed" for months without a single assertion running.
 
   it('explains that main-track placement usually comes from the selected audience', () => {
     mountInspectorFixture();
@@ -325,5 +301,21 @@ describe('inspector — conflict detection', () => {
       document.getElementById('toast').textContent.includes('Formation'),
       'toast should mention the conflicting main event'
     );
+  });
+});
+
+describe('Inspector — time entry rules', () => {
+  it('snapToQuarter rounds 2359 up to the 2400 end-of-day marker and keeps colon input', () => {
+    assert.equal(snapToQuarter('2359'), '2400');
+    assert.equal(snapToQuarter('13:00'), '1300');
+    assert.equal(snapToQuarter('730'), '0730');
+  });
+  it('isUsableTimeEntry rejects blank and unparseable text but accepts colon and short forms', () => {
+    assert.equal(isUsableTimeEntry(''), false);
+    assert.equal(isUsableTimeEntry('abc'), false);
+    assert.equal(isUsableTimeEntry('0095'), false);
+    assert.equal(isUsableTimeEntry('2500'), false);
+    assert.equal(isUsableTimeEntry('13:00'), true);
+    assert.equal(isUsableTimeEntry('730'), true);
   });
 });

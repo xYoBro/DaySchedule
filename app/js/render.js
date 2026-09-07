@@ -99,7 +99,7 @@ function renderHeader(day) {
   let html = '<div class="hdr" title="Customize schedule">';
   html += '<div class="hdr-text">';
   html += '<div class="hdr-title">' + esc(Store.getTitle()) + '</div>';
-  html += '<div class="hdr-sub">' + esc(dateStr) + ' &ensp;\u2014&ensp; ' + esc(dayLabel) + '</div>';
+  html += '<div class="hdr-sub">' + [dateStr, dayLabel].filter(Boolean).map(esc).join(' &ensp;\u2014&ensp; ') + '</div>';
   html += '<div class="hdr-meta">' + esc(footer.contact || '') + '</div>';
   html += '</div>';
   if (logo) {

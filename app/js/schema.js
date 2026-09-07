@@ -46,8 +46,9 @@ function isValidScheduleTime(hhmm) {
 
 function normalizeEvent(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const title = (raw.title || '').trim();
-  if (!title) return null;
+  // A blank title must not erase the event: the editor writes '' to the Store
+  // on every keystroke, so a reload mid-edit used to delete the whole record.
+  const title = (raw.title || '').trim() || 'Untitled event';
   const startTime = normalizeTime(raw.startTime);
   const endTime = normalizeTime(raw.endTime);
   // Rejects malformed times (which would render as "NaN hrs" and sort
@@ -85,10 +86,13 @@ function normalizeGroup(raw) {
 function normalizeNote(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const text = (raw.text || '').trim();
-  if (!text) return null;
+  const category = (raw.category || '').trim();
+  // Only a note with nothing in it is dropped; a category with the text
+  // momentarily cleared is still the user's note.
+  if (!text && !category) return null;
   return {
     id:       sanitizeEntityId(raw.id, 'note'),
-    category: (raw.category || '').trim(),
+    category,
     text,
   };
 }

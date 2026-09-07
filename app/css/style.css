@@ -24,7 +24,7 @@
   --chrome-toolbar: #ffffff;
   --chrome-text: #1d1d1f;
   --chrome-text-secondary: #48484a;
-  --chrome-text-muted: #86868b;
+  --chrome-text-muted: #6e6e73; /* 5.1:1 on white — #86868b was 3.6:1, below WCAG AA */
   --chrome-border: #e5e5ea;
   --chrome-surface: #f5f5f7;
 }
@@ -449,24 +449,26 @@ body {
 }
 
 /* ── BREAK band — minimal ── */
+/* Palette variables, not near-black literals: on Dark Ops the literals put
+   near-black text on a near-black tint and breaks vanished. */
 .band.brk {
   margin: 8px 0;
-  background: rgba(29, 29, 31, 0.06);
+  background: var(--sch-surface);
   justify-content: center;
-  border-top: 1px solid rgba(29, 29, 31, 0.14);
-  border-bottom: 1px solid rgba(29, 29, 31, 0.14);
+  border-top: 1px solid var(--sch-border);
+  border-bottom: 1px solid var(--sch-border);
 }
 .band.brk .band-time {
-  border-right-color: rgba(29, 29, 31, 0.18);
+  border-right-color: var(--sch-border);
   padding: 8px 10px 8px 4px;
 }
 .band.brk .band-time .t-start {
   font-size: 11px;
   font-weight: 700;
-  color: rgba(29, 29, 31, 0.72);
+  color: var(--sch-text-secondary);
 }
 .band.brk .band-time .t-end {
-  color: rgba(29, 29, 31, 0.5);
+  color: var(--sch-text-muted);
 }
 .band.brk .band-content {
   display: flex;
@@ -478,7 +480,7 @@ body {
   font-weight: 750;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: rgba(29, 29, 31, 0.8);
+  color: var(--sch-text);
 }
 .band.brk .band-conc-slot { width: 0; border: none; }
 
@@ -715,6 +717,12 @@ body {
   padding: 4px 8px;
   border-radius: 4px;
   line-height: 1;
+  /* 44px touch target (UI/UX standard); the glyph stays 18px. */
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .insp-close:hover { background: rgba(0,0,0,0.06); color: #1d1d1f; }
 .insp-delete-zone {
@@ -1123,7 +1131,8 @@ body {
   max-width: 200px;
 }
 .tb-title:hover { background: rgba(0,0,0,0.04); }
-.tb-title:focus { background: white; box-shadow: 0 0 0 2px rgba(var(--app-accent),0.3); }
+/* Surface, not white: in the dark theme white put light text on a white field. */
+.tb-title:focus { background: var(--chrome-surface); box-shadow: 0 0 0 2px rgba(var(--app-accent),0.3); }
 .tb-title:disabled {
   color: var(--chrome-text-muted);
   cursor: not-allowed;
@@ -3092,7 +3101,7 @@ body {
   --chrome-toolbar: #252545;
   --chrome-text: #e0e0f0;
   --chrome-text-secondary: #b0b0cc;
-  --chrome-text-muted: #6b6b8a;
+  --chrome-text-muted: #9a9ab5; /* 6.2:1 on the dark bg — #6b6b8a was 3.3:1 */
   --chrome-border: #333355;
   --chrome-surface: #1e1e38;
 }
@@ -3608,6 +3617,11 @@ body {
   margin-bottom: 6px;
   border-bottom: 1px solid var(--sch-border);
 }
+.cards-card-tag {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
 .cards-event {
   padding: 6px 0;
   border-bottom: 1px solid var(--sch-border);
@@ -3763,6 +3777,19 @@ body {
 }
 .skin-option:hover { border-color: var(--sch-accent); }
 .skin-option.selected { border-color: var(--sch-accent); }
+/* The pickers are <button>s so they're keyboard-reachable; strip UA chrome. */
+.skin-option, .palette-option {
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.palette-option { border: none; padding: 0; }
+.skin-option:focus-visible, .palette-option:focus-visible {
+  outline: 2px solid var(--sch-accent);
+  outline-offset: 2px;
+}
 .skin-thumb {
   height: 40px;
   border-radius: 4px;
@@ -3866,6 +3893,39 @@ body {
 }
 .palette-option-name { font-size: 9px; color: var(--chrome-text-muted); margin-top: 4px; }
 
+/* Group tag shared by the Grid banner and Cards main-track rows (Bands and
+   Phases have their own equivalents). */
+.skin-group-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+.grid-banner-who, .cards-shared-who { display: block; margin-top: 2px; }
+
+/* Day tabs must scroll, not squeeze the toolbar, on a 15-day schedule. */
+.day-tabs { overflow-x: auto; flex-shrink: 1; min-width: 0; scrollbar-width: thin; }
+.day-tab { white-space: nowrap; flex-shrink: 0; }
+
+/* Focus rings that actually clear 3:1 (the 0.15-alpha ones were ~1.6:1). */
+.tb-title:focus, .library-new-input:focus, .version-save-input:focus {
+  box-shadow: 0 0 0 2px rgb(var(--app-accent));
+}
+
+/* A single unbroken token (a URL pasted as a title) must wrap rather than
+   overflow into the next column or get clipped by overflow:hidden. */
+.band-title, .band-desc, .cc-title, .ci-title, .ci-detail,
+.grid-cell-title, .grid-banner-title, .grid-banner-desc,
+.cards-event-title, .cards-event-detail, .cards-card-header,
+.phase-name, .phase-desc, .phase-task-title, .phase-task-detail,
+.notes-list li {
+  overflow-wrap: anywhere;
+}
+
 /* ══════════════════════════════════════════════════════════════
    PRINT STYLES
    ══════════════════════════════════════════════════════════════ */
@@ -3875,6 +3935,22 @@ body {
   .app-body { height: auto; overflow: visible; display: block; }
   .preview-area { padding: 0; display: block; }
   #printContainer { display: block !important; }
+  /* Editor-only advice with skin-switch buttons — never on a printed page. */
+  .band-view-note { display: none !important; }
+  /* Group tags, lane headers and the logo are backgrounds; with Chrome's
+     default "Background graphics" off they printed white-on-white. */
+  .page, .page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* The scaler measured at the 8.2in printable width (8.5in less @page
+     margins); printing the 8.5in screen width made Chrome shrink by 3.5%. */
+  #printContainer .page { width: 8.2in; }
+  /* Screen-only state must not print: the editor's selection highlight and
+     the "Unit Logo" placeholder text. */
+  #scheduleContainer [data-event-id].selected, .band-conc.selected, .conc-item.selected,
+  .grid-banner.selected, .cards-shared-item.selected, .cards-event.selected,
+  .phase-header.selected, .phase-task.selected, .notes-list li.selected {
+    box-shadow: none !important; background: transparent !important; outline: none !important;
+  }
+  .hdr-logo span { visibility: hidden; }
   .page {
     box-shadow: none;
     border-radius: 0;

@@ -144,7 +144,9 @@ function renderScheduleSetup(panel) {
         html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Sat, Mar 15)"' + disabledAttr + '>';
         html += '<button class="btn insp-day-duplicate" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Duplicate Day</button>';
         if (days.length > 1) {
-          html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Remove Day</button>';
+          html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;" data-delete-label="Remove Day" data-delete-armed-label="Tap again to remove"' + disabledAttr + '>Remove Day</button>';
+        } else {
+          html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;" disabled title="A schedule needs at least one day.">Remove Day</button>';
         }
         html += '</div>';
       }
@@ -197,8 +199,10 @@ function wireScheduleSetup(panel) {
     }
 
     const removeBtn = body.querySelector('.insp-day-remove');
-    if (removeBtn) {
-      removeBtn.addEventListener('click', () => {
+    if (removeBtn && !removeBtn.disabled) {
+      // Removing a day takes every event and note on it — same tap-again
+      // confirm as the other destructive buttons.
+      wireDeleteButton(removeBtn, () => {
         saveUndoState();
         Store.removeDay(dayId);
         _expandedDayId = null;
@@ -251,17 +255,17 @@ function renderSettingsModal(modal) {
   html += '<section class="settings-panel' + (_settingsActiveTab === 'basics' ? ' active' : '') + '" data-settings-panel="basics">';
   html += '<div class="settings-section">';
   html += '<div class="settings-section-title">Basics</div>';
-  html += '<label class="settings-label">Schedule Title</label>';
+  html += '<label class="settings-label" for="settings-title">Schedule Title</label>';
   html += '<input type="text" class="settings-input" id="settings-title" value="' + esc(title) + '">';
-  html += '<label class="settings-label">Unit Logo</label>';
+  html += '<label class="settings-label" for="settings-logo">Unit Logo</label>';
   html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
   if (Store.getLogo()) {
     html += '<div class="settings-logo-preview"><img src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
     html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove logo</button></div>';
   }
-  html += '<label class="settings-label">Header Line</label>';
+  html += '<label class="settings-label" for="settings-contact">Header Line</label>';
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
-  html += '<label class="settings-label">Point of Contact</label>';
+  html += '<label class="settings-label" for="settings-poc">Point of Contact</label>';
   html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
   html += '</div>';
   html += '</section>';
@@ -274,11 +278,12 @@ function renderSettingsModal(modal) {
   SKIN_NAMES.forEach(function(skin) {
     const label = SKIN_LABELS[skin];
     const selected = skin === currentTheme.skin ? ' selected' : '';
-    html += '<div class="skin-option' + selected + '" data-skin="' + skin + '">';
+    // Buttons, not divs: the pickers were unreachable by keyboard.
+    html += '<button type="button" class="skin-option' + selected + '" data-skin="' + skin + '" aria-pressed="' + (selected ? 'true' : 'false') + '">';
     html += '<div class="skin-thumb skin-thumb-' + skin + '"></div>';
     html += '<div class="skin-option-name">' + esc(label.name) + '</div>';
     html += '<div class="skin-option-desc">' + esc(label.desc) + '</div>';
-    html += '</div>';
+    html += '</button>';
   });
   html += '</div>';
 
@@ -287,19 +292,19 @@ function renderSettingsModal(modal) {
   PALETTE_NAMES.forEach(function(name) {
     const p = PALETTES[name];
     const selected = name === currentTheme.palette ? ' selected' : '';
-    html += '<div class="palette-option' + selected + '" data-palette="' + name + '">';
+    html += '<button type="button" class="palette-option' + selected + '" data-palette="' + name + '" aria-pressed="' + (selected ? 'true' : 'false') + '">';
     html += '<div class="palette-swatch" style="background:' + esc(p.bg) + ';">';
     html += '<div class="palette-bar" style="background:' + esc(p.accent) + ';"></div>';
     html += '<div class="palette-bar" style="background:' + esc(p.accentSecondary) + ';"></div>';
     html += '<div class="palette-bar" style="background:' + esc(p.accentTertiary) + ';"></div>';
     html += '</div>';
     html += '<div class="palette-option-name">' + esc(PALETTE_LABELS[name]) + '</div>';
-    html += '</div>';
+    html += '</button>';
   });
-  html += '<div class="palette-option' + (currentTheme.palette === 'custom' ? ' selected' : '') + '" data-palette="custom">';
+  html += '<button type="button" class="palette-option' + (currentTheme.palette === 'custom' ? ' selected' : '') + '" data-palette="custom" aria-pressed="' + (currentTheme.palette === 'custom' ? 'true' : 'false') + '">';
   html += '<div class="palette-swatch palette-custom-swatch">+</div>';
   html += '<div class="palette-option-name">Custom</div>';
-  html += '</div>';
+  html += '</button>';
   html += '</div>';
   html += '</div>';
   html += '</section>';
@@ -313,7 +318,7 @@ function renderSettingsModal(modal) {
     html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
     html += '<input type="text" class="insp-group-name" value="' + esc(g.name) + '" placeholder="Group name">';
     html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Toggle between Primary and Supporting">' + (g.scope === 'main' ? 'Primary' : 'Supporting') + '</button>';
-    html += '<button class="insp-group-remove">&times;</button>';
+    html += '<button class="insp-group-remove" type="button" aria-label="Remove audience" title="Remove audience" data-delete-label="&times;" data-delete-armed-label="Delete?">&times;</button>';
     html += '</div>';
   });
   html += '<button class="btn" id="settings-add-group" style="margin-top:6px;font-size:11px;">+ Add Audience</button>';
@@ -369,6 +374,7 @@ function wireSettingsModal(modal) {
       saveUndoState();
       Store.setTitle(titleInput.value.trim());
       syncToolbarTitle();
+      renderActiveDay();
       sessionSave();
     });
   }
@@ -379,12 +385,30 @@ function wireSettingsModal(modal) {
     logoInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      // The logo is stored inline (data: URL) in the .schedule file and the
+      // crash-recovery backup; a non-image is dropped on reload and a huge one
+      // silently overflows sessionStorage. Refuse both with a reason.
+      if (!/^image\//.test(file.type || '')) {
+        toast('That file isn’t an image. Choose a PNG, JPG, or SVG logo.', 4500);
+        logoInput.value = '';
+        return;
+      }
+      if (file.size > LOGO_MAX_BYTES) {
+        toast('Logo is ' + (file.size / (1024 * 1024)).toFixed(1) + ' MB — keep it under 2 MB so the schedule file stays small and saves reliably.', 6000);
+        logoInput.value = '';
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (ev) => {
         saveUndoState();
         Store.setLogo(ev.target.result);
+        renderActiveDay();
         sessionSave();
         renderSettingsModal(modal);
+      };
+      reader.onerror = () => {
+        toast('Couldn’t read that file. Try a different image.', 4500);
+        logoInput.value = '';
       };
       reader.readAsDataURL(file);
     });
@@ -394,6 +418,7 @@ function wireSettingsModal(modal) {
     logoRemove.addEventListener('click', () => {
       saveUndoState();
       Store.setLogo(null);
+      renderActiveDay();
       sessionSave();
       renderSettingsModal(modal);
     });
@@ -408,10 +433,13 @@ function wireSettingsModal(modal) {
   modal.querySelectorAll('.insp-group-item').forEach(item => {
     const groupId = item.getAttribute('data-group-id');
 
+    // The schedule behind the modal must track these live, like the scope
+    // toggle below does — otherwise Store and preview disagree until Done.
     const colorInput = item.querySelector('.insp-group-color');
-    colorInput.addEventListener('change', () => {
+    colorInput.addEventListener('input', () => {
       saveUndoState();
       Store.updateGroup(groupId, { color: colorInput.value });
+      renderActiveDay();
       sessionSave();
     });
 
@@ -419,8 +447,12 @@ function wireSettingsModal(modal) {
     nameInput.addEventListener('input', () => {
       saveUndoState();
       Store.updateGroup(groupId, { name: nameInput.value.trim() });
+      renderActiveDay();
       sessionSave();
     });
+    wireRequiredTextField(nameInput, 'Unnamed Group', (value) => {
+      Store.updateGroup(groupId, { name: value });
+    }, 'Audiences need a name — restored the previous one.');
 
     const scopeBtn = item.querySelector('.insp-group-scope');
     scopeBtn.addEventListener('click', () => {
@@ -434,10 +466,13 @@ function wireSettingsModal(modal) {
       sessionSave();
     });
 
-    const removeBtn = item.querySelector('.insp-group-remove');
-    removeBtn.addEventListener('click', () => {
+    // Removing an audience un-assigns its events on every day — the most
+    // destructive click in the app, so it gets the same tap-again confirm
+    // as event/note deletion.
+    wireDeleteButton(item.querySelector('.insp-group-remove'), () => {
       saveUndoState();
       Store.removeGroup(groupId);
+      renderActiveDay();
       sessionSave();
       renderSettingsModal(modal);
     });
@@ -448,9 +483,11 @@ function wireSettingsModal(modal) {
   if (addGroupBtn) {
     addGroupBtn.addEventListener('click', () => {
       saveUndoState();
-      Store.addGroup({ name: 'New Group' });
+      Store.addGroup({ name: 'New Audience' });
       sessionSave();
       renderSettingsModal(modal);
+      const last = modal.querySelector('.insp-group-item:last-of-type .insp-group-name');
+      if (last) { last.focus(); last.select(); }
     });
   }
 
@@ -510,6 +547,7 @@ function wireSettingsFooterField(modal, selector, key) {
   input.addEventListener('input', () => {
     saveUndoState();
     Store.setFooter({ [key]: input.value.trim() });
+    renderActiveDay();
     sessionSave();
   });
 }
@@ -529,39 +567,57 @@ function wireDayField(item, selector, dayId, field, nullable) {
   const input = item.querySelector(selector);
   if (!input) return;
   const isTimeField = field === 'startTime' || field === 'endTime';
-  const eventType = input.type === 'date' ? 'change' : 'input';
-  input.addEventListener(eventType, () => {
-    const val = input.value.trim();
-    if (isTimeField) {
-      // Day times seed new-event defaults; committing raw keystrokes let
-      // garbage like "abc" produce "NaNNaN" event times downstream.
-      const normalized = normalizeTime(val);
-      if (!isValidScheduleTime(normalized)) return;
+  if (isTimeField) {
+    // Day times commit on blur/Enter, not per keystroke: "17" typed on the
+    // way to "1700" is a valid-looking 0017. Same validation as event times,
+    // plus end > start.
+    const commitTime = () => {
+      const day = Store.getDay(dayId);
+      const raw = input.value.trim();
+      const normalized = normalizeTime(raw);
+      if (!raw || !isValidScheduleTime(normalized)) {
+        input.value = (day && day[field]) || '';
+        toast('Times use 24-hour HHMM, e.g. 0730.');
+        return;
+      }
+      const other = day ? (field === 'startTime' ? day.endTime : day.startTime) : '';
+      if (other) {
+        const startMin = timeToMinutes(field === 'startTime' ? normalized : other);
+        const endMin = timeToMinutes(field === 'endTime' ? normalized : other);
+        if (endMin <= startMin) {
+          input.value = (day && day[field]) || '';
+          toast('End time must be after start time.');
+          return;
+        }
+      }
+      input.value = normalized;
+      if (day && day[field] === normalized) return;
       saveUndoState();
       Store.updateDay(dayId, { [field]: normalized });
       renderActiveDay();
       sessionSave();
-      return;
-    }
+    };
+    input.addEventListener('blur', commitTime);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    });
+    return;
+  }
+  const eventType = input.type === 'date' ? 'change' : 'input';
+  input.addEventListener(eventType, () => {
+    const val = input.value.trim();
     saveUndoState();
     Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
     renderActiveDay();
     sessionSave();
-    // Re-render inspector when date changes (reorders accordion)
-    if (field === 'date') renderInspector();
+    // Re-render inspector when date changes (reorders accordion); the
+    // re-render replaces this input, so put focus back for arrow-key stepping.
+    if (field === 'date') {
+      renderInspector();
+      const next = document.querySelector('.insp-day-item[data-day-id="' + dayId + '"] .insp-day-date');
+      if (next) next.focus();
+    }
   });
-  if (isTimeField) {
-    input.addEventListener('blur', () => {
-      const day = Store.getDay(dayId);
-      const normalized = normalizeTime(input.value.trim());
-      if (!isValidScheduleTime(normalized)) {
-        input.value = (day && day[field]) || '';
-        toast('Times use 24-hour HHMM, e.g. 0730.');
-      } else if (normalized !== input.value.trim()) {
-        input.value = normalized;
-      }
-    });
-  }
 }
 
 function formatDateShort(dateStr) {
@@ -728,7 +784,9 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += '</label>';
   html += '<label class="day-sheet-detail-field day-sheet-detail-wide">';
   html += '<span class="day-sheet-detail-label">Notes</span>';
-  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description" value="' + esc(evt.description) + '" placeholder="Optional">';
+  // textarea, not <input>: a single-line input strips the newlines the
+  // Event Inspector's textarea allows, flattening "Line one\nLine two" on commit.
+  html += '<textarea rows="2" data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description" placeholder="Optional">' + esc(evt.description) + '</textarea>';
   html += '</label>';
   html += '</div>';
   if (overlapNames.length > 0) {
@@ -783,7 +841,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
 
   if (!ctx.events.length) {
     html += '<div class="day-sheet-table-wrap">';
-    html += '<div class="day-sheet-empty"><strong>No events yet.</strong> Add one here or use <strong>Add Event</strong>.</div>';
+    html += '<div class="day-sheet-empty"><strong>No events yet.</strong> Click <strong>Add Event</strong> above.</div>';
     html += '</div>';
     html += '</div>';
     modal.innerHTML = html;
@@ -813,8 +871,8 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     const isSelected = evt.id === selectedEventId;
 
     html += '<tr class="day-sheet-row' + (isSelected ? ' is-selected' : '') + '" data-event-id="' + esc(evt.id) + '">';
-    html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="startTime" data-focus="startTime" value="' + esc(evt.startTime) + '" maxlength="4" placeholder="0700"></td>';
-    html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="endTime" data-focus="endTime" value="' + esc(evt.endTime) + '" maxlength="4" placeholder="0800"></td>';
+    html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="startTime" data-focus="startTime" value="' + esc(evt.startTime) + '" maxlength="5" placeholder="0700"></td>';
+    html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="endTime" data-focus="endTime" value="' + esc(evt.endTime) + '" maxlength="5" placeholder="0800"></td>';
     html += '<td><input type="text" class="day-sheet-title-input" data-event-id="' + esc(evt.id) + '" data-field="title" data-focus="title" value="' + esc(evt.title) + '"></td>';
     html += '<td><select class="day-sheet-group-select" data-event-id="' + esc(evt.id) + '" data-focus="groupId">';
     html += '<option value="">No audience</option>';
@@ -823,9 +881,9 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     });
     html += '</select></td>';
     html += '<td><input type="text" class="day-sheet-location-input" data-event-id="' + esc(evt.id) + '" data-field="location" data-focus="location" value="' + esc(evt.location) + '"></td>';
-    html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isBreak ? ' checked' : '') + ' aria-label="Break"></td>';
+    html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isBreak"' + (evt.isBreak ? ' checked' : '') + ' aria-label="Break"></td>';
     if (canHighlight) {
-      html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track." aria-label="Main track override"></td>';
+      html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isMainEvent"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track." aria-label="Main track override"></td>';
     } else {
       html += '<td class="day-sheet-check-cell"><span class="day-sheet-cell-note" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">Auto</span></td>';
     }
@@ -846,8 +904,14 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '</div>';
   html += '</div>';
 
+  // Re-rendering replaces the scrolling table; carry the scroll position over
+  // so toggling a row near the bottom of a long sheet doesn't snap to the top.
+  const previousWrap = modal.querySelector('.day-sheet-table-wrap');
+  const previousScrollTop = previousWrap ? previousWrap.scrollTop : 0;
   modal.innerHTML = html;
   wireDayEventSheetModal(modal, dayId);
+  const nextWrap = modal.querySelector('.day-sheet-table-wrap');
+  if (nextWrap && previousScrollTop) nextWrap.scrollTop = previousScrollTop;
 
   if (focusInfo && focusInfo.eventId && focusInfo.field) {
     setTimeout(() => {
@@ -874,7 +938,10 @@ function wireDayEventSheetModal(modal, dayId) {
       const defaultGroup = groups.find(g => g.scope === 'main') || groups[0];
       const day = Store.getDay(dayId);
       const events = Store.getEvents(dayId);
-      let startMin = timeToMinutes(events.length ? events[events.length - 1].endTime : ((day && day.startTime) || '0800'));
+      // After the latest-ending event, not the latest-starting one — a short
+      // event inside a long block otherwise lands the new row mid-block.
+      const lastEnd = events.reduce((m, e) => Math.max(m, timeToMinutes(e.endTime)), -1);
+      let startMin = lastEnd >= 0 ? lastEnd : timeToMinutes((day && day.startTime) || '0800');
       if (!Number.isFinite(startMin)) startMin = 8 * 60;
       // Clamp below the 2345 end cap so end > start even when the last
       // event already runs to the end of the day.
@@ -914,7 +981,9 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = input.getAttribute('data-event-id');
       const focusInfo = input._daySheetNextFocus || null;
       input._daySheetNextFocus = null;
-      input.value = snapToQuarter(input.value);
+      // Only snap something parseable: snapping "" or "abc" here turned it
+      // into 0000 before the deferred commit could reject and revert it.
+      if (isUsableTimeEntry(input.value)) input.value = snapToQuarter(input.value);
       const relatedTarget = e.relatedTarget;
       const field = input.getAttribute('data-field');
       const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
@@ -967,6 +1036,12 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = input.getAttribute('data-event-id');
       const field = input.getAttribute('data-field');
       const value = typeof input.value === 'string' ? input.value.trim() : input.value;
+      if (field === 'title' && !value) {
+        const current = Store.getEvents(dayId).find(e => e.id === eventId);
+        input.value = current ? current.title : '';
+        toast('Events need a title — restored the previous one.');
+        return;
+      }
       commitDayEventSheetUpdate(dayId, eventId, { [field]: value }, { rerenderModal: false });
     });
     if (input.tagName !== 'TEXTAREA') {
@@ -1008,7 +1083,9 @@ function wireDayEventSheetModal(modal, dayId) {
     });
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
-      commitDayEventSheetUpdate(dayId, eventId, { isBreak: input.checked }, { rerenderModal: true, checkConflict: true });
+      commitDayEventSheetUpdate(dayId, eventId, { isBreak: input.checked }, {
+        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: 'isBreak' },
+      });
     });
   });
 
@@ -1019,7 +1096,9 @@ function wireDayEventSheetModal(modal, dayId) {
     });
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
-      commitDayEventSheetUpdate(dayId, eventId, { isMainEvent: input.checked }, { rerenderModal: true, checkConflict: true });
+      commitDayEventSheetUpdate(dayId, eventId, { isMainEvent: input.checked }, {
+        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: 'isMainEvent' },
+      });
     });
   });
 
@@ -1038,19 +1117,21 @@ function wireDaySheetDetailPanel(modal, dayId) {
     });
   }
 
-  detailPanel.querySelectorAll('input[type="text"]').forEach(input => {
+  detailPanel.querySelectorAll('input[type="text"], textarea').forEach(input => {
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
       const field = input.getAttribute('data-field');
       const value = typeof input.value === 'string' ? input.value.trim() : input.value;
       commitDayEventSheetUpdate(dayId, eventId, { [field]: value }, { rerenderModal: false });
     });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        input.blur();
-      }
-    });
+    if (input.tagName !== 'TEXTAREA') {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          input.blur();
+        }
+      });
+    }
   });
 
   const deleteBtn = detailPanel.querySelector('#daySheetDeleteSelected');
@@ -1096,9 +1177,28 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
   if (!evt) return;
 
   const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
+  if ((startInput && !isUsableTimeEntry(startInput.value)) || (endInput && !isUsableTimeEntry(endInput.value))) {
+    if (startInput) startInput.value = evt.startTime;
+    if (endInput) endInput.value = evt.endTime;
+    toast('Times use 24-hour HHMM, e.g. 0730.');
+    return;
+  }
   const startTime = startInput ? snapToQuarter(startInput.value) : evt.startTime;
   const endTime = endInput ? snapToQuarter(endInput.value) : evt.endTime;
   const updates = { startTime, endTime };
+
+  if (startTime === evt.startTime && endTime === evt.endTime) {
+    // Unchanged: skip the undo entry, the dirty write, the conflict toast and
+    // the full re-render — just honor the requested focus.
+    if (startInput) startInput.value = startTime;
+    if (endInput) endInput.value = endTime;
+    const focusInfo = options && options.focusInfo;
+    if (focusInfo && focusInfo.eventId && focusInfo.field) {
+      const target = modal.querySelector('[data-event-id="' + focusInfo.eventId + '"][data-focus="' + focusInfo.field + '"]');
+      if (target && target.focus) target.focus();
+    }
+    return;
+  }
 
   if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
     if (options && options.allowStartTimeStaging && startTime !== evt.startTime && endTime === evt.endTime) {
@@ -1184,17 +1284,17 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '</div>';
 
   // Title
-  html += '<label>Title</label>';
+  html += '<label for="insp-evt-title">Title</label>';
   html += '<input type="text" id="insp-evt-title" value="' + esc(evt.title) + '"' + textReadOnly + '>';
 
   // Times — text inputs with snap-to-15 validation
   html += '<div class="field-row">';
-  html += '<div><label>Start</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="4" class="time-input"' + textReadOnly + '></div>';
-  html += '<div><label>End</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="4" class="time-input"' + textReadOnly + '></div>';
+  html += '<div><label for="insp-evt-start">Start</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="5" class="time-input"' + textReadOnly + '></div>';
+  html += '<div><label for="insp-evt-end">End</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="5" class="time-input"' + textReadOnly + '></div>';
   html += '</div>';
 
   // Group
-  html += '<label>Audience</label>';
+  html += '<label for="insp-evt-group">Audience</label>';
   html += '<select id="insp-evt-group"' + disabledAttr + '>';
   html += '<option value="">No audience</option>';
   groups.forEach(g => {
@@ -1203,17 +1303,17 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '</select>';
 
   // Specific People
-  html += '<label>Specific People</label>';
+  html += '<label for="insp-evt-attendees">Specific People</label>';
   html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="Optional names"' + textReadOnly + '>';
 
   // Description
-  html += '<label>Notes</label>';
+  html += '<label for="insp-evt-desc">Notes</label>';
   html += '<textarea id="insp-evt-desc"' + textReadOnly + '>' + esc(evt.description) + '</textarea>';
 
   // Location + POC
-  html += '<label>Location</label>';
+  html += '<label for="insp-evt-loc">Location</label>';
   html += '<input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '"' + textReadOnly + '>';
-  html += '<label>POC</label>';
+  html += '<label for="insp-evt-poc">POC</label>';
   html += '<input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '"' + textReadOnly + '>';
 
   // Break toggle
@@ -1262,6 +1362,9 @@ function wireEventInspector(panel, dayId, eventId) {
   if (!editable) return;
 
   autoCommit('#insp-evt-title', 'title');
+  wireRequiredTextField(panel.querySelector('#insp-evt-title'), 'Untitled event', (value) => {
+    Store.updateEvent(dayId, eventId, { title: value });
+  }, 'Events need a title — restored the previous one.');
   wireTimeInput(panel, '#insp-evt-start', 'startTime', dayId, eventId);
   wireTimeInput(panel, '#insp-evt-end', 'endTime', dayId, eventId);
   autoCommit('#insp-evt-attendees', 'attendees');
@@ -1292,6 +1395,9 @@ function wireEventInspector(panel, dayId, eventId) {
       if (band) band.classList.add('selected');
       sessionSave();
       renderInspector();
+      // renderInspector rebuilt the select; keep keyboard focus on it.
+      const nextSelect = document.getElementById('insp-evt-group');
+      if (nextSelect) nextSelect.focus();
       checkTimeConflict(dayId, eventId);
     });
   }
@@ -1319,10 +1425,10 @@ function renderNoteInspector(panel, dayId, noteId) {
     html += '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>';
   }
 
-  html += '<label>Category</label>';
+  html += '<label for="insp-note-cat">Category</label>';
   html += '<input type="text" id="insp-note-cat" value="' + esc(note.category) + '" placeholder="e.g., Medical, TDY"' + textReadOnly + '>';
 
-  html += '<label>Text</label>';
+  html += '<label for="insp-note-text">Text</label>';
   html += '<textarea id="insp-note-text"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
 
   html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-note-delete"' + disabledAttr + '>Delete Note</button></div>';
@@ -1357,6 +1463,9 @@ function wireNoteInspector(panel, dayId, noteId) {
     if (noteEl) noteEl.classList.add('selected');
     sessionSave();
   });
+  wireRequiredTextField(textInput, '', (value) => {
+    Store.updateNote(dayId, noteId, { text: value });
+  }, 'Notes need text — restored the previous text.');
 
   wireDeleteButton(panel.querySelector('#insp-note-delete'), () => {
     saveUndoState();
@@ -1369,20 +1478,27 @@ function wireNoteInspector(panel, dayId, noteId) {
 
 // ── Delete confirmation pattern ────────────────────────────────────────────
 
+const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+
 function wireDeleteButton(btn, onConfirm) {
   if (!btn) return;
   let armed = false;
+  // Per-button timer: a shared module timer let arming one Delete cancel
+  // another's disarm, leaving "Tap again" armed indefinitely.
+  let timer = null;
   const defaultLabel = btn.getAttribute('data-delete-label') || (btn.id.includes('note') ? 'Delete Note' : 'Delete Event');
+  const armedLabel = btn.getAttribute('data-delete-armed-label') || 'Tap again to delete';
   btn.addEventListener('click', () => {
     if (armed) {
+      clearTimeout(timer);
       onConfirm();
       return;
     }
     armed = true;
-    btn.textContent = 'Tap again to delete';
+    btn.textContent = armedLabel;
     btn.classList.add('confirm');
-    clearDeleteTimer();
-    _deleteTimer = setTimeout(() => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
       armed = false;
       btn.textContent = defaultLabel;
       btn.classList.remove('confirm');
@@ -1398,7 +1514,16 @@ function clearDeleteTimer() {
 
 function renderActiveDay() {
   const dayId = Store.getActiveDay();
-  if (dayId) renderDay(dayId);
+  if (dayId) {
+    renderDay(dayId);
+  } else {
+    // Otherwise the previous schedule's (or a deleted day's) page stays on
+    // screen looking live — and browser-menu print would print it.
+    const container = document.getElementById('scheduleContainer');
+    if (container) {
+      container.innerHTML = '<div class="empty-state"><strong>No days yet.</strong> Click <strong>+ Day</strong> to start this schedule.</div>';
+    }
+  }
   renderDayTabs();
   syncPreviewSelection();
 }
@@ -1500,6 +1625,7 @@ function wireToolbar() {
     tbTitle.value = Store.getTitle();
     tbTitle.addEventListener('input', () => {
       if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) return;
+      saveUndoState();
       Store.setTitle(tbTitle.value.trim());
       renderActiveDay();
       sessionSave();
@@ -1534,8 +1660,14 @@ function wireToolbar() {
 
   const daySheetOverlay = document.getElementById('dayEventSheetModal');
   if (daySheetOverlay) {
+    // A drag-select that starts inside a cell and ends over the backdrop
+    // dispatches its click to the overlay; only a press that began on the
+    // backdrop counts as "close".
+    let pressStartedOnBackdrop = false;
+    daySheetOverlay.addEventListener('mousedown', (e) => { pressStartedOnBackdrop = e.target === daySheetOverlay; });
     daySheetOverlay.addEventListener('click', (e) => {
-      if (e.target === daySheetOverlay) closeDayEventSheetModal();
+      if (e.target === daySheetOverlay && pressStartedOnBackdrop) closeDayEventSheetModal();
+      pressStartedOnBackdrop = false;
     });
   }
 
@@ -1569,10 +1701,17 @@ function openAddEvent(dayId) {
   saveUndoState();
   const groups = Store.getGroups();
   const defaultGroup = groups.find(g => g.scope === 'main') || groups[0];
+  // Start where the day currently ends (or at the day's start), not at a
+  // fixed 0800 that overlaps whatever is already there.
+  const day = Store.getDay(dayId);
+  const lastEnd = Store.getEvents(dayId).reduce((m, e) => Math.max(m, timeToMinutes(e.endTime)), -1);
+  let startMin = lastEnd >= 0 ? lastEnd : timeToMinutes((day && day.startTime) || '0800');
+  if (!Number.isFinite(startMin)) startMin = 8 * 60;
+  startMin = Math.min(startMin, (23 * 60) + 45 - TIME_INCREMENT);
   const evt = Store.addEvent(dayId, {
     title: 'New Event',
-    startTime: '0800',
-    endTime: '0900',
+    startTime: minutesToTime(startMin),
+    endTime: minutesToTime(Math.min(startMin + 60, (23 * 60) + 45)),
     groupId: defaultGroup ? defaultGroup.id : '',
   });
   sessionSave();
@@ -1580,6 +1719,8 @@ function openAddEvent(dayId) {
   if (evt) {
     selectEntity('event', dayId, evt.id);
     checkTimeConflict(dayId, evt.id);
+    const titleInput = document.getElementById('insp-evt-title');
+    if (titleInput) { titleInput.focus(); titleInput.select(); }
   }
 }
 
@@ -1602,11 +1743,12 @@ function snapToQuarter(timeStr) {
   const cleaned = timeStr.replace(/[^0-9]/g, '').padStart(4, '0').slice(0, 4);
   let h = parseInt(cleaned.slice(0, 2), 10);
   let m = parseInt(cleaned.slice(2, 4), 10);
-  if (isNaN(h) || h > 23) h = 0;
+  if (isNaN(h) || h > 24) h = 0;
   if (isNaN(m) || m > 59) m = 0;
-  // Round to nearest 15
+  // Round to nearest 15; 2359 rounds up to 2400 (a valid end-of-day end
+  // time — the range check rejects it as a start).
   m = Math.round(m / 15) * 15;
-  if (m === 60) { m = 0; h = Math.min(h + 1, 23); }
+  if (m === 60) { m = 0; h = Math.min(h + 1, 24); }
   return String(h).padStart(2, '0') + String(m).padStart(2, '0');
 }
 
@@ -1629,15 +1771,52 @@ function eventTimeRangeIsValid(dayId, eventId, updates) {
   return timeToMinutes(nextEnd) > timeToMinutes(nextStart);
 }
 
+// A field the record cannot exist without. The live 'input' handlers write
+// '' to the Store while the user retypes; on blur an empty field restores the
+// last non-empty value (or the fallback) so nothing is persisted blank.
+function wireRequiredTextField(input, fallback, commit, message) {
+  if (!input) return;
+  let last = input.value.trim() || fallback;
+  input.addEventListener('input', () => {
+    if (input.value.trim()) last = input.value.trim();
+  });
+  input.addEventListener('blur', () => {
+    if (input.value.trim() || !last) return;
+    input.value = last;
+    commit(last);
+    renderActiveDay();
+    sessionSave();
+    toast(message);
+  });
+}
+
+// Empty or unparseable text ("", "abc", "0095", "2500") must revert, not snap
+// to midnight — the day-level fields already behave this way (wireDayField).
+function isUsableTimeEntry(raw) {
+  const value = String(raw || '').trim();
+  return !!value && isValidScheduleTime(normalizeTime(value));
+}
+
 function wireTimeInput(panel, selector, field, dayId, eventId) {
   const input = panel.querySelector(selector);
   if (!input) return;
   input.addEventListener('blur', () => {
-    const snapped = snapToQuarter(input.value);
-    const updates = { [field]: snapped };
-    if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
+    if (!isUsableTimeEntry(input.value)) {
       const evt = Store.getEvents(dayId).find(item => item.id === eventId);
       if (evt) input.value = evt[field];
+      toast('Times use 24-hour HHMM, e.g. 0730.');
+      return;
+    }
+    const snapped = snapToQuarter(input.value);
+    const updates = { [field]: snapped };
+    const current = Store.getEvents(dayId).find(item => item.id === eventId);
+    if (current && current[field] === snapped) {
+      // Nothing changed: no undo entry, no dirty write, no conflict toast.
+      input.value = snapped;
+      return;
+    }
+    if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
+      if (current) input.value = current[field];
       toast('End time must be after start time.');
       return;
     }

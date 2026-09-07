@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+  A minimal stand-in for "some existing SharePoint page" -- its own body
+  margin, background, font-family, and a stray <p> with default UA margin.
+  Use it to re-verify dist/DaySchedule.sharepoint.html after any change to
+  that file, especially the <style> block: paste the ported widget's full
+  contents where marked below, open this file in a browser, and confirm
+  (via DevTools computed-style panel, not just "no console errors"):
+
+    - the host's own h1 color / body margin+background / paragraph spacing
+      are untouched (the widget must not leak page-wide styles), and
+    - the widget's own cards/bars still have their real padding and margins
+      (a previous version of the port passed the first check while silently
+      failing the second -- an over-specific reset rule beat every
+      class-based margin/padding rule in the app's stylesheet; see the
+      SPECIFICITY NOTE in dist/DaySchedule.sharepoint.html's header comment).
+
+  Not part of the build -- nothing regenerates this automatically.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SharePoint host-page simulation</title>
+<style>
+  body { margin: 40px; background: #ffe9c7; font-family: Georgia, serif; }
+  h1 { color: darkred; }
+  .host-widget-zone { border: 4px dashed limegreen; padding: 12px; }
+  .host-footer { margin-top: 40px; padding: 20px; background: #d0e8ff; }
+</style>
+</head>
+<body>
+  <h1>Host Page Title (should stay serif/darkred, unaffected)</h1>
+  <p id="host-para">This paragraph belongs to the host page, not the widget.</p>
+
+  <div class="host-widget-zone">
+    <!-- ⬇⬇⬇ Paste the full contents of dist/DaySchedule.sharepoint.html here ⬇⬇⬇ -->
+
+    <!-- ⬆⬆⬆ end pasted widget ⬆⬆⬆ -->
+  </div>
+
+  <div class="host-footer">Host page footer &mdash; should still look like this (blue box), not be reset by the widget.</div>
+</body>
+</html>

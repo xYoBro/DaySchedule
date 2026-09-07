@@ -82,3 +82,9 @@ describe('utils — local error log', () => {
     assert.deepEqual(getAppErrorLog(), []);
   });
 });
+
+describe('utils — formatDuration precision', () => {
+  it('formats 75 min as 1.25 hrs, not 1.3', () => { assert.equal(formatDuration(75), '1.25 hrs'); });
+  it('formats 100 min as 1.67 hrs', () => { assert.equal(formatDuration(100), '1.67 hrs'); });
+  it('still formats 90 min as 1.5 hrs', () => { assert.equal(formatDuration(90), '1.5 hrs'); });
+});

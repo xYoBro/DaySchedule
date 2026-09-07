@@ -12,7 +12,11 @@ const TestRunner = (() => {
   function it(name, fn) {
     if (!currentSuite) throw new Error('it() must be inside describe()');
     try {
-      fn();
+      const result = fn();
+      // An async test here would "pass" before any of its assertions ran.
+      if (result && typeof result.then === 'function') {
+        throw new Error('async test in the synchronous runner — move it to runner-ui.html / runner-integration.html');
+      }
       currentSuite.tests.push({ name, passed: true });
       currentSuite.pass++;
     } catch (e) {

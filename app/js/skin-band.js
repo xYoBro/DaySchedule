@@ -338,7 +338,10 @@ function renderConcurrentItemBody(c, g) {
   if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
   if (c.attendees) {
     const prefix = g ? '+ ' : 'WHO: ';
-    const existingIdx = getDaggerFootnotes().findIndex(fn => fn.title === c.title && fn.attendees === c.attendees);
+    // Two different events can share a title and attendees; the footnote
+    // carries a time, so the time is part of the identity.
+    const timeLabel = c.startTime + ' – ' + c.endTime;
+    const existingIdx = getDaggerFootnotes().findIndex(fn => fn.title === c.title && fn.attendees === c.attendees && fn.time === timeLabel);
     if (existingIdx !== -1) {
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + (existingIdx + 1) + '</sup></div>';
     } else if (c.attendees.length > 25) {

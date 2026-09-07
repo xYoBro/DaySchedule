@@ -33,8 +33,9 @@ function minutesToTime(m) {
 function formatDuration(minutes) {
   if (!Number.isFinite(minutes) || minutes < 0) return '';
   if (minutes < 60) return minutes + ' min';
-  const hrs = minutes / 60;
-  return (hrs === Math.floor(hrs) ? hrs : hrs.toFixed(1)) + (hrs === 1 ? ' hr' : ' hrs');
+  // Two decimals, trailing zeros trimmed: 75 min is "1.25 hrs", not "1.3 hrs".
+  const hrs = Math.round((minutes / 60) * 100) / 100;
+  return hrs + (hrs === 1 ? ' hr' : ' hrs');
 }
 
 function generateId(prefix) {

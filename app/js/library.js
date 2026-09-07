@@ -104,11 +104,20 @@ let _libraryContinueAction = null;
 
 async function runLibraryContinueAction() {
   if (typeof _libraryContinueAction !== 'function') return;
+  const btn = document.getElementById('libraryContinueBtn');
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Opening…'; }
   try {
     await _libraryContinueAction();
   } catch (err) {
     console.error('Continue failed:', err);
+    if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'continue');
+    // The action may already have hidden the start screen; the advice
+    // "use Open .schedule" only makes sense with that screen showing.
+    showLibrary();
     toast('Couldn’t continue: ' + (err && err.message ? err.message : 'unexpected error') + '. Use Open .schedule instead.', 5500);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
   }
 }
 
@@ -138,14 +147,19 @@ async function renderLibraryContinueCard() {
     metaEl.textContent = parts.join(' · ');
     btn.textContent = 'Continue';
     _libraryContinueAction = async () => {
+      // The draft must be in the Store before reattaching: the reattach
+      // matches the draft's identity against the file's schedules.
+      if (!Store.getDays().length) sessionLoad();
       // Same workbook as the remembered file? Reattach its handle so
       // auto-save writes back to it (the click is the permission gesture).
       if (record && sessionState.workbookFileName === record.name
           && typeof hasScheduleWorkbookHandle === 'function' && !hasScheduleWorkbookHandle()
           && typeof adoptScheduleWorkbookHandle === 'function') {
-        await adoptScheduleWorkbookHandle(record.handle);
+        const reattached = await adoptScheduleWorkbookHandle(record.handle);
+        if (!reattached) {
+          toast('Couldn’t reconnect to ' + record.name + ' (moved, deleted, or permission declined). Your work is still here — use Save .schedule to choose where to save it.', 7000);
+        }
       }
-      if (!Store.getDays().length) sessionLoad();
       const days = Store.getDays();
       if (days.length && !Store.getActiveDay()) Store.setActiveDay(days[0].id);
       hideLibrary();
@@ -484,6 +498,13 @@ async function returnToLibrary() {
   setCurrentFile(null, null);
   Store.reset();
   setCurrentScheduleFileData(null);
+  // Everything is on disk now (or there was nothing to save). Drop the
+  // session draft — otherwise the Continue card advertises the schedule just
+  // left, and clicking it opens an empty editor — and detach the workbook so
+  // a stray Ctrl+S on the start screen can't append a blank schedule to it.
+  // The card then falls through to "Welcome back · Reopen", which reads the file.
+  if (typeof discardSessionDraft === 'function') discardSessionDraft();
+  if (typeof clearScheduleWorkbookTarget === 'function') clearScheduleWorkbookTarget();
   showLibrary();
 }
 
@@ -574,12 +595,12 @@ function wireLibrary() {
     newInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') doCreate();
       if (e.key === 'Escape') {
-        newInput.value = 'New Schedule';
+        newInput.value = '';
         newInput.blur();
       }
     });
     if (newCancel) newCancel.onclick = () => {
-      newInput.value = 'New Schedule';
+      newInput.value = '';
       newInput.blur();
     };
   }
@@ -641,12 +662,14 @@ function wireLibrary() {
 
 // ── Help modal ─────────────────────────────────────────────────────────────
 
+// localStorage throws (not "returns null") when a hosting page or browser
+// setting blocks site storage; Help must open regardless.
 function hasSeenStartupHelp() {
-  return localStorage.getItem(HELP_SEEN_KEY) === '1';
+  try { return localStorage.getItem(HELP_SEEN_KEY) === '1'; } catch (e) { return false; }
 }
 
 function markHelpSeen() {
-  localStorage.setItem(HELP_SEEN_KEY, '1');
+  try { localStorage.setItem(HELP_SEEN_KEY, '1'); } catch (e) { console.warn('Could not remember that Help was seen:', e); }
 }
 
 function syncHelpEntryPoints() {

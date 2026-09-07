@@ -17,7 +17,7 @@ function renderDayBody_cards(dayId) {
   const day = Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
-  const events = day.events.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const events = day.events.slice().sort(compareBandOrder);
   const notes = Store.getNotes(dayId);
 
   clearDaggerFootnotes();
@@ -62,6 +62,13 @@ function renderDayBody_cards(dayId) {
       if (sharedMeta.length > 0) {
         html += '<span class="cards-shared-meta">' + sharedMeta.join('<span class="cards-meta-sep">\u00b7</span>') + '</span>';
       }
+      const sharedGroup = groups.find(g => g.id === e.groupId) || null;
+      if (sharedGroup || e.attendees) {
+        html += '<span class="cards-shared-meta cards-shared-who">';
+        if (sharedGroup) html += '<span class="skin-group-tag" style="background:' + esc(sharedGroup.color) + ';color:' + esc(getContrastingTextColor(sharedGroup.color)) + ';">' + esc(sharedGroup.name) + '</span>';
+        if (e.attendees) html += '<span>WHO: ' + esc(e.attendees) + '</span>';
+        html += '</span>';
+      }
       if (exceptionNote) {
         html += '<span class="cards-shared-exception">Exceptions: ' + esc(exceptionNote) + '</span>';
       }
@@ -76,10 +83,12 @@ function renderDayBody_cards(dayId) {
     html += '<div class="cards-grid cards-cols-' + colCount + '">';
     activeGroups.forEach(g => {
       const gEvents = groupEvents.filter(e => e.groupId === g.id)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+        .sort(compareBandOrder);
 
       html += '<div class="cards-card" style="border-top:3px solid ' + esc(g.color) + ';">';
-      html += '<div class="cards-card-header" style="color:' + esc(g.color) + ';">' + esc(g.name) + '</div>';
+      // Same colored tag as the other skins: the group color as text over
+      // the card surface has no contrast guarantee for a user-chosen color.
+      html += '<div class="cards-card-header"><span class="cards-card-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
 
       gEvents.forEach(evt => {
         html += '<div class="cards-event" data-event-id="' + esc(evt.id) + '">';
