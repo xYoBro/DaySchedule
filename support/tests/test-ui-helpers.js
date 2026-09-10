@@ -92,6 +92,18 @@ function resetUiHarnessState() {
   _currentFileName = null;
   _lastKnownSavedAt = null;
   _dirty = false;
+  discardSessionDraft();
+  clearScheduleWorkbookTarget();
+  clearUndoHistory();
+  _editSequence = 0;
+  _savedEditSequence = 0;
+  _workbookSavePromise = null;
+  _legacySavePromise = null;
+  _versionPersistencePromise = null;
+  _saveInProgress = false;
+  _navigationSaving = false;
+  _autosaveFailureNotified = false;
+  _recoveryUnavailableNotified = false;
   _scheduleWorkbookHandle = null;
   _scheduleWorkbookData = null;
   _workbookSearchText = '';
@@ -154,8 +166,10 @@ function resetUiHarnessState() {
     'dayEventSheetModal',
   ].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
+    if (el) closeModal(id);
   });
+  document.querySelectorAll('.modal-overlay.active').forEach(el => closeModal(el.id));
+  syncModalBackground();
   document.querySelectorAll('[data-help-tab]').forEach((el, idx) => {
     el.classList.toggle('active', idx === 0);
   });

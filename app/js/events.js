@@ -44,6 +44,10 @@ document.addEventListener('click', e => {
 
   const skinSwitch = e.target.closest('[data-skin-switch]');
   if (skinSwitch) {
+    if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
+      toast('Read-only. Click Edit.'); return;
+    }
+    saveUndoState();
     const skin = skinSwitch.getAttribute('data-skin-switch');
     const fileData = getCurrentScheduleFileData();
     if (fileData) {
@@ -100,6 +104,12 @@ document.addEventListener('click', e => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
+  if (e.defaultPrevented) return;
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"]')) {
+    e.preventDefault();
+    e.target.click();
+    return;
+  }
   // Caps Lock makes e.key 'P' — the shortcut must not silently hand the
   // keystroke to the browser's own print/save dialogs.
   const key = typeof e.key === 'string' ? e.key.toLowerCase() : '';
@@ -109,7 +119,7 @@ document.addEventListener('keydown', e => {
   if ((e.metaKey || e.ctrlKey) && key === 'p') {
     e.preventDefault();
     if (onStartScreen) { toast('Open a schedule first.'); return; }
-    printAllDays();
+    openPrintReview();
     return;
   }
   // Cmd/Ctrl+S — save immediately

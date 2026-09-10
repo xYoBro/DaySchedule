@@ -1,294 +1,117 @@
-# Project CLAUDE.md
+# Project guidance
 
-## Tech Stack
-- HTML5, CSS3, vanilla JavaScript (no frameworks)
-- No build step — files served directly to the browser
-- Target browsers: Safari, Chrome, Firefox (latest versions)
-- Must work with file:// URLs as well as http://
+## Architecture and supported environments
 
-## Code Standards
+DaySchedule uses HTML, CSS, and vanilla JavaScript, with no runtime framework or package dependency. Develop against `app/index.html`; Python 3.10+ packaging tools create the distributable files in `dist/`. Generated files must be rebuilt from source, never patched by hand.
 
-### HTML
-- Semantic elements over divs (`<nav>`, `<main>`, `<section>`, `<article>`, `<aside>`)
-- All images require meaningful `alt` text
-- Forms require associated `<label>` elements
-- No inline styles — all styling in CSS files
-- No inline event handlers — all JS in script files or modules
+Target current Chrome, Edge, Firefox, and Safari. Verify HTTP and `file://` startup independently. Native file access requires browser support and permission; embedded contexts can impose additional restrictions. Safari and Firefox use download-based workbook saving. The iframe build does not depend on CSS `@scope`.
 
-### CSS
-- Use CSS custom properties (variables) for colors, spacing, typography
-- Spacing system based on 8px increments: `--space-1: 8px`, `--space-2: 16px`, etc.
-- Mobile-first responsive design — start with smallest screen, use `min-width` media queries
-- No `!important` unless overriding third-party styles
-- Prefer `rem` for font sizes, `px` for borders and shadows, `%` or `vw/vh` for layout
-- Class naming: BEM-ish (`.block__element--modifier`) or simple descriptive classes — be consistent
+The primary product is a local `.schedule` workbook containing multiple schedules. A browser with an old directory handle can still use legacy per-schedule JSON storage. The workbook is not an online collaboration service, and neither mode provides atomic coordination through a sync provider.
 
-### JavaScript
-- No `var` — use `const` by default, `let` when reassignment is needed
-- No `any` workarounds — this isn't TypeScript but write as if types matter
-- All DOM queries cached in variables at the top of scope
-- Event delegation over individual listeners when possible
-- Always handle errors — no empty catches, no unhandled promise rejections
-- No `setTimeout` or `requestAnimationFrame` as bug fixes unless the timing dependency is verified and documented
+## Working rules
 
-## Debugging Standards
-- When fixing browser-specific bugs, verify the assumption in the actual browser before applying a fix
-- If a fix involves Safari + file:// URLs, test both conditions independently
-- Prefer simple direct solutions over clever abstractions
-- A fix should make the code simpler. If it adds complexity, the problem is not yet understood
-- After two failed fix attempts on the same bug, stop and use the cupertino agent to investigate
-- `python3 -m http.server` sends no cache headers, so browsers heuristically cache app
-  JS/CSS for a long time — after editing, hard-reload (Cmd+Shift+R) or serve on a fresh
-  port, or you will debug stale code. (The single-file dist build sidesteps this.)
-- Native dialogs (file pickers, print, beforeunload) freeze headless/automated browsers.
-  runner-ui.html has a guard that no-ops them with a console warning; the app's
-  beforeunload guard is skipped under `navigator.webdriver` for the same reason.
+- Establish a passing baseline before edits. Use the relevant browser harnesses and build regressions, then verify the affected user flow.
+- Make the smallest change that fixes the underlying cause. Keep formatting and unrelated refactors out of the patch.
+- Use `const` by default and `let` for reassignment. Prefer clear functions and explicit data boundaries to additional global state.
+- Handle failed promises and storage errors. Explain failures in the UI when the user's work or next action is affected.
+- Use semantic elements, associated labels, and visible focus states. Dialogs must manage focus and return it to the control that opened them.
+- Aim for 44 CSS pixel touch targets. Keep dense tables usable without removing labels or keyboard operation. Meet WCAG AA text contrast and honor reduced motion.
+- Prefer CSS variables and existing classes. Keep layout-dependent inline styles and print overrides purposeful; do not mass-convert existing styling as part of a bug fix.
+- Do not use timers as a speculative fix. Document a browser timing dependency when one is required.
+- Investigate browser-specific behavior in that browser. An HTTP pass does not establish that Safari plus `file://` works.
+- Hard-reload after editing or use a fresh server port. A cached script can make a correct fix appear broken.
+- Test doubles for native dialogs do not verify the operating system's file picker, permissions, or print dialog. Report that boundary explicitly.
 
-## UI/UX Standards
-- Minimum touch target: 44x44px
-- All interactive elements need visible focus states (keyboard accessibility)
-- Color contrast: WCAG AA minimum (4.5:1 for body text, 3:1 for large text)
-- Loading states for any async operation
-- Error states must explain what happened AND what the user can do about it
-- Animations under 300ms, ease-out for entrances, ease-in for exits
-- No decorative animation — motion must communicate something
+## Source map
 
-## Project Structure
-```
-/
-├── app/                        ← the live application
-│   ├── index.html              ← app shell
-│   ├── css/
-│   │   └── style.css           ← all styles (screen + print)
-│   ├── js/
-│   │   ├── constants.js        ← default groups, color palette, layout targets
-│   │   ├── app-state.js        ← Store object + global state
-│   │   ├── utils.js            ← generateId, esc, timeToMinutes, formatDuration, local error log
-│   │   ├── ui-core.js          ← modal, toast, dropdown primitives
-│   │   ├── schema.js           ← normalizeEvent, normalizeGroup, normalizeNote, normalizeDay
-│   │   ├── data-helpers.js     ← eventsOverlap, classifyEvents, computeDuration
-│   │   ├── persistence.js      ← session storage, undo/redo
-│   │   ├── storage.js          ← FSAPI directory access, IndexedDB handles (dir + workbook file), auto-save, versions
-│   │   ├── themes.js           ← palette definitions, CSS var application, editor chrome toggle
-│   │   ├── skin-band.js        ← band skin: horizontal time bands + concurrent
-│   │   ├── skin-grid.js        ← grid skin: time × groups matrix
-│   │   ├── skin-cards.js       ← cards skin: group detail panels
-│   │   ├── skin-phases.js      ← phases skin: phase-based field exercises
-│   │   ├── library.js          ← start screen (Continue card, open/create), library CRUD, context menu, help modal
-│   │   ├── versions.js         ← version panel UI
-│   │   ├── render.js           ← renderDay() dispatcher, shared renderers, dagger footnote state
-│   │   ├── workbook-ui.js      ← workbook switcher UI (multi-schedule navigation; persistence.js owns data)
-│   │   ├── print.js            ← print layout engine, adaptive scaling
-│   │   ├── events.js           ← click handlers, keyboard shortcuts
-│   │   ├── inspector.js        ← inspector panel, settings modal, toolbar wiring
-│   │   └── init.js             ← boot flow, migration, sample data (loads last)
-│   └── data/
-│       └── scheduledata.js     ← externalized state (SAVED_STATE)
-├── tools/
-│   ├── build-single-html.py    ← bundles app/ into dist/DaySchedule.html (fail-loud CSP guard)
-│   ├── build-sharepoint-embed.py ← transforms dist/DaySchedule.html into dist/DaySchedule.sharepoint.html
-│   │                              (a <div>+<script> embed for a SharePoint Embed/Script Editor web part;
-│   │                              run build-single-html.py first — this reads dist/DaySchedule.html)
-│   └── sharepoint-host-check.html ← paste-the-widget-in harness for re-verifying the embed build
-│                                     (a fake host page with its own conflicting CSS)
-└── support/                    ← docs and tests
-    ├── CLAUDE.md
-    ├── LICENSE
-    ├── tests/
-    │   ├── runner.html         ← open in browser to run unit tests
-    │   ├── test-runner.js      ← minimal assertion library (SYNC: an async test fails
-    │   │                          loudly here — put anything that awaits in runner-ui /
-    │   │                          runner-integration; a rejected promise used to count as a pass)
-    │   ├── test-utils.js       ← utility function tests (incl. esc/error-log)
-    │   ├── test-schema.js      ← schema normalization + sanitization tests
-    │   ├── test-data-helpers.js ← overlap detection, classification tests
-    │   ├── test-store.js       ← Store state management tests
-    │   ├── test-storage.js     ← storage layer + workbook parse tests
-    │   ├── test-themes.js      ← theme system + whitelist tests
-    │   ├── test-inspector.js   ← inspector panel tests
-    │   ├── runner-integration.html ← async integration test runner
-    │   ├── test-runner-async.js    ← async-aware test framework
-    │   ├── test-integration.js     ← integration tests (save/load/version/locks/core flow)
-    │   ├── runner-ui.html          ← UI harness runner (loads the real app shell)
-    │   ├── test-ui-helpers.js      ← UI harness helpers
-    │   ├── test-app-shell.js       ← app-shell flow tests
-    │   ├── test-render.js          ← renderer tests
-    │   └── test-print.js           ← print layout tests
-    └── docs/
-        └── superpowers/
-            ├── specs/           ← design specifications
-            └── plans/           ← implementation plans
+| Path | Responsibility |
+| --- | --- |
+| `app/index.html` | App shell, source CSP, ordered script tags |
+| `app/css/style.css` | Editor, layout, responsive, and print styles |
+| `app/js/constants.js` | Defaults and the source `APP_VERSION = 'dev'` marker |
+| `app/js/app-state.js` | Store and compatibility aliases for state |
+| `app/js/utils.js` | Time, escaping, IDs, and local error logging |
+| `app/js/ui-core.js` | Dialog, toast, dropdown, and focus behavior |
+| `app/js/schema.js` | Validation and normalization of persisted data |
+| `app/js/data-helpers.js` | Time overlap, audience classification, layout data |
+| `app/js/persistence.js` | Workbook envelopes, recovery, undo, save orchestration |
+| `app/js/storage.js` | Legacy directory access, file operations, handle storage |
+| `app/js/themes.js` | Schedule palettes and editor chrome theme |
+| `app/js/skin-*.js` | Bands, Grid, Cards, and Phases renderers |
+| `app/js/library.js` | Start screen, create/open, legacy library, Help |
+| `app/js/versions.js` | Version management UI |
+| `app/js/render.js` | Shared rendering and layout dispatch |
+| `app/js/workbook-ui.js` | Workbook schedule management UI |
+| `app/js/print.js` | Print preparation, measurement, and output options |
+| `app/js/events.js`, `app/js/inspector.js` | Interaction, shortcuts, editing, settings |
+| `app/js/init.js` | Boot recovery and legacy migration; loads last |
+| `app/data/scheduledata.js` | Inert placeholder in distributed builds |
+| `tools/` | Standalone/iframe builders and build/host regression checks |
+| `support/tests/` | Unit, asynchronous integration, and UI browser harnesses |
+| `support/docs/superpowers/` | Historical design and implementation documents |
+
+Scripts are classic scripts with shared runtime bindings. Their order is part of the contract:
+
+1. `constants` → `app-state` → `utils` → `ui-core`.
+2. `schema` → `data-helpers` → `persistence` → `storage` → `themes`.
+3. The four `skin-*` files → `library` → `versions`.
+4. `render` → `workbook-ui` → `print` → `events` → `inspector`.
+5. `data/scheduledata.js` → `init.js`.
+
+Skin functions can call shared render functions because all scripts load before rendering starts. Preserve that ordering and use the module contract comments when changing a cross-file API.
+
+## Data and save boundaries
+
+All schedule changes flow through Store. Persisted input must pass through schema normalization before it reaches the DOM. Keep ID, date, time, color, logo, and theme validation in place; rendering must escape user text. A workbook may legitimately contain a schedule with no days. Invalid imported records need a visible explanation rather than silent corruption.
+
+The active schedule is one envelope in a workbook. Recovery, schedule switching, named versions, and saves must preserve sibling schedules and the active envelope's identity. Do not serialize just the active Store as a replacement for the complete workbook. A new draft must detach the previous file target before it becomes editable.
+
+Save operations must retain revision and workbook identity across asynchronous permission requests and writes. A completed write acknowledges the snapshot it wrote, not edits made while it was pending. Failed writes must not turn into a success indicator. A fallback download must say **Downloaded**, because it does not replace the source file.
+
+File permissions are re-requested only through an explicit user action. Background autosave must not prompt. IndexedDB remembers handles when allowed; recovery storage and handle storage can each be unavailable. Keep editor startup functional in those cases and surface failures that affect recovery.
+
+File-change checks reduce accidental overwrites but cannot make read-check-write atomic through a network drive or sync client. Keep one editor at a time as the documented workflow. Legacy directory locks remain advisory; do not casually resurrect the removed new-profile directory setup UI.
+
+Required text fields can be temporarily blank while typing. Reverting or normalizing that state must not delete the edited event. Events cannot cross midnight. Preserve valid minute precision rather than silently snapping it to quarter hours.
+
+## Data locality
+
+The app must not send schedule data to a service. It can load its static assets from a host, but makes no application network requests after loading. Files chosen in a synced or shared folder are copied by that service according to the user's configuration; that is outside the app's local browser boundary.
+
+Keep these controls intact:
+
+1. The source CSP blocks connections with `connect-src 'none'`, forms with `form-action 'none'`, and external resource types through explicit source restrictions. The standalone builder retains those restrictions while allowing its inline scripts and styles. CSP is not a general promise that every possible browser navigation or hostile same-origin host is blocked.
+2. No analytics, external fonts, CDNs, remote API calls, or fetched media in app features. Source assets are relative files; the standalone app includes them.
+3. Operational `.schedule` and `app/data/*.json` files are gitignored. The builder accepts only an inert legacy data placeholder and replaces its contents with a fixed comment, so even placeholder comments cannot distribute private data.
+
+The default embed contains the complete standalone document in iframe `srcdoc`. It retains the app's CSP and license, and gives the app its own DOM, CSS, event listeners, and lifecycle. It does not protect the app from same-origin host scripts. A cross-origin HTTPS iframe provides an origin boundary, but hosting CSP, authentication, storage policy, and native-picker restrictions still apply. Never claim a synthetic-host test certifies a SharePoint tenant.
+
+Any feature needing application network access requires an explicit product decision and a revision to this policy.
+
+## Build and verification
+
+```bash
+python3 tools/build-single-html.py
+python3 tools/build-sharepoint-embed.py
+python3 tools/test-builds.py
+node tools/test-embed.cjs
+node support/tests/test-browser.cjs
 ```
 
-### Script Load Order
-Scripts load via `<script>` tags in index.html. Order matters — dependencies must load first:
-1. **Foundation:** constants.js → app-state.js (Store) → utils.js → ui-core.js
-2. **Data layer:** schema.js → data-helpers.js → persistence.js → storage.js
-3. **Theme layer:** themes.js
-4. **Skin renderers:** skin-band.js → skin-grid.js → skin-cards.js → skin-phases.js
-5. **UI layer:** library.js → versions.js
-6. **Core rendering:** render.js → workbook-ui.js → print.js
-7. **Interaction:** events.js → inspector.js
-8. **Data + Init:** data/scheduledata.js → init.js (must be last)
+`build-sharepoint-embed.py --build-dist` first rebuilds the standalone app. Its default output is a self-contained iframe for an approved custom HTML host; `--app-url https://…` generates a URL iframe for a modern SharePoint Embed web part. Both write `dist/DaySchedule.sharepoint.html`. `--height` controls frame height.
 
-Note: skin files and render.js have a mutual runtime dependency (skins call render's dagger footnote functions; render dispatches to skin renderDayBody functions). All load before any rendering occurs.
+Build stamps use the date plus a hash of the unstamped complete app, including its license and assets. Keep exactly one source `APP_VERSION = 'dev'` marker. Both distributed forms include the MIT notice. Build failures must occur before replacing the output when CSP, input data, license, or required source files are invalid.
 
-### State Management
-All app state flows through the `Store` object in `app-state.js`. The Store holds the schedule's days, events, groups, notes, and UI state (active day, selected event, undo/redo stacks). Backward-compatible `window` property aliases allow existing code to read/write globals — these proxy to Store internals via `Object.defineProperty`.
+`test-builds.py` uses temporary copies. `test-embed.cjs` does the same and requires Playwright plus Chromium, Firefox, and WebKit; set `DAYSCHEDULE_PLAYWRIGHT_MODULE` if its package is outside Node's normal search path. It checks host DOM/style isolation, theme propagation, frame lifecycle, frame CSP, fallback downloads, and file boot. A second loopback origin verifies Chromium's actual cross-origin picker denial and the resulting download without opening an OS dialog. The manual host is `tools/sharepoint-host-check.html`.
 
-### Data Persistence
-Primary mode is the **workbook flow**: one `.schedule` JSON file the user picks via
-`showSaveFilePicker()`/`showOpenFilePicker()`. Once a file handle is attached, auto-save
-(2-second debounce) writes every edit back to it. The handle (+ name/savedAt) is persisted
-in IndexedDB (`DayScheduleDB`, key `workbookFile`) so the start screen can offer the
-**Continue card**: session draft (priority — newest state, and the only route back into an
-unsaved draft) → remembered file handle ("Welcome back · Reopen") → hidden. Permission is
-re-requested lazily; silent auto-saves never pop a permission prompt. "Start fresh" must
-call `clearScheduleWorkbookTarget()` — a stale handle would silently overwrite the
-previously opened file.
+Open the following over HTTP in each target browser:
 
-Safety nets: sessionStorage crash recovery underneath every edit; a `beforeunload` warning
-when `isDirty()`; a one-time first-save note (localStorage `dayschedule_first_save_noted`)
-telling users their workbook is a local file. Legacy directory mode (shared `data/` folder
-via `showDirectoryPicker()`) still exists behind `hasDirectoryAccess()`.
+- `support/tests/runner.html` for synchronous unit tests.
+- `support/tests/runner-integration.html` for asynchronous persistence tests with in-memory file handles.
+- `support/tests/runner-ui.html` for the real app shell, renderers, and print preparation.
 
-Fallback: browsers without FSAPI (Safari, Firefox) run in legacy mode with download-based
-export (each save downloads a fresh copy; the fallback banner says so plainly). Named
-versions are embedded in each schedule's JSON file. In workbook mode the version backend
-is the in-memory envelope (`getCurrentScheduleFileData()`), persisted through
-`saveScheduleWorkbookFile`; in directory mode it is the schedule's own `.json` file.
-`createVersion`/`restoreVersion`/`getVersions` branch on `_currentFileName` — both modes
-must keep working.
+Keep asynchronous tests out of the synchronous runner. Use separate contexts or cleanup to prevent browser storage leaking between cases. After source changes, rebuild both tracked distributables once the combined checks pass. Also verify local-file startup and a representative dense print layout. Printing inside an iframe needs deployment-specific review; the documented user route is to open the app in its own tab.
 
-Untrusted-input boundary: everything read from disk goes through
-`normalizePersistedState` (schema.js) — entity ids sanitized to `[A-Za-z0-9_-]`, group
-colors must be hex, logo must be a `data:image/` URL, event times validated (`HHMM`,
-minutes ≤ 59, end > start, no cross-midnight) — and theme values are whitelisted in
-`getScheduleTheme` (themes.js). Dropped events are reported via toast on load. Keep both
-layers intact when adding fields.
+`support/tests/test-browser.cjs` runs all three harnesses and the release user flows in Chromium, Firefox, and WebKit. It starts a local server, uses isolated browser contexts, and writes evidence to the ignored `output/playwright/release/` directory. It uses the same `DAYSCHEDULE_PLAYWRIGHT_MODULE` override as the iframe suite. It does not access the user's browser profile.
 
-Workbook load rule: `parseScheduleWorkbookContent` requires at least one valid day only
-for loose JSON that is *not* a workbook (`requireDays: !isWorkbook`). The app itself writes
-workbooks whose active schedule has no days yet (Start fresh → Save, switcher New Blank);
-refusing those made the whole file — sibling schedules included — unopenable.
-
-Session-draft identity: `buildSerializableState` stores `workbookScheduleId` (the active
-envelope's id) and `sessionLoad` restores it onto the rebuilt fileData. Reattaching a
-remembered handle (`adoptScheduleWorkbookHandle`, the Continue card) reads and parses the
-file, restores `_scheduleWorkbookData` (all sibling schedules) and merges the draft onto the
-matching envelope so its id/versions/activity survive — without this the first auto-save
-after a reload rewrote the file as a one-schedule workbook with no versions. Leaving the
-editor (`returnToLibrary`) calls `discardSessionDraft()` + `clearScheduleWorkbookTarget()`;
-the Continue card then offers "Welcome back · Reopen", which reads the file.
-
-Save integrity: `sessionSave` bumps an edit sequence (`getEditSequence()`); both save paths
-snapshot it before serializing and re-mark dirty if edits landed during the write. A
-failed write to an attached handle detaches the handle (keeping `_scheduleWorkbookData`)
-and says so — it must never fall through to a Downloads copy labelled "Saved". Downloads go
-through `triggerDownload` (anchor attached, blob URL revoked on a timer — a synchronous
-revoke can abort Safari/Firefox's only save path) and end in
-`markScheduleWorkbookDownloaded()`, which shows a persistent **Downloaded** indicator
-(with a hover explanation) instead of "Saved" — the opened file is untouched on that path.
-`forceSave` (Ctrl/Cmd+S) calls `saveScheduleWorkbookFile()` non-silently so the save path
-reports its own outcome; don't add a caller-side "Saved" toast.
-
-Blank-required-field rule: normalization must never delete a record because a required
-field is momentarily empty — the editor writes `''` to the Store on every keystroke, so a
-reload mid-edit used to erase the event. `normalizeEvent` keeps a blank title as
-`Untitled event`; `normalizeNote` keeps a note that still has a category and drops only a
-fully empty one. On the editor side `wireRequiredTextField` (inspector.js) restores the last
-non-empty value on blur with a toast, and time inputs revert (not snap to `0000`) on empty
-or unparseable text via `isUsableTimeEntry`. `+ Note` inserts an *empty* note and focuses
-the text field — never a placeholder string (it printed); `renderNotes` shows an untouched
-empty note as a print-hidden `.note-empty` stub. Logo uploads are refused when not an image or
-over `LOGO_MAX_BYTES` (2 MB) — the logo is inlined into the file and the sessionStorage
-crash backup.
-
-Loading priority on boot: IndexedDB directory handle → `data/scheduledata.js`
-(legacy migration) → `sessionStorage` (crash recovery) → **start screen, empty**.
-Sample data is never auto-loaded into an editable schedule (users mistook it for their
-own work and saved it into real workbook files); `loadSampleData()` exists for tests only.
-
-`APP_VERSION` in constants.js is `'dev'` in source; the build script stamps the build
-date into dist (fail-loud guard, like the CSP rewrite). The Help modal displays it —
-first question for any bug report, since stale distributed copies are the most common
-cause of "the buttons don't work" reports.
-
-### Data Locality (hard requirement)
-The app must remain **zero-egress**: schedule data may be sensitive, and nothing ever
-leaves the user's machine. Deployment model is one-way — GitHub Pages serves the static
-files, the browser downloads them, and all data stays local (FSAPI files on disk,
-IndexedDB, sessionStorage).
-
-Enforced three ways — keep all of them intact:
-1. **CSP meta tag** in `app/index.html`: `connect-src 'none'` makes the browser refuse
-   all outbound requests (fetch/XHR/WebSocket/beacon), `img-src` allows only local/data:/
-   blob: sources, `form-action 'none'` blocks form posts. The build script rewrites
-   script-src/style-src to `'unsafe-inline'` for the bundled dist file and **fails the
-   build** if the CSP tag is missing.
-2. **No external resources**: no CDNs, no web fonts, no analytics, no network APIs
-   anywhere in app code. All `<script>`/`<link>` references are relative paths.
-3. **Git hygiene**: `*.schedule` and `app/data/*.json` are gitignored — the repo is
-   public and is the Pages site, so committed data is published data. The build script
-   independently refuses to bundle operational data into the app shell.
-
-Adding any feature that needs the network requires explicitly revisiting this section.
-Verification: use the app with networking disabled (airplane mode) — everything must
-work identically; DevTools Network tab shows nothing after initial page load.
-
-### Print Layout System
-The print system renders schedules as horizontal band layouts. Events are organized into three visual tiers based on duration and importance. Concurrent event detection identifies overlapping time ranges and stacks them into rows. Adaptive scaling adjusts band heights and font sizes to fit the available page area, ensuring the schedule prints cleanly without manual intervention.
-
-Dense-day behavior diverges by medium: **print** uses the three compression stages then a
-zoom fallback to fit the paper; **screen** uses the compression stages then stretches the
-page to the content height (`min-height = contentH`) — never zoom. The `.page` element has
-a fixed design height, so without the stretch the content would clip; microscopic-but-fits
-is worse than a tall, readable page. The bands density warning (with working skin-switch
-buttons) steers users to Grid/Cards/Phases for dense days. The three compression stages
-tune band-skin CSS vars only — for Grid/Cards/Phases, print compression is effectively
-notes-shrink then zoom. `afterprint` empties `#printContainer` (the print stylesheet
-forces it visible, so stale pages there would be printed by a later browser-menu print).
-
-## Known Issues
-<!-- Track recurring bugs or browser quirks here so agents can reference them -->
-- Legacy directory mode is orphaned: the "Connect Shared Folder" button was deliberately
-  removed (commit 5dfadec), so `promptForDirectory()` has no reachable caller on a fresh
-  profile. The lock/library code stays for browsers with a previously persisted handle.
-  Deciding whether to delete that code path or re-expose the button is an open product
-  decision — do not resurrect or remove it casually.
-- `snapToQuarter` (inspector.js) turns unparseable event-time typos into "0000" rather
-  than rejecting them; the range check usually catches it, but the silent zeroing is
-  confusing. Day-field inputs validate properly (wireDayField); event inputs still snap.
-- The `data-palette="custom"` option in Customize → Look has no UI for setting
-  `customColors`, so selecting it just falls back to the classic palette.
-- Phases skin attaches tasks to "the most recent phase in array order", not by time
-  overlap — a task can appear under a phase it doesn't overlap. Bands/Grid group by
-  actual overlap. Divergence is by-design-ish but unreviewed.
-- Cards/Phases show overlapping events without any conflict indication (Bands and Grid
-  surface them). Overlaps themselves are allowed by design.
-- Editor undo/redo, versions, and locks are gated on `isCurrentScheduleEditable()`;
-  the keyboard shortcuts route through the same functions. Keep new mutation paths
-  behind the same gate.
-- Workbook mode has no way to delete a schedule from a `.schedule` file: the switcher
-  modal (workbook-ui.js) only offers New Blank / Duplicate / open. A mistaken or test
-  schedule is permanent unless the whole workbook is abandoned via Start fresh. Open
-  product decision — each `.workbook-item` is itself a `<button>`, so a delete affordance
-  means restructuring the row, not just adding a button inside it.
-- Print zoom has no readability floor (print.js `scale = maxH / contentH`): a very dense
-  day in Grid/Cards/Phases — where the three compression stages only tune band-skin
-  CSS vars — prints "fitted" but tiny. Open decision: warn, clamp and overflow, or leave.
-- Quick Edit's Escape closes the whole sheet (committing the pending cell) rather than
-  cancelling the cell edit, and the Audience `<select>` re-focuses itself after its
-  re-render. Both are conventions worth a product call, not defects.
-- The Quick Edit checkboxes are 16px (the UI/UX standard says 44px targets); enlarging
-  them makes every row taller in a deliberately dense sheet. Decision pending.
-- init.js's boot IIFE runs its top-level steps (`wireToolbar`, `wireLibrary`,
-  `wireWorkbookUi`, `applyEditorTheme`) through `runBootStep()`, which catches and
-  logs instead of letting one throw abort every step after it; the IIFE's promise also
-  has a `.catch` that logs, lands on the start screen, and toasts — a boot failure must
-  never leave the default shell on screen with nothing wired and nothing said. Added after a
-  SharePoint embed deployment reported most buttons inert except one — a hosting
-  page can deny things the standalone app never has to think about (e.g.
-  partitioned/blocked storage access for embedded content), and one such failure
-  must not silently leave unrelated buttons unwired with no visible error. Route
-  any new top-level boot step through `runBootStep()` too.
+For bugs, collect the build stamp, reproduction steps, and relevant local error-log entries. Review potentially sensitive details before sharing them. Historical specs and old review notes describe earlier states; current source, these instructions, README, and current status take precedence.

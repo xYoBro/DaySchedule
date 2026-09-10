@@ -9,6 +9,9 @@
  *   summarizeDisplayList(items, limit?)          → string
  *   summarizeExceptionNote(info, itemLimit?)     → string
  *   classifyEvents(events, groups)                → {mainBands[], concurrent[]}
+ *   buildPhaseGroups(events, groups)              → temporally contained phases and independent tasks
+ *   getAudienceHandoutEvents(events, groups, id)   → selected audience plus shared events
+ *   getScheduleReviewIssues(days, groups)          → advisory date, range, audience and conflict issues
  *   analyzeDayLayout(events, groups, classified?) → layout metrics + recommendation
  *
  * REQUIRES:
@@ -57,9 +60,78 @@ function isEventEffectiveMain(evt, groupsOrMap) {
   if (evt.isBreak) return true;
   const groupMap = getGroupMap(groupsOrMap);
   const group = groupMap[evt.groupId];
-  if (!group) return false;
-  if (group.scope === 'main') return true;
+  if (group && group.scope === 'main') return true;
   return !!evt.isMainEvent;
+}
+
+// A phase may contain a task only when the complete task fits one phase.
+// Tasks outside phases or spanning their boundaries stay independent, rather
+// than inheriting a misleading parent from the order of the event array.
+function buildPhaseGroups(events, groups) {
+  const ordered = (events || []).slice().sort(compareBandOrder);
+  const groupMap = getGroupMap(groups);
+  const phases = ordered.filter(evt => isEventEffectiveMain(evt, groupMap))
+    .map(event => ({ event, group: groupMap[event.groupId] || null, tasks: [], sortEvent: event }));
+  const independent = [];
+  ordered.filter(evt => !isEventEffectiveMain(evt, groupMap)).forEach(event => {
+    const overlaps = phases.filter(phase => !phase.event.isBreak && eventsOverlap(event, phase.event));
+    const parent = overlaps.length === 1 ? overlaps[0] : null;
+    const contained = parent && timeToMinutes(event.startTime) >= timeToMinutes(parent.event.startTime)
+      && timeToMinutes(event.endTime) <= timeToMinutes(parent.event.endTime);
+    const task = { event, group: groupMap[event.groupId] || null };
+    if (contained) parent.tasks.push(task);
+    else {
+      const label = overlaps.length ? 'Tasks spanning phase boundaries' : 'Other timed tasks';
+      const cluster = independent.find(phase => phase.sortEvent.startTime === event.startTime && phase.label === label);
+      if (cluster) cluster.tasks.push(task);
+      else independent.push({ event: null, group: null, tasks: [task], sortEvent: event, label });
+    }
+  });
+  return phases.concat(independent).sort((a, b) => compareBandOrder(a.sortEvent, b.sortEvent));
+}
+
+function getAudienceHandoutEvents(events, groups, audienceId) {
+  if (!audienceId) return (events || []).slice();
+  return (events || []).filter(evt => evt.groupId === audienceId || isSharedTrackEvent(evt, groups)
+    || (!evt.groupId && isEventEffectiveMain(evt, groups)));
+}
+
+// Advisory only: a shared room or overlapping audience can be intentional.
+// Keep these checks separate from schema rejection and event classification.
+function getScheduleReviewIssues(days, groups) {
+  const issues = [];
+  const dated = new Map();
+  const groupMap = getGroupMap(groups);
+  const add = (day, type, message, eventIds) => issues.push({ dayId: day.id, type, message, eventIds: eventIds || [] });
+  (days || []).forEach((day, index) => {
+    const label = day.label || day.date || ('Day ' + (index + 1));
+    const date = day.date && new Date(day.date + 'T00:00:00');
+    const validDate = date && !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}$/.test(day.date)
+      && date.getFullYear() === Number(day.date.slice(0, 4))
+      && date.getMonth() + 1 === Number(day.date.slice(5, 7)) && date.getDate() === Number(day.date.slice(8, 10));
+    if (!validDate) add(day, 'date', label + ': choose a valid date.');
+    else if (dated.has(day.date)) add(day, 'duplicate-date', label + ': shares its date with ' + dated.get(day.date) + '.');
+    else dated.set(day.date, label);
+    const start = timeToMinutes(day.startTime), end = timeToMinutes(day.endTime);
+    const validRange = Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end <= 1440 && end > start;
+    if (!validRange) add(day, 'day-range', label + ': review the day’s start and end times.');
+    const events = day.events || [];
+    events.forEach(evt => {
+      if (!groupMap[evt.groupId] && !evt.isBreak) add(day, 'audience', label + ': ' + evt.title + ' has no audience recorded.', [evt.id]);
+      if (validRange && (timeToMinutes(evt.startTime) < start || timeToMinutes(evt.endTime) > end))
+        add(day, 'outside-day', label + ': ' + evt.title + ' is outside the day’s stated hours.', [evt.id]);
+    });
+    events.forEach((evt, i) => events.slice(i + 1).forEach(other => {
+      if (evt.isBreak || other.isBreak || !eventsOverlap(evt, other)) return;
+      const reasons = [];
+      if (evt.groupId && evt.groupId === other.groupId) reasons.push('audience');
+      if (evt.location && other.location && evt.location.trim().toLowerCase() === other.location.trim().toLowerCase()) reasons.push('location');
+      const people = new Set(collectAttendeeNames(evt.attendees).map(name => name.toLowerCase()));
+      if (collectAttendeeNames(other.attendees).some(name => people.has(name.toLowerCase()))) reasons.push('named people');
+      if (reasons.length) add(day, 'overlap', label + ': ' + evt.title + ' and ' + other.title + ' overlap and share ' + reasons.join(', ') + '. Confirm this is intended.', [evt.id, other.id]);
+    }));
+  });
+  return issues;
 }
 
 function isSharedTrackEvent(evt, groupsOrMap) {

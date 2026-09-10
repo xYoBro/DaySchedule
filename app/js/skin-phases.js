@@ -13,12 +13,12 @@
  *   render.js — dispatches to this when skin === 'phases'
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function renderDayBody_phases(dayId) {
-  const day = Store.getDay(dayId);
+function renderDayBody_phases(dayId, dayOverride) {
+  const day = dayOverride || Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
   const events = day.events.slice().sort(compareBandOrder);
-  const notes = Store.getNotes(dayId);
+  const notes = day.notes || Store.getNotes(dayId);
 
   clearDaggerFootnotes();
 
@@ -30,29 +30,7 @@ function renderDayBody_phases(dayId) {
     return html;
   }
 
-  // Classify: main-scope events become phases, limited-scope become tasks
-  const phases = [];
-  let currentPhase = null;
-
-  events.forEach(evt => {
-    const group = groups.find(g => g.id === evt.groupId);
-    const isPhase = isEventEffectiveMain(evt, groups);
-
-    if (isPhase) {
-      currentPhase = {
-        event: evt,
-        group: group,
-        tasks: [],
-      };
-      phases.push(currentPhase);
-    } else {
-      if (!currentPhase) {
-        currentPhase = { event: null, group: null, tasks: [] };
-        phases.push(currentPhase);
-      }
-      currentPhase.tasks.push({ event: evt, group: group });
-    }
-  });
+  const phases = buildPhaseGroups(events, groups);
 
   let html = '<div class="phases-schedule">';
 
@@ -79,7 +57,7 @@ function renderDayBody_phases(dayId) {
         if (evt.attendees) html += '<span>WHO: ' + esc(evt.attendees) + '</span>';
         html += '</div>';
       }
-      if (evt.description && !isBreak) {
+      if (evt.description) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
       }
       if (exceptionNote) {
@@ -88,6 +66,7 @@ function renderDayBody_phases(dayId) {
       html += '</div>';
     } else {
       html += '<div class="phase-block">';
+      html += '<div class="phase-independent-label">' + esc(phase.label) + '</div>';
     }
 
     if (phase.tasks.length > 0) {

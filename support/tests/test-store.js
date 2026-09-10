@@ -78,3 +78,16 @@ describe('Store — schedule state', () => {
     assert.equal(Store.getActiveDay(), day2.id);
   });
 });
+
+describe('Store — normalized import identity', () => {
+  it('deleting one imported event cannot delete a colliding neighbor', () => {
+    const state = normalizePersistedState({ days: [{ id: 'day', events: [
+      { id: 'e/a', title: 'A', startTime: '0800', endTime: '0900' },
+      { id: 'ea', title: 'B', startTime: '0800', endTime: '0900' },
+    ] }] });
+    Store.loadPersistedState(state);
+    Store.removeEvent('day', Store.getEvents('day')[0].id);
+    assert.equal(Store.getEvents('day').length, 1);
+    assert.equal(Store.getEvents('day')[0].title, 'B');
+  });
+});

@@ -69,6 +69,9 @@ function runBootStep(name, fn) {
     });
   }
 
+  // Recovery is local and independent of a previously granted file handle.
+  if (typeof restoreDurableRecovery === 'function') await restoreDurableRecovery();
+
   // Check FSAPI support
   if (!hasFSAPI()) {
     const banner = document.getElementById('libraryFallbackBanner');

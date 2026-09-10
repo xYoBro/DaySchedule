@@ -4,15 +4,15 @@
  *   saveUndoState()    — push current Store snapshot to undo stack (debounced 800ms)
  *   undo()             — pop undo stack, push to redo, render
  *   redo()             — pop redo stack, push to undo, render
- *   sessionSave(options?) — debounced write to sessionStorage (500ms) + triggers markDirty()
- *   sessionLoad()      → boolean — loads from sessionStorage if available
+ *   sessionSave(options?) — marks edits; debounces complete tab + IndexedDB recovery (500ms)
+ *   sessionLoad()      → boolean — restores selected complete recovery, preserving unsaved status
  *   saveDataFile()     → Promise<boolean> — legacy FSAPI single-file save or download fallback
  *   importDataFile()   — opens file picker, parses JS/JSON, loads into Store
  *   buildScheduleWorkbookContent(fileData?) — serializes a .schedule workbook JSON file
  *   parseScheduleWorkbookContent(text, fileName?) — parses .schedule/JSON/legacy JS wrappers
  *   clearScheduleWorkbookTarget() — detach workbook handle + data (must run before Start fresh)
  *   openScheduleWorkbookFromHandle(handle) → Promise<boolean> — reopen remembered file (Continue card)
- *   adoptScheduleWorkbookHandle(handle) → Promise<boolean> — reattach handle to a session draft
+ *   adoptScheduleWorkbookHandle(handle) → Promise<boolean> — reconcile recovery with latest file before attachment
  *
  * REQUIRES:
  *   app-state.js — Store.snapshot(), Store.restore(), Store.getPersistedState(),
@@ -33,6 +33,17 @@ let _fileHandle = null;
 let _scheduleWorkbookHandle = null;
 let _scheduleWorkbookData = null;
 let _saveInProgress = false;
+let _workbookSavePromise = null;
+let _workbookGeneration = 0;
+let _workbookOpenRequest = 0;
+let _workbookId = null;
+let _workbookBaseline = null;
+let _savedEditSequence = 0;
+let _recoveryLoaded = false;
+let _recoveryWriteQueue = Promise.resolve();
+let _recoveryGeneration = 0;
+let _recoveryUnavailableNotified = false;
+const RECOVERY_FORMAT_VERSION = 1;
 let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
@@ -44,9 +55,10 @@ let _undoSaveTimer = null;
 let _undoPending = false;
 
 function saveUndoState() {
+  if (_redoStack.length) _redoStack.length = 0;
   // Debounce: only capture one snapshot per burst of rapid edits
   if (!_undoPending) {
-    _undoStack.push(Store.snapshot());
+    _undoStack.push(captureUndoState());
     if (_undoStack.length > UNDO_MAX) _undoStack.shift();
     if (_redoStack.length) _redoStack.length = 0;
     _undoPending = true;
@@ -72,8 +84,9 @@ function undo() {
     return;
   }
   if (!_undoStack.length) return;
-  _redoStack.push(Store.snapshot());
-  Store.restore(_undoStack.pop());
+  finishUndoGroup();
+  _redoStack.push(captureUndoState());
+  restoreUndoState(_undoStack.pop());
   renderActiveDay();
   syncToolbarTitle();
   renderInspector();
@@ -87,13 +100,33 @@ function redo() {
     return;
   }
   if (!_redoStack.length) return;
-  _undoStack.push(Store.snapshot());
-  Store.restore(_redoStack.pop());
+  finishUndoGroup();
+  _undoStack.push(captureUndoState());
+  restoreUndoState(_redoStack.pop());
   renderActiveDay();
   syncToolbarTitle();
   renderInspector();
   sessionSave();
   toast('Redo');
+}
+
+function captureUndoState() {
+  const snapshot = Store.snapshot();
+  const fileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+  snapshot.theme = fileData && fileData.theme ? cloneScheduleData(fileData.theme) : null;
+  return snapshot;
+}
+
+function restoreUndoState(snapshot) {
+  Store.restore(snapshot);
+  const fileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
+  if (fileData && Object.prototype.hasOwnProperty.call(snapshot, 'theme')) fileData.theme = snapshot.theme;
+}
+
+function finishUndoGroup() {
+  clearTimeout(_undoSaveTimer);
+  _undoSaveTimer = null;
+  _undoPending = false;
 }
 
 let _sessionSaveTimer = null;
@@ -116,6 +149,138 @@ function buildSerializableState() {
   return state;
 }
 
+// A complete document snapshot for versions; editor selection is included so
+// restoring a checkpoint also returns to the day that was being reviewed.
+function buildVersionState() {
+  const state = cloneScheduleData(Store.getPersistedState());
+  state.activeDay = Store.getActiveDay();
+  const fileData = getCurrentScheduleFileData();
+  state.theme = typeof getScheduleTheme === 'function'
+    ? cloneScheduleData(getScheduleTheme(fileData && fileData.theme))
+    : cloneScheduleData(fileData && fileData.theme || { skin: 'bands', palette: 'classic' });
+  return state;
+}
+
+function loadVersionState(state) {
+  Store.loadPersistedState(state);
+  const fileData = getCurrentScheduleFileData();
+  if (fileData && state.theme) fileData.theme = cloneScheduleData(state.theme);
+}
+
+// This checksum detects accidental file changes; it is not a security hash.
+// Length plus two independent 32-bit accumulators avoids storing a second
+// entire workbook (including every logo and version) in recovery metadata.
+function fingerprintWorkbookContent(text) {
+  let a = 2166136261;
+  let b = 5381;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    a = Math.imul(a ^ code, 16777619);
+    b = Math.imul(b, 33) ^ code;
+  }
+  return text.length + ':' + (a >>> 0).toString(16) + ':' + (b >>> 0).toString(16);
+}
+
+function buildRecoveryRecord() {
+  const workbook = getScheduleWorkbookSnapshot();
+  return {
+    recoveryFormat: RECOVERY_FORMAT_VERSION,
+    backupId: generateId('recovery'),
+    updatedAt: new Date().toISOString(),
+    workbook,
+    workbookFileName: getScheduleWorkbookFileName() || (_workbookBaseline && _workbookBaseline.fileName) || '',
+    baseline: _workbookBaseline,
+    dirty: isDirty(),
+    revision: _editSequence,
+    savedRevision: _savedEditSequence,
+    sourceMode: getCurrentFileName() ? 'directory' : 'workbook',
+    sourceFileName: getCurrentFileName() || '',
+  };
+}
+
+function recoveryState(record) {
+  if (!record) return null;
+  if (record.recoveryFormat !== undefined) {
+    if (record.recoveryFormat !== RECOVERY_FORMAT_VERSION || !record.workbook) return null;
+    const parsed = parseScheduleWorkbookContent(JSON.stringify(record.workbook));
+    return { ...parsed.state, workbookFileName: record.workbookFileName || '', recovery: record };
+  }
+  return Array.isArray(record.days) ? record : null;
+}
+
+function queueRecoveryWrite(record) {
+  const generation = _recoveryGeneration;
+  _recoveryWriteQueue = _recoveryWriteQueue.catch(e => console.warn('Recovery queue failed:', e)).then(async () => {
+    if (generation !== _recoveryGeneration) return false;
+    return typeof writeRecoveryRecord === 'function' ? writeRecoveryRecord(record) : false;
+  });
+  return _recoveryWriteQueue;
+}
+
+async function flushSessionBackup() {
+  clearTimeout(_sessionSaveTimer);
+  _sessionSaveTimer = null;
+  if (!Store.getTitle() && !Store.getDays().length && !_scheduleWorkbookData) return false;
+  const record = buildRecoveryRecord();
+  _lastRecoveryRecord = record;
+  let sessionOk = false;
+  try {
+    sessionStorage.setItem('schedule_state', JSON.stringify(record));
+    sessionOk = true;
+  } catch (e) {
+    try { sessionStorage.removeItem('schedule_state'); } catch (inner) { console.warn('Could not remove stale recovery:', inner); }
+    console.warn('Tab recovery unavailable:', e);
+  }
+  const durableOk = await queueRecoveryWrite(record);
+  if (!durableOk && !_recoveryUnavailableNotified) {
+    _recoveryUnavailableNotified = true;
+    toast(sessionOk
+      ? 'Recovery is available only in this tab. Save your workbook before closing it; this browser blocked durable local storage.'
+      : 'Local recovery is unavailable. Save your workbook now; this browser could not back up your changes.', 9000);
+  }
+  if (durableOk) _recoveryUnavailableNotified = false;
+  return sessionOk || durableOk;
+}
+
+async function restoreDurableRecovery() {
+  const durable = typeof readRecoveryRecord === 'function' ? await readRecoveryRecord() : null;
+  let session = null;
+  try { session = JSON.parse(sessionStorage.getItem('schedule_state') || 'null'); }
+  catch (e) {
+    console.warn('Unreadable tab recovery:', e);
+    try {
+      const raw = sessionStorage.getItem('schedule_state');
+      if (raw && typeof recoveryTransaction === 'function') {
+        await recoveryTransaction('readwrite', store => store.put({ raw, savedAt: new Date().toISOString() }, 'unreadableTabRecovery'));
+      }
+    } catch (storageError) { console.warn('Could not preserve unreadable tab recovery:', storageError); }
+  }
+  let sessionValid = false;
+  try { sessionValid = !!recoveryState(session); } catch (e) { console.warn('Unreadable session workbook:', e); }
+  // Even two tabs with the same workbook ID can have divergent unsaved
+  // histories. A valid tab-local copy is authoritative for that tab.
+  const candidate = sessionValid ? session : (durable || session);
+  if (!candidate) return false;
+  let valid = false;
+  try { valid = !!recoveryState(candidate); } catch (e) { console.warn('Unsupported recovery contents:', e); }
+  if (!valid) {
+    _unsupportedRecovery = true;
+    toast('A recovery copy uses an unsupported format. It has been kept locally; reopen it with the app version that created it.', 9000);
+    return false;
+  }
+  // A blocked sessionStorage must not prevent IndexedDB recovery.
+  _pendingDurableRecovery = candidate;
+  return true;
+}
+
+let _pendingDurableRecovery = null;
+let _lastRecoveryRecord = null;
+
+function getRecoveryDraftRecord() {
+  if (_pendingDurableRecovery || _lastRecoveryRecord) return _pendingDurableRecovery || _lastRecoveryRecord;
+  try { return JSON.parse(sessionStorage.getItem('schedule_state') || 'null'); } catch (e) { return null; }
+}
+
 // Bumped on every real edit (not on post-save bookkeeping). Lets a save that
 // was in flight tell whether edits landed after it built its content.
 let _editSequence = 0;
@@ -123,83 +288,76 @@ function getEditSequence() {
   return _editSequence;
 }
 
-let _sessionBackupFailureNotified = false;
-
 function sessionSave(options) {
   clearTimeout(_sessionSaveTimer);
-  _sessionSaveTimer = setTimeout(() => {
-    try {
-      sessionStorage.setItem('schedule_state', JSON.stringify(buildSerializableState()));
-    } catch (e) {
-      // Usually quota (a large logo can exceed sessionStorage limits). A stale
-      // draft is worse than none — the Continue card prefers the draft over
-      // the remembered file, so an old draft would win over newer saved work.
-      console.warn('Crash-recovery backup failed; unsaved work will not survive a crash:', e);
-      try { sessionStorage.removeItem('schedule_state'); } catch (inner) { console.warn('Could not clear the stale backup either:', inner); }
-      if (typeof logAppError === 'function') logAppError('error', 'Crash-recovery backup failed: ' + String(e && e.message || e), 'sessionSave');
-      if (!_sessionBackupFailureNotified) {
-        _sessionBackupFailureNotified = true;
-        toast('Crash-recovery backup is off — this schedule is too large to back up in this tab (usually a big logo). Save your work now.', 8000);
-      }
-    }
-  }, 500);
   if (!options || !options.skipDirty) {
     _editSequence++;
-    // Trigger auto-save if connected
     if (typeof markDirty === 'function') markDirty();
   }
+  _sessionSaveTimer = setTimeout(() => flushSessionBackup(), 500);
 }
 
-// Cancel any pending draft write and remove the stored draft (used when the
-// editor is left cleanly — the file, not the draft, is now the truth).
+// Invalidating queued writes before deleting prevents a slow backup from
+// resurrecting a document after the user has successfully left the editor.
 function discardSessionDraft() {
+  const record = getRecoveryDraftRecord();
+  const backupId = record && record.backupId;
   clearTimeout(_sessionSaveTimer);
   _sessionSaveTimer = null;
-  try {
-    sessionStorage.removeItem('schedule_state');
-  } catch (e) {
-    console.warn('Could not discard the session draft:', e);
-  }
+  _pendingDurableRecovery = null;
+  _lastRecoveryRecord = null;
+  _recoveryGeneration++;
+  try { sessionStorage.removeItem('schedule_state'); } catch (e) { console.warn('Could not discard tab recovery:', e); }
+  _recoveryWriteQueue = _recoveryWriteQueue.catch(e => console.warn('Recovery write failed:', e)).then(() =>
+    typeof deleteRecoveryRecord === 'function' ? deleteRecoveryRecord(backupId) : false);
+  return _recoveryWriteQueue;
 }
 
-// Flush the debounced draft when the page is going away: an edit made in the
-// last 500ms before a reload would otherwise be missing from the Continue card.
 window.addEventListener('pagehide', () => {
-  if (!_sessionSaveTimer) return;
-  clearTimeout(_sessionSaveTimer);
-  _sessionSaveTimer = null;
-  try {
-    sessionStorage.setItem('schedule_state', JSON.stringify(buildSerializableState()));
-  } catch (e) {
-    console.warn('Final crash-recovery backup failed:', e);
-  }
+  if (_sessionSaveTimer) flushSessionBackup();
 });
 
 function sessionLoad() {
   try {
-    const raw = sessionStorage.getItem('schedule_state');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const state = normalizePersistedState(parsed);
-      Store.loadPersistedState(state);
-      if (typeof setCurrentScheduleFileData === 'function') {
-        const fileData = {
-          name: state.title || 'Local Draft',
-          current: Store.getPersistedState(),
-          versions: [],
-          activity: [],
-        };
-        if (state.theme) fileData.theme = state.theme;
-        const draftId = parsed && typeof parsed.workbookScheduleId === 'string' ? sanitizeEntityRef(parsed.workbookScheduleId) : '';
-        if (draftId) fileData.id = draftId;
-        setCurrentScheduleFileData(fileData);
-      }
-      return true;
+    let parsed = _pendingDurableRecovery;
+    if (!parsed) parsed = JSON.parse(sessionStorage.getItem('schedule_state') || 'null');
+    const state = recoveryState(parsed);
+    if (!state) return false;
+    clearScheduleWorkbookTarget();
+    _recoveryLoaded = true;
+    setCurrentFile(null, null);
+    if (parsed.recoveryFormat === RECOVERY_FORMAT_VERSION) {
+      const workbook = parseScheduleWorkbookContent(JSON.stringify(parsed.workbook));
+      _scheduleWorkbookData = workbook.workbookData;
+      _workbookId = _scheduleWorkbookData.workbookId || generateId('workbook');
+      _workbookBaseline = parsed.baseline || null;
+      _editSequence = Number.isSafeInteger(parsed.revision) ? parsed.revision : 0;
+      _savedEditSequence = Number.isSafeInteger(parsed.savedRevision) ? parsed.savedRevision : 0;
+      Store.loadPersistedState(workbook.state);
+      setCurrentScheduleFileData(workbook.fileData);
+      // A clean recovery without a committed file baseline (e.g. a download)
+      // must remain recoverable until the user explicitly saves or leaves it.
+      _dirty = parsed.dirty !== false || !_workbookBaseline;
+    } else {
+      Store.loadPersistedState(normalizePersistedState(state));
+      const fileData = { name: Store.getTitle() || 'Local Draft', current: Store.getPersistedState(), versions: [], activity: [] };
+      if (state.theme) fileData.theme = state.theme;
+      const draftId = typeof state.workbookScheduleId === 'string' ? sanitizeEntityRef(state.workbookScheduleId) : '';
+      if (draftId) fileData.id = draftId;
+      setCurrentScheduleFileData(fileData);
+      _workbookBaseline = state.workbookFileName ? { fileName: state.workbookFileName, fingerprint: null } : null;
+      _dirty = true; // Older recovery records never established save status.
     }
+    if (_dirty) markDirty();
+    else updateSaveIndicator('saved');
+    _lastRecoveryRecord = parsed;
+    _pendingDurableRecovery = null;
+    return true;
   } catch (e) {
-    console.warn('Could not restore the session draft:', e);
+    console.warn('Could not restore the local recovery copy:', e);
+    toast('The local recovery copy could not be opened. It has been kept; use Open .schedule to open a saved workbook.', 9000);
+    return false;
   }
-  return false;
 }
 
 function cloneScheduleData(value) {
@@ -261,6 +419,8 @@ function buildScheduleWorkbookObject(fileData) {
     schedules.push(envelope);
   }
   return {
+    ...(existing || {}),
+    workbookId: _workbookId || (_workbookId = (existing && existing.workbookId) || generateId('workbook')),
     fileType: SCHEDULE_WORKBOOK_FILE_TYPE,
     schemaVersion: SCHEDULE_WORKBOOK_SCHEMA_VERSION,
     savedAt: new Date().toISOString(),
@@ -284,6 +444,13 @@ function getScheduleWorkbookFileName() {
 function clearScheduleWorkbookTarget() {
   _scheduleWorkbookHandle = null;
   _scheduleWorkbookData = null;
+  _workbookId = null;
+  _workbookBaseline = null;
+  _savedEditSequence = 0;
+  _recoveryLoaded = false;
+  _workbookGeneration++;
+  _workbookOpenRequest++;
+  clearTimeout(_autosaveTimer);
 }
 
 async function ensureWorkbookHandlePermission(handle, silent) {
@@ -311,9 +478,9 @@ function showFirstSaveNoteOnce(fileName, downloaded) {
   if (downloaded) {
     // No remembered handle exists on this path, so "reopen from the start
     // screen" would be a promise the app can't keep.
-    toast('Downloaded ' + fileName + '. Your workbook is a file in your Downloads folder — nothing is uploaded. Next time, use Open .schedule to open the newest copy.', 8000);
+    toast('Downloaded ' + fileName + '. DaySchedule does not upload your workbook. Next time, use Open .schedule to open the newest copy from your Downloads folder.', 8000);
   } else {
-    toast('Saved ' + fileName + '. Your workbook is a file on this computer — nothing is uploaded. Reopen it from the start screen anytime.', 8000);
+    toast('Saved ' + fileName + '. DaySchedule does not upload your workbook. Your folder’s sync service may copy it. Reopen it from the start screen anytime.', 8000);
   }
   return true;
 }
@@ -334,8 +501,12 @@ function triggerDownload(blob, fileName) {
 // Reopen a remembered workbook file without a picker (Continue card path).
 // The caller's click is the user gesture the permission prompt needs.
 async function openScheduleWorkbookFromHandle(handle) {
+  const generation = _workbookGeneration;
+  const request = ++_workbookOpenRequest;
+  const currentRequest = () => generation === _workbookGeneration && request === _workbookOpenRequest;
   if (!handle || typeof handle.getFile !== 'function') return false;
   const granted = await ensureWorkbookHandlePermission(handle, false);
+  if (!currentRequest()) return false;
   if (!granted) {
     toast('Permission was declined — use Open .schedule to pick the file instead.', 4500);
     return false;
@@ -344,16 +515,20 @@ async function openScheduleWorkbookFromHandle(handle) {
   try {
     file = await handle.getFile();
   } catch (err) {
+    if (!currentRequest()) return false;
     if (typeof clearWorkbookFileRecord === 'function') clearWorkbookFileRecord();
     toast('Couldn’t find ' + (handle.name || 'the workbook file') + ' — it may have been moved or renamed. Use Open .schedule to find it.', 5500);
     return false;
   }
   try {
     const content = await file.text();
+    if (!currentRequest()) return false;
     const parsed = parseScheduleWorkbookContent(content, file.name || handle.name);
     _scheduleWorkbookHandle = handle;
+    _workbookBaseline = { fileName: handle.name, fingerprint: fingerprintWorkbookContent(content) };
     _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
     loadParsedScheduleData(parsed);
+    if (!showScheduleImportNotice(parsed)) toast('Opened ' + (file.name || handle.name || 'workbook'));
     return true;
   } catch (err) {
     toast('Couldn’t open ' + (handle.name || 'the workbook file') + ': ' + err.message, 5500);
@@ -361,40 +536,99 @@ async function openScheduleWorkbookFromHandle(handle) {
   }
 }
 
-// Reattach the remembered handle to the in-memory session draft (no file read
-// — the draft is newer than the file). Used when a session draft and the
-// remembered file are the same workbook.
+// Compare recovery to the exact file revision it came from. A clean draft
+// must yield to a later handoff; conflicting unsaved work is never overwritten.
 async function adoptScheduleWorkbookHandle(handle) {
+  const generation = _workbookGeneration;
   if (!handle || typeof handle.createWritable !== 'function') return false;
-  const granted = await ensureWorkbookHandlePermission(handle, false);
-  if (!granted) return false;
-  // Permission can be granted for a file that has since been moved or
-  // deleted; adopting that handle makes every later auto-save fail silently.
+  if (!await ensureWorkbookHandlePermission(handle, false)) { markDirty(); return false; }
   let parsed;
+  let content;
   try {
     const file = await handle.getFile();
-    parsed = parseScheduleWorkbookContent(await file.text(), file.name || handle.name);
+    content = await file.text();
+    parsed = parseScheduleWorkbookContent(content, file.name || handle.name);
   } catch (err) {
-    if (typeof clearWorkbookFileRecord === 'function') clearWorkbookFileRecord();
+    if (typeof clearWorkbookFileRecord === 'function') await clearWorkbookFileRecord();
+    markDirty();
     return false;
   }
-  // Reattaching must bring the workbook's other schedules and this schedule's
-  // identity and history back into memory. With only the session draft in
-  // memory, the first auto-save rewrote the file as a one-schedule workbook —
-  // every sibling schedule and every named version gone from disk.
-  _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
-  const draft = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
-  const draftId = draft && draft.id ? draft.id : getScheduleEnvelopeId({ name: Store.getTitle() });
-  const candidates = Array.isArray(_scheduleWorkbookData.schedules) ? _scheduleWorkbookData.schedules : [parsed.fileData];
-  const match = candidates.find(item => getScheduleEnvelopeId(item) === draftId) || null;
-  if (match && typeof setCurrentScheduleFileData === 'function') {
-    const merged = cloneScheduleData(match);
-    merged.current = Store.getPersistedState(); // the draft is newer than the file
-    if (draft && draft.theme) merged.theme = draft.theme;
-    setCurrentScheduleFileData(merged);
+  if (generation !== _workbookGeneration) return false;
+  const latest = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
+  const changed = !_workbookBaseline || _workbookBaseline.fingerprint !== fingerprintWorkbookContent(content);
+  if (!isDirty()) {
+    loadParsedScheduleData(parsed);
+  } else if (changed) {
+    if (!await reviewWorkbookConflict(latest) || generation !== _workbookGeneration) return false;
+    keepBothWorkbookCopies(latest);
   }
   _scheduleWorkbookHandle = handle;
+  _workbookBaseline = { fileName: handle.name || '', fingerprint: fingerprintWorkbookContent(content) };
+  _workbookId = (_scheduleWorkbookData && _scheduleWorkbookData.workbookId) || latest.workbookId || generateId('workbook');
+  if (isDirty()) markDirty();
+  sessionSave({ skipDirty: true });
   return true;
+}
+
+function reviewWorkbookConflict(latest) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('staleWarningModal');
+    if (!overlay) { resolve(false); return; }
+    const content = overlay.querySelector('.modal');
+    const names = (latest.schedules || []).map(item => item.name || 'Untitled schedule');
+    content.innerHTML = '<h2>Review changed workbook</h2>'
+      + '<p>The file changed since this copy was saved. Your local changes are still safe. Keep both adds your schedules as recovered copies alongside the latest file schedules.</p>'
+      + '<p><strong>Latest file:</strong> ' + esc(names.join(', ')) + '</p>'
+      + '<p><strong>Your copy:</strong> ' + esc(getScheduleWorkbookEntries().map(item => item.name).join(', ')) + '</p>'
+      + '<div class="modal-actions"><button class="btn" id="recoveryCancelBtn">Cancel</button>'
+      + '<button class="btn btn-primary" id="recoveryKeepBothBtn">Keep Both</button></div>';
+    let finished = false;
+    const finish = answer => {
+      if (finished) return;
+      finished = true;
+      overlay.removeEventListener('modalclose', onClosed);
+      overlay.removeEventListener('click', backdrop);
+      document.removeEventListener('keydown', escape, true);
+      closeModal('staleWarningModal');
+      resolve(answer);
+    };
+    const onClosed = () => finish(false);
+    overlay.addEventListener('modalclose', onClosed);
+    const backdrop = event => { if (event.target === overlay) finish(false); };
+    const escape = event => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); finish(false); }
+    };
+    content.querySelector('#recoveryCancelBtn').onclick = () => finish(false);
+    content.querySelector('#recoveryKeepBothBtn').onclick = () => finish(true);
+    overlay.addEventListener('click', backdrop);
+    document.addEventListener('keydown', escape, true);
+    openModal('staleWarningModal');
+  });
+}
+
+function keepBothWorkbookCopies(latest) {
+  const local = getScheduleWorkbookSnapshot();
+  const merged = cloneScheduleData(latest);
+  if (!Array.isArray(merged.schedules)) merged.schedules = [];
+  let active = null;
+  local.schedules.forEach(source => {
+    const recovered = cloneScheduleData(source);
+    recovered.name = (source.name || 'Schedule') + ' (Recovered)';
+    recovered.current.title = recovered.name;
+    recovered.id = getUniqueWorkbookScheduleId(recovered.name, merged.schedules);
+    merged.schedules.push(recovered);
+    if (source.id === local.activeScheduleId) active = recovered;
+  });
+  if (Array.isArray(local.archivedSchedules)) {
+    merged.archivedSchedules = (merged.archivedSchedules || []).concat(cloneScheduleData(local.archivedSchedules));
+  }
+  active = active || merged.schedules[merged.schedules.length - 1];
+  merged.activeScheduleId = active.id;
+  merged.schedule = cloneScheduleData(active);
+  _scheduleWorkbookData = merged;
+  _workbookId = merged.workbookId || generateId('workbook');
+  loadWorkbookScheduleEnvelope(active);
+  toast('Both copies are preserved. Review the recovered schedules before removing duplicates.', 7000);
 }
 
 // Plain-English, no trailing period (callers add their own punctuation).
@@ -512,7 +746,48 @@ function buildNewWorkbookScheduleEnvelope(name, options) {
   } else if (currentFileData && currentFileData.theme) {
     envelope.theme = cloneScheduleData(currentFileData.theme);
   }
+  if (opts.duplicate) applyDuplicateOptions(envelope.current, opts);
   return envelope;
+}
+
+function calendarDateValue(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return null;
+  const date = new Date(value + 'T00:00:00.000Z');
+  return !isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value ? date.getTime() : null;
+}
+
+function applyDuplicateOptions(state, options) {
+  const days = state.days || [];
+  if (options.firstDate) {
+    const target = calendarDateValue(options.firstDate);
+    const dates = days.map(day => calendarDateValue(day.date));
+    if (target === null || !dates.length || dates.some(value => value === null)) {
+      throw new Error('Give every source day a valid date before duplicating onto new dates.');
+    }
+    const offset = target - Math.min(...dates);
+    days.forEach((day, index) => {
+      const shifted = new Date(dates[index] + offset);
+      if (shifted.getUTCFullYear() < 1 || shifted.getUTCFullYear() > 9999) throw new Error('The new dates are outside the supported calendar range.');
+      day.date = shifted.toISOString().slice(0, 10);
+    });
+  }
+  if (options.clearContacts) state.footer = { contact: '', poc: '', updated: '' };
+  days.forEach(day => {
+    if (options.clearNotes) day.notes = [];
+    (day.events || []).forEach(event => {
+      if (options.clearContacts) event.poc = '';
+      if (options.clearPeople) event.attendees = '';
+    });
+  });
+}
+
+function previewWorkbookDuplicate(name, options) {
+  const envelope = buildNewWorkbookScheduleEnvelope(name, { ...options, duplicate: true });
+  const source = Store.getDays();
+  return {
+    name: envelope.name,
+    days: envelope.current.days.map((day, index) => ({ from: source[index].date || '', to: day.date || '' })),
+  };
 }
 
 function loadWorkbookScheduleEnvelope(envelope, options) {
@@ -556,6 +831,7 @@ function switchScheduleInWorkbook(scheduleId) {
 }
 
 function createScheduleInWorkbook(name, options) {
+  if (!isCurrentScheduleEditable()) return false;
   const workbook = getScheduleWorkbookSnapshot({ includeCurrent: true });
   if (!Array.isArray(workbook.schedules)) workbook.schedules = [];
   const envelope = buildNewWorkbookScheduleEnvelope(name, options);
@@ -568,6 +844,54 @@ function createScheduleInWorkbook(name, options) {
   loadWorkbookScheduleEnvelope(envelope);
   toast('Created ' + envelope.name);
   return envelope.id;
+}
+
+function archiveWorkbookSchedule(scheduleId) {
+  if (!isCurrentScheduleEditable()) return false;
+  const workbook = getScheduleWorkbookSnapshot();
+  if (workbook.schedules.length < 2) {
+    toast('Keep at least one schedule in the workbook. Create a blank schedule before archiving this one.');
+    return false;
+  }
+  const index = workbook.schedules.findIndex(item => item.id === scheduleId);
+  if (index < 0) return false;
+  const removed = workbook.schedules.splice(index, 1)[0];
+  removed.archivedAt = new Date().toISOString();
+  if (!Array.isArray(workbook.archivedSchedules)) workbook.archivedSchedules = [];
+  workbook.archivedSchedules.push(removed);
+  _scheduleWorkbookData = workbook;
+  if (workbook.activeScheduleId === scheduleId) {
+    const next = workbook.schedules[Math.min(index, workbook.schedules.length - 1)];
+    workbook.activeScheduleId = next.id;
+    workbook.schedule = cloneScheduleData(next);
+    loadWorkbookScheduleEnvelope(next);
+  } else {
+    sessionSave();
+    if (typeof renderWorkbookSwitcher === 'function') renderWorkbookSwitcher();
+  }
+  toast('Archived ' + removed.name + '. Restore it from Archived schedules.');
+  return true;
+}
+
+function getArchivedWorkbookSchedules() {
+  const workbook = getScheduleWorkbookSnapshot();
+  return (workbook.archivedSchedules || []).map((item, index) => ({ index, name: item.name || 'Schedule', archivedAt: item.archivedAt || '' }));
+}
+
+function restoreArchivedWorkbookSchedule(index) {
+  if (!isCurrentScheduleEditable()) return false;
+  const workbook = getScheduleWorkbookSnapshot();
+  if (!Array.isArray(workbook.archivedSchedules) || !workbook.archivedSchedules[index]) return false;
+  const restored = workbook.archivedSchedules.splice(index, 1)[0];
+  if (workbook.schedules.some(item => item.id === restored.id)) restored.id = getUniqueWorkbookScheduleId(restored.name, workbook.schedules);
+  delete restored.archivedAt;
+  workbook.schedules.push(restored);
+  workbook.activeScheduleId = restored.id;
+  workbook.schedule = cloneScheduleData(restored);
+  _scheduleWorkbookData = workbook;
+  loadWorkbookScheduleEnvelope(restored);
+  toast('Restored ' + restored.name);
+  return true;
 }
 
 function buildStandaloneScheduleWorkbookObject(fileData) {
@@ -594,111 +918,128 @@ function getScheduleWorkbookSuggestedName() {
 }
 
 async function saveScheduleWorkbookFile(options) {
-  const opts = options || {};
-  if (_saveInProgress) {
-    if (!opts.silent) toast('Save already in progress.');
-    return false;
+  const generation = _workbookGeneration;
+  // Callers awaiting Save need the latest revision, not a false success from
+  // an earlier snapshot. Serialize and take a fresh snapshot after the wait.
+  while (_workbookSavePromise) {
+    await _workbookSavePromise;
+    if (generation !== _workbookGeneration) return false;
   }
+  if (_saveInProgress) return false;
   _saveInProgress = true;
+  _workbookSavePromise = performWorkbookSave(options || {}, generation);
   try {
-    const suggestedName = opts.suggestedName || getScheduleWorkbookSuggestedName();
-    // Stamp the live envelope before serializing — otherwise every workbook
-    // save carries the schedule's creation-time lastSavedAt forever and the
-    // switcher/Versions panel report stale times.
-    if (!opts.content) {
-      const memFileData = typeof getCurrentScheduleFileData === 'function' ? getCurrentScheduleFileData() : null;
-      if (memFileData && (!opts.fileData || opts.fileData === memFileData)) {
-        memFileData.lastSavedAt = new Date().toISOString();
-        if (typeof getUserName === 'function' && getUserName()) {
-          memFileData.lastSavedBy = getUserName();
-        }
-      }
-    }
-    const content = opts.content || buildScheduleWorkbookContent(opts.fileData);
-
-    if (window.showSaveFilePicker) {
-      let handle = null;
-      const editsWhenBuilt = _editSequence;
-      try {
-        handle = opts.reuseHandle === false ? null : _scheduleWorkbookHandle;
-        if (handle) {
-          // A handle restored from IndexedDB starts in 'prompt' state; silent
-          // auto-saves must not pop a permission dialog mid-edit.
-          const granted = await ensureWorkbookHandlePermission(handle, opts.silent);
-          if (!granted) {
-            if (opts.requireHandle) return false;
-            handle = null;
-          }
-        }
-        if (!handle && opts.requireHandle) return false;
-        if (!handle) {
-          handle = await window.showSaveFilePicker({
-            suggestedName,
-            types: [{
-              description: 'DaySchedule Schedule',
-              accept: { 'application/json': ['.schedule'] },
-            }],
-          });
-        }
-        const writable = await handle.createWritable();
-        await writable.write(content);
-        await writable.close();
-        if (opts.reuseHandle !== false) {
-          _scheduleWorkbookHandle = handle;
-          if (typeof saveWorkbookFileRecord === 'function') {
-            saveWorkbookFileRecord({
-              handle,
-              name: handle.name || suggestedName,
-              savedAt: new Date().toISOString(),
-            });
-          }
-        }
-        _scheduleWorkbookData = JSON.parse(content);
-        sessionSave({ skipDirty: true });
-        if (_editSequence !== editsWhenBuilt) {
-          // Edits landed while the write was in flight: what's on disk is
-          // already behind. Stay dirty so auto-save runs again.
-          if (typeof markDirty === 'function') markDirty();
-        } else if (typeof markScheduleWorkbookSaved === 'function') {
-          markScheduleWorkbookSaved();
-        }
-        if (!opts.silent && !showFirstSaveNoteOnce(handle.name || suggestedName)) {
-          toast('Saved ' + (handle.name || suggestedName));
-        }
-        return true;
-      } catch (err) {
-        if (err.name === 'AbortError') return false;
-        console.warn('Schedule save failed:', err);
-        if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'save');
-        if (handle) {
-          // The write to the attached file failed (moved, deleted, permission
-          // revoked). Falling through to a Downloads copy and saying "Saved"
-          // hid that; detach so the next Save .schedule asks where to save.
-          // Keep _scheduleWorkbookData — the sibling schedules must survive.
-          _scheduleWorkbookHandle = null;
-          if (typeof clearWorkbookFileRecord === 'function') clearWorkbookFileRecord();
-          if (!opts.silent) {
-            toast('Couldn’t write to ' + (handle.name || 'the workbook file') + ' — it may have been moved, deleted, or its permission revoked. Click Save .schedule to choose where to save.', 8000);
-          }
-          return false;
-        }
-        if (opts.requireHandle) return false;
-      }
-    }
-
-    if (opts.requireHandle) return false;
-
-    const blob = new Blob([content], { type: 'application/json' });
-    triggerDownload(blob, suggestedName);
-    _scheduleWorkbookData = JSON.parse(content);
-    sessionSave({ skipDirty: true });
-    if (typeof markScheduleWorkbookDownloaded === 'function') markScheduleWorkbookDownloaded();
-    if (!opts.silent && !showFirstSaveNoteOnce(suggestedName, true)) {
-      toast('Downloaded ' + suggestedName + ' to your Downloads folder — keep the newest copy.', 4500);
-    }
-    return true;
+    return await _workbookSavePromise;
   } finally {
     _saveInProgress = false;
+    _workbookSavePromise = null;
+  }
+}
+
+async function performWorkbookSave(opts, generation) {
+  const suggestedName = opts.suggestedName || getScheduleWorkbookSuggestedName();
+  let handle = opts.downloadOnly || opts.reuseHandle === false ? null : _scheduleWorkbookHandle;
+  let writable = null;
+  try {
+    if (window.showSaveFilePicker && !opts.downloadOnly) {
+      if (handle && !await ensureWorkbookHandlePermission(handle, opts.silent)) {
+        if (opts.requireHandle || generation !== _workbookGeneration) return false;
+        handle = null;
+        _scheduleWorkbookHandle = null;
+        await clearWorkbookFileRecord();
+        if (generation !== _workbookGeneration) return false;
+      }
+      if (!handle && opts.requireHandle) return false;
+      if (!handle) {
+        handle = await window.showSaveFilePicker({
+          suggestedName,
+          types: [{ description: 'DaySchedule Schedule', accept: { 'application/json': ['.schedule'] } }],
+        });
+      } else if (_workbookBaseline && typeof handle.getFile === 'function') {
+        // Check immediately before writing. OS/sync clients cannot provide an
+        // atomic compare-and-swap; one editor at a time remains the contract.
+        for (;;) {
+          const file = await handle.getFile();
+          const text = await file.text();
+          if (generation !== _workbookGeneration) return false;
+          const fingerprint = fingerprintWorkbookContent(text);
+          if (fingerprint === _workbookBaseline.fingerprint) break;
+          if (opts.silent) {
+            toast('The workbook file changed. Save Now to review both copies; your changes are still here.', 8000);
+            return false;
+          }
+          const parsed = parseScheduleWorkbookContent(text, handle.name);
+          const latest = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
+          if (!await reviewWorkbookConflict(latest)) return false;
+          if (generation !== _workbookGeneration) return false;
+          keepBothWorkbookCopies(latest);
+          _workbookBaseline = { fileName: handle.name, fingerprint };
+        }
+      }
+    } else if (opts.requireHandle) {
+      return false;
+    }
+    if (generation !== _workbookGeneration) return false;
+    const revision = _editSequence;
+    const now = new Date().toISOString();
+    const workbook = opts.content ? JSON.parse(opts.content) : buildScheduleWorkbookObject(opts.fileData);
+    const active = workbook.schedules.find(item => item.id === workbook.activeScheduleId);
+    if (active) {
+      active.lastSavedAt = now;
+      active.lastSavedBy = getUserName() || active.lastSavedBy || '';
+      workbook.schedule = cloneScheduleData(active);
+    }
+    const content = JSON.stringify(workbook, null, 2) + '\n';
+    if (handle) {
+      writable = await handle.createWritable({ mode: 'exclusive' });
+      await writable.write(content);
+      await writable.close();
+      writable = null;
+    } else {
+      triggerDownload(new Blob([content], { type: 'application/json' }), suggestedName);
+    }
+    // The successful write belongs only to the document that initiated it.
+    if (generation !== _workbookGeneration) return false;
+    if (handle && opts.reuseHandle !== false) {
+      _scheduleWorkbookHandle = handle;
+      _workbookBaseline = { fileName: handle.name || suggestedName, fingerprint: fingerprintWorkbookContent(content) };
+      await saveWorkbookFileRecord({ handle, name: handle.name || suggestedName, savedAt: now });
+      if (generation !== _workbookGeneration) return false;
+    }
+    _savedEditSequence = revision;
+    // Acknowledge metadata, never replace live sibling data with old content.
+    _scheduleWorkbookData = getScheduleWorkbookSnapshot();
+    const live = getCurrentScheduleFileData();
+    if (live && active && live.id === active.id) {
+      live.lastSavedAt = now;
+      live.lastSavedBy = active.lastSavedBy;
+    }
+    if (_editSequence !== revision) markDirty();
+    else if (handle) markScheduleWorkbookSaved();
+    else markScheduleWorkbookDownloaded();
+    sessionSave({ skipDirty: true });
+    if (!opts.silent && !showFirstSaveNoteOnce(handle ? handle.name : suggestedName, !handle)) {
+      toast(handle ? 'Saved ' + handle.name : 'Downloaded ' + suggestedName + ' — keep the newest copy.', 4500);
+    }
+    return true;
+  } catch (err) {
+    if (writable) {
+      try { await writable.abort(); } catch (abortError) { console.warn('Could not abort failed workbook write:', abortError); }
+    }
+    if (err && err.name === 'AbortError') return false;
+    if (!handle && !opts.requireHandle && !opts.downloadOnly) {
+      toast('This browser or embedded page cannot open the save picker. A .schedule copy will download instead.', 7000);
+      return performWorkbookSave({ ...opts, downloadOnly: true }, generation);
+    }
+    console.warn('Workbook save failed:', err);
+    if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'save');
+    if (generation === _workbookGeneration && handle && handle === _scheduleWorkbookHandle) {
+      _scheduleWorkbookHandle = null;
+      await clearWorkbookFileRecord();
+    }
+    if (generation === _workbookGeneration) markDirty();
+    if (!opts.silent) toast('Could not write the workbook. Your changes are still here. Save .schedule again to choose a file.', 8000);
+    return false;
   }
 }
 
@@ -765,6 +1106,33 @@ function parseScheduleWorkbookContent(content, fileName) {
   let workbookData = null;
   let activeSchedule = null;
   if (isWorkbook) {
+    if (parsed.schemaVersion !== undefined && parsed.schemaVersion !== SCHEDULE_WORKBOOK_SCHEMA_VERSION) {
+      throw new Error('This workbook uses an unsupported format version. Open it in the app version that created it; the file has not been changed.');
+    }
+    const entries = Array.isArray(parsed.schedules) && parsed.schedules.length ? parsed.schedules : [parsed.schedule];
+    if (parsed.archivedSchedules !== undefined && !Array.isArray(parsed.archivedSchedules)) {
+      throw new Error('This workbook has an invalid archive list. The file has not been changed.');
+    }
+    (parsed.archivedSchedules || []).forEach(entry => {
+      if (!entry || typeof entry !== 'object' || !entry.current || !Array.isArray(entry.current.days)) {
+        throw new Error('An archived schedule cannot be read. The file has not been changed.');
+      }
+      entry.name = normalizeText(entry.name) || normalizeText(entry.current.title) || 'Archived schedule';
+    });
+    const ids = new Set();
+    entries.forEach(entry => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry) || (entry.id !== undefined && typeof entry.id !== 'string')) {
+        throw new Error('A schedule in this workbook has an invalid identity. The file has not been changed.');
+      }
+      const entryState = extractSchedulePayload(entry).state;
+      if (!entryState || !Array.isArray(entryState.days)) {
+        throw new Error('A schedule in this workbook has no readable days list. The file has not been changed.');
+      }
+      entry.name = normalizeText(entry.name) || (entry.current && normalizeText(entry.current.title)) || 'Schedule';
+      const id = getScheduleEnvelopeId(entry);
+      if (ids.has(id)) throw new Error('This workbook repeats a schedule ID. Each schedule needs a unique ID; the file has not been changed.');
+      ids.add(id);
+    });
     workbookData = cloneScheduleData(parsed);
     if (Array.isArray(parsed.schedules) && parsed.schedules.length) {
       activeSchedule = parsed.schedules.find(item => getScheduleEnvelopeId(item) === parsed.activeScheduleId)
@@ -789,10 +1157,14 @@ function parseScheduleWorkbookContent(content, fileName) {
     (n, d) => n + (d && Array.isArray(d.events) ? d.events.length : 0), 0);
   const keptEventCount = state.days.reduce((n, d) => n + d.events.length, 0);
   const droppedEventCount = rawEventCount - keptEventCount;
-  if (droppedEventCount > 0 && typeof toast === 'function') {
-    toast('Skipped ' + droppedEventCount + (droppedEventCount === 1 ? ' event' : ' events')
-      + ' with missing or invalid data (title or times). Everything else loaded normally.', 6500);
-  }
+  const repairedDayCount = payload.state.days.reduce((count, day, index) => {
+    const normalized = day && normalizeDay(day);
+    if (!day || !normalized) return count;
+    return count + ((day.date && day.date !== normalized.date)
+      || (day.startTime && day.startTime !== normalized.startTime)
+      || (day.endTime && day.endTime !== normalized.endTime) ? 1 : 0);
+  }, 0);
+  showScheduleImportNotice({ repairedDayCount, droppedEventCount });
 
   if (payload.fileData && payload.fileData.theme && !state.theme) state.theme = payload.fileData.theme;
   const fileData = payload.fileData
@@ -825,10 +1197,25 @@ function parseScheduleWorkbookContent(content, fileName) {
     fileData,
     workbookData,
     droppedEventCount,
+    repairedDayCount,
   };
 }
 
+function showScheduleImportNotice(parsed) {
+  const repaired = parsed.repairedDayCount || 0;
+  const dropped = parsed.droppedEventCount || 0;
+  if (repaired) {
+    toast('Repaired invalid dates or day hours in ' + repaired + ' day(s). Review each day before saving.'
+      + (dropped ? ' Also skipped ' + dropped + ' invalid event(s).' : ''), 8500);
+  } else if (dropped) {
+    toast('Skipped ' + dropped + (dropped === 1 ? ' event' : ' events')
+      + ' with missing or invalid data (title or times). Everything else loaded normally.', 6500);
+  }
+  return !!(repaired || dropped);
+}
+
 function loadParsedScheduleData(parsed) {
+  _workbookGeneration++;
   // Opening a file is a new starting point, not an edit: pushing the empty
   // pre-open Store onto the undo stack let one Ctrl+Z blank the schedule.
   if (typeof clearUndoHistory === 'function') clearUndoHistory();
@@ -837,6 +1224,9 @@ function loadParsedScheduleData(parsed) {
     setCurrentScheduleFileData(parsed.fileData);
   }
   _fileHandle = null;
+  _workbookId = parsed.workbookData && parsed.workbookData.workbookId || generateId('workbook');
+  _savedEditSequence = _editSequence;
+  _dirty = false;
   _scheduleWorkbookData = parsed.workbookData || buildStandaloneScheduleWorkbookObject(parsed.fileData);
   // Nothing has been edited yet — an "Unsaved" chip right after opening is a lie.
   sessionSave({ skipDirty: true });
@@ -846,6 +1236,9 @@ function loadParsedScheduleData(parsed) {
 }
 
 async function openScheduleWorkbookFile(options) {
+  const generation = _workbookGeneration;
+  const request = ++_workbookOpenRequest;
+  const currentRequest = () => generation === _workbookGeneration && request === _workbookOpenRequest;
   const opts = options || {};
   if (window.showOpenFilePicker) {
     let handle = null;
@@ -864,12 +1257,16 @@ async function openScheduleWorkbookFile(options) {
       // is the right fallback. A file that fails to parse is not.
       console.warn('File picker unavailable, falling back:', err);
     }
+    if (!currentRequest()) return false;
     if (handle) {
       try {
         const file = await handle.getFile();
         const content = await file.text();
+        if (!currentRequest()) return false;
         const parsed = parseScheduleWorkbookContent(content, file.name || handle.name);
+        _workbookGeneration++;
         _scheduleWorkbookHandle = handle;
+        _workbookBaseline = { fileName: handle.name, fingerprint: fingerprintWorkbookContent(content) };
         if (typeof saveWorkbookFileRecord === 'function') {
           saveWorkbookFileRecord({
             handle,
@@ -885,11 +1282,12 @@ async function openScheduleWorkbookFile(options) {
             fileData: parsed.fileData,
             workbookData: parsed.workbookData,
           });
+          showScheduleImportNotice(parsed);
         } else {
           loadParsedScheduleData(parsed);
           if (typeof hideLibrary === 'function') hideLibrary();
           // The "Skipped N events" warning must not be wiped by this toast.
-          if (!parsed.droppedEventCount) toast('Opened ' + (file.name || handle.name || 'schedule'));
+          if (!parsed.droppedEventCount && !parsed.repairedDayCount) toast('Opened ' + (file.name || handle.name || 'schedule'));
         }
         return true;
       } catch (err) {
@@ -900,6 +1298,7 @@ async function openScheduleWorkbookFile(options) {
       }
     }
   }
+  if (!currentRequest()) return false;
   importDataFile(opts);
   return false;
 }
@@ -947,19 +1346,28 @@ async function saveDataFile() {
 }
 
 function importDataFile(options) {
+  const generation = _workbookGeneration;
+  const request = ++_workbookOpenRequest;
+  const currentRequest = () => generation === _workbookGeneration && request === _workbookOpenRequest;
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = '.schedule,.js,.json';
   input.addEventListener('change', () => {
+    if (!currentRequest()) return;
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onerror = () => {
+      if (!currentRequest()) return;
       toast('Couldn’t read ' + file.name + ' — check the file is still available and try again.', 6000);
     };
     reader.onload = async () => {
+      if (!currentRequest()) return;
       try {
         const parsed = parseScheduleWorkbookContent(reader.result, file.name);
+        _workbookGeneration++;
+        _workbookBaseline = null;
+        _workbookId = parsed.workbookData && parsed.workbookData.workbookId || generateId('workbook');
         const state = parsed.state;
 
         if (options && typeof options.onImported === 'function') {
@@ -971,12 +1379,13 @@ function importDataFile(options) {
             fileData: parsed.fileData,
             workbookData: parsed.workbookData,
           });
+          showScheduleImportNotice(parsed);
           return;
         }
 
         _scheduleWorkbookHandle = null; // file input cannot provide a writable handle
         loadParsedScheduleData(parsed);
-        if (!parsed.droppedEventCount) toast('Imported ' + file.name + ' (' + state.days.length + ' days)');
+        if (!parsed.droppedEventCount && !parsed.repairedDayCount) toast('Imported ' + file.name + ' (' + state.days.length + ' days)');
       } catch (err) {
         if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'import');
         toast('Import failed: ' + friendlyFileError(err) + '.', 6000);

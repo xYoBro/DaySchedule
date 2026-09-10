@@ -39,10 +39,10 @@ function clearDaggerFootnotes() { _daggerFootnotes = []; }
 
 // Skin dispatcher registry
 const SKIN_RENDERERS = {
-  bands: function(dayId) { return renderDayBody_band(dayId); },
-  grid:  function(dayId) { return typeof renderDayBody_grid   === 'function' ? renderDayBody_grid(dayId)   : ''; },
-  cards: function(dayId) { return typeof renderDayBody_cards  === 'function' ? renderDayBody_cards(dayId)  : ''; },
-  phases:function(dayId) { return typeof renderDayBody_phases === 'function' ? renderDayBody_phases(dayId) : ''; },
+  bands: function(dayId, day) { return renderDayBody_band(dayId, day); },
+  grid:  function(dayId, day) { return typeof renderDayBody_grid   === 'function' ? renderDayBody_grid(dayId, day)   : ''; },
+  cards: function(dayId, day) { return typeof renderDayBody_cards  === 'function' ? renderDayBody_cards(dayId, day)  : ''; },
+  phases:function(dayId, day) { return typeof renderDayBody_phases === 'function' ? renderDayBody_phases(dayId, day) : ''; },
 };
 
 // Shared reference to current schedule file data for theme access.
@@ -96,7 +96,7 @@ function renderHeader(day) {
   const footer = Store.getFooter();
   const dateStr = day.date ? formatDateDisplay(day.date) : '';
 
-  let html = '<div class="hdr" title="Customize schedule">';
+  let html = '<div class="hdr" role="button" tabindex="0" aria-label="Customize schedule" title="Customize schedule">';
   html += '<div class="hdr-text">';
   html += '<div class="hdr-title">' + esc(Store.getTitle()) + '</div>';
   html += '<div class="hdr-sub">' + [dateStr, dayLabel].filter(Boolean).map(esc).join(' &ensp;\u2014&ensp; ') + '</div>';
@@ -120,12 +120,12 @@ function renderNotes(notes) {
       // Freshly added, nothing typed yet. Visible on screen so it can be
       // clicked back into; hidden in print (see @media print) and dropped
       // by normalizeNote on the next load.
-      html += '<li data-note-id="' + esc(n.id) + '" class="note-empty"><em>Empty note</em></li>';
+      html += '<li data-note-id="' + esc(n.id) + '" class="note-empty"><button type="button" class="note-select"><em>Empty note</em></button></li>';
       return;
     }
-    html += '<li data-note-id="' + esc(n.id) + '">';
+    html += '<li data-note-id="' + esc(n.id) + '"><button type="button" class="note-select">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
-    html += esc(n.text) + '</li>';
+    html += esc(n.text) + '</button></li>';
   });
   html += '</ul>';
   if (_daggerFootnotes.length > 0) {

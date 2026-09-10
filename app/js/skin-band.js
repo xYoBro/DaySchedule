@@ -18,13 +18,13 @@
  *   print.js  — renderBand(), renderConcurrentRow() called directly for print layout
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function renderDayBody_band(dayId) {
-  const day = Store.getDay(dayId);
+function renderDayBody_band(dayId, dayOverride) {
+  const day = dayOverride || Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
   const classified = classifyEvents(day.events, groups);
   const { mainBands, concurrent } = classified;
-  const notes = Store.getNotes(dayId);
+  const notes = day.notes || Store.getNotes(dayId);
   const layoutAnalysis = analyzeDayLayout(day.events, groups, classified);
   const densityInfo = getBandDensityInfo(mainBands, concurrent, layoutAnalysis);
 
@@ -39,7 +39,7 @@ function renderDayBody_band(dayId) {
     html += '</div>';
   }
   mainBands.forEach((band) => {
-    html += renderBand(band, densityInfo);
+    html += renderBand(band, densityInfo, day.events);
   });
   html += '</div>';
 
@@ -113,12 +113,12 @@ function renderBandDensityNote(densityInfo) {
   return html;
 }
 
-function renderBand(band, densityInfo) {
+function renderBand(band, densityInfo, dayEvents) {
   const { event: evt, tier, group, concurrent: concList, overlappingMain } = band;
   const dur = computeDuration(evt);
   const durStr = formatDuration(dur);
   const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
-  const sharedExceptions = getSharedEventExceptions(evt, Store.getEvents(Store.getActiveDay()), Store.getGroups());
+  const sharedExceptions = getSharedEventExceptions(evt, dayEvents || Store.getEvents(Store.getActiveDay()), Store.getGroups());
   const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
   const groupTextColor = group ? getContrastingTextColor(group.color) : '#ffffff';
   const previewLimit = getBandPreviewLimit(concList || [], densityInfo);
@@ -147,19 +147,19 @@ function renderBand(band, densityInfo) {
   // Content
   html += '<div class="band-content">';
   html += '<div class="band-title">' + esc(evt.title) + '</div>';
-  if (tier !== 'break') {
+  {
     const metaParts = ['<span class="band-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];
     if (evt.location) metaParts.push('<span class="band-meta-item">' + esc(evt.location) + '</span>');
     if (evt.poc) metaParts.push('<span class="band-meta-item">POC: ' + esc(evt.poc) + '</span>');
     html += '<div class="band-meta-line">' + metaParts.join('<span class="band-meta-sep">\u00b7</span>') + '</div>';
   }
-  if (evt.description && tier !== 'break') {
+  if (evt.description) {
     html += '<div class="band-desc">' + esc(evt.description) + '</div>';
   }
-  if (group && tier !== 'break') {
+  if (group) {
     html += '<div><span class="band-tag" style="background:' + esc(group.color) + ';color:' + esc(groupTextColor) + ';">' + esc(group.name) + '</span></div>';
   }
-  if (evt.attendees && tier !== 'break') {
+  if (evt.attendees) {
     const attendeeLabel = group ? '+ ' : 'WHO: ';
     html += '<div class="band-attendees">' + attendeeLabel + esc(evt.attendees) + '</div>';
   }
@@ -209,8 +209,11 @@ function renderBandConcurrentCard(c) {
   if (c.attendees) {
     const prefix = cGroup ? '+ ' : 'WHO: ';
     if (c.attendees.length > 25) {
-      addDaggerFootnote({ title: c.title, time: c.startTime + '\u2013' + c.endTime, attendees: c.attendees });
-      const daggerNum = getDaggerFootnotes().length;
+      let daggerNum = getDaggerFootnotes().findIndex(fn => c.id && fn.eventId === c.id) + 1;
+      if (!daggerNum) {
+        addDaggerFootnote({ eventId: c.id, title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+        daggerNum = getDaggerFootnotes().length;
+      }
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
     } else {
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
@@ -341,11 +344,11 @@ function renderConcurrentItemBody(c, g) {
     // Two different events can share a title and attendees; the footnote
     // carries a time, so the time is part of the identity.
     const timeLabel = c.startTime + ' – ' + c.endTime;
-    const existingIdx = getDaggerFootnotes().findIndex(fn => fn.title === c.title && fn.attendees === c.attendees && fn.time === timeLabel);
+    const existingIdx = getDaggerFootnotes().findIndex(fn => (c.id && fn.eventId === c.id) || (!c.id && fn.title === c.title && fn.attendees === c.attendees && fn.time === timeLabel));
     if (existingIdx !== -1) {
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + (existingIdx + 1) + '</sup></div>';
     } else if (c.attendees.length > 25) {
-      addDaggerFootnote({ title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
+      addDaggerFootnote({ eventId: c.id, title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + getDaggerFootnotes().length + '</sup></div>';
     } else {
       html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';

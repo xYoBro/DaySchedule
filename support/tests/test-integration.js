@@ -110,6 +110,18 @@ if (typeof getCurrentScheduleFileData === 'undefined') {
 function resetTestState() {
   MockFS.reset();
   Store.reset();
+  discardSessionDraft();
+  clearScheduleWorkbookTarget();
+  clearUndoHistory();
+  _editSequence = 0;
+  _savedEditSequence = 0;
+  _workbookSavePromise = null;
+  _legacySavePromise = null;
+  _versionPersistencePromise = null;
+  _saveInProgress = false;
+  _navigationSaving = false;
+  _autosaveFailureNotified = false;
+  _recoveryUnavailableNotified = false;
   _dirHandle = null;
   _currentFileName = null;
   _lastKnownSavedAt = null;
@@ -944,4 +956,500 @@ describe('Integration — opening a file resets undo', () => {
     clearScheduleWorkbookTarget();
     clearUndoHistory();
   });
+});
+
+describe('Integration — workbook recovery and save boundaries', () => {
+  function workbook() {
+    resetTestState();
+    clearScheduleWorkbookTarget();
+    clearUndoHistory();
+    discardSessionDraft();
+    let current = null;
+    window.getCurrentScheduleFileData = () => current;
+    window.setCurrentScheduleFileData = data => { current = data; };
+    Store.setTitle('Alpha');
+    Store.addDay({ id: 'recovery_day', date: '2026-09-10' });
+    current = buildScheduleFile('Alpha', Store.getPersistedState(), [], 'Tester');
+    return () => current;
+  }
+
+  function delayedHandle() {
+    let finish;
+    let entered;
+    const gate = new Promise(resolve => { finish = resolve; });
+    const started = new Promise(resolve => { entered = resolve; });
+    let content = buildScheduleWorkbookContent();
+    const handle = {
+      name: 'recovery.schedule',
+      queryPermission: async () => 'granted',
+      getFile: async () => ({ name: 'recovery.schedule', text: async () => content }),
+      createWritable: async () => ({
+        write: async text => { entered(); await gate; content = text; },
+        close: async () => {},
+        abort: async () => {},
+      }),
+    };
+    return { handle, started, finish, read: () => JSON.parse(content) };
+  }
+
+  it('recovers every unsaved sibling and named version, including a zero-day active schedule', async () => {
+    workbook();
+    createScheduleInWorkbook('Bravo');
+    await createVersion('Checkpoint');
+    await wait(550);
+    Store.reset();
+    setCurrentScheduleFileData(null);
+    clearScheduleWorkbookTarget();
+    assert(sessionLoad(), 'recovery should load');
+    assert.equal(getScheduleWorkbookEntries().length, 2);
+    assert.equal(getCurrentScheduleFileData().versions.length, 1);
+    assert(isDirty(), 'recovered uncommitted work must remain dirty');
+    discardSessionDraft();
+    clearScheduleWorkbookTarget();
+  });
+
+  it('new typing after Undo cannot retain the abandoned Redo branch', () => {
+    workbook();
+    saveUndoState();
+    Store.setTitle('Bravo');
+    undo();
+    saveUndoState();
+    Store.setTitle('Charlie');
+    redo();
+    assert.equal(Store.getTitle(), 'Charlie');
+    undo();
+    assert.equal(Store.getTitle(), 'Alpha');
+    discardSessionDraft();
+  });
+
+  it('restores document appearance with a named version', async () => {
+    const current = workbook();
+    current().theme = { skin: 'bands', palette: 'ocp' };
+    await createVersion('Original');
+    current().theme = { skin: 'grid', palette: 'classic' };
+    await restoreVersion(0);
+    assert.equal(current().theme.skin, 'bands');
+    assert.equal(current().theme.palette, 'ocp');
+    discardSessionDraft();
+  });
+
+  it('keeps newer inactive-schedule edits when an older save finishes', async () => {
+    workbook();
+    createScheduleInWorkbook('Bravo');
+    switchScheduleInWorkbook('alpha');
+    const mock = delayedHandle();
+    const picker = window.showSaveFilePicker;
+    const remember = window.saveWorkbookFileRecord;
+    window.showSaveFilePicker = async () => mock.handle;
+    window.saveWorkbookFileRecord = async () => true;
+    try {
+      const saving = saveScheduleWorkbookFile({ silent: true });
+      await mock.started;
+      Store.setTitle('Alpha amended');
+      sessionSave();
+      switchScheduleInWorkbook('bravo');
+      mock.finish();
+      await saving;
+      const alpha = getScheduleWorkbookSnapshot().schedules.find(item => item.id === 'alpha');
+      assert.equal(alpha.current.title, 'Alpha amended');
+      assert(isDirty(), 'newer workbook revision is not committed');
+    } finally {
+      mock.finish();
+      window.showSaveFilePicker = picker;
+      window.saveWorkbookFileRecord = remember;
+      discardSessionDraft();
+      clearScheduleWorkbookTarget();
+    }
+  });
+
+  it('recovers the complete draft from durable storage after the tab backup is gone', async () => {
+    workbook();
+    createScheduleInWorkbook('Bravo');
+    await createVersion('Durable checkpoint');
+    assert(await flushSessionBackup());
+    sessionStorage.removeItem('schedule_state');
+    _lastRecoveryRecord = null;
+    Store.reset();
+    setCurrentScheduleFileData(null);
+    clearScheduleWorkbookTarget();
+    assert(await restoreDurableRecovery());
+    assert(sessionLoad());
+    assert.equal(getScheduleWorkbookEntries().length, 2);
+    assert.equal(getCurrentScheduleFileData().versions[0].name, 'Durable checkpoint');
+    assert(isDirty());
+    await discardSessionDraft();
+  });
+
+  it('prefers newer disk data after a clean sequential handoff', async () => {
+    workbook();
+    let disk = '';
+    const handle = {
+      name: 'handoff.schedule', queryPermission: async () => 'granted',
+      getFile: async () => ({ name: 'handoff.schedule', text: async () => disk }),
+      createWritable: async () => ({ write: async text => { disk = text; }, close: async () => {} }),
+    };
+    const picker = window.showSaveFilePicker;
+    const remember = window.saveWorkbookFileRecord;
+    window.showSaveFilePicker = async () => handle;
+    window.saveWorkbookFileRecord = async () => true;
+    try {
+      assert(await saveScheduleWorkbookFile({ silent: true }));
+      await flushSessionBackup();
+      const changed = JSON.parse(disk);
+      changed.schedules[0].current.title = 'Teammate final copy';
+      changed.schedule = changed.schedules[0];
+      disk = JSON.stringify(changed);
+      Store.reset();
+      setCurrentScheduleFileData(null);
+      clearScheduleWorkbookTarget();
+      assert(sessionLoad());
+      assert(!isDirty(), 'saved baseline survived recovery');
+      assert(await adoptScheduleWorkbookHandle(handle));
+      assert.equal(Store.getTitle(), 'Teammate final copy');
+      Store.setFooter({ contact: 'New phone' });
+      sessionSave();
+      assert(await saveScheduleWorkbookFile({ silent: true }));
+      assert.equal(JSON.parse(disk).schedules[0].current.title, 'Teammate final copy');
+    } finally {
+      window.showSaveFilePicker = picker;
+      window.saveWorkbookFileRecord = remember;
+      await discardSessionDraft();
+      clearScheduleWorkbookTarget();
+    }
+  });
+
+  it('keeps both full copies after an unsaved recovery conflicts with disk', async () => {
+    workbook();
+    createScheduleInWorkbook('Unsaved sibling');
+    const latest = buildStandaloneScheduleWorkbookObject(buildScheduleFile('Teammate', {
+      title: 'Teammate', days: [], groups: [], logo: null, footer: {},
+    }, [], 'Other'));
+    const handle = {
+      name: 'conflict.schedule', queryPermission: async () => 'granted',
+      getFile: async () => ({ name: 'conflict.schedule', text: async () => JSON.stringify(latest) }),
+      createWritable: async () => ({}),
+    };
+    const review = window.reviewWorkbookConflict;
+    try {
+      window.reviewWorkbookConflict = async () => false;
+      assert.equal(await adoptScheduleWorkbookHandle(handle), false);
+      assert.equal(getScheduleWorkbookEntries().length, 2, 'cancel leaves the local workbook intact');
+      assert.equal(hasScheduleWorkbookHandle(), false, 'cancel cannot attach an overwrite target');
+      window.reviewWorkbookConflict = async () => true;
+      assert(await adoptScheduleWorkbookHandle(handle));
+      const saved = getScheduleWorkbookSnapshot();
+      assert.equal(saved.schedules.length, 3, 'latest plus both recovered siblings');
+      assert(saved.schedules.some(item => item.current.title === 'Teammate'));
+      assert(saved.schedules.some(item => item.current.title === 'Alpha (Recovered)'));
+      assert(saved.schedules.some(item => item.current.title === 'Unsaved sibling (Recovered)'));
+    } finally {
+      window.reviewWorkbookConflict = review;
+      await discardSessionDraft();
+      clearScheduleWorkbookTarget();
+    }
+  });
+
+  it('a completed save cannot reattach a previous workbook after Start fresh', async () => {
+    workbook();
+    const mock = delayedHandle();
+    const picker = window.showSaveFilePicker;
+    window.showSaveFilePicker = async () => mock.handle;
+    try {
+      const saving = saveScheduleWorkbookFile({ silent: true });
+      await mock.started;
+      clearScheduleWorkbookTarget();
+      Store.reset();
+      Store.setTitle('Fresh');
+      setCurrentScheduleFileData(buildScheduleFile('Fresh', Store.getPersistedState(), [], ''));
+      sessionSave();
+      mock.finish();
+      assert.equal(await saving, false);
+      assert.equal(hasScheduleWorkbookHandle(), false);
+      assert.equal(Store.getTitle(), 'Fresh');
+      assert(isDirty());
+    } finally {
+      mock.finish();
+      window.showSaveFilePicker = picker;
+      await discardSessionDraft();
+      clearScheduleWorkbookTarget();
+    }
+  });
+
+  it('archives and restores schedules without losing their versions', async () => {
+    workbook();
+    await createVersion('Keep me');
+    createScheduleInWorkbook('Bravo');
+    assert(archiveWorkbookSchedule('alpha'));
+    assert.equal(getScheduleWorkbookEntries().length, 1);
+    assert.equal(getArchivedWorkbookSchedules().length, 1);
+    assert.equal(archiveWorkbookSchedule('bravo'), false, 'last schedule remains available');
+    assert(restoreArchivedWorkbookSchedule(0));
+    assert.equal(getCurrentScheduleFileData().versions[0].name, 'Keep me');
+    assert.equal(getArchivedWorkbookSchedules().length, 0);
+    await discardSessionDraft();
+  });
+
+  it('previews date shifting and clears only selected old details on the copy', () => {
+    workbook();
+    Store.addDay({ id: 'second_day', date: '2026-09-12' });
+    Store.addEvent('recovery_day', { title: 'Brief', startTime: '0800', endTime: '0900', poc: 'Old POC', attendees: 'Old person' });
+    Store.addNote('recovery_day', { text: 'Old note' });
+    Store.setFooter({ contact: 'Old contact' });
+    const options = { duplicate: true, firstDate: '2026-10-03', clearContacts: true, clearNotes: true };
+    const preview = previewWorkbookDuplicate('Next drill', options);
+    assert.deepEqual(preview.days.map(day => day.to), ['2026-10-03', '2026-10-05']);
+    assert.equal(Store.getDays()[0].date, '2026-09-10', 'preview cannot mutate the source');
+    createScheduleInWorkbook('Next drill', options);
+    assert.equal(Store.getDays()[0].date, '2026-10-03');
+    assert.equal(Store.getDays()[0].events[0].poc, '');
+    assert.equal(Store.getDays()[0].events[0].attendees, 'Old person');
+    assert.equal(Store.getDays()[0].notes.length, 0);
+    switchScheduleInWorkbook('alpha');
+    assert.equal(Store.getFooter().contact, 'Old contact');
+    assert.equal(Store.getDays()[0].notes.length, 1);
+    discardSessionDraft();
+  });
+
+  it('renames and removes a version without changing current schedule content', async () => {
+    workbook();
+    await createVersion('First');
+    await createVersion('Second');
+    assert(await renameVersion(1, 'Baseline'));
+    assert.equal((await getVersions())[1].name, 'Baseline');
+    assert(await deleteVersion(0));
+    assert.equal((await getVersions()).length, 1);
+    assert.equal(Store.getTitle(), 'Alpha');
+    assert.equal((await getVersions())[0].name, 'Baseline');
+    await discardSessionDraft();
+  });
+
+
+  it('keeps legacy edits during a slow read dirty until the newer state is saved', async () => {
+    workbook();
+    installMockDir();
+    setUserName('Tester');
+    const file = buildScheduleFile('Alpha', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('alpha.json', file);
+    setCurrentFile('alpha.json', file.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+    let finish;
+    let entered;
+    const gate = new Promise(resolve => { finish = resolve; });
+    const started = new Promise(resolve => { entered = resolve; });
+    const read = window.readScheduleFile;
+    window.readScheduleFile = async (name, options) => {
+      if (name === 'alpha.json') { entered(); await gate; }
+      return read(name, options);
+    };
+    try {
+      const saving = saveCurrentSchedule();
+      await started;
+      Store.setTitle('Typed during read');
+      sessionSave();
+      finish();
+      assert(await saving);
+      assert(isDirty());
+      window.readScheduleFile = read;
+      assert(await saveCurrentSchedule());
+      assert.equal((await read('alpha.json')).current.title, 'Typed during read');
+    } finally {
+      finish();
+      window.readScheduleFile = read;
+      await discardSessionDraft();
+    }
+  });
+
+  it('a second legacy checkpoint retains a protected checkpoint whose earlier write failed', async () => {
+    workbook();
+    installMockDir();
+    setUserName('Tester');
+    const file = buildScheduleFile('Alpha', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('alpha.json', file);
+    setCurrentScheduleFileData(file);
+    setCurrentFile('alpha.json', file.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+    const write = window.writeScheduleFile;
+    window.writeScheduleFile = async (name, data) => name === 'alpha.json' ? false : write(name, data);
+    try {
+      assert.equal(await createVersion('Protected first checkpoint'), false);
+      assert.equal(getCurrentScheduleFileData().versions.length, 1);
+      assert.equal((await getVersions())[0].name, 'Protected first checkpoint', 'the version panel must show the protected unsaved checkpoint');
+      window.writeScheduleFile = write;
+      assert(await createVersion('Second checkpoint'));
+      const written = await readScheduleFile('alpha.json');
+      assert.deepEqual(written.versions.map(version => version.name), ['Second checkpoint', 'Protected first checkpoint']);
+    } finally {
+      window.writeScheduleFile = write;
+      await discardSessionDraft();
+    }
+  });
+
+  it('legacy Save Version cannot bypass an external-change warning', async () => {
+    workbook();
+    installMockDir();
+    setUserName('Tester');
+    const file = buildScheduleFile('Alpha', Store.getPersistedState(), [], 'Tester');
+    await writeScheduleFile('alpha.json', file);
+    setCurrentFile('alpha.json', file.lastSavedAt);
+    await claimCurrentScheduleLock({ silent: true });
+    file.lastSavedAt = '2099-01-01T00:00:00.000Z';
+    file.current.title = 'Externally completed';
+    await writeScheduleFile('alpha.json', file);
+    assert.equal(await createVersion('Do not overwrite'), false);
+    assert.equal((await readScheduleFile('alpha.json')).current.title, 'Externally completed');
+    closeModal('staleWarningModal');
+    await discardSessionDraft();
+  });
+
+  it('a failed attached write never silently downloads or marks the draft clean', async () => {
+    workbook();
+    const picker = window.showSaveFilePicker;
+    const download = window.triggerDownload;
+    const forget = window.clearWorkbookFileRecord;
+    let downloads = 0;
+    const handle = {
+      name: 'failed.schedule', queryPermission: async () => 'granted',
+      createWritable: async () => { throw new Error('Disk write refused'); },
+    };
+    _scheduleWorkbookHandle = handle;
+    window.showSaveFilePicker = async () => handle;
+    window.triggerDownload = () => { downloads++; };
+    window.clearWorkbookFileRecord = async () => true;
+    sessionSave();
+    try {
+      assert.equal(await saveScheduleWorkbookFile({ silent: true }), false);
+      assert.equal(downloads, 0);
+      assert(isDirty());
+      assert.equal(hasScheduleWorkbookHandle(), false);
+    } finally {
+      window.showSaveFilePicker = picker;
+      window.triggerDownload = download;
+      window.clearWorkbookFileRecord = forget;
+      await discardSessionDraft();
+      clearScheduleWorkbookTarget();
+    }
+  });
+
+
+  it('keeps this tab on its own workbook when another tab has a newer durable draft', async () => {
+    workbook();
+    sessionSave();
+    await flushSessionBackup();
+    const first = sessionStorage.getItem('schedule_state');
+    clearScheduleWorkbookTarget();
+    Store.setTitle('Other tab workbook');
+    setCurrentScheduleFileData(buildScheduleFile('Other tab workbook', Store.getPersistedState(), [], ''));
+    sessionSave();
+    const other = buildRecoveryRecord();
+    other.updatedAt = new Date(Date.now() + 1000).toISOString();
+    await writeRecoveryRecord(other);
+    sessionStorage.setItem('schedule_state', first);
+    Store.reset();
+    setCurrentScheduleFileData(null);
+    clearScheduleWorkbookTarget();
+    _lastRecoveryRecord = null;
+    assert(await restoreDurableRecovery());
+    assert(sessionLoad());
+    assert.equal(Store.getTitle(), 'Alpha');
+    await discardSessionDraft();
+  });
+
+  it('preserves divergent same-workbook tab recovery when the other tab saves a newer backup', async () => {
+    workbook();
+    sessionSave();
+    await flushSessionBackup();
+    const first = sessionStorage.getItem('schedule_state');
+    const firstRecord = JSON.parse(first);
+    Store.setTitle('Other tab divergent edits');
+    sessionSave();
+    const other = buildRecoveryRecord();
+    other.updatedAt = new Date(Date.now() + 1000).toISOString();
+    assert.equal(other.workbook.workbookId, firstRecord.workbook.workbookId);
+    await writeRecoveryRecord(other);
+    sessionStorage.setItem('schedule_state', first);
+    clearTimeout(_sessionSaveTimer);
+    Store.reset();
+    setCurrentScheduleFileData(null);
+    clearScheduleWorkbookTarget();
+    _lastRecoveryRecord = null;
+    assert(await restoreDurableRecovery());
+    assert(sessionLoad());
+    assert.equal(Store.getTitle(), 'Alpha');
+    await discardSessionDraft();
+    const remaining = await readRecoveryRecord();
+    assert.equal(remaining.backupId, other.backupId, 'leaving this tab cannot erase the other tab recovery');
+    await deleteRecoveryRecord(other.backupId);
+    assert.equal(await readRecoveryRecord(), null, 'the matching backup can be removed');
+  });
+
+  it('downloads honestly after a revoked target and a blocked picker without writing that old target', async () => {
+    workbook();
+    let writes = 0;
+    let downloads = 0;
+    const picker = window.showSaveFilePicker;
+    const download = window.triggerDownload;
+    const forget = window.clearWorkbookFileRecord;
+    _scheduleWorkbookHandle = {
+      name: 'revoked.schedule', queryPermission: async () => 'denied',
+      createWritable: async () => { writes++; throw new Error('Must not write a revoked target'); },
+    };
+    window.showSaveFilePicker = async () => { throw new DOMException('Embedded picker unavailable', 'SecurityError'); };
+    window.triggerDownload = () => { downloads++; };
+    window.clearWorkbookFileRecord = async () => true;
+    sessionSave();
+    try {
+      assert(await saveScheduleWorkbookFile());
+      assert.equal(writes, 0);
+      assert.equal(downloads, 1);
+      assert.equal(hasScheduleWorkbookHandle(), false);
+      assert(getWorkbookSaveStatus().startsWith('Downloaded copy'));
+    } finally {
+      window.showSaveFilePicker = picker;
+      window.triggerDownload = download;
+      window.clearWorkbookFileRecord = forget;
+      await discardSessionDraft();
+      clearScheduleWorkbookTarget();
+    }
+  });
+
+  it('an old Reopen result cannot overwrite work created while its read was pending', async () => {
+    workbook();
+    const old = buildScheduleWorkbookContent();
+    let finish;
+    let begin;
+    const gate = new Promise(resolve => { finish = resolve; });
+    const started = new Promise(resolve => { begin = resolve; });
+    const handle = {
+      name: 'old.schedule', queryPermission: async () => 'granted',
+      getFile: async () => { begin(); await gate; return { name: 'old.schedule', text: async () => old }; },
+    };
+    const opening = openScheduleWorkbookFromHandle(handle);
+    await started;
+    clearScheduleWorkbookTarget();
+    Store.setTitle('New work while opening');
+    setCurrentScheduleFileData(buildScheduleFile('New work while opening', Store.getPersistedState(), [], ''));
+    sessionSave();
+    finish();
+    assert.equal(await opening, false);
+    assert.equal(Store.getTitle(), 'New work while opening');
+    assert.equal(hasScheduleWorkbookHandle(), false);
+    assert(isDirty());
+    await discardSessionDraft();
+  });
+
+  it('rejects future formats and ambiguous workbook IDs before loading anything', () => {
+    workbook();
+    const file = JSON.parse(buildScheduleWorkbookContent());
+    file.schemaVersion = 99;
+    assert.throws(() => parseScheduleWorkbookContent(JSON.stringify(file)));
+    file.schemaVersion = 1;
+    file.schedules.push(cloneScheduleData(file.schedules[0]));
+    assert.throws(() => parseScheduleWorkbookContent(JSON.stringify(file)));
+    file.schedules[1].id = 'unreadable-sibling';
+    delete file.schedules[1].current.days;
+    assert.throws(() => parseScheduleWorkbookContent(JSON.stringify(file)), 'an unreadable inactive sibling must not become an empty schedule');
+    assert.equal(Store.getTitle(), 'Alpha');
+    discardSessionDraft();
+  });
+
 });

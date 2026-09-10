@@ -113,3 +113,118 @@ describe('UI Harness — print', () => {
     assert.equal(page.dataset.printScaled, undefined);
   });
 });
+
+describe('UI Harness — print review and handouts', () => {
+  it('prints only selected days and audiences while preserving shared events and Store state', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'cards', dayCount: 2 });
+    const before = JSON.stringify(Store.getPersistedState());
+    const originalDay = Store.getActiveDay();
+    const html = buildPrintMarkup({ dayIds: [seeded.day1.id], audienceId: 'grp_chiefs', mode: 'readable' });
+    const fixture = document.createElement('div');
+    fixture.innerHTML = html;
+    assert.equal(fixture.querySelectorAll('.print-page').length, 1);
+    assert(html.includes('Formation'));
+    assert(html.includes('Weapons Qualification'));
+    assert(html.includes('Lunch'));
+    assert(!html.includes('Aircraft Launch Sim'));
+    assert(!html.includes('Day 2 Formation'));
+    assert(html.includes('Audience: Flight Chiefs'));
+    assert(html.includes('Accountability formation.'));
+    assert.equal(Store.getActiveDay(), originalDay);
+    assert.equal(JSON.stringify(Store.getPersistedState()), before);
+  });
+
+  it('labels an overview and omits only event descriptions while retaining day notes and other fields', () => {
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'grid' });
+    const html = buildPrintMarkup({ detail: 'overview' });
+    assert(html.includes('Overview · Event notes omitted.'));
+    assert(!html.includes('Accountability formation.'));
+    assert(html.includes('Bldg 200 Apron'));
+    assert(html.includes('OCP unless mission tasking requires otherwise.'));
+    assert(buildPrintMarkup({ detail: 'full' }).includes('Accountability formation.'));
+  });
+
+  it('lets readable pages grow without any compression or zoom', () => {
+    resetUiHarnessState();
+    const page = document.createElement('div');
+    page.className = 'page print-page print-readable';
+    page.dataset.printMode = 'readable';
+    page.style.zoom = '0.2';
+    page.style.setProperty('--notes-fs', '5px');
+    stubScrollHeight(page, 5000);
+    applyPrintScalingToPage(page, true);
+    assert.equal(page.style.zoom, '');
+    assert.equal(page.style.getPropertyValue('--notes-fs'), '');
+    assert.equal(page.dataset.printScaled, undefined);
+  });
+
+  it('requires at least one day and previews deliberate omissions before printing', () => {
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'cards', dayCount: 2 });
+    openPrintReview();
+    const modal = document.getElementById('printReviewModal');
+    const detail = document.getElementById('printDetail');
+    detail.value = 'overview';
+    detail.dispatchEvent(new Event('change'));
+    assert(document.getElementById('printReviewSummary').textContent.includes('event note(s) will be omitted'));
+    modal.querySelectorAll('[name="printDay"]').forEach(input => { input.checked = false; });
+    modal.querySelector('[name="printDay"]').dispatchEvent(new Event('change'));
+    assert.equal(document.getElementById('printReviewConfirm').disabled, true);
+    assert(document.getElementById('printReviewSummary').textContent.includes('0 day(s), 0 event(s)'));
+    closeModal('printReviewModal');
+  });
+});
+
+describe('UI Harness — print geometry', () => {
+  it('keeps readable text at least 9 pt across all skins and removes temporary measurement nodes', async () => {
+    // The UI harness deliberately omits the application stylesheet. Geometry
+    // assertions need the real CSS, not browser-default button typography.
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = '../../app/css/style.css';
+    try {
+      await new Promise((resolve, reject) => {
+        stylesheet.onload = resolve;
+        stylesheet.onerror = () => reject(new Error('Could not load print stylesheet'));
+        document.head.appendChild(stylesheet);
+      });
+      SKIN_NAMES.forEach(skin => {
+        resetUiHarnessState();
+        seedUiSchedule({ skin, longConcurrentAttendees: true });
+        const metrics = measurePrintPlan({ mode: 'readable' });
+        assert.equal(metrics.length, 1);
+        assert.equal(metrics[0].scale, 1);
+        assert(metrics[0].smallestTextPt >= 9, skin + ' should retain readable type');
+        assert.equal(document.querySelector('.print-measurement'), null);
+      });
+    } finally {
+      stylesheet.remove();
+    }
+  });
+});
+
+describe('UI Harness — print cleanup', () => {
+  it('labels PDF output and clears print-only state after a browser print failure', async () => {
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'cards' });
+    window.dispatchEvent(new Event('afterprint'));
+    const originalTitle = document.title;
+    const originalPrint = window.print;
+    let outputTitle = '';
+    window.print = () => { outputTitle = document.title; throw new Error('Print unavailable'); };
+    try {
+      printSchedule({ audienceId: 'grp_chiefs', detail: 'overview' });
+      await wait(20);
+      assert(outputTitle.includes('Flight Chiefs') && outputTitle.includes('Overview'));
+      assert.equal(document.getElementById('printContainer').innerHTML, '');
+      assert.equal(document.body.classList.contains('printing-schedule'), false);
+      assert.equal(document.title, originalTitle);
+      assert(document.getElementById('toast').textContent.includes('Couldn’t open the print dialog'));
+    } finally {
+      window.print = originalPrint;
+      window.dispatchEvent(new Event('afterprint'));
+    }
+  });
+});

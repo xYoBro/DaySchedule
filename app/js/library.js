@@ -90,9 +90,12 @@ function formatWorkbookSavedAt(iso) {
 
 function readSessionDraftState() {
   try {
-    const state = JSON.parse(sessionStorage.getItem('schedule_state') || 'null');
-    if (state && Array.isArray(state.days) && state.days.length) return state;
-  } catch (e) { /* corrupt session data — ignore */ }
+    const record = typeof getRecoveryDraftRecord === 'function'
+      ? getRecoveryDraftRecord()
+      : JSON.parse(sessionStorage.getItem('schedule_state') || 'null');
+    const state = typeof recoveryState === 'function' ? recoveryState(record) : record;
+    if (state && Array.isArray(state.days)) return state;
+  } catch (e) { console.warn('Could not inspect workbook recovery:', e); }
   return null;
 }
 
@@ -126,7 +129,6 @@ async function renderLibraryContinueCard() {
   if (!strip) return;
   strip.hidden = true;
   _libraryContinueAction = null;
-  if (hasDirectoryAccess()) return; // directory mode has its own schedule list
 
   const labelEl = document.getElementById('libraryContinueLabel');
   const titleEl = document.getElementById('libraryContinueTitle');
@@ -135,21 +137,23 @@ async function renderLibraryContinueCard() {
   if (!labelEl || !titleEl || !metaEl || !btn) return;
 
   const sessionState = readSessionDraftState();
-  const record = typeof loadWorkbookFileRecord === 'function' ? await loadWorkbookFileRecord() : null;
+  const recoveringLegacy = !!(sessionState && sessionState.recovery && sessionState.recovery.sourceMode === 'directory');
+  if (hasDirectoryAccess() && !sessionState) return;
+  const record = !recoveringLegacy && typeof loadWorkbookFileRecord === 'function' ? await loadWorkbookFileRecord() : null;
 
   if (sessionState) {
     const eventCount = sessionState.days.reduce((n, d) => n + ((d.events && d.events.length) || 0), 0);
     const dayCount = sessionState.days.length;
     const parts = [dayCount + (dayCount === 1 ? ' day' : ' days'), eventCount + (eventCount === 1 ? ' event' : ' events')];
     parts.push(sessionState.workbookFileName ? sessionState.workbookFileName : 'not saved to a file yet');
-    labelEl.textContent = 'Continue where you left off';
+    labelEl.textContent = recoveringLegacy ? 'Recover a local copy' : 'Continue where you left off';
     titleEl.textContent = sessionState.title || 'Untitled workbook';
     metaEl.textContent = parts.join(' · ');
     btn.textContent = 'Continue';
     _libraryContinueAction = async () => {
       // The draft must be in the Store before reattaching: the reattach
       // matches the draft's identity against the file's schedules.
-      if (!Store.getDays().length) sessionLoad();
+      if (!Store.getTitle() && !Store.getDays().length) sessionLoad();
       // Same workbook as the remembered file? Reattach its handle so
       // auto-save writes back to it (the click is the permission gesture).
       if (record && sessionState.workbookFileName === record.name
@@ -162,6 +166,8 @@ async function renderLibraryContinueCard() {
       }
       const days = Store.getDays();
       if (days.length && !Store.getActiveDay()) Store.setActiveDay(days[0].id);
+      if (!hasScheduleWorkbookHandle()) markDirty();
+      if (recoveringLegacy) toast('Recovered as a separate workbook. Save .schedule to keep this copy; the shared file is unchanged.', 8000);
       hideLibrary();
       if (typeof syncCurrentScheduleAccess === 'function') await syncCurrentScheduleAccess();
       syncToolbarTitle();
@@ -188,7 +194,6 @@ async function renderLibraryContinueCard() {
       }
       hideLibrary();
       if (typeof syncCurrentScheduleAccess === 'function') await syncCurrentScheduleAccess();
-      toast('Opened ' + (record.name || 'workbook'));
     };
     strip.hidden = false;
   }
@@ -486,26 +491,45 @@ async function deleteSchedule(fileName) {
   }
 }
 
+let _returnToLibraryPending = false;
+
 async function returnToLibrary() {
-  if (isDirty() && isCurrentScheduleEditable()) {
-    const ok = hasDirectoryAccess()
-      ? await saveCurrentSchedule()
-      : (typeof saveScheduleWorkbookFile === 'function' ? await saveScheduleWorkbookFile() : false);
-    if (!ok) return;
+  if (_returnToLibraryPending) return;
+  _returnToLibraryPending = true;
+  const generation = _workbookGeneration;
+  try {
+    while (_versionPersistencePromise || _workbookSavePromise || _legacySavePromise) {
+      await Promise.all([_versionPersistencePromise, _workbookSavePromise, _legacySavePromise].filter(Boolean));
+      if (generation !== _workbookGeneration) return;
+    }
+    if (isDirty() && !isCurrentScheduleEditable()) {
+      toast('Your unsaved changes are still protected locally. Save a separate .schedule copy before leaving this read-only schedule.', 8000);
+      return;
+    }
+    // A true save result acknowledges one revision, not necessarily the latest
+    // edit. Drain newer revisions before clearing either memory or recovery.
+    while (isDirty()) {
+      const ok = getCurrentFileName()
+        ? await saveCurrentSchedule()
+        : await saveScheduleWorkbookFile();
+      if (!ok || generation !== _workbookGeneration) return;
+    }
+    _navigationSaving = true;
+    syncEditorChrome();
+    await releaseCurrentScheduleLock();
+    if (generation !== _workbookGeneration || isDirty()) return;
+    clearUndoHistory();
+    await discardSessionDraft();
+    setCurrentFile(null, null);
+    Store.reset();
+    setCurrentScheduleFileData(null);
+    clearScheduleWorkbookTarget();
+    showLibrary();
+  } finally {
+    _navigationSaving = false;
+    _returnToLibraryPending = false;
+    syncEditorChrome();
   }
-  await releaseCurrentScheduleLock();
-  if (typeof clearUndoHistory === 'function') clearUndoHistory();
-  setCurrentFile(null, null);
-  Store.reset();
-  setCurrentScheduleFileData(null);
-  // Everything is on disk now (or there was nothing to save). Drop the
-  // session draft — otherwise the Continue card advertises the schedule just
-  // left, and clicking it opens an empty editor — and detach the workbook so
-  // a stray Ctrl+S on the start screen can't append a blank schedule to it.
-  // The card then falls through to "Welcome back · Reopen", which reads the file.
-  if (typeof discardSessionDraft === 'function') discardSessionDraft();
-  if (typeof clearScheduleWorkbookTarget === 'function') clearScheduleWorkbookTarget();
-  showLibrary();
 }
 
 // ── Context menu ───────────────────────────────────────────────────────────
@@ -522,13 +546,15 @@ function showContextMenu(x, y, fileName) {
     document.body.appendChild(menu);
 
     menu.querySelector('#ctxDuplicate').onclick = () => {
+      const target = _contextMenuTarget;
       closeContextMenu();
-      if (_contextMenuTarget) duplicateSchedule(_contextMenuTarget);
+      if (target) duplicateSchedule(target);
     };
     menu.querySelector('#ctxDelete').onclick = () => {
+      const target = _contextMenuTarget;
       closeContextMenu();
-      if (_contextMenuTarget && confirm('Delete this schedule? This cannot be undone.')) {
-        deleteSchedule(_contextMenuTarget);
+      if (target && confirm('Delete this schedule? This cannot be undone.')) {
+        deleteSchedule(target);
       }
     };
   }
@@ -730,7 +756,7 @@ function openHelpModal(options) {
     : (wasSeen ? (_helpActiveTab || 'faq') : 'start');
   markHelpSeen();
   _helpActiveTab = defaultTab;
-  overlay.classList.add('active');
+  openModal('helpModal');
   syncHelpEntryPoints();
   wireHelpModal(overlay);
   renderHelpErrorLog();
@@ -738,7 +764,7 @@ function openHelpModal(options) {
 
 function closeHelpModal() {
   const overlay = document.getElementById('helpModal');
-  if (overlay) overlay.classList.remove('active');
+  if (overlay) closeModal('helpModal');
   syncHelpEntryPoints();
 }
 
@@ -748,7 +774,7 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
+  if (e.key === 'Escape' && !e.defaultPrevented) {
     const overlay = document.getElementById('helpModal');
     if (overlay && overlay.classList.contains('active')) closeHelpModal();
   }

@@ -90,29 +90,45 @@ window.addEventListener('unhandledrejection', e => {
   logAppError('promise', reason && reason.message ? reason.message : reason, '');
 });
 
+function parseHexColor(color) {
+  let hex = String(color || '').trim().replace(/^#/, '');
+  if (/^[\da-f]{3,4}$/i.test(hex)) hex = hex.split('').map(ch => ch + ch).join('');
+  if (!/^(?:[\da-f]{6}|[\da-f]{8})$/i.test(hex)) return null;
+  return { rgb: [0, 2, 4].map(offset => parseInt(hex.slice(offset, offset + 2), 16) / 255),
+    alpha: hex.length === 8 ? parseInt(hex.slice(6), 16) / 255 : 1 };
+}
+
+function compositeColor(foreground, background) {
+  return foreground.rgb.map((channel, i) => channel * foreground.alpha + background[i] * (1 - foreground.alpha));
+}
+
+function rgbLuminance(rgb) {
+  const channels = rgb.map(channel => {
+    return channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+  });
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function colorLuminance(color) {
+  const parsed = parseHexColor(color);
+  return parsed ? rgbLuminance(compositeColor(parsed, [1, 1, 1])) : null;
+}
+
+function getColorContrast(text, background) {
+  const foreground = parseHexColor(text);
+  const surface = parseHexColor(background);
+  if (!foreground || !surface) return 0;
+  const bg = compositeColor(surface, [1, 1, 1]);
+  const a = rgbLuminance(compositeColor(foreground, bg));
+  const b = rgbLuminance(bg);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
 function getContrastingTextColor(bgColor) {
-  const fallback = '#1d1d1f';
-  if (!bgColor) return fallback;
-
-  const hex = String(bgColor).trim().replace(/^#/, '');
-  const normalized = hex.length === 3
-    ? hex.split('').map(ch => ch + ch).join('')
-    : hex;
-
-  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return fallback;
-
-  const r = parseInt(normalized.slice(0, 2), 16) / 255;
-  const g = parseInt(normalized.slice(2, 4), 16) / 255;
-  const b = parseInt(normalized.slice(4, 6), 16) / 255;
-
-  function linearize(channel) {
-    return channel <= 0.04045
-      ? channel / 12.92
-      : Math.pow((channel + 0.055) / 1.055, 2.4);
-  }
-
-  const luminance = (0.2126 * linearize(r)) + (0.7152 * linearize(g)) + (0.0722 * linearize(b));
-  const whiteContrast = 1.05 / (luminance + 0.05);
-  const darkContrast = (luminance + 0.05) / 0.05;
-  return darkContrast >= whiteContrast ? '#1d1d1f' : '#ffffff';
+  if (colorLuminance(bgColor) === null) return '#1d1d1f';
+  // Measure the actual dark ink, not black followed by a different return value.
+  const dark = getColorContrast('#1d1d1f', bgColor);
+  const white = getColorContrast('#ffffff', bgColor);
+  if (dark >= 4.5 && dark >= white) return '#1d1d1f';
+  return getColorContrast('#000000', bgColor) >= white ? '#000000' : '#ffffff';
 }

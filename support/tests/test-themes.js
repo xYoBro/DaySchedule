@@ -1,4 +1,13 @@
 describe('Themes — palette definitions', () => {
+  it('keeps ordinary and muted text readable on both preset surfaces', () => {
+    Object.entries(PALETTES).forEach(([name, colors]) => {
+      ['text', 'textSecondary', 'textMuted'].forEach(key => {
+        ['bg', 'surface'].forEach(surface => {
+          assert(getColorContrast(colors[key], colors[surface]) >= 4.5, name + ' ' + key + ' on ' + surface);
+        });
+      });
+    });
+  });
   it('PALETTES contains all 5 presets', () => {
     assert(PALETTES.classic, 'classic');
     assert(PALETTES.airforce, 'airforce');

@@ -154,3 +154,65 @@ describe('schema — notes survive a cleared text field', () => {
     assert.equal(normalizeNote({ category: '  ', text: '' }), null);
   });
 });
+
+describe('schema — imported identity and day integrity', () => {
+  it('keeps inherited object keys out of entity lookup maps', () => {
+    const state = normalizePersistedState({ groups: [{ id: '__proto__', name: 'A' }, { id: 'constructor', name: 'B' }],
+      days: [{ id: 'toString', events: [{ id: 'hasOwnProperty', title: 'Safe', groupId: '__proto__', startTime: '0800', endTime: '0900' }] }],
+      activeDay: 'toString' });
+    assert.equal(state.days[0].events[0].groupId, state.groups[0].id);
+    assert.equal(state.activeDay, state.days[0].id);
+    [state.groups[0].id, state.groups[1].id, state.days[0].id, state.days[0].events[0].id].forEach(id => {
+      assert(!Object.prototype.hasOwnProperty.call(Object.prototype, id));
+    });
+  });
+  it('does not coerce object fields or punctuation into text or midnight', () => {
+    const malformed = { toString: null };
+    const state = normalizePersistedState({ title: malformed, activeDay: malformed,
+      groups: [{ id: malformed, name: malformed }], footer: { contact: malformed },
+      days: [{ id: malformed, events: [{ id: malformed, title: malformed, startTime: '0737', endTime: '0832', groupId: malformed }] }],
+    });
+    assert.equal(state.title, '');
+    assert.equal(state.days[0].events[0].title, 'Untitled event');
+    assert.equal(normalizeEvent({ title: 'Missing start', endTime: '0800' }), null);
+    assert.equal(normalizeEvent({ startTime: ':', endTime: '0800' }), null);
+    assert.equal(normalizeTime('0'), '0000');
+  });
+  it('preserves colliding records and their exact audience/day references', () => {
+    const state = normalizePersistedState({
+      groups: [{ id: 'g/a', name: 'A' }, { id: 'ga', name: 'B' }],
+      days: [
+        { id: 'd/a', events: [
+          { id: 'e/a', title: 'A', groupId: 'g/a', startTime: '0800', endTime: '0900' },
+          { id: 'ea', title: 'B', groupId: 'ga', startTime: '0900', endTime: '1000' },
+        ] },
+        { id: 'da', events: [{ id: 'ea', title: 'C', startTime: '0800', endTime: '0900' }] },
+      ], activeDay: 'da',
+    });
+    assert.equal(state.days.length, 2);
+    assert(state.days[0].id !== state.days[1].id, 'day IDs must be unique');
+    assert.equal(state.activeDay, state.days[1].id);
+    assert.equal(new Set(state.days.flatMap(d => d.events.map(e => e.id))).size, 3);
+    assert(state.groups[0].id !== state.groups[1].id, 'audience IDs must be unique');
+    assert.equal(state.days[0].events[0].groupId, state.groups[0].id);
+    assert.equal(state.days[0].events[1].groupId, state.groups[1].id);
+  });
+  it('normalizes reversed day bounds as one valid range', () => {
+    const day = normalizeDay({ startTime: '1700', endTime: '0700' });
+    assert(timeToMinutes(day.endTime) > timeToMinutes(day.startTime));
+  });
+  it('rejects impossible calendar dates without rolling into another month', () => {
+    assert.equal(normalizeDay({ date: '2026-02-31' }).date, '');
+    assert.equal(normalizeDay({ date: '2024-02-29' }).date, '2024-02-29');
+    assert.equal(normalizeDay({ date: '2026-02-29' }).date, '');
+  });
+  it('normalizes unexpected scalar text without crashing the entire import', () => {
+    const state = normalizePersistedState({ groups: [{ name: 42 }], days: [{
+      label: 9, events: [{ title: 123, description: false, startTime: '0800', endTime: '0900' }],
+      notes: [{ category: 7, text: 12 }],
+    }] });
+    assert.equal(state.groups[0].name, '42');
+    assert.equal(state.days[0].events[0].title, '123');
+    assert.equal(state.days[0].notes[0].text, '12');
+  });
+});

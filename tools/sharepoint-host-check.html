@@ -1,21 +1,12 @@
 <!DOCTYPE html>
 <!--
-  A minimal stand-in for "some existing SharePoint page" -- its own body
-  margin, background, font-family, and a stray <p> with default UA margin.
-  Use it to re-verify dist/DaySchedule.sharepoint.html after any change to
-  that file, especially the <style> block: paste the ported widget's full
-  contents where marked below, open this file in a browser, and confirm
-  (via DevTools computed-style panel, not just "no console errors"):
-
-    - the host's own h1 color / body margin+background / paragraph spacing
-      are untouched (the widget must not leak page-wide styles), and
-    - the widget's own cards/bars still have their real padding and margins
-      (a previous version of the port passed the first check while silently
-      failing the second -- an over-specific reset rule beat every
-      class-based margin/padding rule in the app's stylesheet; see the
-      SPECIFICITY NOTE in dist/DaySchedule.sharepoint.html's header comment).
-
-  Not part of the build -- nothing regenerates this automatically.
+  Synthetic host for the iframe build; this is not a live SharePoint test.
+  Build the default srcdoc snippet, paste it at DAYSCHEDULE_EMBED below,
+  then open this file. Check host styles, controls and keyboard shortcuts,
+  frame dark mode, Create, and removing/reinserting the frame. The frame
+  should behave like the standalone app without changing its host.
+  Automated equivalents live in tools/test-embed.cjs. Native file-picker
+  permissions, print dialogs and tenant policies need manual deployment QA.
 -->
 <html lang="en">
 <head>
@@ -26,16 +17,21 @@
   h1 { color: darkred; }
   .host-widget-zone { border: 4px dashed limegreen; padding: 12px; }
   .host-footer { margin-top: 40px; padding: 20px; background: #d0e8ff; }
+  .toolbar, .app-body { color: darkred; padding: 10px; }
+  button { font-family: Georgia, serif; border: 3px solid darkred; }
 </style>
 </head>
 <body>
   <h1>Host Page Title (should stay serif/darkred, unaffected)</h1>
   <p id="host-para">This paragraph belongs to the host page, not the widget.</p>
+  <div id="host-toolbar" class="toolbar">Host toolbar must remain visible.</div>
+  <div id="host-app" class="app-body">Host app body must remain visible.</div>
+  <label for="host-input">Host text field</label>
+  <input id="host-input" value="Host controls stay independent">
+  <button id="host-button">Host button</button>
 
   <div class="host-widget-zone">
-    <!-- ⬇⬇⬇ Paste the full contents of dist/DaySchedule.sharepoint.html here ⬇⬇⬇ -->
-
-    <!-- ⬆⬆⬆ end pasted widget ⬆⬆⬆ -->
+    <!-- DAYSCHEDULE_EMBED -->
   </div>
 
   <div class="host-footer">Host page footer &mdash; should still look like this (blue box), not be reset by the widget.</div>

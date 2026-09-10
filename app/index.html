@@ -18,14 +18,14 @@
       <div class="library-brand">DaySchedule</div>
       <div class="library-header-actions">
         <button class="library-help-btn" id="libraryHelpBtn" title="Help &amp; shortcuts">Help</button>
-        <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme"></button>
+        <button class="library-theme-toggle" id="editorThemeToggle" title="UI theme" aria-label="Toggle editor appearance"></button>
       </div>
     </div>
     <div class="library-body">
       <section class="library-home">
         <h1 class="library-home-title">Open the workbook. Edit the day.</h1>
         <p class="library-home-copy">One app. One <strong>.schedule</strong> workbook file. No folder setup.</p>
-        <p class="library-home-privacy">Everything stays on this computer &mdash; nothing is uploaded or shared.</p>
+        <p class="library-home-privacy">DaySchedule does not transmit your schedule. Files in a synced folder follow that folder&rsquo;s sharing settings.</p>
         <div class="library-continue-strip" id="libraryContinueStrip" hidden>
           <div class="library-continue-info">
             <div class="library-start-label" id="libraryContinueLabel">Continue where you left off</div>
@@ -82,11 +82,11 @@
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
-      <button class="tb-back" id="tbBack" title="Back to library">&larr;</button>
+      <button class="tb-back" id="tbBack" title="Back to library" aria-label="Back to library">&larr;</button>
       <div class="tb-sep"></div>
       <div class="tb-brand">DaySchedule</div>
       <div class="tb-sep"></div>
-      <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title">
+      <input type="text" class="tb-title" id="tbTitle" value="" placeholder="Schedule Title" aria-label="Schedule title">
       <button class="workbook-switch-btn" id="workbookSwitchBtn" type="button" hidden>
         <span id="workbookSwitchLabel">1 schedule</span>
         <span class="workbook-switch-caret">▾</span>
@@ -105,7 +105,7 @@
       <div class="tb-sep"></div>
       <button class="btn" id="customizeBtn">Customize</button>
       <div class="tb-overflow" id="overflowMenu">
-        <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions">&#x2026;</button>
+        <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions" aria-label="More actions" aria-expanded="false" aria-controls="overflowDropdown">&#x2026;</button>
         <div class="tb-overflow-dropdown" id="overflowDropdown">
           <button class="tb-overflow-item" id="versionsMenuBtn">Versions</button>
           <button class="tb-overflow-item" id="saveScheduleFileBtn">Save .schedule</button>
@@ -199,7 +199,7 @@
           </div>
           <div class="help-item">
             <div class="help-item-label">Is my data private?</div>
-            <div class="help-item-desc">Yes. Everything runs and stays on this computer &mdash; the app never uploads or shares anything, and the browser is blocked from sending data out. Don&rsquo;t take our word for it: turn off Wi&#8209;Fi and the app works exactly the same.</div>
+            <div class="help-item-desc">DaySchedule does not transmit your schedule. The app works offline and its Content Security Policy blocks application network requests. Files in a synced or shared folder follow that folder&rsquo;s settings. An embedded app also depends on the hosting site and its administrator.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Can I open an older export (scheduledata.js)?</div>
@@ -238,7 +238,7 @@
             </div>
             <div class="help-shortcut">
               <div class="help-shortcut-keys"><kbd>Ctrl</kbd><span class="help-shortcut-plus">+</span><kbd>P</kbd></div>
-              <span>Print all days</span>
+              <span>Review and print</span>
             </div>
             <div class="help-shortcut">
               <div class="help-shortcut-keys"><kbd>Ctrl</kbd><span class="help-shortcut-plus">+</span><kbd>Z</kbd></div>

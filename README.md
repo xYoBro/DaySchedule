@@ -1,84 +1,134 @@
 # DaySchedule
 
-DaySchedule is a browser-based day-schedule builder. It runs entirely in your browser — no server, no accounts, and no network access. Your schedule data never leaves your computer.
+DaySchedule is a browser-based day-schedule builder. It needs no account or application server. The app makes no network requests after its files load and works offline. Schedules live in files you choose and browser recovery storage. Saving to a synced or shared folder lets that folder's service copy the file elsewhere; DaySchedule does not upload it.
 
-Licensed under the MIT License. See [LICENSE](LICENSE).
+Licensed under the [MIT License](LICENSE). The generated app also includes the license notice.
 
-## How Your Data Is Stored
+## Start and save
 
-Everything lives in one **`.schedule` file** (a workbook) that you save on your own computer or a shared drive. One workbook file can hold many schedules — use the schedule switcher in the toolbar to move between them.
+1. Open `app/index.html`, or open the built `dist/DaySchedule.html` as a local file.
+2. Choose **Create** for a new workbook or **Open .schedule** for an existing one.
+3. Build your day with **+ Day**, **+ Event**, and **+ Note**. **Quick Edit** gives you a worksheet with one row per event.
+4. Save the workbook. A `.schedule` file can hold several schedules; use the toolbar switcher to move between them.
 
-- **Chrome and Edge:** after you save once, DaySchedule auto-saves every edit back to your `.schedule` file (watch for `Saved` in the toolbar). The start screen offers a **Continue** card to reopen your last workbook.
-- **Safari and Firefox:** auto-save to a file isn't supported by the browser. Each save downloads a fresh copy of the `.schedule` file and the toolbar shows `Downloaded` (not `Saved`) — keep the newest copy; the file you opened is unchanged.
+In a standalone Chrome or Edge tab, supported file access lets the app autosave edits to the file after the first save. Wait for **Saved** before closing or handing off. The start screen can offer **Continue** to recover a draft or reopen a remembered file; the browser may ask for permission again.
 
-A session backup underneath every edit protects against crashes and accidental tab closes, and the app warns you before closing with unsaved work.
+Safari and Firefox use download-based saving. **Downloaded** means a fresh copy was sent to Downloads; the file you opened is unchanged. Keep the newest copy. Embedded browsers may also restrict native file access: open the standalone app in its own tab when you need file autosave.
 
-## First-Time Use
+Browser recovery storage protects work when available. It is separate from saving the workbook, and it can be unavailable, cleared, or full. Keep saved copies of important work.
 
-1. Open `index.html` (or the single-file `DaySchedule.html`) in Chrome or Edge.
-2. Click **Create** to start a new schedule, or **Open .schedule** to open an existing workbook file.
-3. Build your day: `+ Day`, `+ Event`, `+ Note`. `Quick Edit` works like a dense worksheet — one row per event, with a selected-row editor for extra fields.
-4. Save when prompted. After the first save, edits auto-save; wait for `Saved` in the toolbar before closing or handing off.
+The recovery copy includes the whole workbook, archived schedules, and version history. On **Continue**, a clean remembered workbook reloads the latest file. If local edits and the file have both changed, the app offers **Cancel** or **Keep Both**. Keep Both puts recovered copies alongside the latest file's schedules for you to compare. A changed file also pauses background autosave; use **Save Now** to review it.
 
-`Audience` means the group or section an event belongs to. `Primary` audiences go to the main track automatically. `Supporting` or unassigned events stay out of the main track unless you turn on `Main Track`. `Specific People` is for named people who need something different from the main audience.
+## Manage and reuse schedules
 
-## Working as a Team
+The workbook switcher can search, open, create, and duplicate schedules. **Archive** removes a schedule from the active list while keeping it in the file; expand **Archived schedules** and choose **Restore** to bring it back. Keep at least one active schedule. Archiving does not erase sensitive information from the file.
 
-DaySchedule has no server, so there is no real-time collaboration. The safe workflow for a shared `.schedule` file (SharePoint, Teams-synced folder, network drive):
+Use **Duplicate Current** to copy a schedule. Its optional **New first date** shifts all day dates by the same offset, preserving their spacing. Review the dates before **Create Copy**. You can also clear contacts and event POCs, notes, or specific people when preparing the next exercise. The original schedule stays available.
 
-- **One editor at a time.** Agree on who has the file, edit, wait for `Saved`, hand off.
-- Before major changes, open **Versions** (under `More`) and save a named version — restoring creates an automatic backup of the current state first.
-- If two people edit the same file at once, the last save wins and the other person's changes are lost. Nothing in the app can prevent that — the rule has to be human.
-- If you reach the file through Teams/SharePoint, use the **synced** folder on your computer. A downloaded copy is a separate file that nobody else sees.
+**More → Versions** supports named snapshots, restore, rename, and delete, and shows the approximate workbook size. Versions include appearance settings and logos. Deleting unneeded versions can reduce file size; archiving a schedule retains its contents.
 
-### Legacy shared-folder mode
+## Work with a team
 
-Earlier DaySchedule versions supported a shared `app/data` folder with per-schedule files, edit locks, and Take Over. That mode still works in browsers that already have the folder connected, but new setups can no longer connect to it — the workbook flow above replaced it. The locks it used are advisory (they rely on folder sync being fast), so the one-editor-at-a-time rule applies there too.
+Use **one editor at a time** for a shared workbook. Agree on who has it, wait for **Saved**, then hand off. Files reached through a Teams or SharePoint synced folder are shared through that service; a separately downloaded copy is a different file.
 
-## Layouts
+Before major changes, use **More → Versions** to save a named version. Versions live inside the workbook; restoring one first backs up the current state. Version history travels with copies of the file.
 
-Four layouts render the same data: **Bands** (main track + concurrent events), **Grid** (time × groups), **Cards** (per-group panels), and **Phases** (long block exercises). Layout applies to the whole schedule. On crowded days, Bands shows a density note with one-click switches — Grid or Cards are usually easier to check for conflicts.
+There is no server coordinating simultaneous edits. File checks and browser warnings cannot make a network drive or sync service atomic. Keep the one-editor rule even when the app detects a changed file.
 
-Overlapping events are **allowed by design** (concurrent training is the normal case). Bands surfaces them as "Also Happening" and exception notes; Grid warns when events in the same group's lane overlap. Cards and Phases simply show all events.
+Earlier releases used a connected `app/data` directory with a file for each schedule. Existing browser profiles can still reopen that legacy mode, but new setups use workbooks. Legacy locks depend on timely folder sync and remain advisory. A recovered legacy draft opens as a separate workbook so it cannot silently overwrite the shared original.
 
-## Printing
+## Layouts and printing
 
-Use the in-app **Print** button or `Ctrl/Cmd+P`. Every day prints on its own page, auto-scaled to fit. Very dense days print smaller to fit the paper — if a page is hard to read, switch layouts or split the day.
+Four layouts show the same schedule: **Bands** for a main track with concurrent events, **Grid** for time and audience lanes, **Cards** for audience panels, and **Phases** for longer exercises. The selected layout applies to the schedule.
 
-## If Something Breaks
+An **Audience** is a group or section. Primary audiences normally appear on the main track. Supporting or unassigned events need **Main Track** enabled to join it. **Specific People** describes people who need something different from the audience's main activity. Concurrent events are allowed; check overlap warnings in the context of the people involved.
 
-Open **Help → Shortcuts**. The bottom shows the build stamp and a local log of recent errors — include both in any bug report. The log stays on your computer.
+Use the app's **Print** action or `Ctrl/Cmd+P` to review days, audience, detail, and page layout. **Readable pages** lets a day continue onto more pages. **Fit each day on one page** can make dense text small; the review warns about that tradeoff. Schedule checks flag missing dates, overlaps, and other items to review without forbidding deliberate concurrent events.
 
-The most common cause of "buttons don't work" is a stale copy of the app. Compare the build stamp with the current release before anything else.
+An audience handout includes primary-audience events and breaks. It is a filtered presentation, not a redaction tool: review named exceptions and day notes before sharing. Check the browser's print preview as paper settings affect the result. When embedded, open the standalone app in its own tab for printing so the host page is not included.
 
-## Known Limitations
+**Customize → Look** offers preset palettes and editable custom colors with a text-contrast warning. The editor's light/dark toggle is separate from the schedule's printed appearance.
 
-- **Single-day events only.** An event cannot cross midnight (e.g., 2200–0100). The editor rejects such ranges, and files containing them load with a notice that those events were skipped.
-- **Not a calendar.** There are no time zones, no recurrence, no reminders. Times are plain 24-hour wall-clock labels (`0730`), and every day is built explicitly.
-- **No multi-editor protection in the workbook flow.** A shared `.schedule` file is last-writer-wins. One editor at a time; save Versions before big changes.
-- **Schedules inside a workbook can't be deleted yet.** The workbook switcher can create, duplicate, and open schedules but not remove one. To drop an unwanted schedule, use **Start fresh** for a new workbook or leave it in place.
-- **Logos must be image files under 2 MB.** The logo is stored inside the `.schedule` file itself (and in the crash-recovery backup), so larger files are refused with a message.
-- **Legacy-mode locks are advisory.** Two people clicking `Edit` within a slow folder-sync window can both succeed. `Take Over` reloads the file from disk, but work the other editor hadn't saved is lost.
-- **Full auto-save needs Chrome or Edge.** Safari and Firefox fall back to download-based saving.
-- **Versions live inside the workbook file.** Versions created before the first save of a new draft exist only in the session backup until the file is saved.
-- **Crash recovery has a size limit.** Very large logos can exceed browser session-storage quota; if that happens the crash backup stops updating (a warning is logged to the browser console).
-- **Dense-day printing trades size for fit.** Print always fits the paper, even if that means small text. On screen the page grows taller instead.
-- **No enforcement, by design.** There are no accounts and no server: anyone who can open the file can edit it. The app is zero-egress — a strict Content-Security-Policy blocks all network traffic, which is also why it works fully offline.
+## Boundaries
 
-## Building the Single-File App Shell
+- Events stay within one day. Times use 24-hour wall-clock labels, such as `0730`; there are no time zones, recurrence rules, or reminders.
+- There are no accounts or access controls inside the workbook. Anyone with a copy can read and edit its contents, including saved versions. Use your file-sharing system to control access.
+- Logos are stored inside the workbook and recovery copy and must be supported image files under 2 MB.
+- Browser recovery and remembered file permissions depend on the browser profile and origin. Private browsing, storage restrictions, moving the app, or clearing browser data can affect them.
+- An iframe has its own UI document, but a same-origin host can still read or modify it. Use a trusted host. Multiple app instances on the same origin share browser persistence; keep one editor open at a time.
+
+## Build and distribute
+
+Python 3.10 or newer is required for the packaging tools. Source files run directly in a browser without a build step.
 
 ```bash
 python3 tools/build-single-html.py
 ```
 
-This creates `dist/DaySchedule.html` — the whole app in one file, stamped with the build date (shown in Help). The generated file is only the app shell; schedule data stays in your `.schedule` files. The build fails loudly if the zero-egress CSP tag is missing.
+This writes `dist/DaySchedule.html`, including scripts, styles, the MIT notice, and a build stamp such as `2026-09-10+012345abcdef`. The hash identifies the bundled content, including uncommitted source changes. The file is an app shell: schedule data belongs in `.schedule` files. The builder refuses non-placeholder content in `app/data/scheduledata.js`, removes placeholder comments, and requires the app's Content Security Policy.
 
-## Tests
+Use current Chrome, Edge, Firefox, or Safari. The iframe build uses ordinary document isolation and no longer requires CSS `@scope`; there is no separately claimed old-browser minimum. Native file autosave depends on browser support, permissions, and whether the app is embedded.
 
-Open these in a browser (serve the repo root, e.g. `python3 -m http.server`):
+### SharePoint and other hosts
 
-- `support/tests/runner.html` — unit tests (utilities, schema validation, data helpers, store)
-- `support/tests/runner-integration.html` — storage/persistence integration tests (in-memory FSAPI mock)
-- `support/tests/runner-ui.html` — UI harness (renderers, app-shell flows, print behavior)
+The modern SharePoint **Embed** web part accepts iframe embed code; it does not accept arbitrary script tags. It is different from an administrator-approved custom HTML or SPFx host. See Microsoft's [Embed web part guidance](https://support.microsoft.com/en-us/office/add-content-to-your-page-using-the-embed-web-part-721f3b2f-437f-45ef-ac4e-df29dba74de8).
 
-Note: `python3 -m http.server` sends no cache headers, so browsers cache the app JS aggressively. After editing, serve on a fresh port or hard-reload — otherwise you are testing stale code.
+For the modern Embed route, publish `DaySchedule.html` at an approved HTTPS URL that serves it as HTML and permits framing, then generate a URL-based snippet:
+
+```bash
+python3 tools/build-sharepoint-embed.py --app-url 'https://approved.example/DaySchedule.html'
+```
+
+Copy the generated `<iframe …></iframe>` from `dist/DaySchedule.sharepoint.html` into the Embed web part. Your SharePoint administrator must allow the host domain. The app host's framing policy and authentication must also permit the deployment. A SharePoint document-library download link is not automatically an executable app host. Cross-origin frames can restrict native file pickers; opening the app URL in its own tab is the supported route for reliable file autosave.
+
+For an approved host that accepts a complete HTML snippet, build the self-contained version:
+
+```bash
+python3 tools/build-sharepoint-embed.py --build-dist --height 900
+```
+
+This rebuilds the standalone app and places that complete document in an iframe's `srcdoc`. Its CSP and license stay inside the frame. The host gets no app scripts, styles, keyboard handlers, or global boot guard. Removing and reinserting the frame creates a new app instance. The host can still impose stricter CSP or storage policies; same-origin `srcdoc` is UI isolation, not protection from a malicious host administrator.
+
+Both commands write the same snippet path, so distribute the mode you intended. `--height` sets the frame height in CSS pixels. Test the actual host's page width, scrolling, storage access, save workflow, and print workflow before rollout. The repository's synthetic-host tests do not certify a live SharePoint tenant.
+
+## Verify changes
+
+Run the build regressions; outputs stay in temporary copies:
+
+```bash
+python3 tools/test-builds.py
+```
+
+With Playwright and its browser engines installed, run iframe regressions:
+
+```bash
+node tools/test-embed.cjs
+```
+
+If Playwright is installed outside the normal Node module search path, set `DAYSCHEDULE_PLAYWRIGHT_MODULE` to its module directory. This suite checks Chromium, Firefox, and WebKit host isolation, dark mode, remounting, frame CSP, fallback downloads, and `file://` boot. It also verifies that a cross-origin frame downloads a valid workbook when Chromium rejects the native picker. The tests use local loopback origins and do not operate native file-picker or print dialogs.
+
+Run the complete browser harnesses and user flows with the same Playwright setup:
+
+```bash
+node support/tests/test-browser.cjs
+```
+
+This command starts its own local server and uses isolated browser contexts in all three engines. It covers startup, mobile layout, keyboard operation, exact-minute edits, printing, custom colors, download/reopen, dated duplication, archive/restore, and version management. It writes evidence to the gitignored `output/playwright/release/` directory and does not use your browser profile.
+
+With Chromium and Poppler's `pdftotext` and `pdfinfo` on PATH, verify emitted PDFs:
+
+```bash
+node support/tests/test-print-pdf.cjs
+```
+
+This checks 48 synthetic event descriptions in all four layouts, both print modes, and Letter/A4 output. It checks one-page fitting and the readable mode's pre-print text measurement. PDF files and results go to the same ignored evidence directory; physical printer output still needs inspection.
+
+Serve the repo root and open the app harnesses in each target browser:
+
+- `support/tests/runner.html`: utilities, schema, data helpers, and store.
+- `support/tests/runner-integration.html`: asynchronous storage and persistence with an in-memory file-system mock.
+- `support/tests/runner-ui.html`: real app-shell, rendering, and print-layout behavior.
+
+For example, use `python3 -m http.server`. Hard-reload after edits or use a fresh port to avoid cached scripts. Test the standalone build as a local file as well as over HTTP. `tools/sharepoint-host-check.html` is a manual synthetic host for the generated iframe snippet.
+
+If something breaks, open **Help → Shortcuts** and include the build stamp and relevant local error-log entries in the report. Review error details before sharing them. Neither the log nor the report is uploaded by DaySchedule.

@@ -175,7 +175,7 @@ describe('UI Harness — app shell', () => {
     assert.equal(getCurrentFileName(), null);
     assert.equal(isCurrentScheduleEditable(), true, 'new workbook should stay editable');
     assert.equal(document.getElementById('libraryView').classList.contains('active'), false);
-    assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Safari Draft');
+    assert.equal(recoveryState(JSON.parse(sessionStorage.getItem('schedule_state'))).title, 'Safari Draft');
     assert.equal(document.getElementById('editorAccessBar').hidden, false, 'workbook save bar should stay visible');
     assert(document.getElementById('editorAccessText').textContent.includes('.schedule'));
     assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Save .schedule');
@@ -436,7 +436,7 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('versionModal').classList.contains('active'), false);
     assert.equal(versions.length, 2, 'restoring should create an auto-backup');
     await wait(600);
-    assert.equal(JSON.parse(sessionStorage.getItem('schedule_state')).title, 'Version Harness');
+    assert.equal(recoveryState(JSON.parse(sessionStorage.getItem('schedule_state'))).title, 'Version Harness');
 
     await openVersionPanel();
     assert(document.getElementById('versionModal').textContent.includes('Recent'));
@@ -526,7 +526,7 @@ describe('UI Harness — app shell', () => {
     assert.equal(document.getElementById('tbTitle').value, 'Undo Baseline');
 
     await wait(600);
-    const saved = JSON.parse(sessionStorage.getItem('schedule_state'));
+    const saved = recoveryState(JSON.parse(sessionStorage.getItem('schedule_state')));
     assert.equal(saved.title, 'Undo Baseline');
   });
 
@@ -1005,12 +1005,12 @@ describe('UI Harness — app shell', () => {
     let undoCalls = 0;
     let redoCalls = 0;
     const originalForceSave = window.forceSave;
-    const originalPrintAllDays = window.printAllDays;
+    const originalPrintAllDays = window.openPrintReview;
     const originalUndo = window.undo;
     const originalRedo = window.redo;
 
     window.forceSave = () => { saveCalls += 1; };
-    window.printAllDays = () => { printCalls += 1; };
+    window.openPrintReview = () => { printCalls += 1; };
     window.undo = () => { undoCalls += 1; };
     window.redo = () => { redoCalls += 1; };
 
@@ -1026,7 +1026,7 @@ describe('UI Harness — app shell', () => {
       input.remove();
     } finally {
       window.forceSave = originalForceSave;
-      window.printAllDays = originalPrintAllDays;
+      window.openPrintReview = originalPrintAllDays;
       window.undo = originalUndo;
       window.redo = originalRedo;
     }

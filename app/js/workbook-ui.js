@@ -52,6 +52,8 @@ function renderWorkbookModal() {
   if (!overlay) return;
   const content = overlay.querySelector('.modal');
   if (!content) return;
+  const focusedId = overlay.contains(document.activeElement) ? document.activeElement.id : null;
+  const hadFocus = overlay.contains(document.activeElement);
 
   const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
   const filtered = getFilteredWorkbookEntries();
@@ -60,7 +62,7 @@ function renderWorkbookModal() {
 
   let html = '<div class="workbook-head">'
     + '<div>'
-    + '<h2>Workbook Schedules</h2>'
+    + '<h2 id="workbookModal-heading">Workbook Schedules</h2>'
     + '<p class="workbook-desc">One .schedule file can hold years of drills. Search, open, or create the next one here.</p>'
     + '</div>'
     + '<button class="modal-close-btn" id="workbookCloseBtn" aria-label="Close">&times;</button>'
@@ -70,6 +72,12 @@ function renderWorkbookModal() {
     + '<button class="btn" id="workbookNewBtn">New Blank</button>'
     + '<button class="btn btn-primary" id="workbookDuplicateBtn">Duplicate Current</button>'
     + '</div>'
+    + '<details class="workbook-duplicate-options"><summary>Duplicate onto new dates or clear old details</summary>'
+    + '<label>New first date <input type="date" id="workbookFirstDate"></label>'
+    + '<label><input type="checkbox" id="workbookClearContacts"> Clear contacts and event POCs</label>'
+    + '<label><input type="checkbox" id="workbookClearNotes"> Clear notes</label>'
+    + '<label><input type="checkbox" id="workbookClearPeople"> Clear specific people</label>'
+    + '</details><div id="workbookDuplicatePreview" class="workbook-duplicate-preview" hidden></div>'
     + '<input type="search" id="workbookSearch" class="workbook-search" value="' + esc(_workbookSearchText) + '" placeholder="Search schedules" aria-label="Search schedules">'
     + '<div class="workbook-count">' + filtered.length + ' of ' + entries.length + (entries.length === 1 ? ' schedule' : ' schedules') + '</div>'
     + '<div class="workbook-list">';
@@ -78,19 +86,32 @@ function renderWorkbookModal() {
     html += '<div class="workbook-empty">No schedules match that search.</div>';
   } else {
     filtered.forEach(entry => {
-      html += '<button class="workbook-item' + (entry.active ? ' active' : '') + '" data-schedule-id="' + esc(entry.id) + '">'
+      html += '<div class="workbook-item-row"><button class="workbook-item' + (entry.active ? ' active' : '') + '" data-schedule-id="' + esc(entry.id) + '">'
         + '<span class="workbook-item-main">'
         + '<span class="workbook-item-name">' + esc(entry.name) + '</span>'
         + '<span class="workbook-item-meta">' + esc(formatWorkbookMeta(entry)) + '</span>'
         + '</span>'
         + (entry.active ? '<span class="workbook-active-badge">Open</span>' : '')
-        + '</button>';
+        + '</button><button class="btn" data-archive-schedule="' + esc(entry.id) + '" aria-label="Archive ' + esc(entry.name) + '"'
+        + (entries.length < 2 ? ' disabled title="Keep at least one schedule"' : '') + '>Archive</button></div>';
     });
   }
 
   html += '</div>';
+  const archived = getArchivedWorkbookSchedules();
+  if (archived.length) {
+    html += '<details class="workbook-archive-list"><summary>Archived schedules (' + archived.length + ')</summary>';
+    archived.forEach(item => {
+      html += '<div class="workbook-item-row"><span>' + esc(item.name) + '</span><button class="btn" data-restore-schedule="' + item.index + '">Restore</button></div>';
+    });
+    html += '</details>';
+  }
   content.className = 'modal workbook-modal';
   content.innerHTML = html;
+  if (hadFocus && getActiveModal() === overlay) {
+    const replacement = focusedId && document.getElementById(focusedId);
+    (replacement || content.querySelector('#workbookSearch')).focus();
+  }
 
   const search = content.querySelector('#workbookSearch');
   if (search) {
@@ -129,12 +150,55 @@ function renderWorkbookModal() {
   const duplicateBtn = content.querySelector('#workbookDuplicateBtn');
   if (duplicateBtn) {
     duplicateBtn.onclick = () => {
-      const input = document.getElementById('workbookNewName');
+      const input = content.querySelector('#workbookNewName');
       const name = input && input.value.trim() ? input.value.trim() : defaultName;
-      if (typeof createScheduleInWorkbook === 'function') createScheduleInWorkbook(name, { duplicate: true });
-      closeWorkbookModal();
+      const options = {
+        duplicate: true,
+        firstDate: content.querySelector('#workbookFirstDate').value,
+        clearContacts: content.querySelector('#workbookClearContacts').checked,
+        clearNotes: content.querySelector('#workbookClearNotes').checked,
+        clearPeople: content.querySelector('#workbookClearPeople').checked,
+      };
+      if (!options.firstDate && !options.clearContacts && !options.clearNotes && !options.clearPeople) {
+        createScheduleInWorkbook(name, options);
+        closeWorkbookModal();
+        return;
+      }
+      const preview = content.querySelector('#workbookDuplicatePreview');
+      try {
+        const plan = previewWorkbookDuplicate(name, options);
+        preview.innerHTML = '<h3>Review ' + esc(plan.name) + '</h3><ul>'
+          + plan.days.map(day => '<li>' + esc(day.from || 'No date') + ' → ' + esc(day.to || 'No date') + '</li>').join('')
+          + '</ul><p>' + esc([
+            options.clearContacts ? 'Contacts and POCs will be cleared.' : '',
+            options.clearNotes ? 'Notes will be cleared.' : '',
+            options.clearPeople ? 'Specific people will be cleared.' : '',
+          ].filter(Boolean).join(' ')) + '</p>'
+          + '<div class="modal-actions"><button class="btn" id="workbookCancelDuplicate">Cancel</button>'
+          + '<button class="btn btn-primary" id="workbookConfirmDuplicate">Create Copy</button></div>';
+        preview.hidden = false;
+        preview.querySelector('#workbookCancelDuplicate').onclick = () => { preview.hidden = true; duplicateBtn.focus(); };
+        preview.querySelector('#workbookConfirmDuplicate').onclick = () => {
+          createScheduleInWorkbook(name, options);
+          closeWorkbookModal();
+        };
+        preview.querySelector('#workbookConfirmDuplicate').focus();
+      } catch (err) {
+        toast(err.message, 6500);
+      }
     };
   }
+
+  content.querySelectorAll('[data-archive-schedule]').forEach(button => {
+    button.onclick = () => {
+      if (archiveWorkbookSchedule(button.getAttribute('data-archive-schedule'))) renderWorkbookModal();
+    };
+  });
+  content.querySelectorAll('[data-restore-schedule]').forEach(button => {
+    button.onclick = () => {
+      if (restoreArchivedWorkbookSchedule(Number(button.getAttribute('data-restore-schedule')))) renderWorkbookModal();
+    };
+  });
 
   content.querySelectorAll('.workbook-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -152,14 +216,16 @@ function openWorkbookModal() {
   const overlay = document.getElementById('workbookModal');
   if (!overlay) return;
   renderWorkbookModal();
-  overlay.classList.add('active');
+  openModal('workbookModal');
   const search = document.getElementById('workbookSearch');
-  if (search) setTimeout(() => search.focus(), 0);
+  if (search) setTimeout(() => {
+    if (search.isConnected && getActiveModal() === overlay) search.focus();
+  }, 0);
 }
 
 function closeWorkbookModal() {
   const overlay = document.getElementById('workbookModal');
-  if (overlay) overlay.classList.remove('active');
+  if (overlay) closeModal('workbookModal');
 }
 
 function wireWorkbookUi() {

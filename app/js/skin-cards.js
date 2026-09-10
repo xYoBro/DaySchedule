@@ -13,12 +13,12 @@
  *   render.js — dispatches to this when skin === 'cards'
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function renderDayBody_cards(dayId) {
-  const day = Store.getDay(dayId);
+function renderDayBody_cards(dayId, dayOverride) {
+  const day = dayOverride || Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
   const events = day.events.slice().sort(compareBandOrder);
-  const notes = Store.getNotes(dayId);
+  const notes = day.notes || Store.getNotes(dayId);
 
   clearDaggerFootnotes();
 
@@ -72,6 +72,7 @@ function renderDayBody_cards(dayId) {
       if (exceptionNote) {
         html += '<span class="cards-shared-exception">Exceptions: ' + esc(exceptionNote) + '</span>';
       }
+      if (e.description) html += '<span class="cards-event-detail">' + esc(e.description) + '</span>';
       html += '</span>';
     });
     html += '</div>';

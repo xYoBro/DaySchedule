@@ -90,6 +90,7 @@ function renderInspector() {
   const panel = document.getElementById('inspectorPanel');
   if (!panel) return;
   clearDeleteTimer();
+  wireEditabilityGuard(panel, '#insp-close, .insp-day-header', renderInspector);
 
   if (_selection.type === 'event' && _selection.dayId && _selection.entityId) {
     renderEventInspector(panel, _selection.dayId, _selection.entityId);
@@ -125,23 +126,23 @@ function renderScheduleSetup(panel) {
       const timeRange = day.startTime + '–' + day.endTime;
       const isExpanded = day.id === (_expandedDayId || '');
       html += '<div class="insp-day-item" data-day-id="' + esc(day.id) + '">';
-      html += '<div class="insp-day-header' + (isExpanded ? ' expanded' : '') + '">';
+      html += '<button type="button" class="insp-day-header' + (isExpanded ? ' expanded' : '') + '" aria-expanded="' + isExpanded + '">';
       html += '<span class="insp-day-arrow">' + (isExpanded ? '▾' : '▸') + '</span>';
       html += '<span class="insp-day-summary">';
       html += '<strong>' + esc(shortDate) + '</strong>';
       html += '<span class="insp-day-times">' + esc(timeRange) + '</span>';
       html += '</span>';
-      html += '</div>';
+      html += '</button>';
       if (isExpanded) {
         html += '<div class="insp-day-body">';
         html += '<label>Date</label>';
-        html += '<input type="date" class="insp-day-date" value="' + esc(day.date) + '"' + disabledAttr + '>';
+        html += '<input type="date" class="insp-day-date" aria-label="Day date" value="' + esc(day.date) + '"' + disabledAttr + '>';
         html += '<div class="field-row">';
-        html += '<div><label>Start</label><input type="text" class="insp-day-start" value="' + esc(day.startTime) + '" placeholder="0700"' + disabledAttr + '></div>';
-        html += '<div><label>End</label><input type="text" class="insp-day-end" value="' + esc(day.endTime) + '" placeholder="1630"' + disabledAttr + '></div>';
+        html += '<div><label>Start</label><input type="text" class="insp-day-start" aria-label="Day start time" value="' + esc(day.startTime) + '" placeholder="0700"' + disabledAttr + '></div>';
+        html += '<div><label>End</label><input type="text" class="insp-day-end" aria-label="Day end time" value="' + esc(day.endTime) + '" placeholder="1630"' + disabledAttr + '></div>';
         html += '</div>';
         html += '<label>Label</label>';
-        html += '<input type="text" class="insp-day-label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Sat, Mar 15)"' + disabledAttr + '>';
+        html += '<input type="text" class="insp-day-label" aria-label="Day label" value="' + esc(day.label || '') + '" placeholder="auto (e.g., Sat, Mar 15)"' + disabledAttr + '>';
         html += '<button class="btn insp-day-duplicate" style="font-size:10px;padding:3px 8px;margin-top:6px;"' + disabledAttr + '>Duplicate Day</button>';
         if (days.length > 1) {
           html += ' <button class="btn btn-danger insp-day-remove" style="font-size:10px;padding:3px 8px;margin-top:6px;" data-delete-label="Remove Day" data-delete-armed-label="Tap again to remove"' + disabledAttr + '>Remove Day</button>';
@@ -168,6 +169,8 @@ function wireScheduleSetup(panel) {
       const dayId = header.closest('.insp-day-item').getAttribute('data-day-id');
       _expandedDayId = (_expandedDayId === dayId) ? null : dayId;
       renderInspector();
+      const next = panel.querySelector('.insp-day-item[data-day-id="' + dayId + '"] .insp-day-header');
+      if (next) next.focus();
     });
   });
 
@@ -227,16 +230,36 @@ function openSettingsModal() {
   }
   const modal = document.getElementById('settingsModalContent');
   renderSettingsModal(modal);
-  document.getElementById('settingsModal').classList.add('active');
+  openModal('settingsModal');
 }
 
 function closeSettingsModal() {
-  document.getElementById('settingsModal').classList.remove('active');
   renderActiveDay();
   renderInspector();
+  closeModal('settingsModal');
+}
+
+// A lock can change while an editor is already open. Gate the action at the
+// event boundary as well as disabling controls when initially rendering it.
+function wireEditabilityGuard(container, allowed, refresh) {
+  if (container._editabilityGuard) return;
+  container._editabilityGuard = true;
+  ['click', 'input', 'change'].forEach(type => container.addEventListener(type, e => {
+    if (typeof isCurrentScheduleEditable !== 'function' || isCurrentScheduleEditable()) return;
+    const control = e.target.closest('input, select, textarea, button');
+    if (!control || (allowed && control.matches(allowed))) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (type !== 'click' && refresh) refresh();
+    toast('Read-only. Click Edit to make changes.');
+  }, true));
 }
 
 function renderSettingsModal(modal) {
+  const focused = modal.contains(document.activeElement) ? document.activeElement : null;
+  const focusId = focused && focused.id;
+  const focusData = focused && ['settingsTab', 'skin', 'palette'].find(key => focused.dataset[key]);
+  const focusValue = focusData && focused.dataset[focusData];
   const title = Store.getTitle();
   const footer = Store.getFooter();
   const groups = Store.getGroups();
@@ -260,7 +283,7 @@ function renderSettingsModal(modal) {
   html += '<label class="settings-label" for="settings-logo">Unit Logo</label>';
   html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
   if (Store.getLogo()) {
-    html += '<div class="settings-logo-preview"><img src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
+    html += '<div class="settings-logo-preview"><img alt="Current unit logo" src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
     html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove logo</button></div>';
   }
   html += '<label class="settings-label" for="settings-contact">Header Line</label>';
@@ -306,6 +329,15 @@ function renderSettingsModal(modal) {
   html += '<div class="palette-option-name">Custom</div>';
   html += '</button>';
   html += '</div>';
+  const custom = Object.assign({}, PALETTES.classic, currentTheme.customColors);
+  html += '<div class="custom-palette-fields"' + (currentTheme.palette === 'custom' ? '' : ' hidden') + '>';
+  const colorLabels = { bg: 'Paper', text: 'Text', textSecondary: 'Secondary text', textMuted: 'Muted text',
+    accent: 'Main accent', accentSecondary: 'Second accent', accentTertiary: 'Third accent', border: 'Borders', surface: 'Panels' };
+  Object.keys(colorLabels).forEach(key => {
+    html += '<label class="custom-palette-field"><span>' + colorLabels[key] + '</span>'
+      + '<input type="color" data-custom-color="' + key + '" value="' + esc(custom[key]) + '"></label>';
+  });
+  html += '<p class="custom-palette-warning" role="status"></p></div>';
   html += '</div>';
   html += '</section>';
 
@@ -315,8 +347,8 @@ function renderSettingsModal(modal) {
   html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Primary shows in the main track.</p>';
   groups.forEach(g => {
     html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
-    html += '<input type="color" class="insp-group-color" value="' + esc(g.color) + '">';
-    html += '<input type="text" class="insp-group-name" value="' + esc(g.name) + '" placeholder="Group name">';
+    html += '<input type="color" class="insp-group-color" aria-label="Color for ' + esc(g.name) + '" value="' + esc(g.color) + '">';
+    html += '<input type="text" class="insp-group-name" aria-label="Audience name" value="' + esc(g.name) + '" placeholder="Group name">';
     html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Toggle between Primary and Supporting">' + (g.scope === 'main' ? 'Primary' : 'Supporting') + '</button>';
     html += '<button class="insp-group-remove" type="button" aria-label="Remove audience" title="Remove audience" data-delete-label="&times;" data-delete-armed-label="Delete?">&times;</button>';
     html += '</div>';
@@ -352,20 +384,69 @@ function renderSettingsModal(modal) {
 
   modal.innerHTML = html;
   wireSettingsModal(modal);
+  modal.querySelectorAll('[data-settings-panel]').forEach(panel => {
+    const name = panel.dataset.settingsPanel;
+    panel.id = 'settings-panel-' + name;
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', 'settings-tab-' + name);
+    panel.hidden = name !== _settingsActiveTab;
+  });
+  const nextFocus = focusId ? document.getElementById(focusId)
+    : focusData ? Array.from(modal.querySelectorAll('button')).find(btn => btn.dataset[focusData] === focusValue) : null;
+  if (nextFocus && modal.contains(nextFocus)) nextFocus.focus();
 }
 
 function renderSettingsTab(tabId, label) {
   const active = _settingsActiveTab === tabId ? ' active' : '';
-  return '<button type="button" class="settings-tab' + active + '" data-settings-tab="' + esc(tabId) + '" role="tab" aria-selected="' + (_settingsActiveTab === tabId ? 'true' : 'false') + '">' + esc(label) + '</button>';
+  return '<button type="button" id="settings-tab-' + tabId + '" class="settings-tab' + active + '" data-settings-tab="' + esc(tabId) + '" role="tab" aria-controls="settings-panel-' + tabId + '" tabindex="' + (active ? '0' : '-1') + '" aria-selected="' + (_settingsActiveTab === tabId ? 'true' : 'false') + '">' + esc(label) + '</button>';
 }
 
 function wireSettingsModal(modal) {
+  wireEditabilityGuard(modal, '.settings-tab, #settings-done, #settings-save-file, #settings-save-schedule-file', () => renderSettingsModal(modal));
   modal.querySelectorAll('.settings-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       _settingsActiveTab = tab.getAttribute('data-settings-tab') || 'look';
       renderSettingsModal(modal);
+      modal.querySelector('[data-settings-tab="' + _settingsActiveTab + '"]').focus();
+    });
+    tab.addEventListener('keydown', e => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const tabs = Array.from(modal.querySelectorAll('.settings-tab'));
+      const i = tabs.indexOf(tab);
+      const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1
+        : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[next].click();
     });
   });
+
+  function updateCustomContrast() {
+    const warning = modal.querySelector('.custom-palette-warning');
+    if (!warning) return;
+    const colors = Object.assign({}, PALETTES.classic, getScheduleTheme(getCurrentScheduleFileData() && getCurrentScheduleFileData().theme).customColors);
+    const transparent = Object.values(colors).some(color => {
+      const parsed = parseHexColor(color);
+      return parsed && parsed.alpha < 1;
+    });
+    const low = ['text', 'textSecondary', 'textMuted'].some(key =>
+      ['bg', 'surface'].some(surface => getColorContrast(colors[key], colors[surface]) < 4.5));
+    warning.textContent = transparent ? 'Transparent colors depend on the surface behind them. Choose opaque colors for predictable contrast.'
+      : low ? 'Some text has low contrast. Choose darker text on light paper, or lighter text on dark paper.' : 'Text contrast meets the 4.5:1 reading target.';
+  }
+  modal.querySelectorAll('[data-custom-color]').forEach(input => {
+    input.addEventListener('change', () => {
+      const fileData = getCurrentScheduleFileData();
+      if (!fileData) return;
+      saveUndoState();
+      if (!fileData.theme) fileData.theme = {};
+      fileData.theme.palette = 'custom';
+      fileData.theme.customColors = Object.assign({}, fileData.theme.customColors, { [input.dataset.customColor]: input.value });
+      sessionSave();
+      renderActiveDay();
+      updateCustomContrast();
+    });
+  });
+  updateCustomContrast();
 
   // General tab fields — auto-commit on change
   const titleInput = modal.querySelector('#settings-title');
@@ -399,7 +480,13 @@ function wireSettingsModal(modal) {
         return;
       }
       const reader = new FileReader();
+      const targetSchedule = getCurrentScheduleFileData();
       reader.onload = (ev) => {
+        if ((typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable())
+            || targetSchedule !== getCurrentScheduleFileData()) {
+          toast('The schedule changed while the logo was loading. Choose the logo again.');
+          return;
+        }
         saveUndoState();
         Store.setLogo(ev.target.result);
         renderActiveDay();
@@ -495,6 +582,7 @@ function wireSettingsModal(modal) {
   modal.querySelectorAll('.skin-option').forEach(function(opt) {
     opt.addEventListener('click', function() {
       const skin = opt.getAttribute('data-skin');
+      saveUndoState();
       const fileData = getCurrentScheduleFileData();
       if (fileData) {
         if (!fileData.theme) fileData.theme = {};
@@ -511,6 +599,7 @@ function wireSettingsModal(modal) {
   modal.querySelectorAll('.palette-option').forEach(function(opt) {
     opt.addEventListener('click', function() {
       const palette = opt.getAttribute('data-palette');
+      saveUndoState();
       const fileData = getCurrentScheduleFileData();
       if (fileData) {
         if (!fileData.theme) fileData.theme = {};
@@ -606,6 +695,11 @@ function wireDayField(item, selector, dayId, field, nullable) {
   const eventType = input.type === 'date' ? 'change' : 'input';
   input.addEventListener(eventType, () => {
     const val = input.value.trim();
+    if (field === 'date' && val && !isValidScheduleDate(val)) {
+      input.value = Store.getDay(dayId).date;
+      toast('Choose a valid calendar date.');
+      return;
+    }
     saveUndoState();
     Store.updateDay(dayId, { [field]: nullable && !val ? null : val });
     renderActiveDay();
@@ -881,9 +975,9 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     });
     html += '</select></td>';
     html += '<td><input type="text" class="day-sheet-location-input" data-event-id="' + esc(evt.id) + '" data-field="location" data-focus="location" value="' + esc(evt.location) + '"></td>';
-    html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isBreak"' + (evt.isBreak ? ' checked' : '') + ' aria-label="Break"></td>';
+    html += '<td class="day-sheet-check-cell"><label class="day-sheet-check-target"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isBreak"' + (evt.isBreak ? ' checked' : '') + ' aria-label="Break"></label></td>';
     if (canHighlight) {
-      html += '<td class="day-sheet-check-cell"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isMainEvent"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track." aria-label="Main track override"></td>';
+      html += '<td class="day-sheet-check-cell"><label class="day-sheet-check-target"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isMainEvent"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track." aria-label="Main track override"></label></td>';
     } else {
       html += '<td class="day-sheet-check-cell"><span class="day-sheet-cell-note" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">Auto</span></td>';
     }
@@ -912,6 +1006,13 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   wireDayEventSheetModal(modal, dayId);
   const nextWrap = modal.querySelector('.day-sheet-table-wrap');
   if (nextWrap && previousScrollTop) nextWrap.scrollTop = previousScrollTop;
+  modal.querySelectorAll('.day-sheet-row input, .day-sheet-row select').forEach(input => {
+    const field = input.dataset.field || input.dataset.focus;
+    const labels = { startTime: 'Start time', endTime: 'End time', title: 'Event title', groupId: 'Audience',
+      location: 'Location', isBreak: 'Break', isMainEvent: 'Main track override' };
+    const evt = ctx.events.find(item => item.id === input.dataset.eventId);
+    input.setAttribute('aria-label', (labels[field] || field) + ': ' + (evt ? evt.title : 'event'));
+  });
 
   if (focusInfo && focusInfo.eventId && focusInfo.field) {
     setTimeout(() => {
@@ -927,6 +1028,23 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
 }
 
 function wireDayEventSheetModal(modal, dayId) {
+  wireEditabilityGuard(modal, '#daySheetClose, #daySheetOpenDetails', () => renderDayEventSheetModal(modal, Store.getActiveDay()));
+  modal.onkeydown = e => {
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    const input = e.target.closest('input[data-event-id], textarea[data-event-id]');
+    if (!input || input.type === 'checkbox') return;
+    const eventId = input.dataset.eventId;
+    const evt = Store.getEvents(dayId).find(item => item.id === eventId);
+    if (!evt) return;
+    const field = input.dataset.field;
+    const isTime = field === 'startTime' || field === 'endTime';
+    const fields = isTime ? Object.values(getDayEventSheetTimeInputs(modal, eventId)).filter(Boolean) : [input];
+    if (!fields.some(el => el.value !== String(evt[el.dataset.field] || ''))) return;
+    e.preventDefault();
+    fields.forEach(el => { el.value = evt[el.dataset.field] || ''; el._daySheetNextFocus = null; });
+    input.select();
+    toast('Cell edit canceled. Press Escape again to close Quick Edit.');
+  };
   const closeBtn = modal.querySelector('#daySheetClose');
   if (closeBtn) closeBtn.addEventListener('click', () => closeDayEventSheetModal());
 
@@ -943,11 +1061,10 @@ function wireDayEventSheetModal(modal, dayId) {
       const lastEnd = events.reduce((m, e) => Math.max(m, timeToMinutes(e.endTime)), -1);
       let startMin = lastEnd >= 0 ? lastEnd : timeToMinutes((day && day.startTime) || '0800');
       if (!Number.isFinite(startMin)) startMin = 8 * 60;
-      // Clamp below the 2345 end cap so end > start even when the last
-      // event already runs to the end of the day.
-      startMin = Math.min(startMin, (23 * 60) + 45 - TIME_INCREMENT);
+      // Keep a valid final interval when the day already reaches midnight.
+      startMin = Math.min(startMin, 1440 - TIME_INCREMENT);
       const startTime = minutesToTime(startMin);
-      const endTime = minutesToTime(Math.min(startMin + 60, (23 * 60) + 45));
+      const endTime = minutesToTime(Math.min(startMin + 60, 1440));
       const evt = Store.addEvent(dayId, {
         title: 'New Event',
         startTime,
@@ -981,14 +1098,13 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = input.getAttribute('data-event-id');
       const focusInfo = input._daySheetNextFocus || null;
       input._daySheetNextFocus = null;
-      // Only snap something parseable: snapping "" or "abc" here turned it
-      // into 0000 before the deferred commit could reject and revert it.
-      if (isUsableTimeEntry(input.value)) input.value = snapToQuarter(input.value);
+      // Normalize only parseable text; preserve exact minutes and reject blanks.
+      if (isUsableTimeEntry(input.value)) input.value = normalizeTime(input.value);
       const relatedTarget = e.relatedTarget;
       const field = input.getAttribute('data-field');
       const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
-      const startCandidate = startInput ? snapToQuarter(startInput.value) : '';
-      const endCandidate = endInput ? snapToQuarter(endInput.value) : '';
+      const startCandidate = startInput ? normalizeTime(startInput.value) : '';
+      const endCandidate = endInput ? normalizeTime(endInput.value) : '';
       const stagePairedEndEdit = field === 'startTime'
         && startCandidate
         && endCandidate
@@ -1002,6 +1118,7 @@ function wireDayEventSheetModal(modal, dayId) {
       );
       if (isSameRowTimeInput(relatedTarget) || isSameRowTimeInput(document.activeElement)) return;
       setTimeout(() => {
+        if (!modal.contains(input)) return;
         if (isSameRowTimeInput(document.activeElement)) return;
         commitDayEventSheetTimeRange(modal, dayId, eventId, {
           focusInfo,
@@ -1063,11 +1180,7 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = select.getAttribute('data-event-id');
       const currentEvent = Store.getEvents(dayId).find(e => e.id === eventId);
       if (!currentEvent) return;
-      const newGroup = Store.getGroup(select.value);
       const updates = { groupId: select.value };
-      if (!newGroup) {
-        updates.isMainEvent = false;
-      }
       commitDayEventSheetUpdate(dayId, eventId, updates, {
         rerenderModal: true,
         checkConflict: true,
@@ -1153,6 +1266,7 @@ function wireDaySheetDetailPanel(modal, dayId) {
 }
 
 function commitDayEventSheetUpdate(dayId, eventId, updates, options) {
+  if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) return;
   saveUndoState();
   Store.updateEvent(dayId, eventId, updates);
   renderActiveDay();
@@ -1183,8 +1297,8 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
     toast('Times use 24-hour HHMM, e.g. 0730.');
     return;
   }
-  const startTime = startInput ? snapToQuarter(startInput.value) : evt.startTime;
-  const endTime = endInput ? snapToQuarter(endInput.value) : evt.endTime;
+  const startTime = startInput ? normalizeTime(startInput.value) : evt.startTime;
+  const endTime = endInput ? normalizeTime(endInput.value) : evt.endTime;
   const updates = { startTime, endTime };
 
   if (startTime === evt.startTime && endTime === evt.endTime) {
@@ -1206,8 +1320,8 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
       if (endInput) endInput.value = endTime;
       setTimeout(() => {
         const current = getDayEventSheetTimeInputs(modal, eventId);
-        const currentStart = current.startInput ? snapToQuarter(current.startInput.value) : '';
-        const currentEnd = current.endInput ? snapToQuarter(current.endInput.value) : '';
+        const currentStart = current.startInput ? normalizeTime(current.startInput.value) : '';
+        const currentEnd = current.endInput ? normalizeTime(current.endInput.value) : '';
         if (currentStart === startTime && currentEnd === endTime) {
           commitDayEventSheetTimeRange(modal, dayId, eventId, {
             focusInfo: options.focusInfo
@@ -1287,7 +1401,7 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '<label for="insp-evt-title">Title</label>';
   html += '<input type="text" id="insp-evt-title" value="' + esc(evt.title) + '"' + textReadOnly + '>';
 
-  // Times — text inputs with snap-to-15 validation
+  // Times — exact minutes with range validation
   html += '<div class="field-row">';
   html += '<div><label for="insp-evt-start">Start</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="5" class="time-input"' + textReadOnly + '></div>';
   html += '<div><label for="insp-evt-end">End</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="5" class="time-input"' + textReadOnly + '></div>';
@@ -1352,6 +1466,11 @@ function wireEventInspector(panel, dayId, eventId) {
       const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
       if (band) band.classList.add('selected');
       sessionSave();
+      if (field === 'isBreak' || field === 'isMainEvent') {
+        renderInspector();
+        const next = panel.querySelector(selector);
+        if (next) next.focus();
+      }
     });
   }
 
@@ -1384,11 +1503,7 @@ function wireEventInspector(panel, dayId, eventId) {
   if (groupSelect) {
     groupSelect.addEventListener('change', () => {
       saveUndoState();
-      const newGroup = Store.getGroup(groupSelect.value);
       const updates = { groupId: groupSelect.value };
-      if (!newGroup) {
-        updates.isMainEvent = false; // no group = never main
-      }
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
       const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
@@ -1537,7 +1652,7 @@ function renderDayTabs() {
   days.forEach((day, i) => {
     const label = day.label || (day.date ? formatDateShort(day.date) : 'Day ' + (i + 1));
     const active = day.id === activeDay ? ' active' : '';
-    html += '<button class="day-tab' + active + '" data-day-id="' + esc(day.id) + '">' + esc(label) + '</button>';
+    html += '<button class="day-tab' + active + '" data-day-id="' + esc(day.id) + '" aria-pressed="' + (day.id === activeDay) + '" aria-controls="scheduleContainer">' + esc(label) + '</button>';
   });
   tabs.innerHTML = html;
 
@@ -1575,7 +1690,7 @@ function wireToolbar() {
     }
     saveUndoState();
     const day = Store.addDay({ date: getDefaultNewDayDate(), startTime: '0700', endTime: '1630' });
-    if (!Store.getActiveDay()) Store.setActiveDay(day.id);
+    Store.setActiveDay(day.id);
     _expandedDayId = day.id;
     sessionSave();
     renderActiveDay();
@@ -1589,12 +1704,29 @@ function wireToolbar() {
   const overflowBtn = document.getElementById('overflowBtn');
   const overflowMenu = document.getElementById('overflowMenu');
   if (overflowBtn && overflowMenu) {
+    const syncOverflow = () => overflowBtn.setAttribute('aria-expanded', String(overflowMenu.classList.contains('open')));
     overflowBtn.onclick = (e) => {
       e.stopPropagation();
       overflowMenu.classList.toggle('open');
+      syncOverflow();
     };
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#overflowMenu')) overflowMenu.classList.remove('open');
+      syncOverflow();
+    });
+    overflowMenu.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && overflowMenu.classList.contains('open')) {
+        e.preventDefault();
+        overflowMenu.classList.remove('open');
+        syncOverflow();
+        overflowBtn.focus();
+      } else if (e.key === 'ArrowDown' && e.target === overflowBtn) {
+        e.preventDefault();
+        overflowMenu.classList.add('open');
+        syncOverflow();
+        const first = overflowMenu.querySelector('.tb-overflow-item');
+        if (first) first.focus();
+      }
     });
   }
 
@@ -1602,7 +1734,7 @@ function wireToolbar() {
   if (customizeBtn) customizeBtn.onclick = () => openSettingsModal();
 
   const printBtn = document.getElementById('printBtn');
-  if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); printAllDays(); };
+  if (printBtn) printBtn.onclick = () => { overflowMenu.classList.remove('open'); openPrintReview(); };
 
   // Back to library
   const backBtn = document.getElementById('tbBack');
@@ -1673,7 +1805,7 @@ function wireToolbar() {
 
   // Escape key closes settings modal
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && !e.defaultPrevented) {
       const overlay = document.getElementById('settingsModal');
       if (overlay && overlay.classList.contains('active')) {
         closeSettingsModal();
@@ -1707,11 +1839,11 @@ function openAddEvent(dayId) {
   const lastEnd = Store.getEvents(dayId).reduce((m, e) => Math.max(m, timeToMinutes(e.endTime)), -1);
   let startMin = lastEnd >= 0 ? lastEnd : timeToMinutes((day && day.startTime) || '0800');
   if (!Number.isFinite(startMin)) startMin = 8 * 60;
-  startMin = Math.min(startMin, (23 * 60) + 45 - TIME_INCREMENT);
+  startMin = Math.min(startMin, 1440 - TIME_INCREMENT);
   const evt = Store.addEvent(dayId, {
     title: 'New Event',
     startTime: minutesToTime(startMin),
-    endTime: minutesToTime(Math.min(startMin + 60, (23 * 60) + 45)),
+    endTime: minutesToTime(Math.min(startMin + 60, 1440)),
     groupId: defaultGroup ? defaultGroup.id : '',
   });
   sessionSave();
@@ -1811,12 +1943,12 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
       toast('Times use 24-hour HHMM, e.g. 0730.');
       return;
     }
-    const snapped = snapToQuarter(input.value);
-    const updates = { [field]: snapped };
+    const normalized = normalizeTime(input.value);
+    const updates = { [field]: normalized };
     const current = Store.getEvents(dayId).find(item => item.id === eventId);
-    if (current && current[field] === snapped) {
+    if (current && current[field] === normalized) {
       // Nothing changed: no undo entry, no dirty write, no conflict toast.
-      input.value = snapped;
+      input.value = normalized;
       return;
     }
     if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
@@ -1824,7 +1956,7 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
       toast('End time must be after start time.');
       return;
     }
-    input.value = snapped;
+    input.value = normalized;
     saveUndoState();
     Store.updateEvent(dayId, eventId, updates);
     renderActiveDay();

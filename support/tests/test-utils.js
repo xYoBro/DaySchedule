@@ -38,6 +38,15 @@ describe('utils — esc', () => {
 });
 
 describe('utils — getContrastingTextColor', () => {
+  it('uses ink that meets AA on middle gray, including short and alpha hex', () => {
+    ['#808080', '#888', '#808080ff'].forEach(bg => {
+      assert(getColorContrast(getContrastingTextColor(bg), bg) >= 4.5, bg + ' must have readable ink');
+    });
+  });
+  it('composites transparent text over its actual background before contrast', () => {
+    assert.equal(getColorContrast('#0000', '#000000'), 1);
+    assert.equal(getColorContrast('#fff0', '#ffffff'), 1);
+  });
   it('returns dark text for light backgrounds', () => {
     assert.equal(getContrastingTextColor('#fff3a0'), '#1d1d1f');
   });

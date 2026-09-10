@@ -476,3 +476,41 @@ describe('UI Harness — render and skins', () => {
     });
   });
 });
+
+describe('UI Harness — content fidelity and keyboard notes', () => {
+  it('preserves event and break descriptions, locations, contacts and attendees in every skin', () => {
+    SKIN_NAMES.forEach(skin => {
+      resetUiHarnessState();
+      const seeded = seedUiSchedule({ skin });
+      const events = Store.getEvents(seeded.day1.id);
+      const formation = events.find(evt => evt.title === 'Formation');
+      const lunch = events.find(evt => evt.isBreak);
+      Store.updateEvent(seeded.day1.id, formation.id, { description: 'Shared description sentinel' });
+      Store.updateEvent(seeded.day1.id, lunch.id, { description: 'Break description sentinel', location: 'Break location sentinel', poc: 'Break contact sentinel', attendees: 'Break attendee sentinel' });
+      renderDay(seeded.day1.id);
+      const text = document.getElementById('scheduleContainer').textContent;
+      ['Shared description sentinel', 'Break description sentinel', 'Break location sentinel', 'Break contact sentinel', 'Break attendee sentinel'].forEach(value => assert(text.includes(value), skin + ' missing ' + value));
+    });
+  });
+
+  it('reuses one footnote for concurrent attendees repeated in bands and the detailed list', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'bands', longConcurrentAttendees: true });
+    const concurrent = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Weapons Qualification');
+    renderDay(seeded.day1.id);
+    assert.equal(getDaggerFootnotes().filter(note => note.eventId === concurrent.id).length, 1);
+  });
+
+  it('renders existing notes as native keyboard buttons which select the note editor', () => {
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'bands' });
+    renderDay(seeded.day1.id);
+    const note = Store.getNotes(seeded.day1.id)[0];
+    const button = document.querySelector('.notes-list [data-note-id="' + note.id + '"] button');
+    assert(button, 'note must expose a native button');
+    assert.equal(button.tabIndex, 0);
+    button.click();
+    assert.equal(_selection.type, 'note');
+    assert.equal(_selection.entityId, note.id);
+  });
+});

@@ -96,6 +96,7 @@ const STORAGE_DB_VERSION = 1;
 const STORAGE_STORE_NAME = 'handles';
 const STORAGE_HANDLE_KEY = 'dataDir';
 const STORAGE_WORKBOOK_KEY = 'workbookFile';
+const STORAGE_RECOVERY_KEY = 'workbookRecovery';
 const AUTOSAVE_DELAY = 2000;
 const LOCK_LEASE_MS = 20 * 60 * 1000;
 const LOCK_REFRESH_MS = 60 * 1000;
@@ -111,11 +112,16 @@ let _lockRefreshTimer = null;
 let _currentScheduleLock = null;
 let _editorReadOnly = true;
 let _manualDraftExported = false;
+let _legacySavePromise = null;
+let _versionPersistencePromise = null;
+let _navigationSaving = false;
+let _unsupportedRecovery = false;
+let _fallbackLockSessionId = null;
 
 // ── Slug generation ────────────────────────────────────────────────────────
 
 function scheduleNameToSlug(name) {
-  const slug = (name || '').trim().toLowerCase()
+  const slug = normalizeText(name).trim().toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/[\s-]+/g, '-')
     .replace(/^-+|-+$/g, '');
@@ -146,7 +152,7 @@ function appendActivity(fileData, type, detail, user, at) {
 }
 
 function formatActivityText(entry) {
-  const detail = entry && entry.detail ? entry.detail : '';
+  const detail = entry ? normalizeText(entry.detail) : '';
   switch (entry && entry.type) {
     case 'created':
       return 'Created schedule';
@@ -208,6 +214,58 @@ function _openDB() {
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+    req.onblocked = () => reject(new Error('Local storage is busy in another app tab.'));
+  });
+}
+
+async function recoveryTransaction(mode, operation) {
+  let db;
+  try {
+    db = await _openDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORAGE_STORE_NAME, mode);
+      const req = operation(tx.objectStore(STORAGE_STORE_NAME));
+      tx.oncomplete = () => resolve(req && req.result !== undefined ? req.result : true);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('Recovery transaction aborted'));
+    });
+  } catch (e) {
+    console.warn('Local workbook recovery unavailable:', e);
+    return null;
+  } finally {
+    if (db) db.close();
+  }
+}
+
+async function readRecoveryRecord() {
+  const record = await recoveryTransaction('readonly', store => store.get(STORAGE_RECOVERY_KEY));
+  _unsupportedRecovery = !!(record && record.recoveryFormat !== RECOVERY_FORMAT_VERSION);
+  if (_unsupportedRecovery) {
+    const compatible = await recoveryTransaction('readonly', store => store.get(STORAGE_RECOVERY_KEY + '-v1'));
+    if (compatible && compatible.recoveryFormat === RECOVERY_FORMAT_VERSION) return compatible;
+  }
+  return record && typeof record === 'object' ? record : null;
+}
+
+async function writeRecoveryRecord(record) {
+  // Preserve foreign/newer records intact; a different key holds this app's
+  // current draft so working in an older app can never overwrite them.
+  const key = _unsupportedRecovery ? STORAGE_RECOVERY_KEY + '-v1' : STORAGE_RECOVERY_KEY;
+  return !!await recoveryTransaction('readwrite', store => store.put(record, key));
+}
+
+async function deleteRecoveryRecord(backupId) {
+  if (!backupId) return false;
+  const key = _unsupportedRecovery ? STORAGE_RECOVERY_KEY + '-v1' : STORAGE_RECOVERY_KEY;
+  return !!await recoveryTransaction('readwrite', store => {
+    const request = store.get(key);
+    request.onsuccess = () => {
+      const record = request.result;
+      // Delete only this exact backup. Two tabs can share a workbook ID
+      // and revision number while holding different unsaved histories.
+      if (record && record.backupId === backupId) store.delete(key);
+    };
+    return request;
   });
 }
 
@@ -244,6 +302,7 @@ async function saveWorkbookFileRecord(record) {
       tx.objectStore(STORAGE_STORE_NAME).put(record, STORAGE_WORKBOOK_KEY);
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('Local storage transaction aborted'));
     });
   } catch (e) {
     console.warn('Could not remember workbook file:', e);
@@ -278,6 +337,7 @@ async function clearWorkbookFileRecord() {
       tx.objectStore(STORAGE_STORE_NAME).delete(STORAGE_WORKBOOK_KEY);
       tx.oncomplete = () => resolve(true);
       tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('Local storage transaction aborted'));
     });
   } catch (e) {
     return false;
@@ -326,13 +386,18 @@ function showSyncConfirmation() {
   return new Promise(resolve => {
     const overlay = document.getElementById('syncConfirmModal');
     if (!overlay) { resolve(true); return; }
-    overlay.classList.add('active');
+    openModal('syncConfirmModal');
 
     const confirmBtn = overlay.querySelector('#syncConfirmYes');
     const cancelBtn = overlay.querySelector('#syncConfirmNo');
 
+    let settled = false;
+    const onClosed = () => cleanup(false);
     const cleanup = (result) => {
-      overlay.classList.remove('active');
+      if (settled) return;
+      settled = true;
+      overlay.removeEventListener('modalclose', onClosed);
+      closeModal('syncConfirmModal');
       overlay.removeEventListener('click', onBackdropClick);
       document.removeEventListener('keydown', onKeyDown, true);
       confirmBtn.onclick = null;
@@ -352,6 +417,7 @@ function showSyncConfirmation() {
 
     confirmBtn.onclick = () => cleanup(true);
     cancelBtn.onclick = () => cleanup(false);
+    overlay.addEventListener('modalclose', onClosed);
     overlay.addEventListener('click', onBackdropClick);
     document.addEventListener('keydown', onKeyDown, true);
   });
@@ -381,8 +447,13 @@ function showLockTakeoverConfirmation(lock) {
     const confirmBtn = content.querySelector('#takeoverConfirmBtn');
     const cancelBtn = content.querySelector('#takeoverCancelBtn');
 
+    let settled = false;
+    const onClosed = () => cleanup(false);
     const cleanup = (result) => {
-      overlay.classList.remove('active');
+      if (settled) return;
+      settled = true;
+      overlay.removeEventListener('modalclose', onClosed);
+      closeModal('lockTakeoverModal');
       overlay.removeEventListener('click', onBackdropClick);
       document.removeEventListener('keydown', onKeyDown, true);
       acknowledge.onchange = null;
@@ -407,9 +478,10 @@ function showLockTakeoverConfirmation(lock) {
     confirmBtn.onclick = () => cleanup(true);
     cancelBtn.onclick = () => cleanup(false);
 
+    overlay.addEventListener('modalclose', onClosed);
     overlay.addEventListener('click', onBackdropClick);
     document.addEventListener('keydown', onKeyDown, true);
-    overlay.classList.add('active');
+    openModal('lockTakeoverModal');
   });
 }
 
@@ -454,7 +526,8 @@ function getLockSessionId() {
     }
     return sessionId;
   } catch (e) {
-    return 'locksession_fallback';
+    if (!_fallbackLockSessionId) _fallbackLockSessionId = generateId('locksession');
+    return _fallbackLockSessionId;
   }
 }
 
@@ -838,6 +911,7 @@ async function releaseCurrentScheduleLock() {
 }
 
 function isCurrentScheduleEditable() {
+  if (_navigationSaving) return false;
   if (!_currentFileName) return true;
   return !_editorReadOnly;
 }
@@ -877,7 +951,7 @@ async function scheduleFileExists(fileName) {
     await _dirHandle.getFileHandle(fileName);
     return true;
   } catch (e) {
-    return false;
+    return !(e && (e.name === 'NotFoundError' || /^File not found:/.test(e.message || '')));
   }
 }
 
@@ -928,7 +1002,7 @@ async function deleteScheduleFile(fileName) {
 
 async function renameScheduleFile(oldName, newName) {
   if (!_dirHandle || oldName === newName) return true;
-  const existingTarget = await readScheduleFile(newName, { suppressErrors: true });
+  const existingTarget = await scheduleFileExists(newName);
   if (existingTarget) {
     toast('A schedule with that name already exists.');
     return false;
@@ -995,7 +1069,20 @@ async function autoSave() {
   await saveCurrentSchedule();
 }
 
-async function saveCurrentSchedule() {
+async function withLegacyWrite(operation) {
+  const fileName = _currentFileName;
+  while (_legacySavePromise) await _legacySavePromise;
+  if (!fileName || fileName !== _currentFileName) return false;
+  _legacySavePromise = operation(fileName);
+  try { return await _legacySavePromise; }
+  finally { _legacySavePromise = null; }
+}
+
+function saveCurrentSchedule() {
+  return withLegacyWrite(performLegacySave);
+}
+
+async function performLegacySave(fileName) {
   if (!isCurrentScheduleEditable()) return false;
   if (!_currentFileName || !_dirHandle) return false;
   const userName = await ensureUserName();
@@ -1004,8 +1091,10 @@ async function saveCurrentSchedule() {
   if (!ownsLock) return false;
   updateSaveIndicator('saving');
 
-  const state = Store.getPersistedState();
-  const existing = await readScheduleFile(_currentFileName);
+  const editsWhenBuilt = getEditSequence();
+  const state = buildVersionState();
+  const existing = await readScheduleFile(fileName);
+  if (fileName !== _currentFileName) return false;
 
   // A file that exists but can't be read (sync-client lock, corruption) must
   // not be rebuilt from scratch — that would silently wipe its versions and
@@ -1025,6 +1114,7 @@ async function saveCurrentSchedule() {
 
   const now = new Date().toISOString();
   const fileData = existing || buildScheduleFile(state.title || 'Untitled', state, [], userName);
+  carryProtectedVersionHistory(fileData);
   fileData.current = state;
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
@@ -1038,9 +1128,11 @@ async function saveCurrentSchedule() {
   if (memFileData && memFileData.theme) {
     fileData.theme = memFileData.theme;
   }
+  if (memFileData && Array.isArray(memFileData.versions)) fileData.versions = cloneScheduleData(memFileData.versions);
 
-  const editsWhenBuilt = typeof getEditSequence === 'function' ? getEditSequence() : 0;
-  const ok = await writeScheduleFile(_currentFileName, fileData);
+  if (fileName !== _currentFileName) return false;
+  const ok = await writeScheduleFile(fileName, fileData);
+  if (fileName !== _currentFileName) return false;
   if (ok) {
     _lastKnownSavedAt = now;
     // Keep in-memory reference in sync with what was written
@@ -1183,10 +1275,10 @@ function showStaleDataWarning(otherUser, otherTime, otherData) {
     + '<button class="btn btn-primary" id="staleOverwriteBtn">Keep Mine</button>'
     + '</div>';
 
-  overlay.classList.add('active');
+  openModal('staleWarningModal');
 
   content.querySelector('#staleLoadBtn').onclick = () => {
-    overlay.classList.remove('active');
+    closeModal('staleWarningModal');
     // The old undo stack would let one Ctrl+Z re-apply this tab's stale copy
     // over the other editor's changes without tripping the stale check again.
     if (typeof clearUndoHistory === 'function') clearUndoHistory();
@@ -1204,11 +1296,12 @@ function showStaleDataWarning(otherUser, otherTime, otherData) {
     renderActiveDay();
     syncToolbarTitle();
     renderInspector();
+    sessionSave({ skipDirty: true });
     toast('Loaded external changes');
   };
 
   content.querySelector('#staleOverwriteBtn').onclick = () => {
-    overlay.classList.remove('active');
+    closeModal('staleWarningModal');
     _lastKnownSavedAt = otherData.lastSavedAt;
     saveCurrentSchedule();
   };
@@ -1244,17 +1337,22 @@ function promptUserName() {
     const content = overlay.querySelector('.modal');
   content.innerHTML = '<h2>Welcome</h2>'
       + '<p style="margin:12px 0;font-size:14px;color:#48484a;">Enter the name your team will recognize.</p>'
-      + '<input type="text" id="userNameInput" placeholder="e.g., SrA Martinez" style="width:100%;padding:8px 12px;font-size:14px;border:1px solid #d2d2d7;border-radius:6px;">'
+      + '<label for="userNameInput">Your name</label><input type="text" id="userNameInput" placeholder="e.g., SrA Martinez" style="width:100%;padding:8px 12px;font-size:14px;border:1px solid #d2d2d7;border-radius:6px;">'
       + '<div class="modal-actions">'
       + '<button class="btn btn-primary" id="userNameDone">Continue</button>'
       + '</div>';
 
-    overlay.classList.add('active');
+    openModal('userNameModal');
     const input = content.querySelector('#userNameInput');
     setTimeout(() => input.focus(), 50);
 
+    let settled = false;
+    const onClosed = () => cleanup('');
     const cleanup = (result) => {
-      overlay.classList.remove('active');
+      if (settled) return;
+      settled = true;
+      overlay.removeEventListener('modalclose', onClosed);
+      closeModal('userNameModal');
       overlay.removeEventListener('click', onBackdropClick);
       document.removeEventListener('keydown', onKeyDown, true);
       doneBtn.onclick = null;
@@ -1285,6 +1383,7 @@ function promptUserName() {
     const doneBtn = content.querySelector('#userNameDone');
     doneBtn.onclick = done;
     input.addEventListener('keydown', onInputKeyDown);
+    overlay.addEventListener('modalclose', onClosed);
     overlay.addEventListener('click', onBackdropClick);
     document.addEventListener('keydown', onKeyDown, true);
   });
@@ -1308,10 +1407,12 @@ function lastVersionWasWritten() {
 }
 
 async function persistWorkbookVersions() {
+  const generation = _workbookGeneration;
   _lastVersionWrittenToFile = false;
   if (typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()
       && typeof saveScheduleWorkbookFile === 'function') {
     const saved = await saveScheduleWorkbookFile({ silent: true, requireHandle: true });
+    if (generation !== _workbookGeneration) return false;
     if (saved) { _lastVersionWrittenToFile = true; return true; }
   }
   // No writable file right now — the version already lives in the envelope;
@@ -1322,6 +1423,7 @@ async function persistWorkbookVersions() {
 }
 
 async function createWorkbookVersion(versionName) {
+  const generation = _workbookGeneration;
   const fileData = getWorkbookFileData();
   if (!fileData) return false;
   const now = new Date().toISOString();
@@ -1331,33 +1433,38 @@ async function createWorkbookVersion(versionName) {
     name: versionName,
     savedBy: userName,
     savedAt: now,
-    data: JSON.parse(JSON.stringify(Store.getPersistedState())),
+    data: buildVersionState(),
   });
   appendActivity(fileData, 'version_saved', versionName, userName, now);
   fileData.lastSavedAt = now;
   if (userName) fileData.lastSavedBy = userName;
-  return persistWorkbookVersions();
+  sessionSave();
+  await flushSessionBackup();
+  return generation === _workbookGeneration ? persistWorkbookVersions() : false;
 }
 
 async function restoreWorkbookVersion(versionIndex) {
+  const generation = _workbookGeneration;
   const fileData = getWorkbookFileData();
   if (!fileData || !Array.isArray(fileData.versions) || !fileData.versions[versionIndex]) return false;
   const target = fileData.versions[versionIndex];
+  if (!target || !target.data || !Array.isArray(target.data.days)) return false;
   const now = new Date().toISOString();
   const userName = getUserName() || '';
   fileData.versions.unshift({
     name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
     savedBy: userName,
     savedAt: now,
-    data: JSON.parse(JSON.stringify(Store.getPersistedState())),
+    data: buildVersionState(),
   });
   // A restore is an undoable step of its own (and must clear stale redo).
-  if (typeof saveUndoState === 'function') saveUndoState();
+  finishUndoGroup();
+  saveUndoState();
   fileData.current = JSON.parse(JSON.stringify(target.data));
   fileData.lastSavedAt = now;
   if (userName) fileData.lastSavedBy = userName;
   appendActivity(fileData, 'version_restored', target.name, userName, now);
-  Store.loadPersistedState(fileData.current);
+  loadVersionState(fileData.current);
   const days = Store.getDays();
   if (!days.find(day => day.id === Store.getActiveDay())) {
     Store.setActiveDay(days[0] ? days[0].id : null);
@@ -1365,21 +1472,53 @@ async function restoreWorkbookVersion(versionIndex) {
   renderActiveDay();
   syncToolbarTitle();
   renderInspector();
-  return persistWorkbookVersions();
+  sessionSave();
+  await flushSessionBackup();
+  return generation === _workbookGeneration ? persistWorkbookVersions() : false;
 }
 
-async function createVersion(versionName) {
-  if (!isCurrentScheduleEditable()) return false;
-  if (!_currentFileName || !_dirHandle) return createWorkbookVersion(versionName);
+async function withVersionMutation(operation) {
+  const generation = _workbookGeneration;
+  const fileName = _currentFileName;
+  while (_versionPersistencePromise) await _versionPersistencePromise;
+  if (generation !== _workbookGeneration || fileName !== _currentFileName) return false;
+  _versionPersistencePromise = operation();
+  try { return await _versionPersistencePromise; }
+  finally { _versionPersistencePromise = null; }
+}
+
+function createVersion(versionName) {
+  if (!isCurrentScheduleEditable()) return Promise.resolve(false);
+  return withVersionMutation(() => (!_currentFileName || !_dirHandle)
+    ? createWorkbookVersion(versionName)
+    : withLegacyWrite(fileName => createLegacyVersion(versionName, fileName)));
+}
+
+function carryProtectedVersionHistory(fileData) {
+  const current = getCurrentScheduleFileData();
+  if (!fileData || !isDirty() || !current) return;
+  // A failed version write is still an unsaved document edit. Subsequent
+  // actions must carry that protected history after the disk baseline check.
+  if (Array.isArray(current.versions)) fileData.versions = cloneScheduleData(current.versions);
+  if (Array.isArray(current.activity)) fileData.activity = cloneScheduleData(current.activity);
+}
+
+async function createLegacyVersion(versionName, fileName) {
   const userName = await ensureUserName();
   if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
   if (!ownsLock) return false;
-  const fileData = await readScheduleFile(_currentFileName);
+  const fileData = await readScheduleFile(fileName);
+  if (fileName !== _currentFileName) return false;
+  if (fileData && _lastKnownSavedAt && fileData.lastSavedAt !== _lastKnownSavedAt) {
+    showStaleDataWarning(fileData.lastSavedBy, fileData.lastSavedAt, fileData);
+    return false;
+  }
   if (!fileData) return false;
+  carryProtectedVersionHistory(fileData);
 
   const now = new Date().toISOString();
-  const currentState = JSON.parse(JSON.stringify(Store.getPersistedState()));
+  const currentState = buildVersionState();
   const version = {
     name: versionName,
     savedBy: userName,
@@ -1394,9 +1533,16 @@ async function createVersion(versionName) {
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = now;
 
-  const ok = await writeScheduleFile(_currentFileName, fileData);
+  fileData.theme = currentState.theme;
+  if (typeof setCurrentScheduleFileData === 'function') setCurrentScheduleFileData(cloneScheduleData(fileData));
+  sessionSave();
+  const revision = getEditSequence();
+  await flushSessionBackup();
+  if (fileName !== _currentFileName) return false;
+  const ok = await writeScheduleFile(fileName, fileData);
+  if (fileName !== _currentFileName) return false;
   if (ok) {
-    _dirty = false;
+    _dirty = getEditSequence() !== revision;
     _lastKnownSavedAt = fileData.lastSavedAt;
     const memFileData = getCurrentScheduleFileData();
     if (memFileData) {
@@ -1405,25 +1551,38 @@ async function createVersion(versionName) {
       memFileData.activity = fileData.activity;
       memFileData.versions = fileData.versions;
     }
-    updateSaveIndicator('saved');
+    if (_dirty) markDirty();
+    else updateSaveIndicator('saved');
     sessionSave({ skipDirty: true });
   }
   return ok;
 }
 
-async function restoreVersion(versionIndex) {
-  if (!isCurrentScheduleEditable()) return false;
-  if (!_currentFileName || !_dirHandle) return restoreWorkbookVersion(versionIndex);
+function restoreVersion(versionIndex) {
+  if (!isCurrentScheduleEditable()) return Promise.resolve(false);
+  return withVersionMutation(() => (!_currentFileName || !_dirHandle)
+    ? restoreWorkbookVersion(versionIndex)
+    : withLegacyWrite(fileName => restoreLegacyVersion(versionIndex, fileName)));
+}
+
+async function restoreLegacyVersion(versionIndex, fileName) {
   const userName = await ensureUserName();
   if (!userName) return false;
   const ownsLock = await ensureCurrentScheduleLockOwnership();
   if (!ownsLock) return false;
-  const fileData = await readScheduleFile(_currentFileName);
+  const fileData = await readScheduleFile(fileName);
+  if (fileName !== _currentFileName) return false;
+  if (fileData && _lastKnownSavedAt && fileData.lastSavedAt !== _lastKnownSavedAt) {
+    showStaleDataWarning(fileData.lastSavedBy, fileData.lastSavedAt, fileData);
+    return false;
+  }
+  carryProtectedVersionHistory(fileData);
   if (!fileData || !fileData.versions || !fileData.versions[versionIndex]) return false;
 
   // Save reference before mutating the array
   const target = fileData.versions[versionIndex];
-  const currentState = JSON.parse(JSON.stringify(Store.getPersistedState()));
+  if (!target || !target.data || !Array.isArray(target.data.days)) return false;
+  const currentState = buildVersionState();
 
   const backup = {
     name: 'Auto-backup before restore, ' + new Date().toLocaleString(),
@@ -1434,21 +1593,32 @@ async function restoreVersion(versionIndex) {
   fileData.versions.unshift(backup);
 
   // A restore is an undoable step of its own (and must clear stale redo).
-  if (typeof saveUndoState === 'function') saveUndoState();
+  finishUndoGroup();
+  saveUndoState();
   fileData.current = JSON.parse(JSON.stringify(target.data));
+  if (fileData.current.theme) fileData.theme = cloneScheduleData(fileData.current.theme);
   fileData.lastSavedBy = userName;
   fileData.lastSavedAt = new Date().toISOString();
   appendActivity(fileData, 'version_restored', target.name, userName, fileData.lastSavedAt);
 
-  const ok = await writeScheduleFile(_currentFileName, fileData);
+  if (typeof setCurrentScheduleFileData === 'function') setCurrentScheduleFileData(cloneScheduleData(fileData));
+  loadVersionState(fileData.current);
+  sessionSave();
+  renderActiveDay();
+  renderInspector();
+  syncToolbarTitle();
+  const revision = getEditSequence();
+  await flushSessionBackup();
+  if (fileName !== _currentFileName) return false;
+  const ok = await writeScheduleFile(fileName, fileData);
+  if (fileName !== _currentFileName) return false;
   if (ok) {
-    Store.loadPersistedState(fileData.current);
     const days = Store.getDays();
     if (!days.find(day => day.id === Store.getActiveDay())) {
       Store.setActiveDay(days[0] ? days[0].id : null);
     }
     _lastKnownSavedAt = fileData.lastSavedAt;
-    _dirty = false;
+    _dirty = getEditSequence() !== revision;
     const memFileData = getCurrentScheduleFileData();
     if (memFileData) {
       memFileData.lastSavedAt = fileData.lastSavedAt;
@@ -1456,7 +1626,8 @@ async function restoreVersion(versionIndex) {
       memFileData.activity = fileData.activity;
       memFileData.versions = fileData.versions;
     }
-    updateSaveIndicator('saved');
+    if (_dirty) markDirty();
+    else updateSaveIndicator('saved');
     renderActiveDay();
     syncToolbarTitle();
     renderInspector();
@@ -1466,27 +1637,79 @@ async function restoreVersion(versionIndex) {
 }
 
 async function getVersions() {
-  const fileData = (!_currentFileName || !_dirHandle)
+  const fileData = (!_currentFileName || !_dirHandle || (isDirty() && getWorkbookFileData()))
     ? getWorkbookFileData()
     : await readScheduleFile(_currentFileName);
   if (!fileData) return [];
-  return (fileData.versions || []).map((v, i) => ({
+  return (Array.isArray(fileData.versions) ? fileData.versions : []).map((v, i) => ({
     index: i,
-    name: v.name,
-    savedBy: v.savedBy,
-    savedAt: v.savedAt,
+    name: v && typeof v.name === 'string' ? v.name : 'Unnamed version',
+    savedBy: v && typeof v.savedBy === 'string' ? v.savedBy : '',
+    savedAt: v && typeof v.savedAt === 'string' ? v.savedAt : '',
   }));
 }
 
+async function changeVersionMetadata(versionIndex, mutation) {
+  if (!isCurrentScheduleEditable()) return false;
+  if (!_currentFileName || !_dirHandle) {
+    const fileData = getWorkbookFileData();
+    if (!fileData || !Array.isArray(fileData.versions) || !fileData.versions[versionIndex]) return false;
+    mutation(fileData.versions, versionIndex);
+    const generation = _workbookGeneration;
+    sessionSave();
+    await flushSessionBackup();
+    return generation === _workbookGeneration ? persistWorkbookVersions() : false;
+  }
+  return withLegacyWrite(async fileName => {
+    if (!await ensureCurrentScheduleLockOwnership()) return false;
+    const fileData = await readScheduleFile(fileName);
+    if (fileName !== _currentFileName || !fileData) return false;
+    if (_lastKnownSavedAt && fileData.lastSavedAt !== _lastKnownSavedAt) {
+      showStaleDataWarning(fileData.lastSavedBy, fileData.lastSavedAt, fileData);
+      return false;
+    }
+    carryProtectedVersionHistory(fileData);
+    if (!Array.isArray(fileData.versions) || !fileData.versions[versionIndex]) return false;
+    mutation(fileData.versions, versionIndex);
+    const current = getCurrentScheduleFileData();
+    if (current) current.versions = fileData.versions;
+    sessionSave();
+    return performLegacySave(fileName);
+  });
+}
+
+function renameVersion(versionIndex, name) {
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return Promise.resolve(false);
+  return withVersionMutation(() => changeVersionMetadata(versionIndex, (versions, index) => { versions[index].name = trimmed; }));
+}
+
+function deleteVersion(versionIndex) {
+  return withVersionMutation(() => changeVersionMetadata(versionIndex, (versions, index) => { versions.splice(index, 1); }));
+}
+
+function getWorkbookSaveStatus() {
+  if (isDirty()) return 'Unsaved changes — save the workbook to keep them.';
+  if (_currentFileName) return 'Saved to ' + _currentFileName;
+  if (hasScheduleWorkbookHandle()) return 'Saved to ' + getScheduleWorkbookFileName();
+  if (_manualDraftExported) return 'Downloaded copy — the opened file is unchanged.';
+  return 'Not saved to a file yet.';
+}
+
+function getWorkbookSizeLabel() {
+  const size = new Blob([buildScheduleWorkbookContent()]).size;
+  return size >= 1024 * 1024 ? (size / (1024 * 1024)).toFixed(1) + ' MB' : Math.max(1, Math.round(size / 1024)) + ' KB';
+}
+
 async function getRecentActivity() {
-  const fileData = (!_currentFileName || !_dirHandle)
+  const fileData = (!_currentFileName || !_dirHandle || (isDirty() && getWorkbookFileData()))
     ? getWorkbookFileData()
     : await readScheduleFile(_currentFileName);
   if (!fileData) return [];
-  return (fileData.activity || []).slice(0, 5).map(entry => ({
+  return (Array.isArray(fileData.activity) ? fileData.activity : []).filter(entry => entry && typeof entry === 'object').slice(0, 5).map(entry => ({
     text: formatActivityText(entry),
-    user: entry.user || '',
-    at: entry.at || '',
+    user: normalizeText(entry.user),
+    at: normalizeText(entry.at),
   }));
 }
 

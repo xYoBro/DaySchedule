@@ -13,12 +13,12 @@
  *   render.js — dispatches to this when skin === 'grid'
  * ──────────────────────────────────────────────────────────────────────────── */
 
-function renderDayBody_grid(dayId) {
-  const day = Store.getDay(dayId);
+function renderDayBody_grid(dayId, dayOverride) {
+  const day = dayOverride || Store.getDay(dayId);
   if (!day) return '';
   const groups = Store.getGroups();
   const events = day.events.slice().sort(compareBandOrder);
-  const notes = Store.getNotes(dayId);
+  const notes = day.notes || Store.getNotes(dayId);
 
   clearDaggerFootnotes();
 

@@ -26,7 +26,8 @@
  *   Registers global keydown listener for Escape → close active modal
  * ──────────────────────────────────────────────────────────────────────────── */
 
-let _previousFocus = null;
+const _modalStack = [];
+const _modalInertState = new Map();
 let _viewportUiScaleFrame = null;
 
 function clampNumber(value, min, max) {
@@ -62,22 +63,87 @@ function scheduleViewportUiScale() {
   });
 }
 
+function getActiveModal() {
+  for (let i = _modalStack.length - 1; i >= 0; i--) {
+    const entry = _modalStack[i];
+    if (entry.modal.isConnected && entry.modal.classList.contains('active')) return entry.modal;
+    _modalStack.splice(i, 1);
+  }
+  return null;
+}
+
+function getModalFocusable(modal) {
+  return Array.from(modal.querySelectorAll('a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]'))
+    .filter(el => !el.disabled && el.tabIndex >= 0 && !el.closest('[hidden], [inert]')
+      && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
+}
+
+function syncModalBackground() {
+  const active = getActiveModal();
+  _modalStack.forEach((entry, index) => { entry.modal.style.zIndex = String(200 + index); });
+  _modalInertState.forEach((wasInert, el) => { el.inert = wasInert; });
+  if (!active) { _modalInertState.clear(); return; }
+  // Walk outwards so this also works when an overlay lives in an app wrapper.
+  let branch = active;
+  while (branch.parentElement) {
+    Array.from(branch.parentElement.children).forEach(el => {
+      if (el === branch || el.id === 'toast' || ['SCRIPT', 'STYLE', 'LINK'].includes(el.tagName)) return;
+      if (!_modalInertState.has(el)) _modalInertState.set(el, el.inert);
+      el.inert = true;
+    });
+    branch = branch.parentElement;
+    if (branch === document.body) break;
+  }
+}
+
+function focusModal(modal) {
+  const focusable = getModalFocusable(modal);
+  const target = focusable.find(el => el.hasAttribute('autofocus')) || focusable[0] || modal;
+  target.focus();
+}
+
 function openModal(id) {
-  _previousFocus = document.activeElement;
   const modal = document.getElementById(id);
+  if (!modal) return;
+  if (!_modalStack.some(entry => entry.modal === modal)) {
+    _modalStack.push({ modal, previousFocus: document.activeElement, zIndex: modal.style.zIndex });
+  }
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('tabindex', '-1');
+  const heading = modal.querySelector('h1, h2, h3');
+  if (heading) {
+    if (!heading.id) heading.id = id + '-heading';
+    modal.setAttribute('aria-labelledby', heading.id);
+    modal.removeAttribute('aria-label');
+  } else if (!modal.hasAttribute('aria-label')) {
+    modal.setAttribute('aria-label', id.replace(/Modal$/, '').replace(/([a-z])([A-Z])/g, '$1 $2'));
+  }
   modal.classList.add('active');
-  const focusable = modal.querySelector('input:not([type="hidden"]), select, textarea, button, [tabindex]:not([tabindex="-1"])');
-  if (focusable) setTimeout(() => focusable.focus(), 50);
+  syncModalBackground();
+  focusModal(modal);
 }
 
 function closeModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
+  const wasActive = modal.classList.contains('active');
+  const index = _modalStack.findIndex(entry => entry.modal === modal);
+  const entry = index < 0 ? null : _modalStack.splice(index, 1)[0];
   modal.classList.remove('active');
-  if (_previousFocus && _previousFocus.focus) {
-    _previousFocus.focus();
-    _previousFocus = null;
+  if (entry) modal.style.zIndex = entry.zIndex;
+  modal.removeAttribute('aria-modal');
+  syncModalBackground();
+  const active = getActiveModal();
+  let previous = entry && entry.previousFocus;
+  if (previous && !previous.isConnected) {
+    previous = previous.id ? document.getElementById(previous.id)
+      : previous.matches('.hdr') ? document.querySelector('#scheduleContainer .hdr') : null;
   }
+  if (previous && previous.isConnected && !previous.closest('[inert]')
+      && (!active || active.contains(previous))) previous.focus();
+  else if (active) focusModal(active);
+  if (wasActive) modal.dispatchEvent(new CustomEvent('modalclose'));
 }
 
 let _toastTimer = null;
@@ -99,10 +165,22 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  const active = document.querySelector('.modal-overlay.active');
+  if (e.defaultPrevented) return;
+  const active = getActiveModal();
   if (!active) return;
-  if (active.id === 'staleWarningModal') {
+  if (e.key === 'Tab') {
+    const focusable = getModalFocusable(active);
+    const first = focusable[0] || active;
+    const last = focusable[focusable.length - 1] || active;
+    if (e.shiftKey && (document.activeElement === first || !active.contains(document.activeElement))) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && (document.activeElement === last || !active.contains(document.activeElement))) {
+      e.preventDefault(); first.focus();
+    }
+    return;
+  }
+  if (e.key !== 'Escape') return;
+  if (active.id === 'staleWarningModal' || active.dataset.modalRequired === 'true') {
     e.preventDefault();
     return;
   }
@@ -128,6 +206,11 @@ document.addEventListener('keydown', e => {
   }
   e.preventDefault();
   closeModal(active.id);
+});
+
+document.addEventListener('focusin', e => {
+  const active = getActiveModal();
+  if (active && !active.contains(e.target)) focusModal(active);
 });
 
 applyViewportUiScale();

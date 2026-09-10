@@ -1,63 +1,35 @@
-# DaySchedule — Status Notes
+# DaySchedule status
 
-**Last updated:** 2026-04-13
+**Last updated:** 2026-09-09
 
-## What's Shipped in Current Workspace
+This describes the current source. The April design notes under `superpowers/` and the older code review are historical; they do not describe the current workbook workflow.
 
-### Schedule Library
-- Home screen with schedule list, create, duplicate, delete
-- File-per-schedule JSON storage in `app/data/` via FSAPI
-- IndexedDB-persisted directory handle (survives browser restarts)
-- Auto-save (2s debounce) + Ctrl+S manual save
-- Text-based save indicator (Saved/Saving.../Unsaved/Not connected)
-- Stale-data detection for Teams/OneDrive concurrent editing
-- Named version snapshots with restore + auto-backup
-- User identity via localStorage
-- Legacy fallback for non-FSAPI browsers
-- Migration from existing scheduledata.js
-- Teams sync guidance (3-step setup, sync confirmation modal, help panel)
-- Help panel with keyboard shortcuts and workflow tips
+## Product
 
-### Themes & Layout Skins
-- 4 layout skins: Bands (default), Grid, Cards, Phases
-- 5 color palettes: Classic, Air Force, OCP, Dark Ops, Mono
-- Custom color slot (UI exists but picker not wired yet)
-- Editor dark mode (light/dark toggle in library header)
-- Settings → Appearance tab with skin thumbnails + color swatches
-- Per-schedule theme in JSON, editor chrome theme in localStorage
-- CSS custom properties for all schedule + editor chrome colors
-- Render dispatcher with skin-specific renderer modules
+DaySchedule builds and prints day schedules without an account or application server. Its primary file is a `.schedule` workbook containing multiple schedules. All four layouts—Bands, Grid, Cards, and Phases—use that data. The app makes no application network requests after its static files load. A user's synced or shared folder can still copy saved files through its own service.
 
-### Event Authoring
-- Right-side event inspector for title, time, group, attendees ("Who"), description, location, POC, and break/highlight toggles
-- Day Sheet modal for the active day: table editor with inline start/end/title/group/location edits
-- Expandable Day Sheet detail rows for attendees, POC, and description
-- Day Sheet add/delete actions plus "Inspector" jump-back for single-event edits
-- Overlap warnings in the inspector and Day Sheet, including highlighted limited-scope events
-- Attendees rendered in band/cards/phases layouts and preserved on new events / import normalization
+## Current behavior
 
-### Testing
-- 56 browser-based unit tests (`support/tests/runner.html`)
-- 29 browser-based integration tests (`support/tests/runner-integration.html`) with in-memory FSAPI mock
-- 15 browser-based UI harness tests (`support/tests/runner-ui.html`) covering render/skins, shell flows, and print behavior
-- Cross-file contracts on all JS modules
+- **Workbooks:** create, open, search, switch, duplicate, archive, and restore schedules. At least one schedule stays active. Optional duplicate settings shift every day by a date offset and clear contacts/POCs, notes, or specific people after a preview.
+- **Saving and recovery:** supported standalone Chromium browsers autosave to an attached file; fallback saving downloads a separate copy with a distinct status. Recovery includes the complete workbook, archived schedules, versions, active identity, and revision state. File-change review offers Cancel or Keep Both; background saves pause for review rather than overwrite a detected change.
+- **Versions:** save, restore with a current-state backup, rename, and delete snapshots. Appearance and active-day state travel with versions. The panel shows workbook size and save status.
+- **Editing:** exact-minute time entry, a selected-row Quick Edit panel, audience and main-track controls, notes, logos, custom palettes, and separate editor light/dark mode. Dialogs, settings tabs, day accordions, focus states, and touch targets support keyboard and narrow-screen use.
+- **Rendering:** long unbroken text wraps; schedule headers and shared details resize with content; Phases assigns tasks by time overlap; renderers preserve the input event arrays.
+- **Printing:** review selected days, audience, full details or overview, and readable pages or one-page fitting. Readable mode allows continuation pages; fit mode warns about small text. Advisory checks flag dates, ranges, and overlaps involving a shared audience, location, or named people.
+- **Distribution:** standalone HTML includes the MIT notice and a date/content-hash build stamp. The builder refuses operational legacy data. Embedding uses an iframe document with its own app CSP and lifecycle. The default `srcdoc` artifact is for an approved custom HTML host; `--app-url` creates an HTTPS iframe for the modern SharePoint Embed route.
 
-## Known Remaining Work
+## Verification
 
-### Themes (next session)
-- [ ] Visual polish on grid/cards/phases skins
-- [ ] Custom color picker ("+" button) — not wired, only presets work
-- [ ] Remove "Save to File" button from Appearance tab modal actions
-- [ ] Print testing with each skin
-- [ ] Grid skin layout tuning with dense data
-- [ ] Cards and phases skins evaluation with 27-event sample
+The repository provides three browser harnesses: synchronous unit tests, asynchronous storage integration tests, and real app-shell/render/print tests. `tools/test-builds.py` verifies packaging guards and output identity in temporary copies. `tools/test-embed.cjs` checks Chromium, Firefox, and WebKit host isolation, dark mode, remounting, CSP, fallback downloads, actual Chromium cross-origin picker denial, and `file://` startup, also in temporary copies. `support/tests/test-browser.cjs` runs the harnesses and release user flows through its own local server and isolated browser contexts; evidence goes to the ignored `output/playwright/release/` directory. See [README](../../README.md) for commands, the [reliability release notes](RELIABILITY-RELEASE.md) for final counts, and [tasks/todo.md](../../tasks/todo.md) for the current verification record.
 
-### Bugs Found & Fixed During Development
-- `returnToLibrary()` race condition — fire-and-forget save lost data (fixed: await)
-- `writeScheduleFile` could leave files corrupted on error (fixed: writable.abort())
-- `getCurrentScheduleFileData()` returned null for non-library boot paths (fixed: auto-create fallback)
-- Event click handler only matched `.band` — grid/cards/phases clicks didn't work (fixed: `[data-event-id]`)
-- `saveCurrentSchedule()` didn't sync theme from in-memory state (fixed: copy before write)
-- Band `.main` colors were hardcoded, not using CSS vars (fixed)
-- Sample data had no main-scope anchors, so limited events weren't concurrent (fixed)
-- Conflict warnings skipped highlighted limited-scope events (fixed: conflict check now uses `classifyEvents()`)
+Native OS file-picker and print dialogs, actual Safari and Edge releases, tenant CSP/authentication rules, and a live SharePoint rollout require deployment checks. Browser-engine automation and file-handle mocks do not establish those results.
+
+## Operating limits
+
+Use one editor at a time. A file fingerprint check is not an atomic write lock across sync services, and legacy directory locks remain advisory. The recovery store keeps the latest local workbook snapshot and can be cleared, blocked, or full; save important work to a file.
+
+Archiving retains the schedule in the workbook. Versions and archived schedules remain readable by anyone with the file. Audience and overview print options filter presentation; they do not guarantee that notes or named exceptions are safe to disclose. Review a handout before sharing.
+
+An iframe separates app UI from host UI. A same-origin host can still read or modify the app, and a stricter host policy can block it. Cross-origin file pickers can be restricted; open the standalone app in its own tab for native autosave and printing.
+
+There are no accounts, real-time collaboration, recurring events, time zones, reminders, or events spanning midnight. Existing directory-mode profiles remain supported; new setups use workbooks. Recovered legacy drafts open as separate workbooks to protect the shared originals.

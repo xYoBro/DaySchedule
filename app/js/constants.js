@@ -5,7 +5,7 @@
  *   Repo:   https://github.com/xYoBro/DaySchedule
  *
  * EXPORTS (all const):
- *   APP_VERSION           — string                            'dev' in source; build date in dist
+ *   APP_VERSION           — string                            'dev' in source; date + content hash in dist
  *   DEFAULT_GROUPS        — Array<{id, name, scope, color}>  Default audience groups
  *   DEFAULT_COLOR_PALETTE — Array<string>                    Hex colors for new groups
  *   TIME_INCREMENT        — number (15)                      Minutes per time snap unit
@@ -20,7 +20,7 @@
  *   library.js    — APP_VERSION shown in the Help modal
  * ──────────────────────────────────────────────────────────────────────────── */
 
-// Stamped with the build date by tools/build-single-html.py; 'dev' when
+// Stamped with the build date and content hash by tools/build-single-html.py; 'dev' when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
 const APP_VERSION = 'dev';

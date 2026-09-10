@@ -195,3 +195,63 @@ describe('data-helpers — analyzeDayLayout', () => {
     assert.equal(analysis.bucketCount >= 5, true);
   });
 });
+
+describe('data-helpers — main track, phases and handouts', () => {
+  const groups = [
+    { id: 'all', scope: 'main', name: 'Everyone' },
+    { id: 'a', scope: 'limited', name: 'Team A' },
+    { id: 'b', scope: 'limited', name: 'Team B' },
+  ];
+  const event = (id, startTime, endTime, extra) => ({ id, title: id, startTime, endTime, groupId: 'a', ...extra });
+
+  it('honors an unassigned Main Track override and keeps primary audience events on the main track', () => {
+    assert.equal(isEventEffectiveMain({ groupId: '', isMainEvent: true }, groups), true);
+    assert.equal(isEventEffectiveMain({ groupId: '', isMainEvent: false }, groups), false);
+    assert.equal(isEventEffectiveMain({ groupId: 'all', isMainEvent: false }, groups), true);
+    assert.equal(isEventEffectiveMain({ groupId: 'b', isMainEvent: false }, groups), false);
+  });
+
+  it('groups only contained tasks under an unambiguous temporal phase', () => {
+    const events = [event('morning', '0800', '0900', { groupId: 'all' }),
+      event('later', '1000', '1100', { groupId: 'all' }),
+      event('inside', '0810', '0840'), event('gap', '0930', '0945'),
+      event('spans', '0845', '1015'), event('after', '1200', '1230')];
+    const phases = buildPhaseGroups(events, groups);
+    assert.deepEqual(phases.find(phase => phase.event && phase.event.id === 'morning').tasks.map(task => task.event.id), ['inside']);
+    ['gap', 'spans', 'after'].forEach(id => assert(phases.some(phase => !phase.event && phase.tasks.some(task => task.event.id === id)), id + ' should be independent'));
+    const renderedIds = phases.flatMap(phase => (phase.event ? [phase.event.id] : []).concat(phase.tasks.map(task => task.event.id))).sort();
+    assert.deepEqual(renderedIds, events.map(evt => evt.id).sort(), 'every event appears exactly once');
+  });
+
+  it('keeps tasks independent when two main phases overlap them', () => {
+    const phases = buildPhaseGroups([event('one', '0800', '1000', { groupId: 'all' }),
+      event('two', '0900', '1100', { isMainEvent: true }), event('ambiguous', '0915', '0930')], groups);
+    assert(phases.some(phase => !phase.event && phase.tasks[0].event.id === 'ambiguous'));
+  });
+
+  it('includes shared events and breaks in an audience handout without leaking another limited audience', () => {
+    const events = [event('shared', '0800', '0900', { groupId: 'all' }), event('own', '0900', '1000'),
+      event('other-highlight', '1000', '1100', { groupId: 'b', isMainEvent: true }),
+      event('break', '1100', '1200', { groupId: '', isBreak: true }),
+      event('unassigned-main', '1200', '1230', { groupId: '', isMainEvent: true })];
+    assert.deepEqual(getAudienceHandoutEvents(events, groups, 'a').map(evt => evt.id), ['shared', 'own', 'break', 'unassigned-main']);
+    assert.equal(getAudienceHandoutEvents(events, groups, '').length, 5);
+    assert.equal(events.length, 5, 'filtering leaves input intact');
+  });
+
+  it('flags dates, hours, missing audiences and shared resources while allowing adjacent events', () => {
+    const days = [{ id: 'd1', date: '2026-09-10', startTime: '0800', endTime: '1700', events: [
+      event('early', '0730', '0830', { groupId: '' }),
+      event('one', '0900', '1000', { location: 'Room 1', attendees: 'Alex; Sam' }),
+      event('two', '0930', '1030', { location: ' room 1 ', attendees: 'alex' }),
+      event('adjacent', '1030', '1100', { location: 'Room 1', attendees: 'Alex' }),
+    ] }, { id: 'd2', date: '2026-09-10', startTime: '1700', endTime: '0800', events: [] },
+    { id: 'd3', date: '2026-02-31', startTime: '0800', endTime: '1700', events: [] }];
+    const issues = getScheduleReviewIssues(days, groups);
+    ['audience', 'outside-day', 'duplicate-date', 'day-range', 'date'].forEach(type => assert(issues.some(issue => issue.type === type), type));
+    const overlaps = issues.filter(issue => issue.type === 'overlap');
+    assert.equal(overlaps.length, 1);
+    assert(overlaps[0].message.includes('audience, location, named people'));
+    assert.deepEqual(overlaps[0].eventIds, ['one', 'two']);
+  });
+});

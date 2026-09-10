@@ -22,7 +22,7 @@ const PALETTES = {
     bg: '#ffffff',
     text: '#1d1d1f',
     textSecondary: '#48484a',
-    textMuted: '#86868b',
+    textMuted: '#6e6e73',
     accent: '#2558a8',
     accentSecondary: '#b06a10',
     accentTertiary: '#4a5568',
@@ -33,7 +33,7 @@ const PALETTES = {
     bg: '#f5f7fa',
     text: '#00308F',
     textSecondary: '#2c3e5a',
-    textMuted: '#708090',
+    textMuted: '#576777',
     accent: '#00308F',
     accentSecondary: '#B8860B',
     accentTertiary: '#708090',
@@ -44,7 +44,7 @@ const PALETTES = {
     bg: '#f5f2ec',
     text: '#3d3929',
     textSecondary: '#5a5040',
-    textMuted: '#8b7d5e',
+    textMuted: '#6d6249',
     accent: '#5a6f52',
     accentSecondary: '#8b7d5e',
     accentTertiary: '#6b6353',
@@ -55,7 +55,7 @@ const PALETTES = {
     bg: '#1a1a2e',
     text: '#e0e0f0',
     textSecondary: '#b0b0cc',
-    textMuted: '#6b6b8a',
+    textMuted: '#9999b6',
     accent: '#5b8def',
     accentSecondary: '#e8a849',
     accentTertiary: '#6b6b8a',
@@ -66,7 +66,7 @@ const PALETTES = {
     bg: '#ffffff',
     text: '#333333',
     textSecondary: '#555555',
-    textMuted: '#888888',
+    textMuted: '#666666',
     accent: '#333333',
     accentSecondary: '#777777',
     accentTertiary: '#aaaaaa',
@@ -141,11 +141,13 @@ function applyPalette(paletteName, customColors) {
 const EDITOR_THEME_KEY = 'dayschedule_editor_theme';
 
 function getEditorTheme() {
-  return localStorage.getItem(EDITOR_THEME_KEY) || 'light';
+  try { return localStorage.getItem(EDITOR_THEME_KEY) === 'dark' ? 'dark' : 'light'; }
+  catch (e) { return document.body.getAttribute('data-editor-theme') === 'dark' ? 'dark' : 'light'; }
 }
 
 function applyEditorTheme(theme) {
-  const t = theme || 'light';
+  const t = theme === 'dark' ? 'dark' : 'light';
   document.body.setAttribute('data-editor-theme', t);
-  localStorage.setItem(EDITOR_THEME_KEY, t);
+  try { localStorage.setItem(EDITOR_THEME_KEY, t); }
+  catch (e) { console.warn('Editor theme will last for this page only:', e); }
 }
