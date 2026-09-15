@@ -47,11 +47,11 @@ Use the app's **Print** action or `Ctrl/Cmd+P` to review days, audience and deta
 
 **Bands** uses the approved day-first paper layout: a prominent main schedule, a separate chronological concurrent-event list, and **Notes & Reminders**. Each event appears in full once. Matching circled numbers link every main block that overlaps a concurrent event; events entirely in gaps remain in the timed concurrent list. Read down the left column, then the right. A third column is a last-resort overflow column after the two-column spacing and type options are exhausted.
 
-Bands uses one US Letter portrait page per day, with half-inch margins. Its optional logo is one inch square, and the notes area reserves 1¼ inches by default. **Customize → Basics** retains the schedule title and optional subtitle and adds logo visibility and notes-space choices. **Emphasize in Bands** in the event inspector marks chosen day anchors or concurrent events independently of **Main Track** placement. **Flight activities** supports shared or differing activity times inside a parent event.
+Bands uses one US Letter portrait page per day, with half-inch margins. Its optional logo is one inch square, and the notes area reserves 1¼ inches by default. **Customize → Basics** retains the schedule title and optional subtitle and adds logo visibility and notes-space choices. **Emphasize this event** marks chosen day anchors or concurrent events. **Schedule section → Main schedule / Concurrent event** controls placement independently of the audience, meal/break flag or emphasis. **Flight activities** supports shared or differing activity times inside a parent event.
 
-Existing version-1 workbooks still open. New saves use workbook format 2 so older app builds reject them instead of dropping flight activities or Bands settings. Distribute the updated app alongside new workbooks.
+Existing version-1 and version-2 workbooks still open in their original sections. New saves use workbook format 3 so older app builds reject them instead of dropping explicit event placement, flight activities or Bands settings. Distribute the updated app alongside new workbooks.
 
-**Specific People** stays free text. Existing records print as entered. The event inspector's **Format names for Bands** offers an explicit separator choice and complete preview; it never guesses which words to remove. Use semicolons or one person per line for reliable separation, including names that contain commas. Large rosters stay with their event, and roster length does not choose highlighting.
+**Names or attendance details** stays free text. Existing records print as entered. **Name layout** in the inspector and Quick Edit offers an explicit separator choice and complete preview; it never guesses which words to remove. Use semicolons or one person per line for reliable separation, including names that contain commas. Large rosters stay with their event, and roster length does not choose highlighting.
 
 Screen and print use the same Bands renderer. Fitting reduces spacing before type, with floors of 9 pt for details, 10.5 pt for small-event names, 9.5 pt for large-roster names and 11.5 pt for main titles. Navigation labels have an 8 pt floor; the footer uses 7 pt. Lighter days gain larger main text and more space, up to a cap. If a complete day cannot fit, the editor retains all its content and shows a warning. App printing is blocked, and native printing shows a not-ready notice for that day instead of issuing a partial schedule. Print at actual size on Letter, with browser headers/footers off; duplex can put the next day on the reverse.
 
@@ -125,7 +125,7 @@ Run the complete browser harnesses and user flows with the same Playwright setup
 node support/tests/test-browser.cjs
 ```
 
-This command starts its own local server and uses isolated browser contexts in all three engines. It covers startup, mobile layout, keyboard operation, exact-minute edits, printing, custom colors, download/reopen, dated duplication, archive/restore, and version management. It writes evidence to the gitignored `output/playwright/release/` directory and does not use your browser profile.
+This command starts its own local server and uses isolated browser contexts in all three engines. Set `DAYSCHEDULE_BROWSERS=chromium,webkit` to select engines; the embed suite accepts the same option. It covers startup, mobile layout, keyboard operation, exact-minute edits, printing, custom colors, download/reopen, dated duplication, archive/restore, and version management. It writes evidence to the gitignored `output/playwright/release/` directory and does not use your browser profile.
 
 With Chromium and Poppler's `pdftotext` and `pdfinfo` on PATH, verify emitted PDFs:
 
@@ -135,6 +135,8 @@ node support/tests/test-bands-pdf.cjs
 ```
 
 The general PDF suite checks 48 synthetic event descriptions in Grid, Cards and Phases, both print modes, and Letter/A4 output. The dedicated Bands suite covers eight Letter pages: main-only, 15 surnames, 40 surnames with timed flights, and fifteen concurrent events, plus explicit overflow blocking. See the [Bands stress-test record](support/docs/BANDS-STRESS-TEST.md) for tested engines and remaining release checks.
+
+For the complete new-author workflow (including keyboard, mobile, multiline names, flights, reminders and download/reopen), run `node support/tests/test-authoring-ui.cjs`. See the [Bands authoring guide](support/docs/BANDS-AUTHORING.md) for the control-to-output mapping and design rationale.
 
 Run reproducible randomized Bands layouts and real editor actions with:
 

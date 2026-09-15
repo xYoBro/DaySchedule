@@ -92,7 +92,7 @@ describe('inspector — day sheet modal', () => {
   // commit is deferred (setTimeout), so it needs the async runner. Under this
   // synchronous runner it "passed" for months without a single assertion running.
 
-  it('explains that main-track placement usually comes from the selected audience', () => {
+  it('offers an explicit section in Quick Edit even for shared audiences', () => {
     mountInspectorFixture();
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
@@ -107,15 +107,15 @@ describe('inspector — day sheet modal', () => {
 
     openDayEventSheetModal();
 
-    const autoLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-cell-note');
+    const placement = document.querySelector('#dayEventSheetModalContent .day-sheet-placement-select');
     const statusBadge = document.querySelector('#dayEventSheetModalContent .day-sheet-badge-track');
     const specificPeopleLabel = document.querySelector('#dayEventSheetModalContent .day-sheet-detail-label');
     const detailsBtn = document.querySelector('#daySheetOpenDetails');
 
-    assert.equal(autoLabel.textContent.trim(), 'Auto');
-    assert.equal(statusBadge.textContent.trim(), 'Main');
-    assert.equal(specificPeopleLabel.textContent.trim(), 'Specific people');
-    assert.equal(detailsBtn.textContent.trim(), 'Details');
+    assert.equal(placement.value, 'main');
+    assert.equal(statusBadge.textContent.trim(), 'Main schedule');
+    assert.equal(specificPeopleLabel.textContent.trim(), 'Names or attendance details');
+    assert.equal(detailsBtn.textContent.trim(), 'All event options');
   });
 
   it('opens the full event editor from quick edit', () => {
@@ -144,7 +144,7 @@ describe('inspector — day sheet modal', () => {
 });
 
 describe('inspector — settings and event details copy', () => {
-  it('keeps Primary and Supporting labels when toggling audience groups', () => {
+  it('keeps Shared and Specific audience roles separate from placement', () => {
     mountInspectorFixture();
 
     const modal = document.getElementById('settingsModalContent');
@@ -161,8 +161,8 @@ describe('inspector — settings and event details copy', () => {
     scopeBtn.click();
     const secondLabel = scopeBtn.textContent.trim();
 
-    assert(firstLabel === 'Primary' || firstLabel === 'Supporting');
-    assert(secondLabel === 'Primary' || secondLabel === 'Supporting');
+    assert(firstLabel === 'Shared' || firstLabel === 'Specific');
+    assert(secondLabel === 'Shared' || secondLabel === 'Specific');
     assert(firstLabel !== secondLabel, 'toggling should swap the label');
   });
 
@@ -210,8 +210,10 @@ describe('inspector — settings and event details copy', () => {
     const text = panel.textContent;
 
     assert(text.includes('Audience'));
-    assert(text.includes('Specific People'));
-    assert(text.includes('Main Track'));
+    assert(text.includes('Names or attendance details'));
+    assert(text.includes('Main schedule'));
+    assert(text.includes('Concurrent event'));
+    assert(panel.querySelector('#insp-placement-concurrent').checked);
   });
 
   it('rejects invalid full-editor time ranges and restores the previous value', () => {
@@ -242,7 +244,6 @@ describe('inspector — settings and event details copy', () => {
 
   it('explains shared-time exceptions in event details', () => {
     mountInspectorFixture();
-    const limitedAudienceName = Store.getGroup('grp_snco').name;
 
     const day = Store.addDay({ date: '2026-04-13', startTime: '0700', endTime: '1630' });
     const shared = Store.addEvent(day.id, {
@@ -263,16 +264,15 @@ describe('inspector — settings and event details copy', () => {
     selectEntity('event', day.id, shared.id);
     renderInspector();
     let panel = document.getElementById('inspectorPanel');
-    assert(panel.textContent.includes('Exceptions active during this block'));
-    assert(panel.textContent.includes(limitedAudienceName));
-    assert(panel.textContent.includes('Named people: MSgt Franklin'));
+    assert(panel.textContent.includes('Concurrent events during this block (1)'));
+    assert(panel.querySelector('.event-related').textContent.includes(limited.title));
 
     selectEntity('event', day.id, limited.id);
     renderInspector();
     panel = document.getElementById('inspectorPanel');
-    assert(panel.textContent.includes('It will read as an exception for ' + limitedAudienceName));
+    assert(panel.textContent.includes('Main schedule during this assignment (1)'));
     assert(panel.textContent.includes('All-Hands Cyber Awareness'));
-    assert(panel.textContent.includes('Named people: MSgt Franklin'));
+    assert.equal(panel.querySelector('#insp-evt-attendees').value, 'MSgt Franklin');
   });
 });
 

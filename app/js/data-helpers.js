@@ -58,6 +58,9 @@ function getGroupMap(groupsOrMap) {
 
 function isEventEffectiveMain(evt, groupsOrMap) {
   if (!evt) return false;
+  // Explicit author choice wins. Older files retain their original inferred
+  // placement until edited; audience and visual emphasis remain separate.
+  if (evt.placement === 'main' || evt.placement === 'concurrent') return evt.placement === 'main';
   if (evt.isBreak) return true;
   const groupMap = getGroupMap(groupsOrMap);
   const group = groupMap[evt.groupId];
@@ -197,7 +200,7 @@ function getScheduleReviewIssues(days, groups) {
           add(day, 'flight-activity', label + ': review the flight, activity and time range within ' + evt.title + '.', [evt.id]);
         }
       });
-      if (!groupMap[evt.groupId] && !evt.isBreak) add(day, 'audience', label + ': ' + evt.title + ' has no audience recorded.', [evt.id]);
+      if (!groupMap[evt.groupId] && !evt.attendees?.trim() && !evt.isBreak) add(day, 'audience', label + ': ' + evt.title + ' has no audience recorded.', [evt.id]);
       if (validRange && (timeToMinutes(evt.startTime) < start || timeToMinutes(evt.endTime) > end))
         add(day, 'outside-day', label + ': ' + evt.title + ' is outside the day’s stated hours.', [evt.id]);
     });
@@ -220,6 +223,7 @@ function getScheduleReviewIssues(days, groups) {
 
 function isSharedTrackEvent(evt, groupsOrMap) {
   if (!evt) return false;
+  if (!isEventEffectiveMain(evt, groupsOrMap)) return false;
   if (evt.isBreak) return true;
   const groupMap = getGroupMap(groupsOrMap);
   const group = groupMap[evt.groupId];

@@ -314,10 +314,15 @@
 .sheet.band-sheet[data-theme] .attendance-area :is(.person-label strong,.attendee-free-text){color:var(--paper-text,#20262c)}
 .band-fit-notice{font-size:12px;line-height:1.5;margin:12px 0;padding:10px 14px;background:var(--ui-bg,#f5f5f7);color:var(--ui-text,#333);border-left:3px solid #a67126}
 .band-fit-notice:empty{display:none}
-.attendee-preview{font-size:11px;line-height:1.5;margin:6px 0 12px}
+.attendee-preview{font-size:12px;line-height:1.45;margin:8px 0 0}
+.attendee-preview summary{cursor:pointer;padding:6px 0;font-weight:600}
+.attendee-preview p{margin:6px 0;color:var(--chrome-text-secondary)}
+.attendee-format select{width:100%;min-height:36px;font-family:inherit}
+.attendee-preview[hidden]{display:none}
 .attendee-preview .attendee-preview-list{max-height:140px;overflow:auto;border:1px solid var(--ui-border,#ddd);padding:6px;white-space:pre-wrap}
 .flight-editor{margin:14px 0;border-top:1px solid var(--ui-border,#ddd);padding-top:10px}
-.flight-editor summary{font-weight:600;cursor:pointer;padding:8px 0}
+.flight-editor summary{font-size:13px;line-height:1.4;font-weight:600;cursor:pointer;padding:10px 0;overflow-wrap:anywhere}
+.flight-editor .insp-context-note{background:none;border:0;padding:0;color:var(--chrome-text-secondary)}
 .flight-editor-item{padding:8px;border:1px solid var(--ui-border,#ddd);border-radius:6px;margin:8px 0}
 .flight-editor-item .field-row{gap:6px}
 .flight-editor-item input,.flight-editor-item textarea{width:100%;min-width:0}

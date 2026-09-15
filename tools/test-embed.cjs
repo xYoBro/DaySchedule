@@ -71,7 +71,7 @@ async function main() {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const origin = 'http://127.0.0.1:' + server.address().port;
-  for (const name of ['chromium', 'firefox', 'webkit']) {
+  for (const name of (process.env.DAYSCHEDULE_BROWSERS || 'chromium,firefox,webkit').split(',')) {
     const browser = await engines[name].launch({ headless: true });
     try {
       const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });

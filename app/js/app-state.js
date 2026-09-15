@@ -90,6 +90,7 @@ const Store = {
       attendees: e.attendees || '',
       isBreak: e.isBreak || false,
       isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === 'main' : false),
+      ...(['main', 'concurrent'].includes(e.placement) ? { placement: e.placement } : {}),
       ...(e.emphasized != null ? { emphasized: !!e.emphasized } : {}),
       ...(e.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(e.attendeeFormat) } : {}),
       ...(Array.isArray(e.flightActivities) ? { flightActivities: normalizeFlightActivities(e.flightActivities) } : {}),

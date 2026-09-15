@@ -136,3 +136,16 @@
 - Test complete app-generated PDFs as well as frozen paper specimens: an empty editor wrapper before a named page can add a blank first sheet even when the schedule itself fits.
 - Before shrinking dense rosters or adding a third column, measure alternative widths in both directions. A narrow allocation search can reject a valid two-column page.
 - PDF geometric text reconstruction can interleave adjacent columns. Use content-stream text for fidelity assertions, and retain independent visual and physical page checks.
+
+## Bands authoring — 2026-09-14
+
+- Ask authors for the section they want. Attendance, placement and visual emphasis
+  must be separate choices; retain inferred placement for legacy records and
+  freeze it before audience edits. Protect new placement with a workbook version.
+- A multiline roster needs a textarea in every editor. Preview the current draft
+  while typing, and commit that same draft when the author changes its format.
+- Browser selectOption does not reproduce the focus change of a native selection.
+  Exercise focus/blur explicitly, and compare saved objects semantically rather
+  than by JSON key order.
+- Parent-time edits must refresh flight controls and flag out-of-range activities,
+  even when their entry details are collapsed.

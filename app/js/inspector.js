@@ -279,29 +279,32 @@ function renderSettingsModal(modal) {
 
   html += '<section class="settings-panel' + (_settingsActiveTab === 'basics' ? ' active' : '') + '" data-settings-panel="basics">';
   html += '<div class="settings-section">';
-  html += '<div class="settings-section-title">Basics</div>';
-  html += '<label class="settings-label" for="settings-title">Schedule Title</label>';
+  html += '<div class="settings-section-title">Page heading</div>';
+  html += '<label class="settings-label" for="settings-title">Schedule title</label>';
+  html += '<p class="insp-hint">An organization name, event title, or anything that describes this schedule.</p>';
   html += '<input type="text" class="settings-input" id="settings-title" value="' + esc(title) + '">';
-  html += '<label class="settings-label" for="settings-logo">Unit Logo</label>';
-  html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
-  if (currentTheme.skin === 'bands') {
-    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
-    html += '<label class="insp-toggle-label"><input type="checkbox" id="settings-band-logo"' + (bandSettings.showLogo ? ' checked' : '') + '> Show logo on Bands</label>';
-  }
-  if (Store.getLogo()) {
-    html += '<div class="settings-logo-preview"><img alt="Current unit logo" src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
-    html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove logo</button></div>';
-  }
-  html += '<label class="settings-label" for="settings-contact">' + (currentTheme.skin === 'bands' ? 'Subtitle (optional)' : 'Header Line') + '</label>';
+  html += '<label class="settings-label" for="settings-contact">' + (currentTheme.skin === 'bands' ? 'Subtitle (optional)' : 'Header line (optional)') + '</label>';
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
-  html += '<label class="settings-label" for="settings-poc">Point of Contact</label>';
-  html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
+  html += '<label class="settings-label" for="settings-poc">Schedule point of contact (optional)</label>';
+  html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '" placeholder="MSgt Doe">';
+  html += '</div><div class="settings-section"><div class="settings-section-title">Logo</div>';
   if (currentTheme.skin === 'bands') {
     const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
-    html += '<label class="settings-label" for="settings-band-notes">Notes &amp; Reminders space</label><select class="settings-input" id="settings-band-notes">' +
-      [[90, '1¼ inches'], [108, '1½ inches'], [144, '2 inches']].map(([value, label]) => '<option value="' + value + '"' + (bandSettings.notesHeight === value ? ' selected' : '') + '>' + label + '</option>').join('') + '</select>';
+    html += '<label class="insp-toggle-label"><input type="checkbox" id="settings-band-logo"' + (bandSettings.showLogo ? ' checked' : '') + '> Show logo space (1 × 1 inch)</label>';
+    html += '<p class="insp-hint">At the left of the heading. Turn off to give the title more room.</p>';
+  }
+  html += '<label class="settings-label" for="settings-logo">Logo image (optional)</label>';
+  html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
+  if (Store.getLogo()) {
+    html += '<div class="settings-logo-preview"><img alt="Current logo" src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
+    html += '<button class="btn" id="settings-logo-remove">Remove logo</button></div>';
   }
   html += '</div>';
+  if (currentTheme.skin === 'bands') {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += '<div class="settings-section"><div class="settings-section-title">Notes &amp; Reminders</div><label class="settings-label" for="settings-band-notes">Space at the bottom of each day</label><select class="settings-input" id="settings-band-notes">' +
+      [[90, '1¼ inches — usual choice'], [108, '1½ inches'], [144, '2 inches']].map(([value, label]) => '<option value="' + value + '"' + (bandSettings.notesHeight === value ? ' selected' : '') + '>' + label + '</option>').join('') + '</select><p class="insp-hint">Use + Reminder to add untimed notes. More space here leaves less room for events.</p></div>';
+  }
   html += '</section>';
 
   html += '<section class="settings-panel' + (_settingsActiveTab === 'look' ? ' active' : '') + '" data-settings-panel="look">';
@@ -355,12 +358,12 @@ function renderSettingsModal(modal) {
   html += '<section class="settings-panel' + (_settingsActiveTab === 'audiences' ? ' active' : '') + '" data-settings-panel="audiences">';
   html += '<div class="settings-section">';
   html += '<div class="settings-section-title">Audiences</div>';
-  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Primary shows in the main track.</p>';
+  html += '<p class="insp-hint" style="margin-top:0;margin-bottom:8px;">Audiences describe who attends. Shared means the whole organization; specific means a smaller group. Choose the schedule section on each event.</p>';
   groups.forEach(g => {
     html += '<div class="insp-group-item" data-group-id="' + esc(g.id) + '">';
     html += '<input type="color" class="insp-group-color" aria-label="Color for ' + esc(g.name) + '" value="' + esc(g.color) + '">';
     html += '<input type="text" class="insp-group-name" aria-label="Audience name" value="' + esc(g.name) + '" placeholder="Group name">';
-    html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Toggle between Primary and Supporting">' + (g.scope === 'main' ? 'Primary' : 'Supporting') + '</button>';
+    html += '<button class="insp-group-scope ' + (g.scope === 'main' ? 'main' : '') + '" title="Change audience role: shared or specific">' + (g.scope === 'main' ? 'Shared' : 'Specific') + '</button>';
     html += '<button class="insp-group-remove" type="button" aria-label="Remove audience" title="Remove audience" data-delete-label="&times;" data-delete-armed-label="Delete?">&times;</button>';
     html += '</div>';
   });
@@ -561,9 +564,10 @@ function wireSettingsModal(modal) {
       saveUndoState();
       const isMain = scopeBtn.classList.contains('main');
       const newScope = isMain ? 'limited' : 'main';
+      preserveEventPlacements();
       Store.updateGroup(groupId, { scope: newScope });
       scopeBtn.classList.toggle('main', !isMain);
-      scopeBtn.textContent = isMain ? 'Supporting' : 'Primary';
+      scopeBtn.textContent = isMain ? 'Specific' : 'Shared';
       renderActiveDay();
       sessionSave();
     });
@@ -573,6 +577,7 @@ function wireSettingsModal(modal) {
     // as event/note deletion.
     wireDeleteButton(item.querySelector('.insp-group-remove'), () => {
       saveUndoState();
+      preserveEventPlacements();
       Store.removeGroup(groupId);
       renderActiveDay();
       sessionSave();
@@ -813,39 +818,21 @@ function getDayEventSheetContext(dayId) {
 }
 
 function getDaySheetTrackStatus(evt, group) {
-  if (evt.isBreak) {
-    return {
-      label: 'Break',
-      tone: 'break',
-      title: 'Breaks always appear in the main track.'
-    };
-  }
-  if (group && group.scope === 'main') {
-    return {
-      label: 'Main',
-      tone: 'primary',
-      title: 'The selected Primary audience automatically places this event in the main track.'
-    };
-  }
-  if (evt.isMainEvent) {
-    return {
-      label: 'Main Override',
-      tone: 'override',
-      title: 'This supporting or unassigned event is manually shown in the main track.'
-    };
-  }
-  if (group && group.scope === 'limited') {
-    return {
-      label: 'Side',
-      tone: 'supporting',
-      title: 'Supporting audiences stay in the side track unless Main Track is turned on.'
-    };
-  }
-  return {
-    label: 'No Audience',
-    tone: 'none',
-    title: 'Choose an audience to place this event automatically, or turn on Main Track manually.'
-  };
+  const main = isEventEffectiveMain(evt, group ? { [group.id]: group } : {});
+  return { label: main ? 'Main schedule' : 'Concurrent event',
+    tone: main ? 'primary' : 'supporting',
+    title: 'Change the schedule section independently of who attends.' };
+}
+
+// Freeze the current position before editing older, implicitly placed events.
+// Audience roles still describe attendance, but editing them must not move rows.
+function preserveEventPlacements() {
+  const groups = Store.getGroups();
+  Store.getDays().forEach(day => day.events.forEach(event => {
+    if (!event.placement) Store.updateEvent(day.id, event.id, {
+      placement: isEventEffectiveMain(event, groups) ? 'main' : 'concurrent'
+    });
+  }));
 }
 
 function resolveDaySheetSelectedEventId(ctx, dayId, preferredId) {
@@ -877,27 +864,29 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += '</div>';
   html += '</div>';
   html += '<div class="day-sheet-detail-actions">';
-  html += '<button class="btn" id="daySheetOpenDetails" data-event-id="' + esc(evt.id) + '">Details</button>';
+  html += '<button class="btn" id="daySheetOpenDetails" data-event-id="' + esc(evt.id) + '">All event options</button>';
   html += '<button class="btn btn-danger" id="daySheetDeleteSelected" data-event-id="' + esc(evt.id) + '" data-delete-label="Delete">Delete</button>';
   html += '</div>';
   html += '</div>';
 
   html += '<div class="day-sheet-detail-grid">';
   html += '<label class="day-sheet-detail-field">';
-  html += '<span class="day-sheet-detail-label">Specific people</span>';
-  html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" value="' + esc(evt.attendees) + '" placeholder="Optional">';
+  html += '<span class="day-sheet-detail-label">Names or attendance details</span>';
+  html += '<textarea rows="2" data-event-id="' + esc(evt.id) + '" data-field="attendees" data-focus="attendees" placeholder="Doe; Smith; Chan">' + esc(evt.attendees) + '</textarea>';
   html += '</label>';
   html += '<label class="day-sheet-detail-field">';
-  html += '<span class="day-sheet-detail-label">POC</span>';
+  html += '<span class="day-sheet-detail-label">Point of contact</span>';
   html += '<input type="text" data-event-id="' + esc(evt.id) + '" data-field="poc" data-focus="poc" value="' + esc(evt.poc) + '" placeholder="Optional">';
   html += '</label>';
   html += '<label class="day-sheet-detail-field day-sheet-detail-wide">';
-  html += '<span class="day-sheet-detail-label">Notes</span>';
+  html += '<span class="day-sheet-detail-label">Event instructions</span>';
   // textarea, not <input>: a single-line input strips the newlines the
   // Event Inspector's textarea allows, flattening "Line one\nLine two" on commit.
   html += '<textarea rows="2" data-event-id="' + esc(evt.id) + '" data-field="description" data-focus="description" placeholder="Optional">' + esc(evt.description) + '</textarea>';
   html += '</label>';
   html += '</div>';
+  html += renderAttendeeFormatting(evt, '', 'sheet');
+  html += '<p class="day-sheet-details-hint">All event options: emphasis, meal / break, and flight activities' + ((evt.flightActivities || []).length ? ' (' + evt.flightActivities.length + ' entered)' : '') + '.</p>';
   if (overlapNames.length > 0) {
     html += '<p class="day-sheet-details-hint">Overlap warning: ' + esc(overlapNames.join(', ')) + ' share this time block.</p>';
   }
@@ -966,17 +955,13 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += '<th>Title</th>';
   html += '<th>Audience</th>';
   html += '<th>Location</th>';
-  html += '<th>Break</th>';
-  html += '<th>Main</th>';
-  html += '<th>Track</th>';
+  html += '<th>Schedule section</th>';
   html += '<th>Dur</th>';
   html += '</tr></thead><tbody>';
 
   ctx.events.forEach(evt => {
     const group = ctx.groupMap[evt.groupId] || null;
     const overlapNames = ctx.overlapMap[evt.id] || [];
-    const canHighlight = !evt.isBreak && !(group && group.scope === 'main');
-    const trackStatus = getDaySheetTrackStatus(evt, group);
     const isSelected = evt.id === selectedEventId;
 
     html += '<tr class="day-sheet-row' + (isSelected ? ' is-selected' : '') + '" data-event-id="' + esc(evt.id) + '">';
@@ -984,24 +969,16 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     html += '<td><input type="text" class="day-sheet-time-input" data-event-id="' + esc(evt.id) + '" data-field="endTime" data-focus="endTime" value="' + esc(evt.endTime) + '" maxlength="5" placeholder="0800"></td>';
     html += '<td><input type="text" class="day-sheet-title-input" data-event-id="' + esc(evt.id) + '" data-field="title" data-focus="title" value="' + esc(evt.title) + '"></td>';
     html += '<td><select class="day-sheet-group-select" data-event-id="' + esc(evt.id) + '" data-focus="groupId">';
-    html += '<option value="">No audience</option>';
+    html += '<option value="">Specific people / other</option>';
     ctx.groups.forEach(g => {
       html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>';
     });
     html += '</select></td>';
     html += '<td><input type="text" class="day-sheet-location-input" data-event-id="' + esc(evt.id) + '" data-field="location" data-focus="location" value="' + esc(evt.location) + '"></td>';
-    html += '<td class="day-sheet-check-cell"><label class="day-sheet-check-target"><input type="checkbox" class="day-sheet-break-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isBreak"' + (evt.isBreak ? ' checked' : '') + ' aria-label="Break"></label></td>';
-    if (canHighlight) {
-      html += '<td class="day-sheet-check-cell"><label class="day-sheet-check-target"><input type="checkbox" class="day-sheet-main-toggle" data-event-id="' + esc(evt.id) + '" data-focus="isMainEvent"' + (evt.isMainEvent ? ' checked' : '') + ' title="Turn this on only when a supporting or unassigned event should appear in the main track." aria-label="Main track override"></label></td>';
-    } else {
-      html += '<td class="day-sheet-check-cell"><span class="day-sheet-cell-note" title="' + esc(evt.isBreak ? 'Breaks always render in the main track.' : 'The selected Primary audience already places this event in the main track.') + '">Auto</span></td>';
-    }
-    html += '<td><div class="day-sheet-track-cell">';
-    html += '<span class="day-sheet-badge day-sheet-badge-track day-sheet-badge-track-' + esc(trackStatus.tone) + '" title="' + esc(trackStatus.title) + '">' + esc(trackStatus.label) + '</span>';
-    if (overlapNames.length > 0) {
-      html += '<span class="day-sheet-badge warn" title="' + esc('Overlaps with ' + overlapNames.join(', ')) + '">Overlap</span>';
-    }
-    html += '</div></td>';
+    html += '<td><select class="day-sheet-placement-select" data-event-id="' + esc(evt.id) + '" data-focus="placement">' +
+      ['main', 'concurrent'].map(value => '<option value="' + value + '"' + ((isEventEffectiveMain(evt, ctx.groupMap) ? 'main' : 'concurrent') === value ? ' selected' : '') + '>' + (value === 'main' ? 'Main schedule' : 'Concurrent event') + '</option>').join('') + '</select>';
+    if (overlapNames.length) html += '<span class="day-sheet-badge warn" title="' + esc('Overlaps with ' + overlapNames.join(', ')) + '">Overlap</span>';
+    html += '</td>';
     html += '<td><span class="day-sheet-duration">' + esc(formatDuration(computeDuration(evt))) + '</span></td>';
     html += '</tr>';
   });
@@ -1024,7 +1001,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   modal.querySelectorAll('.day-sheet-row input, .day-sheet-row select').forEach(input => {
     const field = input.dataset.field || input.dataset.focus;
     const labels = { startTime: 'Start time', endTime: 'End time', title: 'Event title', groupId: 'Audience',
-      location: 'Location', isBreak: 'Break', isMainEvent: 'Main track override' };
+      location: 'Location', placement: 'Schedule section' };
     const evt = ctx.events.find(item => item.id === input.dataset.eventId);
     input.setAttribute('aria-label', (labels[field] || field) + ': ' + (evt ? evt.title : 'event'));
   });
@@ -1044,6 +1021,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
 
 function wireDayEventSheetModal(modal, dayId) {
   wireEditabilityGuard(modal, '#daySheetClose, #daySheetOpenDetails', () => renderDayEventSheetModal(modal, Store.getActiveDay()));
+  disableReadOnlyDaySheetControls(modal);
   modal.onkeydown = e => {
     if (e.key !== 'Escape' || e.defaultPrevented) return;
     const input = e.target.closest('input[data-event-id], textarea[data-event-id]');
@@ -1085,6 +1063,7 @@ function wireDayEventSheetModal(modal, dayId) {
         startTime,
         endTime,
         groupId: defaultGroup ? defaultGroup.id : '',
+        placement: 'main',
       });
       sessionSave();
       renderActiveDay();
@@ -1195,7 +1174,7 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = select.getAttribute('data-event-id');
       const currentEvent = Store.getEvents(dayId).find(e => e.id === eventId);
       if (!currentEvent) return;
-      const updates = { groupId: select.value };
+      const updates = { groupId: select.value, placement: isEventEffectiveMain(currentEvent, Store.getGroups()) ? 'main' : 'concurrent' };
       commitDayEventSheetUpdate(dayId, eventId, updates, {
         rerenderModal: true,
         checkConflict: true,
@@ -1204,28 +1183,12 @@ function wireDayEventSheetModal(modal, dayId) {
     });
   });
 
-  modal.querySelectorAll('.day-sheet-break-toggle').forEach(input => {
-    input.addEventListener('focus', () => {
-      const eventId = input.getAttribute('data-event-id');
-      syncDaySheetSelectionUI(modal, dayId, eventId);
-    });
-    input.addEventListener('change', () => {
-      const eventId = input.getAttribute('data-event-id');
-      commitDayEventSheetUpdate(dayId, eventId, { isBreak: input.checked }, {
-        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: 'isBreak' },
-      });
-    });
-  });
-
-  modal.querySelectorAll('.day-sheet-main-toggle').forEach(input => {
-    input.addEventListener('focus', () => {
-      const eventId = input.getAttribute('data-event-id');
-      syncDaySheetSelectionUI(modal, dayId, eventId);
-    });
-    input.addEventListener('change', () => {
-      const eventId = input.getAttribute('data-event-id');
-      commitDayEventSheetUpdate(dayId, eventId, { isMainEvent: input.checked }, {
-        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: 'isMainEvent' },
+  modal.querySelectorAll('.day-sheet-placement-select').forEach(select => {
+    select.addEventListener('focus', () => syncDaySheetSelectionUI(modal, dayId, select.dataset.eventId));
+    select.addEventListener('change', () => {
+      const eventId = select.dataset.eventId;
+      commitDayEventSheetUpdate(dayId, eventId, { placement: select.value }, {
+        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: 'placement' }
       });
     });
   });
@@ -1236,6 +1199,7 @@ function wireDayEventSheetModal(modal, dayId) {
 function wireDaySheetDetailPanel(modal, dayId) {
   const detailPanel = modal.querySelector('#daySheetDetailPanel');
   if (!detailPanel) return;
+  disableReadOnlyDaySheetControls(modal);
 
   const openDetailsBtn = detailPanel.querySelector('#daySheetOpenDetails');
   if (openDetailsBtn) {
@@ -1246,11 +1210,16 @@ function wireDaySheetDetailPanel(modal, dayId) {
   }
 
   detailPanel.querySelectorAll('input[type="text"], textarea').forEach(input => {
+    if (input.dataset.field === 'attendees') input.addEventListener('input', () => {
+      const current = Store.getEvents(dayId).find(event => event.id === input.dataset.eventId);
+      if (current) updateAttendeePreview(detailPanel, { ...current, attendees: input.value }, 'sheet');
+    });
     input.addEventListener('change', () => {
       const eventId = input.getAttribute('data-event-id');
       const field = input.getAttribute('data-field');
       const value = typeof input.value === 'string' ? input.value.trim() : input.value;
       commitDayEventSheetUpdate(dayId, eventId, { [field]: value }, { rerenderModal: false });
+      if (field === 'attendees') updateAttendeePreview(detailPanel, Store.getEvents(dayId).find(event => event.id === eventId), 'sheet');
     });
     if (input.tagName !== 'TEXTAREA') {
       input.addEventListener('keydown', (e) => {
@@ -1260,6 +1229,13 @@ function wireDaySheetDetailPanel(modal, dayId) {
         }
       });
     }
+  });
+
+  detailPanel.querySelector('#sheet-attendee-format')?.addEventListener('change', event => {
+    const names = detailPanel.querySelector('[data-field="attendees"]');
+    const eventId = names.dataset.eventId;
+    commitDayEventSheetUpdate(dayId, eventId, { attendeeFormat: normalizeAttendeeFormat(event.target.value), attendees: names.value.trim() }, { rerenderModal: false });
+    updateAttendeePreview(detailPanel, Store.getEvents(dayId).find(event => event.id === eventId), 'sheet');
   });
 
   const deleteBtn = detailPanel.querySelector('#daySheetDeleteSelected');
@@ -1278,6 +1254,13 @@ function wireDaySheetDetailPanel(modal, dayId) {
       renderDayEventSheetModal(modal, dayId, nextEventId ? { eventId: nextEventId } : null);
     });
   }
+}
+
+function disableReadOnlyDaySheetControls(modal) {
+  if (typeof isCurrentScheduleEditable !== 'function' || isCurrentScheduleEditable()) return;
+  modal.querySelectorAll('input, textarea, select, button').forEach(control => {
+    if (!control.matches('#daySheetClose, #daySheetOpenDetails')) control.disabled = true;
+  });
 }
 
 function commitDayEventSheetUpdate(dayId, eventId, updates, options) {
@@ -1365,103 +1348,47 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
 function renderEventInspector(panel, dayId, eventId) {
   const evt = Store.getEvents(dayId).find(e => e.id === eventId);
   if (!evt) { renderScheduleSetup(panel); return; }
-
   const groups = Store.getGroups();
-  const evtGroup = Store.getGroup(evt.groupId);
-  const groupIsMain = evtGroup && evtGroup.scope === 'main';
+  const main = isEventEffectiveMain(evt, groups);
+  const showPeople = !main || !!evt.attendees?.trim() || Store.getGroup(evt.groupId)?.scope !== 'main';
   const readOnly = typeof isCurrentScheduleEditable === 'function' ? !isCurrentScheduleEditable() : false;
   const textReadOnly = readOnly ? ' readonly' : '';
   const disabledAttr = readOnly ? ' disabled' : '';
+  let html = '<div class="insp-header"><h3 style="margin:0;">Event</h3><button class="insp-close" id="insp-close" title="Back to Setup">✕</button></div>';
+  html += readOnly ? '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>'
+    : '<p class="insp-hint insp-save-hint">Changes update the preview as you type.</p>';
 
-  let html = '<div class="insp-header"><h3 style="margin:0;">Event</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
-  if (readOnly) {
-    html += '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>';
-  }
-
-  // Check for main-on-main overlaps
-  const allEvents = Store.getEvents(dayId);
-  const { mainBands } = classifyEvents(allEvents, groups);
-  const thisBand = mainBands.find(b => b.event.id === eventId);
-  const sharedExceptions = getSharedEventExceptions(evt, allEvents, groups);
-  const sharedOverlaps = getOverlappingSharedEvents(evt, allEvents, groups);
-  const sharedNames = summarizeDisplayList(sharedExceptions.attendeeNames, 4);
-  const eventNames = summarizeDisplayList(evt.attendees ? evt.attendees.split(/\s*(?:,|;|\n|\/)\s*/).map(name => name.trim()).filter(Boolean) : [], 4);
-  if (thisBand && thisBand.overlappingMain && thisBand.overlappingMain.length > 0) {
-    const names = thisBand.overlappingMain.map(m => esc(m.title)).join(', ');
-    html += '<div class="insp-overlap-warn">Overlaps with ' + names + '</div>';
-  }
-  if (sharedExceptions.groupNames.length > 0) {
-    html += '<div class="insp-context-note">Exceptions active during this block: ' + esc(summarizeDisplayList(sharedExceptions.groupNames, 3)) + '.';
-    if (sharedNames) html += ' Named people: ' + esc(sharedNames) + '.';
-    html += '</div>';
-  } else if (sharedOverlaps.titles.length > 0) {
-    const audienceLabel = evtGroup ? evtGroup.name : 'this audience';
-    html += '<div class="insp-context-note">This runs during ' + esc(summarizeDisplayList(sharedOverlaps.titles, 2)) + '. It will read as an exception for ' + esc(audienceLabel) + '.';
-    if (eventNames) html += ' Named people: ' + esc(eventNames) + '.';
-    html += '</div>';
-  }
-
-  const trackLabel = evt.isBreak
-    ? 'Break'
-    : (groupIsMain
-        ? 'Main'
-        : (evt.isMainEvent ? 'Main Override' : (evtGroup ? 'Side' : 'No Audience')));
-  html += '<div class="insp-summary-pills">';
-  html += '<span class="insp-summary-pill insp-summary-pill-accent">' + esc(evt.startTime + '–' + evt.endTime) + '</span>';
-  html += '<span class="insp-summary-pill">' + esc(evtGroup ? evtGroup.name : 'No audience') + '</span>';
-  html += '<span class="insp-summary-pill">' + esc(trackLabel) + '</span>';
-  html += '</div>';
-
-  // Title
-  html += '<label for="insp-evt-title">Title</label>';
-  html += '<input type="text" id="insp-evt-title" value="' + esc(evt.title) + '"' + textReadOnly + '>';
-
-  // Times — exact minutes with range validation
-  html += '<div class="field-row">';
-  html += '<div><label for="insp-evt-start">Start</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="5" class="time-input"' + textReadOnly + '></div>';
-  html += '<div><label for="insp-evt-end">End</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="5" class="time-input"' + textReadOnly + '></div>';
-  html += '</div>';
-
-  // Group
-  html += '<label for="insp-evt-group">Audience</label>';
-  html += '<select id="insp-evt-group"' + disabledAttr + '>';
-  html += '<option value="">No audience</option>';
-  groups.forEach(g => {
-    html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>';
+  html += '<label for="insp-evt-title">Event title</label><input type="text" id="insp-evt-title" value="' + esc(evt.title) + '"' + textReadOnly + '>';
+  html += '<div class="field-row"><div><label for="insp-evt-start">Start time</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="5" class="time-input"' + textReadOnly + '></div>';
+  html += '<div><label for="insp-evt-end">End time</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="5" class="time-input"' + textReadOnly + '></div></div>';
+  html += '<fieldset class="event-placement"><legend>Schedule section</legend>';
+  [['main', 'Main schedule', 'A band in the day’s main sequence.'], ['concurrent', 'Concurrent event', 'A separate assignment, listed below the main bands.']].forEach(([value, label, hint]) => {
+    html += '<label class="placement-option"><input type="radio" name="event-placement" id="insp-placement-' + value + '" value="' + value + '"' + ((main ? 'main' : 'concurrent') === value ? ' checked' : '') + disabledAttr + '><span><strong>' + label + '</strong><small>' + hint + '</small></span></label>';
   });
-  html += '</select>';
+  html += '</fieldset>';
 
-  // Specific People
-  html += '<label for="insp-evt-attendees">Specific People</label>';
-  html += '<textarea id="insp-evt-attendees" rows="2" placeholder="Optional names"' + textReadOnly + '>' + esc(evt.attendees) + '</textarea>';
-  html += renderAttendeeFormatting(evt, disabledAttr);
+  html += '<section class="event-field-section"><h4>Who attends</h4><label for="insp-evt-group">Audience</label><select id="insp-evt-group"' + disabledAttr + '><option value="">Specific people / other (enter below)</option>';
+  groups.forEach(g => { html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>'; });
+  html += '</select><details class="event-people"' + (showPeople ? ' open' : '') + '><summary>Specific people or attendance details</summary><label for="insp-evt-attendees">Names or attendance details' + (evt.groupId ? ' (optional)' : '') + '</label>';
+  html += '<p class="insp-hint" id="insp-people-hint">Leave blank if the whole audience attends. For a named assignment, enter everyone who must attend. Surnames or full names are both fine.</p>';
+  html += '<textarea id="insp-evt-attendees" rows="2" aria-describedby="insp-people-hint" placeholder="Doe; Smith; Chan"' + textReadOnly + '>' + esc(evt.attendees) + '</textarea>';
+  html += renderAttendeeFormatting(evt, disabledAttr) + '</details></section>';
 
-  // Description
-  html += '<label for="insp-evt-desc">Notes</label>';
-  html += '<textarea id="insp-evt-desc"' + textReadOnly + '>' + esc(evt.description) + '</textarea>';
-
-  // Location + POC
-  html += '<label for="insp-evt-loc">Location</label>';
-  html += '<input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '"' + textReadOnly + '>';
-  html += '<label for="insp-evt-poc">POC</label>';
-  html += '<input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '"' + textReadOnly + '>';
+  html += '<section class="event-field-section"><h4>Where &amp; what to know</h4>';
+  html += '<label for="insp-evt-loc">Location (optional)</label><input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '" placeholder="Building or room"' + textReadOnly + '>';
+  html += '<label for="insp-evt-poc">Point of contact (optional)</label><input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '" placeholder="MSgt Doe"' + textReadOnly + '>';
+  html += '<label for="insp-evt-desc">Event instructions (optional)</label><textarea id="insp-evt-desc" placeholder="What to bring, preparation, or reporting instructions"' + textReadOnly + '>' + esc(evt.description) + '</textarea></section>';
   html += renderBandEventFields(evt, readOnly);
+  html += '<div class="insp-toggle-section"><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + disabledAttr + '> This is a meal or break</label><p class="insp-hint">Keeps the selected schedule section. Use emphasis above to make it an anchor.</p></div>';
 
-  // Break toggle
-  html += '<div class="insp-toggle-section">';
-  html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + disabledAttr + '> Break</label>';
-  html += '</div>';
-
-  // Highlight override — only show if group scope is limited
-  if (!groupIsMain && !evt.isBreak) {
-    html += '<div class="insp-toggle-section">';
-    html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-main"' + (evt.isMainEvent ? ' checked' : '') + disabledAttr + '> Main Track</label>';
-    html += '</div>';
-  }
-
-  // Delete — in sticky zone
+  const { mainBands } = classifyEvents(Store.getEvents(dayId), groups);
+  const overlaps = mainBands.find(band => band.event.id === eventId)?.overlappingMain || [];
+  if (overlaps.length) html += '<div class="insp-overlap-warn">Also on the main schedule at this time: ' + overlaps.map(event => esc(event.title)).join(', ') + '. Review whether both belong here.</div>';
+  const related = Store.getEvents(dayId).filter(event => event.id !== evt.id &&
+    isEventEffectiveMain(event, groups) !== main && eventsOverlap(evt, event));
+  if (related.length) html += '<details class="event-related"><summary>' + (main ? 'Concurrent events during this block' : 'Main schedule during this assignment') + ' (' + related.length + ')</summary><ul>' +
+    related.map(event => '<li>' + esc(event.startTime + '–' + event.endTime + ' · ' + event.title) + '</li>').join('') + '</ul></details>';
   html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-evt-delete"' + disabledAttr + '>Delete Event</button></div>';
-
   panel.innerHTML = html;
   wireEventInspector(panel, dayId, eventId);
 }
@@ -1477,10 +1404,12 @@ function wireEventInspector(panel, dayId, eventId) {
       let val;
       if (el.type === 'checkbox') val = el.checked;
       else val = typeof el.value === 'string' ? el.value.trim() : el.value;
-      Store.updateEvent(dayId, eventId, { [field]: val });
+      const current = Store.getEvents(dayId).find(event => event.id === eventId);
+      const placement = isEventEffectiveMain(current, Store.getGroups()) ? 'main' : 'concurrent';
+      Store.updateEvent(dayId, eventId, { [field]: val, ...(field === 'isBreak' ? { placement } : {}) });
       renderActiveDay();
       sessionSave();
-      if (field === 'isBreak' || field === 'isMainEvent') {
+      if (field === 'isBreak') {
         renderInspector();
         const next = panel.querySelector(selector);
         if (next) next.focus();
@@ -1507,18 +1436,21 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit('#insp-evt-break', 'isBreak', true);
   wireBandEventFields(panel, dayId, eventId);
 
-  // Highlight override (only present for limited-scope groups)
-  const mainCheckbox = panel.querySelector('#insp-evt-main');
-  if (mainCheckbox) {
-    autoCommit('#insp-evt-main', 'isMainEvent', true);
-  }
+  panel.querySelectorAll('[name="event-placement"]').forEach(input => input.addEventListener('change', () => {
+    saveUndoState();
+    Store.updateEvent(dayId, eventId, { placement: input.value });
+    renderActiveDay(); sessionSave(); renderInspector();
+    panel.querySelector('#' + input.id)?.focus();
+    checkTimeConflict(dayId, eventId);
+  }));
 
-  // Group change — auto-derive isMainEvent from group scope and re-render inspector
+  // Attendance changes retain the section shown when this edit began.
   const groupSelect = panel.querySelector('#insp-evt-group');
   if (groupSelect) {
     groupSelect.addEventListener('change', () => {
       saveUndoState();
-      const updates = { groupId: groupSelect.value };
+      const current = Store.getEvents(dayId).find(event => event.id === eventId);
+      const updates = { groupId: groupSelect.value, placement: isEventEffectiveMain(current, Store.getGroups()) ? 'main' : 'concurrent' };
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
       sessionSave();
@@ -1548,18 +1480,19 @@ function renderNoteInspector(panel, dayId, noteId) {
   const textReadOnly = readOnly ? ' readonly' : '';
   const disabledAttr = readOnly ? ' disabled' : '';
 
-  let html = '<div class="insp-header"><h3 style="margin:0;">Note</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
+  let html = '<div class="insp-header"><h3 style="margin:0;">Notes &amp; Reminders</h3><button class="insp-close" id="insp-close" title="Back to Setup">\u2715</button></div>';
   if (readOnly) {
     html += '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>';
   }
 
-  html += '<label for="insp-note-cat">Category</label>';
+  html += '<p class="insp-hint">An untimed reminder at the bottom of this day’s page.</p>';
+  html += '<label for="insp-note-cat">Heading (optional)</label>';
   html += '<input type="text" id="insp-note-cat" value="' + esc(note.category) + '" placeholder="e.g., Medical, TDY"' + textReadOnly + '>';
 
-  html += '<label for="insp-note-text">Text</label>';
-  html += '<textarea id="insp-note-text" placeholder="Type the note"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
+  html += '<label for="insp-note-text">Reminder</label>';
+  html += '<textarea id="insp-note-text" placeholder="What people need to remember"' + textReadOnly + '>' + esc(note.text) + '</textarea>';
 
-  html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-note-delete"' + disabledAttr + '>Delete Note</button></div>';
+  html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-note-delete"' + disabledAttr + '>Delete Reminder</button></div>';
 
   panel.innerHTML = html;
   wireNoteInspector(panel, dayId, noteId);
@@ -1858,6 +1791,7 @@ function openAddEvent(dayId) {
     startTime: minutesToTime(startMin),
     endTime: minutesToTime(Math.min(startMin + 60, 1440)),
     groupId: defaultGroup ? defaultGroup.id : '',
+    placement: 'main',
   });
   sessionSave();
   renderActiveDay();
@@ -1905,10 +1839,15 @@ function checkTimeConflict(dayId, eventId) {
   const groups = Store.getGroups();
   const { mainBands } = classifyEvents(Store.getEvents(dayId), groups);
   const band = mainBands.find(b => b.event.id === eventId);
-  if (!band || band.event.isBreak || band.tier !== 'main') return;
-  if (band.overlappingMain && band.overlappingMain.length > 0) {
-    const names = band.overlappingMain.map(c => c.title).join(', ');
+  const conflicts = band && !band.event.isBreak && band.tier === 'main' ? band.overlappingMain || [] : [];
+  if (conflicts.length) {
+    const names = conflicts.map(c => c.title).join(', ');
     toast('Schedule conflict: overlaps with ' + names);
+  } else {
+    // Moving an assignment to Concurrent resolves this main/main warning.
+    // Do not leave the old toast contradicting the newly selected section.
+    const notice = document.getElementById('toast');
+    if (notice?.textContent.startsWith('Schedule conflict:')) notice.classList.remove('show');
   }
 }
 
@@ -1974,6 +1913,7 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
     Store.updateEvent(dayId, eventId, updates);
     renderActiveDay();
     sessionSave();
+    updateFlightEditorTimeContext(panel, Store.getEvents(dayId).find(event => event.id === eventId));
     checkTimeConflict(dayId, eventId);
   });
   // Also commit on Enter key

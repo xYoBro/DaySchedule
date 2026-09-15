@@ -30,7 +30,8 @@ function audit({expected}) {
   if (!sheet) fail('Missing Bands sheet');
   const day = Store.getDays().find(item => item.id === Store.getActiveDay());
   const groups = Store.getGroups();
-  const primary = event => event.isMainEvent || event.isBreak || groups.find(group => group.id === event.groupId)?.scope === 'main';
+  const primary = event => ['main','concurrent'].includes(event.placement) ? event.placement === 'main'
+    : event.isMainEvent || event.isBreak || groups.find(group => group.id === event.groupId)?.scope === 'main';
   const ordered = events => events.slice().sort((a,b) => minutes(a.startTime)-minutes(b.startTime));
   const mains = ordered(day.events.filter(primary)), concurrent = ordered(day.events.filter(event => !primary(event)));
   const articles = [...sheet.querySelectorAll('article[data-event-id]')];
@@ -147,6 +148,7 @@ async function uiCases(browser,origin,name,result) {
       await page.locator('.day-tab').nth(i%2).click();await page.locator('#addEventBtn').click();
       await page.locator('#insp-evt-title').fill('UI'+i+' '+['Briefing','Long training and coordination activity','Workshop'][i%3]);
       await page.locator('#insp-evt-group').selectOption({index:i%3?1:0});
+      if (!await page.locator('#insp-evt-attendees').isVisible()) await page.locator('.event-people > summary').click();
       await page.locator('#insp-evt-attendees').fill(i===7?Array.from({length:40},(_,j)=>'Surname'+j).join('; '):'Doe; Smith; Chan');
       await page.locator('.attendee-preview>summary').click();
       await page.locator('#insp-attendee-format').selectOption('suggested');

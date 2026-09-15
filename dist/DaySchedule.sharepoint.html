@@ -1093,6 +1093,28 @@ body {
   margin: 0 0 12px;
 }
 
+/* Explicit author choices; keep the familiar inspector and paper preview. */
+.inspector .event-placement { border: 0; padding: 0; margin: 14px 0 18px; min-width: 0; }
+.inspector .event-placement legend { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.inspector .placement-option {
+  display: flex; align-items: flex-start; gap: 9px;
+  border: 1px solid var(--chrome-border); border-radius: 6px;
+  padding: 10px; margin: 6px 0; min-height: 44px;
+  text-transform: none; letter-spacing: 0; cursor: pointer;
+}
+.inspector .placement-option:has(:checked) {
+  border-color: var(--chrome-text-secondary); background: rgba(var(--app-accent), .06);
+}
+.inspector .placement-option input { flex: 0 0 auto; margin: 3px 0 0; accent-color: rgba(var(--app-accent), 1); }
+.inspector .placement-option strong { font-size: 13px; font-weight: 600; }
+.inspector .placement-option small { display: block; font-weight: 400; font-size: 12px; line-height: 1.4; color: var(--chrome-text-secondary); margin-top: 3px; }
+.event-people &gt; summary, .event-related &gt; summary { min-height: 44px; padding: 12px 0; cursor: pointer; font-size: 12px; line-height: 1.5; }
+.event-related { font-size: 12px; line-height: 1.5; }
+.event-field-section { border-top: 1px solid var(--chrome-border); padding-top: 14px; margin-top: 16px; }
+.event-field-section h4 { font-size: 14px; margin: 0 0 10px; }
+.inspector .insp-save-hint { margin: 0 0 12px; }
+.inspector .event-field-section .insp-hint { font-size: 12px; }
+
 .insp-section-head {
   margin-top: 0;
   margin-bottom: 8px;
@@ -1731,9 +1753,15 @@ body {
 .day-sheet-table {
   width: 100%;
   min-width: 980px;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
 }
+.day-sheet-table th:nth-child(-n+2) { width: 72px; }
+.day-sheet-table th:nth-child(4) { width: 170px; }
+.day-sheet-table th:nth-child(5) { width: 150px; }
+.day-sheet-table th:nth-child(6) { width: 164px; }
+.day-sheet-table th:last-child { width: 54px; }
 .day-sheet-table th {
   position: sticky;
   top: 0;
@@ -1794,6 +1822,7 @@ body {
 }
 .day-sheet-location-input { min-width: 126px; }
 .day-sheet-group-select { min-width: 120px; }
+.day-sheet-placement-select { min-width: 144px; }
 .day-sheet-check-cell {
   width: 56px;
   text-align: center;
@@ -1921,7 +1950,8 @@ body {
 }
 .day-sheet-detail-field {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
   gap: 6px;
   min-width: 0;
 }
@@ -1936,6 +1966,25 @@ body {
   flex: 1;
   min-width: 0;
 }
+.day-sheet-detail-field textarea {
+  width: 100%;
+  min-height: 54px;
+  resize: vertical;
+  font: inherit;
+  font-size: 12px;
+  padding: 6px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 4px;
+  color: var(--chrome-text);
+  background: var(--chrome-surface);
+}
+.day-sheet-detail-panel .attendee-format {
+  max-width: 620px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.day-sheet-detail-panel .attendee-preview-list { max-height: 80px; }
+.day-sheet-detail-panel .attendee-format select { margin-top: 4px; }
 .day-sheet-detail-wide {
   grid-column: auto;
 }
@@ -2273,7 +2322,7 @@ body {
     grid-template-columns: 1fr;
   }
   .day-sheet-table {
-    min-width: 880px;
+    min-width: 980px;
   }
   .workbook-create {
     grid-template-columns: 1fr;
@@ -4301,7 +4350,7 @@ textarea:focus-visible,
   .modal .insp-group-color { width: 44px; height: 44px; flex-shrink: 0; }
   .modal .insp-group-name { min-width: 0; }
   .insp-toggle-label { min-height: 44px; }
-  .inspector input:not([type=&quot;checkbox&quot;]), .inspector select { min-height: 44px; font-size: 14px; }
+  .inspector input:not([type=&quot;checkbox&quot;]):not([type=&quot;radio&quot;]), .inspector select { min-height: 44px; font-size: 14px; }
 }
 .custom-palette-fields {
   display: grid;
@@ -4688,10 +4737,15 @@ textarea:focus-visible,
 .sheet.band-sheet[data-theme] .attendance-area :is(.person-label strong,.attendee-free-text){color:var(--paper-text,#20262c)}
 .band-fit-notice{font-size:12px;line-height:1.5;margin:12px 0;padding:10px 14px;background:var(--ui-bg,#f5f5f7);color:var(--ui-text,#333);border-left:3px solid #a67126}
 .band-fit-notice:empty{display:none}
-.attendee-preview{font-size:11px;line-height:1.5;margin:6px 0 12px}
+.attendee-preview{font-size:12px;line-height:1.45;margin:8px 0 0}
+.attendee-preview summary{cursor:pointer;padding:6px 0;font-weight:600}
+.attendee-preview p{margin:6px 0;color:var(--chrome-text-secondary)}
+.attendee-format select{width:100%;min-height:36px;font-family:inherit}
+.attendee-preview[hidden]{display:none}
 .attendee-preview .attendee-preview-list{max-height:140px;overflow:auto;border:1px solid var(--ui-border,#ddd);padding:6px;white-space:pre-wrap}
 .flight-editor{margin:14px 0;border-top:1px solid var(--ui-border,#ddd);padding-top:10px}
-.flight-editor summary{font-weight:600;cursor:pointer;padding:8px 0}
+.flight-editor summary{font-size:13px;line-height:1.4;font-weight:600;cursor:pointer;padding:10px 0;overflow-wrap:anywhere}
+.flight-editor .insp-context-note{background:none;border:0;padding:0;color:var(--chrome-text-secondary)}
 .flight-editor-item{padding:8px;border:1px solid var(--ui-border,#ddd);border-radius:6px;margin:8px 0}
 .flight-editor-item .field-row{gap:6px}
 .flight-editor-item input,.flight-editor-item textarea{width:100%;min-width:0}
@@ -4749,7 +4803,7 @@ textarea:focus-visible,
 // Stamped with the build date and content hash by tools/build-single-html.py; &#x27;dev&#x27; when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = &#x27;2026-09-14+fcf78defd098&#x27;;
+const APP_VERSION = &#x27;2026-09-14+3af976eceef6&#x27;;
 
 const DEFAULT_GROUPS = [
   { id: &#x27;grp_all&#x27;,     name: &#x27;All Personnel&#x27;, scope: &#x27;main&#x27;,    color: &#x27;#2558a8&#x27; },
@@ -4880,7 +4934,7 @@ const LAYOUT_TARGETS = {
       &lt;div class=&quot;tb-create-group&quot; aria-label=&quot;Add schedule item&quot;&gt;
         &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addDayBtn&quot;&gt;+ Day&lt;/button&gt;
         &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addEventBtn&quot;&gt;+ Event&lt;/button&gt;
-        &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addNoteBtn&quot;&gt;+ Note&lt;/button&gt;
+        &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addNoteBtn&quot;&gt;+ Reminder&lt;/button&gt;
       &lt;/div&gt;
       &lt;button class=&quot;btn&quot; id=&quot;daySheetBtn&quot;&gt;Quick Edit&lt;/button&gt;
       &lt;div class=&quot;tb-sep&quot;&gt;&lt;/div&gt;
@@ -4991,8 +5045,16 @@ const LAYOUT_TARGETS = {
             &lt;div class=&quot;help-item-desc&quot;&gt;Safest answer: one person edits the workbook file at a time.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
-            &lt;div class=&quot;help-item-label&quot;&gt;Audience vs Specific People?&lt;/div&gt;
-            &lt;div class=&quot;help-item-desc&quot;&gt;&lt;strong&gt;Audience&lt;/strong&gt; is the group. &lt;strong&gt;Specific People&lt;/strong&gt; is for named people.&lt;/div&gt;
+            &lt;div class=&quot;help-item-label&quot;&gt;Main schedule or concurrent event?&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;Choose &lt;strong&gt;Schedule section&lt;/strong&gt; on the event. Then choose who attends. Changing the audience or emphasis keeps the event in its chosen section.&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;help-item&quot;&gt;
+            &lt;div class=&quot;help-item-label&quot;&gt;How do I enter names or flight training?&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;Enter everyone in &lt;strong&gt;Names or attendance details&lt;/strong&gt; and check the &lt;strong&gt;Name layout&lt;/strong&gt; preview. For full names containing commas, choose &lt;strong&gt;One entry per line&lt;/strong&gt;. Expand &lt;strong&gt;Flight activities&lt;/strong&gt; for shared or different flight times. Quick Edit’s &lt;strong&gt;All event options&lt;/strong&gt; opens the same editor.&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;help-item&quot;&gt;
+            &lt;div class=&quot;help-item-label&quot;&gt;Event instructions or reminders?&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;&lt;strong&gt;Event instructions&lt;/strong&gt; print with the event. Use &lt;strong&gt;+ Reminder&lt;/strong&gt; for untimed notes at the bottom of the day. Customize → Basics controls their reserved space, the title, subtitle and optional logo.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
             &lt;div class=&quot;help-item-label&quot;&gt;Where do I change the look?&lt;/div&gt;
@@ -5194,6 +5256,7 @@ const Store = {
       attendees: e.attendees || &#x27;&#x27;,
       isBreak: e.isBreak || false,
       isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === &#x27;main&#x27; : false),
+      ...([&#x27;main&#x27;, &#x27;concurrent&#x27;].includes(e.placement) ? { placement: e.placement } : {}),
       ...(e.emphasized != null ? { emphasized: !!e.emphasized } : {}),
       ...(e.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(e.attendeeFormat) } : {}),
       ...(Array.isArray(e.flightActivities) ? { flightActivities: normalizeFlightActivities(e.flightActivities) } : {}),
@@ -5790,6 +5853,7 @@ function normalizeEvent(raw) {
     attendees:   normalizeText(raw.attendees),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
+    ...([&#x27;main&#x27;, &#x27;concurrent&#x27;].includes(raw.placement) ? { placement: raw.placement } : {}),
     ...(raw.emphasized != null ? { emphasized: !!raw.emphasized } : {}),
     ...(raw.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(raw.attendeeFormat) } : {}),
     ...(Array.isArray(raw.flightActivities) ? { flightActivities: normalizeFlightActivities(raw.flightActivities) } : {}),
@@ -6011,6 +6075,9 @@ function getGroupMap(groupsOrMap) {
 
 function isEventEffectiveMain(evt, groupsOrMap) {
   if (!evt) return false;
+  // Explicit author choice wins. Older files retain their original inferred
+  // placement until edited; audience and visual emphasis remain separate.
+  if (evt.placement === &#x27;main&#x27; || evt.placement === &#x27;concurrent&#x27;) return evt.placement === &#x27;main&#x27;;
   if (evt.isBreak) return true;
   const groupMap = getGroupMap(groupsOrMap);
   const group = groupMap[evt.groupId];
@@ -6150,7 +6217,7 @@ function getScheduleReviewIssues(days, groups) {
           add(day, &#x27;flight-activity&#x27;, label + &#x27;: review the flight, activity and time range within &#x27; + evt.title + &#x27;.&#x27;, [evt.id]);
         }
       });
-      if (!groupMap[evt.groupId] &amp;&amp; !evt.isBreak) add(day, &#x27;audience&#x27;, label + &#x27;: &#x27; + evt.title + &#x27; has no audience recorded.&#x27;, [evt.id]);
+      if (!groupMap[evt.groupId] &amp;&amp; !evt.attendees?.trim() &amp;&amp; !evt.isBreak) add(day, &#x27;audience&#x27;, label + &#x27;: &#x27; + evt.title + &#x27; has no audience recorded.&#x27;, [evt.id]);
       if (validRange &amp;&amp; (timeToMinutes(evt.startTime) &lt; start || timeToMinutes(evt.endTime) &gt; end))
         add(day, &#x27;outside-day&#x27;, label + &#x27;: &#x27; + evt.title + &#x27; is outside the day’s stated hours.&#x27;, [evt.id]);
     });
@@ -6173,6 +6240,7 @@ function getScheduleReviewIssues(days, groups) {
 
 function isSharedTrackEvent(evt, groupsOrMap) {
   if (!evt) return false;
+  if (!isEventEffectiveMain(evt, groupsOrMap)) return false;
   if (evt.isBreak) return true;
   const groupMap = getGroupMap(groupsOrMap);
   const group = groupMap[evt.groupId];
@@ -6489,9 +6557,9 @@ let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
 const SCHEDULE_WORKBOOK_FILE_TYPE = &#x27;dayschedule&#x27;;
-// Version 2 protects nested flight activities and Bands settings from being
-// silently removed by a version-1-only app. Existing version-1 files still open.
-const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 2;
+// Version 3 protects explicit event placement from being silently dropped by
+// older apps. Version 1/2 workbooks keep their original inferred placement.
+const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 3;
 const SCHEDULE_WORKBOOK_DEFAULT_FILENAME = &#x27;DaySchedule.schedule&#x27;;
 
 let _undoSaveTimer = null;
@@ -7554,7 +7622,7 @@ function parseScheduleWorkbookContent(content, fileName) {
   let workbookData = null;
   let activeSchedule = null;
   if (isWorkbook) {
-    if (parsed.schemaVersion !== undefined &amp;&amp; ![1, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
+    if (parsed.schemaVersion !== undefined &amp;&amp; ![1, 2, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
       throw new Error(&#x27;This workbook uses an unsupported format version. Open it in the app version that created it; the file has not been changed.&#x27;);
     }
     const entries = Array.isArray(parsed.schedules) &amp;&amp; parsed.schedules.length ? parsed.schedules : [parsed.schedule];
@@ -12947,29 +13015,32 @@ function renderSettingsModal(modal) {
 
   html += &#x27;&lt;section class=&quot;settings-panel&#x27; + (_settingsActiveTab === &#x27;basics&#x27; ? &#x27; active&#x27; : &#x27;&#x27;) + &#x27;&quot; data-settings-panel=&quot;basics&quot;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;settings-section&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;settings-section-title&quot;&gt;Basics&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-title&quot;&gt;Schedule Title&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;settings-section-title&quot;&gt;Page heading&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-title&quot;&gt;Schedule title&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-hint&quot;&gt;An organization name, event title, or anything that describes this schedule.&lt;/p&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-title&quot; value=&quot;&#x27; + esc(title) + &#x27;&quot;&gt;&#x27;;
-  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-logo&quot;&gt;Unit Logo&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;file&quot; class=&quot;settings-input&quot; id=&quot;settings-logo&quot; accept=&quot;image/*&quot; style=&quot;font-size:12px;padding:5px 8px;&quot;&gt;&#x27;;
-  if (currentTheme.skin === &#x27;bands&#x27;) {
-    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
-    html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;settings-band-logo&quot;&#x27; + (bandSettings.showLogo ? &#x27; checked&#x27; : &#x27;&#x27;) + &#x27;&gt; Show logo on Bands&lt;/label&gt;&#x27;;
-  }
-  if (Store.getLogo()) {
-    html += &#x27;&lt;div class=&quot;settings-logo-preview&quot;&gt;&lt;img alt=&quot;Current unit logo&quot; src=&quot;&#x27; + esc(Store.getLogo()) + &#x27;&quot; style=&quot;max-height:48px;border-radius:4px;&quot;&gt; &#x27;;
-    html += &#x27;&lt;button class=&quot;btn&quot; id=&quot;settings-logo-remove&quot; style=&quot;font-size:10px;padding:2px 8px;&quot;&gt;Remove logo&lt;/button&gt;&lt;/div&gt;&#x27;;
-  }
-  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-contact&quot;&gt;&#x27; + (currentTheme.skin === &#x27;bands&#x27; ? &#x27;Subtitle (optional)&#x27; : &#x27;Header Line&#x27;) + &#x27;&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-contact&quot;&gt;&#x27; + (currentTheme.skin === &#x27;bands&#x27; ? &#x27;Subtitle (optional)&#x27; : &#x27;Header line (optional)&#x27;) + &#x27;&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-contact&quot; value=&quot;&#x27; + esc(footer.contact) + &#x27;&quot;&gt;&#x27;;
-  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-poc&quot;&gt;Point of Contact&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-poc&quot; value=&quot;&#x27; + esc(footer.poc) + &#x27;&quot;&gt;&#x27;;
+  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-poc&quot;&gt;Schedule point of contact (optional)&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-poc&quot; value=&quot;&#x27; + esc(footer.poc) + &#x27;&quot; placeholder=&quot;MSgt Doe&quot;&gt;&#x27;;
+  html += &#x27;&lt;/div&gt;&lt;div class=&quot;settings-section&quot;&gt;&lt;div class=&quot;settings-section-title&quot;&gt;Logo&lt;/div&gt;&#x27;;
   if (currentTheme.skin === &#x27;bands&#x27;) {
     const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
-    html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-band-notes&quot;&gt;Notes &amp;amp; Reminders space&lt;/label&gt;&lt;select class=&quot;settings-input&quot; id=&quot;settings-band-notes&quot;&gt;&#x27; +
-      [[90, &#x27;1¼ inches&#x27;], [108, &#x27;1½ inches&#x27;], [144, &#x27;2 inches&#x27;]].map(([value, label]) =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + (bandSettings.notesHeight === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + label + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/select&gt;&#x27;;
+    html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;settings-band-logo&quot;&#x27; + (bandSettings.showLogo ? &#x27; checked&#x27; : &#x27;&#x27;) + &#x27;&gt; Show logo space (1 × 1 inch)&lt;/label&gt;&#x27;;
+    html += &#x27;&lt;p class=&quot;insp-hint&quot;&gt;At the left of the heading. Turn off to give the title more room.&lt;/p&gt;&#x27;;
+  }
+  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-logo&quot;&gt;Logo image (optional)&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;input type=&quot;file&quot; class=&quot;settings-input&quot; id=&quot;settings-logo&quot; accept=&quot;image/*&quot; style=&quot;font-size:12px;padding:5px 8px;&quot;&gt;&#x27;;
+  if (Store.getLogo()) {
+    html += &#x27;&lt;div class=&quot;settings-logo-preview&quot;&gt;&lt;img alt=&quot;Current logo&quot; src=&quot;&#x27; + esc(Store.getLogo()) + &#x27;&quot; style=&quot;max-height:48px;border-radius:4px;&quot;&gt; &#x27;;
+    html += &#x27;&lt;button class=&quot;btn&quot; id=&quot;settings-logo-remove&quot;&gt;Remove logo&lt;/button&gt;&lt;/div&gt;&#x27;;
   }
   html += &#x27;&lt;/div&gt;&#x27;;
+  if (currentTheme.skin === &#x27;bands&#x27;) {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += &#x27;&lt;div class=&quot;settings-section&quot;&gt;&lt;div class=&quot;settings-section-title&quot;&gt;Notes &amp;amp; Reminders&lt;/div&gt;&lt;label class=&quot;settings-label&quot; for=&quot;settings-band-notes&quot;&gt;Space at the bottom of each day&lt;/label&gt;&lt;select class=&quot;settings-input&quot; id=&quot;settings-band-notes&quot;&gt;&#x27; +
+      [[90, &#x27;1¼ inches — usual choice&#x27;], [108, &#x27;1½ inches&#x27;], [144, &#x27;2 inches&#x27;]].map(([value, label]) =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + (bandSettings.notesHeight === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + label + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/select&gt;&lt;p class=&quot;insp-hint&quot;&gt;Use + Reminder to add untimed notes. More space here leaves less room for events.&lt;/p&gt;&lt;/div&gt;&#x27;;
+  }
   html += &#x27;&lt;/section&gt;&#x27;;
 
   html += &#x27;&lt;section class=&quot;settings-panel&#x27; + (_settingsActiveTab === &#x27;look&#x27; ? &#x27; active&#x27; : &#x27;&#x27;) + &#x27;&quot; data-settings-panel=&quot;look&quot;&gt;&#x27;;
@@ -13023,12 +13094,12 @@ function renderSettingsModal(modal) {
   html += &#x27;&lt;section class=&quot;settings-panel&#x27; + (_settingsActiveTab === &#x27;audiences&#x27; ? &#x27; active&#x27; : &#x27;&#x27;) + &#x27;&quot; data-settings-panel=&quot;audiences&quot;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;settings-section&quot;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;settings-section-title&quot;&gt;Audiences&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;p class=&quot;insp-hint&quot; style=&quot;margin-top:0;margin-bottom:8px;&quot;&gt;Primary shows in the main track.&lt;/p&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-hint&quot; style=&quot;margin-top:0;margin-bottom:8px;&quot;&gt;Audiences describe who attends. Shared means the whole organization; specific means a smaller group. Choose the schedule section on each event.&lt;/p&gt;&#x27;;
   groups.forEach(g =&gt; {
     html += &#x27;&lt;div class=&quot;insp-group-item&quot; data-group-id=&quot;&#x27; + esc(g.id) + &#x27;&quot;&gt;&#x27;;
     html += &#x27;&lt;input type=&quot;color&quot; class=&quot;insp-group-color&quot; aria-label=&quot;Color for &#x27; + esc(g.name) + &#x27;&quot; value=&quot;&#x27; + esc(g.color) + &#x27;&quot;&gt;&#x27;;
     html += &#x27;&lt;input type=&quot;text&quot; class=&quot;insp-group-name&quot; aria-label=&quot;Audience name&quot; value=&quot;&#x27; + esc(g.name) + &#x27;&quot; placeholder=&quot;Group name&quot;&gt;&#x27;;
-    html += &#x27;&lt;button class=&quot;insp-group-scope &#x27; + (g.scope === &#x27;main&#x27; ? &#x27;main&#x27; : &#x27;&#x27;) + &#x27;&quot; title=&quot;Toggle between Primary and Supporting&quot;&gt;&#x27; + (g.scope === &#x27;main&#x27; ? &#x27;Primary&#x27; : &#x27;Supporting&#x27;) + &#x27;&lt;/button&gt;&#x27;;
+    html += &#x27;&lt;button class=&quot;insp-group-scope &#x27; + (g.scope === &#x27;main&#x27; ? &#x27;main&#x27; : &#x27;&#x27;) + &#x27;&quot; title=&quot;Change audience role: shared or specific&quot;&gt;&#x27; + (g.scope === &#x27;main&#x27; ? &#x27;Shared&#x27; : &#x27;Specific&#x27;) + &#x27;&lt;/button&gt;&#x27;;
     html += &#x27;&lt;button class=&quot;insp-group-remove&quot; type=&quot;button&quot; aria-label=&quot;Remove audience&quot; title=&quot;Remove audience&quot; data-delete-label=&quot;&amp;times;&quot; data-delete-armed-label=&quot;Delete?&quot;&gt;&amp;times;&lt;/button&gt;&#x27;;
     html += &#x27;&lt;/div&gt;&#x27;;
   });
@@ -13229,9 +13300,10 @@ function wireSettingsModal(modal) {
       saveUndoState();
       const isMain = scopeBtn.classList.contains(&#x27;main&#x27;);
       const newScope = isMain ? &#x27;limited&#x27; : &#x27;main&#x27;;
+      preserveEventPlacements();
       Store.updateGroup(groupId, { scope: newScope });
       scopeBtn.classList.toggle(&#x27;main&#x27;, !isMain);
-      scopeBtn.textContent = isMain ? &#x27;Supporting&#x27; : &#x27;Primary&#x27;;
+      scopeBtn.textContent = isMain ? &#x27;Specific&#x27; : &#x27;Shared&#x27;;
       renderActiveDay();
       sessionSave();
     });
@@ -13241,6 +13313,7 @@ function wireSettingsModal(modal) {
     // as event/note deletion.
     wireDeleteButton(item.querySelector(&#x27;.insp-group-remove&#x27;), () =&gt; {
       saveUndoState();
+      preserveEventPlacements();
       Store.removeGroup(groupId);
       renderActiveDay();
       sessionSave();
@@ -13481,39 +13554,21 @@ function getDayEventSheetContext(dayId) {
 }
 
 function getDaySheetTrackStatus(evt, group) {
-  if (evt.isBreak) {
-    return {
-      label: &#x27;Break&#x27;,
-      tone: &#x27;break&#x27;,
-      title: &#x27;Breaks always appear in the main track.&#x27;
-    };
-  }
-  if (group &amp;&amp; group.scope === &#x27;main&#x27;) {
-    return {
-      label: &#x27;Main&#x27;,
-      tone: &#x27;primary&#x27;,
-      title: &#x27;The selected Primary audience automatically places this event in the main track.&#x27;
-    };
-  }
-  if (evt.isMainEvent) {
-    return {
-      label: &#x27;Main Override&#x27;,
-      tone: &#x27;override&#x27;,
-      title: &#x27;This supporting or unassigned event is manually shown in the main track.&#x27;
-    };
-  }
-  if (group &amp;&amp; group.scope === &#x27;limited&#x27;) {
-    return {
-      label: &#x27;Side&#x27;,
-      tone: &#x27;supporting&#x27;,
-      title: &#x27;Supporting audiences stay in the side track unless Main Track is turned on.&#x27;
-    };
-  }
-  return {
-    label: &#x27;No Audience&#x27;,
-    tone: &#x27;none&#x27;,
-    title: &#x27;Choose an audience to place this event automatically, or turn on Main Track manually.&#x27;
-  };
+  const main = isEventEffectiveMain(evt, group ? { [group.id]: group } : {});
+  return { label: main ? &#x27;Main schedule&#x27; : &#x27;Concurrent event&#x27;,
+    tone: main ? &#x27;primary&#x27; : &#x27;supporting&#x27;,
+    title: &#x27;Change the schedule section independently of who attends.&#x27; };
+}
+
+// Freeze the current position before editing older, implicitly placed events.
+// Audience roles still describe attendance, but editing them must not move rows.
+function preserveEventPlacements() {
+  const groups = Store.getGroups();
+  Store.getDays().forEach(day =&gt; day.events.forEach(event =&gt; {
+    if (!event.placement) Store.updateEvent(day.id, event.id, {
+      placement: isEventEffectiveMain(event, groups) ? &#x27;main&#x27; : &#x27;concurrent&#x27;
+    });
+  }));
 }
 
 function resolveDaySheetSelectedEventId(ctx, dayId, preferredId) {
@@ -13545,27 +13600,29 @@ function buildDaySheetDetailPanel(ctx, eventId) {
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;day-sheet-detail-actions&quot;&gt;&#x27;;
-  html += &#x27;&lt;button class=&quot;btn&quot; id=&quot;daySheetOpenDetails&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;Details&lt;/button&gt;&#x27;;
+  html += &#x27;&lt;button class=&quot;btn&quot; id=&quot;daySheetOpenDetails&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;All event options&lt;/button&gt;&#x27;;
   html += &#x27;&lt;button class=&quot;btn btn-danger&quot; id=&quot;daySheetDeleteSelected&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-delete-label=&quot;Delete&quot;&gt;Delete&lt;/button&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
 
   html += &#x27;&lt;div class=&quot;day-sheet-detail-grid&quot;&gt;&#x27;;
   html += &#x27;&lt;label class=&quot;day-sheet-detail-field&quot;&gt;&#x27;;
-  html += &#x27;&lt;span class=&quot;day-sheet-detail-label&quot;&gt;Specific people&lt;/span&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;text&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;attendees&quot; data-focus=&quot;attendees&quot; value=&quot;&#x27; + esc(evt.attendees) + &#x27;&quot; placeholder=&quot;Optional&quot;&gt;&#x27;;
+  html += &#x27;&lt;span class=&quot;day-sheet-detail-label&quot;&gt;Names or attendance details&lt;/span&gt;&#x27;;
+  html += &#x27;&lt;textarea rows=&quot;2&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;attendees&quot; data-focus=&quot;attendees&quot; placeholder=&quot;Doe; Smith; Chan&quot;&gt;&#x27; + esc(evt.attendees) + &#x27;&lt;/textarea&gt;&#x27;;
   html += &#x27;&lt;/label&gt;&#x27;;
   html += &#x27;&lt;label class=&quot;day-sheet-detail-field&quot;&gt;&#x27;;
-  html += &#x27;&lt;span class=&quot;day-sheet-detail-label&quot;&gt;POC&lt;/span&gt;&#x27;;
+  html += &#x27;&lt;span class=&quot;day-sheet-detail-label&quot;&gt;Point of contact&lt;/span&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;poc&quot; data-focus=&quot;poc&quot; value=&quot;&#x27; + esc(evt.poc) + &#x27;&quot; placeholder=&quot;Optional&quot;&gt;&#x27;;
   html += &#x27;&lt;/label&gt;&#x27;;
   html += &#x27;&lt;label class=&quot;day-sheet-detail-field day-sheet-detail-wide&quot;&gt;&#x27;;
-  html += &#x27;&lt;span class=&quot;day-sheet-detail-label&quot;&gt;Notes&lt;/span&gt;&#x27;;
+  html += &#x27;&lt;span class=&quot;day-sheet-detail-label&quot;&gt;Event instructions&lt;/span&gt;&#x27;;
   // textarea, not &lt;input&gt;: a single-line input strips the newlines the
   // Event Inspector&#x27;s textarea allows, flattening &quot;Line one\nLine two&quot; on commit.
   html += &#x27;&lt;textarea rows=&quot;2&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;description&quot; data-focus=&quot;description&quot; placeholder=&quot;Optional&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/textarea&gt;&#x27;;
   html += &#x27;&lt;/label&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
+  html += renderAttendeeFormatting(evt, &#x27;&#x27;, &#x27;sheet&#x27;);
+  html += &#x27;&lt;p class=&quot;day-sheet-details-hint&quot;&gt;All event options: emphasis, meal / break, and flight activities&#x27; + ((evt.flightActivities || []).length ? &#x27; (&#x27; + evt.flightActivities.length + &#x27; entered)&#x27; : &#x27;&#x27;) + &#x27;.&lt;/p&gt;&#x27;;
   if (overlapNames.length &gt; 0) {
     html += &#x27;&lt;p class=&quot;day-sheet-details-hint&quot;&gt;Overlap warning: &#x27; + esc(overlapNames.join(&#x27;, &#x27;)) + &#x27; share this time block.&lt;/p&gt;&#x27;;
   }
@@ -13634,17 +13691,13 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   html += &#x27;&lt;th&gt;Title&lt;/th&gt;&#x27;;
   html += &#x27;&lt;th&gt;Audience&lt;/th&gt;&#x27;;
   html += &#x27;&lt;th&gt;Location&lt;/th&gt;&#x27;;
-  html += &#x27;&lt;th&gt;Break&lt;/th&gt;&#x27;;
-  html += &#x27;&lt;th&gt;Main&lt;/th&gt;&#x27;;
-  html += &#x27;&lt;th&gt;Track&lt;/th&gt;&#x27;;
+  html += &#x27;&lt;th&gt;Schedule section&lt;/th&gt;&#x27;;
   html += &#x27;&lt;th&gt;Dur&lt;/th&gt;&#x27;;
   html += &#x27;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#x27;;
 
   ctx.events.forEach(evt =&gt; {
     const group = ctx.groupMap[evt.groupId] || null;
     const overlapNames = ctx.overlapMap[evt.id] || [];
-    const canHighlight = !evt.isBreak &amp;&amp; !(group &amp;&amp; group.scope === &#x27;main&#x27;);
-    const trackStatus = getDaySheetTrackStatus(evt, group);
     const isSelected = evt.id === selectedEventId;
 
     html += &#x27;&lt;tr class=&quot;day-sheet-row&#x27; + (isSelected ? &#x27; is-selected&#x27; : &#x27;&#x27;) + &#x27;&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;&#x27;;
@@ -13652,24 +13705,16 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
     html += &#x27;&lt;td&gt;&lt;input type=&quot;text&quot; class=&quot;day-sheet-time-input&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;endTime&quot; data-focus=&quot;endTime&quot; value=&quot;&#x27; + esc(evt.endTime) + &#x27;&quot; maxlength=&quot;5&quot; placeholder=&quot;0800&quot;&gt;&lt;/td&gt;&#x27;;
     html += &#x27;&lt;td&gt;&lt;input type=&quot;text&quot; class=&quot;day-sheet-title-input&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;title&quot; data-focus=&quot;title&quot; value=&quot;&#x27; + esc(evt.title) + &#x27;&quot;&gt;&lt;/td&gt;&#x27;;
     html += &#x27;&lt;td&gt;&lt;select class=&quot;day-sheet-group-select&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-focus=&quot;groupId&quot;&gt;&#x27;;
-    html += &#x27;&lt;option value=&quot;&quot;&gt;No audience&lt;/option&gt;&#x27;;
+    html += &#x27;&lt;option value=&quot;&quot;&gt;Specific people / other&lt;/option&gt;&#x27;;
     ctx.groups.forEach(g =&gt; {
       html += &#x27;&lt;option value=&quot;&#x27; + esc(g.id) + &#x27;&quot;&#x27; + (g.id === evt.groupId ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + esc(g.name) + &#x27;&lt;/option&gt;&#x27;;
     });
     html += &#x27;&lt;/select&gt;&lt;/td&gt;&#x27;;
     html += &#x27;&lt;td&gt;&lt;input type=&quot;text&quot; class=&quot;day-sheet-location-input&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-field=&quot;location&quot; data-focus=&quot;location&quot; value=&quot;&#x27; + esc(evt.location) + &#x27;&quot;&gt;&lt;/td&gt;&#x27;;
-    html += &#x27;&lt;td class=&quot;day-sheet-check-cell&quot;&gt;&lt;label class=&quot;day-sheet-check-target&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;day-sheet-break-toggle&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-focus=&quot;isBreak&quot;&#x27; + (evt.isBreak ? &#x27; checked&#x27; : &#x27;&#x27;) + &#x27; aria-label=&quot;Break&quot;&gt;&lt;/label&gt;&lt;/td&gt;&#x27;;
-    if (canHighlight) {
-      html += &#x27;&lt;td class=&quot;day-sheet-check-cell&quot;&gt;&lt;label class=&quot;day-sheet-check-target&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;day-sheet-main-toggle&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-focus=&quot;isMainEvent&quot;&#x27; + (evt.isMainEvent ? &#x27; checked&#x27; : &#x27;&#x27;) + &#x27; title=&quot;Turn this on only when a supporting or unassigned event should appear in the main track.&quot; aria-label=&quot;Main track override&quot;&gt;&lt;/label&gt;&lt;/td&gt;&#x27;;
-    } else {
-      html += &#x27;&lt;td class=&quot;day-sheet-check-cell&quot;&gt;&lt;span class=&quot;day-sheet-cell-note&quot; title=&quot;&#x27; + esc(evt.isBreak ? &#x27;Breaks always render in the main track.&#x27; : &#x27;The selected Primary audience already places this event in the main track.&#x27;) + &#x27;&quot;&gt;Auto&lt;/span&gt;&lt;/td&gt;&#x27;;
-    }
-    html += &#x27;&lt;td&gt;&lt;div class=&quot;day-sheet-track-cell&quot;&gt;&#x27;;
-    html += &#x27;&lt;span class=&quot;day-sheet-badge day-sheet-badge-track day-sheet-badge-track-&#x27; + esc(trackStatus.tone) + &#x27;&quot; title=&quot;&#x27; + esc(trackStatus.title) + &#x27;&quot;&gt;&#x27; + esc(trackStatus.label) + &#x27;&lt;/span&gt;&#x27;;
-    if (overlapNames.length &gt; 0) {
-      html += &#x27;&lt;span class=&quot;day-sheet-badge warn&quot; title=&quot;&#x27; + esc(&#x27;Overlaps with &#x27; + overlapNames.join(&#x27;, &#x27;)) + &#x27;&quot;&gt;Overlap&lt;/span&gt;&#x27;;
-    }
-    html += &#x27;&lt;/div&gt;&lt;/td&gt;&#x27;;
+    html += &#x27;&lt;td&gt;&lt;select class=&quot;day-sheet-placement-select&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot; data-focus=&quot;placement&quot;&gt;&#x27; +
+      [&#x27;main&#x27;, &#x27;concurrent&#x27;].map(value =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + ((isEventEffectiveMain(evt, ctx.groupMap) ? &#x27;main&#x27; : &#x27;concurrent&#x27;) === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + (value === &#x27;main&#x27; ? &#x27;Main schedule&#x27; : &#x27;Concurrent event&#x27;) + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/select&gt;&#x27;;
+    if (overlapNames.length) html += &#x27;&lt;span class=&quot;day-sheet-badge warn&quot; title=&quot;&#x27; + esc(&#x27;Overlaps with &#x27; + overlapNames.join(&#x27;, &#x27;)) + &#x27;&quot;&gt;Overlap&lt;/span&gt;&#x27;;
+    html += &#x27;&lt;/td&gt;&#x27;;
     html += &#x27;&lt;td&gt;&lt;span class=&quot;day-sheet-duration&quot;&gt;&#x27; + esc(formatDuration(computeDuration(evt))) + &#x27;&lt;/span&gt;&lt;/td&gt;&#x27;;
     html += &#x27;&lt;/tr&gt;&#x27;;
   });
@@ -13692,7 +13737,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
   modal.querySelectorAll(&#x27;.day-sheet-row input, .day-sheet-row select&#x27;).forEach(input =&gt; {
     const field = input.dataset.field || input.dataset.focus;
     const labels = { startTime: &#x27;Start time&#x27;, endTime: &#x27;End time&#x27;, title: &#x27;Event title&#x27;, groupId: &#x27;Audience&#x27;,
-      location: &#x27;Location&#x27;, isBreak: &#x27;Break&#x27;, isMainEvent: &#x27;Main track override&#x27; };
+      location: &#x27;Location&#x27;, placement: &#x27;Schedule section&#x27; };
     const evt = ctx.events.find(item =&gt; item.id === input.dataset.eventId);
     input.setAttribute(&#x27;aria-label&#x27;, (labels[field] || field) + &#x27;: &#x27; + (evt ? evt.title : &#x27;event&#x27;));
   });
@@ -13712,6 +13757,7 @@ function renderDayEventSheetModal(modal, dayId, focusInfo) {
 
 function wireDayEventSheetModal(modal, dayId) {
   wireEditabilityGuard(modal, &#x27;#daySheetClose, #daySheetOpenDetails&#x27;, () =&gt; renderDayEventSheetModal(modal, Store.getActiveDay()));
+  disableReadOnlyDaySheetControls(modal);
   modal.onkeydown = e =&gt; {
     if (e.key !== &#x27;Escape&#x27; || e.defaultPrevented) return;
     const input = e.target.closest(&#x27;input[data-event-id], textarea[data-event-id]&#x27;);
@@ -13753,6 +13799,7 @@ function wireDayEventSheetModal(modal, dayId) {
         startTime,
         endTime,
         groupId: defaultGroup ? defaultGroup.id : &#x27;&#x27;,
+        placement: &#x27;main&#x27;,
       });
       sessionSave();
       renderActiveDay();
@@ -13863,7 +13910,7 @@ function wireDayEventSheetModal(modal, dayId) {
       const eventId = select.getAttribute(&#x27;data-event-id&#x27;);
       const currentEvent = Store.getEvents(dayId).find(e =&gt; e.id === eventId);
       if (!currentEvent) return;
-      const updates = { groupId: select.value };
+      const updates = { groupId: select.value, placement: isEventEffectiveMain(currentEvent, Store.getGroups()) ? &#x27;main&#x27; : &#x27;concurrent&#x27; };
       commitDayEventSheetUpdate(dayId, eventId, updates, {
         rerenderModal: true,
         checkConflict: true,
@@ -13872,28 +13919,12 @@ function wireDayEventSheetModal(modal, dayId) {
     });
   });
 
-  modal.querySelectorAll(&#x27;.day-sheet-break-toggle&#x27;).forEach(input =&gt; {
-    input.addEventListener(&#x27;focus&#x27;, () =&gt; {
-      const eventId = input.getAttribute(&#x27;data-event-id&#x27;);
-      syncDaySheetSelectionUI(modal, dayId, eventId);
-    });
-    input.addEventListener(&#x27;change&#x27;, () =&gt; {
-      const eventId = input.getAttribute(&#x27;data-event-id&#x27;);
-      commitDayEventSheetUpdate(dayId, eventId, { isBreak: input.checked }, {
-        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: &#x27;isBreak&#x27; },
-      });
-    });
-  });
-
-  modal.querySelectorAll(&#x27;.day-sheet-main-toggle&#x27;).forEach(input =&gt; {
-    input.addEventListener(&#x27;focus&#x27;, () =&gt; {
-      const eventId = input.getAttribute(&#x27;data-event-id&#x27;);
-      syncDaySheetSelectionUI(modal, dayId, eventId);
-    });
-    input.addEventListener(&#x27;change&#x27;, () =&gt; {
-      const eventId = input.getAttribute(&#x27;data-event-id&#x27;);
-      commitDayEventSheetUpdate(dayId, eventId, { isMainEvent: input.checked }, {
-        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: &#x27;isMainEvent&#x27; },
+  modal.querySelectorAll(&#x27;.day-sheet-placement-select&#x27;).forEach(select =&gt; {
+    select.addEventListener(&#x27;focus&#x27;, () =&gt; syncDaySheetSelectionUI(modal, dayId, select.dataset.eventId));
+    select.addEventListener(&#x27;change&#x27;, () =&gt; {
+      const eventId = select.dataset.eventId;
+      commitDayEventSheetUpdate(dayId, eventId, { placement: select.value }, {
+        rerenderModal: true, checkConflict: true, focusInfo: { eventId, field: &#x27;placement&#x27; }
       });
     });
   });
@@ -13904,6 +13935,7 @@ function wireDayEventSheetModal(modal, dayId) {
 function wireDaySheetDetailPanel(modal, dayId) {
   const detailPanel = modal.querySelector(&#x27;#daySheetDetailPanel&#x27;);
   if (!detailPanel) return;
+  disableReadOnlyDaySheetControls(modal);
 
   const openDetailsBtn = detailPanel.querySelector(&#x27;#daySheetOpenDetails&#x27;);
   if (openDetailsBtn) {
@@ -13914,11 +13946,16 @@ function wireDaySheetDetailPanel(modal, dayId) {
   }
 
   detailPanel.querySelectorAll(&#x27;input[type=&quot;text&quot;], textarea&#x27;).forEach(input =&gt; {
+    if (input.dataset.field === &#x27;attendees&#x27;) input.addEventListener(&#x27;input&#x27;, () =&gt; {
+      const current = Store.getEvents(dayId).find(event =&gt; event.id === input.dataset.eventId);
+      if (current) updateAttendeePreview(detailPanel, { ...current, attendees: input.value }, &#x27;sheet&#x27;);
+    });
     input.addEventListener(&#x27;change&#x27;, () =&gt; {
       const eventId = input.getAttribute(&#x27;data-event-id&#x27;);
       const field = input.getAttribute(&#x27;data-field&#x27;);
       const value = typeof input.value === &#x27;string&#x27; ? input.value.trim() : input.value;
       commitDayEventSheetUpdate(dayId, eventId, { [field]: value }, { rerenderModal: false });
+      if (field === &#x27;attendees&#x27;) updateAttendeePreview(detailPanel, Store.getEvents(dayId).find(event =&gt; event.id === eventId), &#x27;sheet&#x27;);
     });
     if (input.tagName !== &#x27;TEXTAREA&#x27;) {
       input.addEventListener(&#x27;keydown&#x27;, (e) =&gt; {
@@ -13928,6 +13965,13 @@ function wireDaySheetDetailPanel(modal, dayId) {
         }
       });
     }
+  });
+
+  detailPanel.querySelector(&#x27;#sheet-attendee-format&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; {
+    const names = detailPanel.querySelector(&#x27;[data-field=&quot;attendees&quot;]&#x27;);
+    const eventId = names.dataset.eventId;
+    commitDayEventSheetUpdate(dayId, eventId, { attendeeFormat: normalizeAttendeeFormat(event.target.value), attendees: names.value.trim() }, { rerenderModal: false });
+    updateAttendeePreview(detailPanel, Store.getEvents(dayId).find(event =&gt; event.id === eventId), &#x27;sheet&#x27;);
   });
 
   const deleteBtn = detailPanel.querySelector(&#x27;#daySheetDeleteSelected&#x27;);
@@ -13946,6 +13990,13 @@ function wireDaySheetDetailPanel(modal, dayId) {
       renderDayEventSheetModal(modal, dayId, nextEventId ? { eventId: nextEventId } : null);
     });
   }
+}
+
+function disableReadOnlyDaySheetControls(modal) {
+  if (typeof isCurrentScheduleEditable !== &#x27;function&#x27; || isCurrentScheduleEditable()) return;
+  modal.querySelectorAll(&#x27;input, textarea, select, button&#x27;).forEach(control =&gt; {
+    if (!control.matches(&#x27;#daySheetClose, #daySheetOpenDetails&#x27;)) control.disabled = true;
+  });
 }
 
 function commitDayEventSheetUpdate(dayId, eventId, updates, options) {
@@ -14033,103 +14084,47 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
 function renderEventInspector(panel, dayId, eventId) {
   const evt = Store.getEvents(dayId).find(e =&gt; e.id === eventId);
   if (!evt) { renderScheduleSetup(panel); return; }
-
   const groups = Store.getGroups();
-  const evtGroup = Store.getGroup(evt.groupId);
-  const groupIsMain = evtGroup &amp;&amp; evtGroup.scope === &#x27;main&#x27;;
+  const main = isEventEffectiveMain(evt, groups);
+  const showPeople = !main || !!evt.attendees?.trim() || Store.getGroup(evt.groupId)?.scope !== &#x27;main&#x27;;
   const readOnly = typeof isCurrentScheduleEditable === &#x27;function&#x27; ? !isCurrentScheduleEditable() : false;
   const textReadOnly = readOnly ? &#x27; readonly&#x27; : &#x27;&#x27;;
   const disabledAttr = readOnly ? &#x27; disabled&#x27; : &#x27;&#x27;;
+  let html = &#x27;&lt;div class=&quot;insp-header&quot;&gt;&lt;h3 style=&quot;margin:0;&quot;&gt;Event&lt;/h3&gt;&lt;button class=&quot;insp-close&quot; id=&quot;insp-close&quot; title=&quot;Back to Setup&quot;&gt;✕&lt;/button&gt;&lt;/div&gt;&#x27;;
+  html += readOnly ? &#x27;&lt;div class=&quot;insp-readonly-note&quot;&gt;Read-only. Click &lt;strong&gt;Edit&lt;/strong&gt;.&lt;/div&gt;&#x27;
+    : &#x27;&lt;p class=&quot;insp-hint insp-save-hint&quot;&gt;Changes update the preview as you type.&lt;/p&gt;&#x27;;
 
-  let html = &#x27;&lt;div class=&quot;insp-header&quot;&gt;&lt;h3 style=&quot;margin:0;&quot;&gt;Event&lt;/h3&gt;&lt;button class=&quot;insp-close&quot; id=&quot;insp-close&quot; title=&quot;Back to Setup&quot;&gt;\u2715&lt;/button&gt;&lt;/div&gt;&#x27;;
-  if (readOnly) {
-    html += &#x27;&lt;div class=&quot;insp-readonly-note&quot;&gt;Read-only. Click &lt;strong&gt;Edit&lt;/strong&gt;.&lt;/div&gt;&#x27;;
-  }
-
-  // Check for main-on-main overlaps
-  const allEvents = Store.getEvents(dayId);
-  const { mainBands } = classifyEvents(allEvents, groups);
-  const thisBand = mainBands.find(b =&gt; b.event.id === eventId);
-  const sharedExceptions = getSharedEventExceptions(evt, allEvents, groups);
-  const sharedOverlaps = getOverlappingSharedEvents(evt, allEvents, groups);
-  const sharedNames = summarizeDisplayList(sharedExceptions.attendeeNames, 4);
-  const eventNames = summarizeDisplayList(evt.attendees ? evt.attendees.split(/\s*(?:,|;|\n|\/)\s*/).map(name =&gt; name.trim()).filter(Boolean) : [], 4);
-  if (thisBand &amp;&amp; thisBand.overlappingMain &amp;&amp; thisBand.overlappingMain.length &gt; 0) {
-    const names = thisBand.overlappingMain.map(m =&gt; esc(m.title)).join(&#x27;, &#x27;);
-    html += &#x27;&lt;div class=&quot;insp-overlap-warn&quot;&gt;Overlaps with &#x27; + names + &#x27;&lt;/div&gt;&#x27;;
-  }
-  if (sharedExceptions.groupNames.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;insp-context-note&quot;&gt;Exceptions active during this block: &#x27; + esc(summarizeDisplayList(sharedExceptions.groupNames, 3)) + &#x27;.&#x27;;
-    if (sharedNames) html += &#x27; Named people: &#x27; + esc(sharedNames) + &#x27;.&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  } else if (sharedOverlaps.titles.length &gt; 0) {
-    const audienceLabel = evtGroup ? evtGroup.name : &#x27;this audience&#x27;;
-    html += &#x27;&lt;div class=&quot;insp-context-note&quot;&gt;This runs during &#x27; + esc(summarizeDisplayList(sharedOverlaps.titles, 2)) + &#x27;. It will read as an exception for &#x27; + esc(audienceLabel) + &#x27;.&#x27;;
-    if (eventNames) html += &#x27; Named people: &#x27; + esc(eventNames) + &#x27;.&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-
-  const trackLabel = evt.isBreak
-    ? &#x27;Break&#x27;
-    : (groupIsMain
-        ? &#x27;Main&#x27;
-        : (evt.isMainEvent ? &#x27;Main Override&#x27; : (evtGroup ? &#x27;Side&#x27; : &#x27;No Audience&#x27;)));
-  html += &#x27;&lt;div class=&quot;insp-summary-pills&quot;&gt;&#x27;;
-  html += &#x27;&lt;span class=&quot;insp-summary-pill insp-summary-pill-accent&quot;&gt;&#x27; + esc(evt.startTime + &#x27;–&#x27; + evt.endTime) + &#x27;&lt;/span&gt;&#x27;;
-  html += &#x27;&lt;span class=&quot;insp-summary-pill&quot;&gt;&#x27; + esc(evtGroup ? evtGroup.name : &#x27;No audience&#x27;) + &#x27;&lt;/span&gt;&#x27;;
-  html += &#x27;&lt;span class=&quot;insp-summary-pill&quot;&gt;&#x27; + esc(trackLabel) + &#x27;&lt;/span&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  // Title
-  html += &#x27;&lt;label for=&quot;insp-evt-title&quot;&gt;Title&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-evt-title&quot; value=&quot;&#x27; + esc(evt.title) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
-
-  // Times — exact minutes with range validation
-  html += &#x27;&lt;div class=&quot;field-row&quot;&gt;&#x27;;
-  html += &#x27;&lt;div&gt;&lt;label for=&quot;insp-evt-start&quot;&gt;Start&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-start&quot; value=&quot;&#x27; + esc(evt.startTime) + &#x27;&quot; placeholder=&quot;0700&quot; maxlength=&quot;5&quot; class=&quot;time-input&quot;&#x27; + textReadOnly + &#x27;&gt;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div&gt;&lt;label for=&quot;insp-evt-end&quot;&gt;End&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-end&quot; value=&quot;&#x27; + esc(evt.endTime) + &#x27;&quot; placeholder=&quot;0800&quot; maxlength=&quot;5&quot; class=&quot;time-input&quot;&#x27; + textReadOnly + &#x27;&gt;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  // Group
-  html += &#x27;&lt;label for=&quot;insp-evt-group&quot;&gt;Audience&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;select id=&quot;insp-evt-group&quot;&#x27; + disabledAttr + &#x27;&gt;&#x27;;
-  html += &#x27;&lt;option value=&quot;&quot;&gt;No audience&lt;/option&gt;&#x27;;
-  groups.forEach(g =&gt; {
-    html += &#x27;&lt;option value=&quot;&#x27; + esc(g.id) + &#x27;&quot;&#x27; + (g.id === evt.groupId ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + esc(g.name) + &#x27;&lt;/option&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;insp-evt-title&quot;&gt;Event title&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-title&quot; value=&quot;&#x27; + esc(evt.title) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;field-row&quot;&gt;&lt;div&gt;&lt;label for=&quot;insp-evt-start&quot;&gt;Start time&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-start&quot; value=&quot;&#x27; + esc(evt.startTime) + &#x27;&quot; placeholder=&quot;0700&quot; maxlength=&quot;5&quot; class=&quot;time-input&quot;&#x27; + textReadOnly + &#x27;&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div&gt;&lt;label for=&quot;insp-evt-end&quot;&gt;End time&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-end&quot; value=&quot;&#x27; + esc(evt.endTime) + &#x27;&quot; placeholder=&quot;0800&quot; maxlength=&quot;5&quot; class=&quot;time-input&quot;&#x27; + textReadOnly + &#x27;&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;fieldset class=&quot;event-placement&quot;&gt;&lt;legend&gt;Schedule section&lt;/legend&gt;&#x27;;
+  [[&#x27;main&#x27;, &#x27;Main schedule&#x27;, &#x27;A band in the day’s main sequence.&#x27;], [&#x27;concurrent&#x27;, &#x27;Concurrent event&#x27;, &#x27;A separate assignment, listed below the main bands.&#x27;]].forEach(([value, label, hint]) =&gt; {
+    html += &#x27;&lt;label class=&quot;placement-option&quot;&gt;&lt;input type=&quot;radio&quot; name=&quot;event-placement&quot; id=&quot;insp-placement-&#x27; + value + &#x27;&quot; value=&quot;&#x27; + value + &#x27;&quot;&#x27; + ((main ? &#x27;main&#x27; : &#x27;concurrent&#x27;) === value ? &#x27; checked&#x27; : &#x27;&#x27;) + disabledAttr + &#x27;&gt;&lt;span&gt;&lt;strong&gt;&#x27; + label + &#x27;&lt;/strong&gt;&lt;small&gt;&#x27; + hint + &#x27;&lt;/small&gt;&lt;/span&gt;&lt;/label&gt;&#x27;;
   });
-  html += &#x27;&lt;/select&gt;&#x27;;
+  html += &#x27;&lt;/fieldset&gt;&#x27;;
 
-  // Specific People
-  html += &#x27;&lt;label for=&quot;insp-evt-attendees&quot;&gt;Specific People&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;textarea id=&quot;insp-evt-attendees&quot; rows=&quot;2&quot; placeholder=&quot;Optional names&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.attendees) + &#x27;&lt;/textarea&gt;&#x27;;
-  html += renderAttendeeFormatting(evt, disabledAttr);
+  html += &#x27;&lt;section class=&quot;event-field-section&quot;&gt;&lt;h4&gt;Who attends&lt;/h4&gt;&lt;label for=&quot;insp-evt-group&quot;&gt;Audience&lt;/label&gt;&lt;select id=&quot;insp-evt-group&quot;&#x27; + disabledAttr + &#x27;&gt;&lt;option value=&quot;&quot;&gt;Specific people / other (enter below)&lt;/option&gt;&#x27;;
+  groups.forEach(g =&gt; { html += &#x27;&lt;option value=&quot;&#x27; + esc(g.id) + &#x27;&quot;&#x27; + (g.id === evt.groupId ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + esc(g.name) + &#x27;&lt;/option&gt;&#x27;; });
+  html += &#x27;&lt;/select&gt;&lt;details class=&quot;event-people&quot;&#x27; + (showPeople ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;Specific people or attendance details&lt;/summary&gt;&lt;label for=&quot;insp-evt-attendees&quot;&gt;Names or attendance details&#x27; + (evt.groupId ? &#x27; (optional)&#x27; : &#x27;&#x27;) + &#x27;&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-hint&quot; id=&quot;insp-people-hint&quot;&gt;Leave blank if the whole audience attends. For a named assignment, enter everyone who must attend. Surnames or full names are both fine.&lt;/p&gt;&#x27;;
+  html += &#x27;&lt;textarea id=&quot;insp-evt-attendees&quot; rows=&quot;2&quot; aria-describedby=&quot;insp-people-hint&quot; placeholder=&quot;Doe; Smith; Chan&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.attendees) + &#x27;&lt;/textarea&gt;&#x27;;
+  html += renderAttendeeFormatting(evt, disabledAttr) + &#x27;&lt;/details&gt;&lt;/section&gt;&#x27;;
 
-  // Description
-  html += &#x27;&lt;label for=&quot;insp-evt-desc&quot;&gt;Notes&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;textarea id=&quot;insp-evt-desc&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/textarea&gt;&#x27;;
-
-  // Location + POC
-  html += &#x27;&lt;label for=&quot;insp-evt-loc&quot;&gt;Location&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-evt-loc&quot; value=&quot;&#x27; + esc(evt.location) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
-  html += &#x27;&lt;label for=&quot;insp-evt-poc&quot;&gt;POC&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-evt-poc&quot; value=&quot;&#x27; + esc(evt.poc) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
+  html += &#x27;&lt;section class=&quot;event-field-section&quot;&gt;&lt;h4&gt;Where &amp;amp; what to know&lt;/h4&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;insp-evt-loc&quot;&gt;Location (optional)&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-loc&quot; value=&quot;&#x27; + esc(evt.location) + &#x27;&quot; placeholder=&quot;Building or room&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;insp-evt-poc&quot;&gt;Point of contact (optional)&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-poc&quot; value=&quot;&#x27; + esc(evt.poc) + &#x27;&quot; placeholder=&quot;MSgt Doe&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;insp-evt-desc&quot;&gt;Event instructions (optional)&lt;/label&gt;&lt;textarea id=&quot;insp-evt-desc&quot; placeholder=&quot;What to bring, preparation, or reporting instructions&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/textarea&gt;&lt;/section&gt;&#x27;;
   html += renderBandEventFields(evt, readOnly);
+  html += &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-break&quot;&#x27; + (evt.isBreak ? &#x27; checked&#x27; : &#x27;&#x27;) + disabledAttr + &#x27;&gt; This is a meal or break&lt;/label&gt;&lt;p class=&quot;insp-hint&quot;&gt;Keeps the selected schedule section. Use emphasis above to make it an anchor.&lt;/p&gt;&lt;/div&gt;&#x27;;
 
-  // Break toggle
-  html += &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&#x27;;
-  html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-break&quot;&#x27; + (evt.isBreak ? &#x27; checked&#x27; : &#x27;&#x27;) + disabledAttr + &#x27;&gt; Break&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  // Highlight override — only show if group scope is limited
-  if (!groupIsMain &amp;&amp; !evt.isBreak) {
-    html += &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&#x27;;
-    html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-main&quot;&#x27; + (evt.isMainEvent ? &#x27; checked&#x27; : &#x27;&#x27;) + disabledAttr + &#x27;&gt; Main Track&lt;/label&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-
-  // Delete — in sticky zone
+  const { mainBands } = classifyEvents(Store.getEvents(dayId), groups);
+  const overlaps = mainBands.find(band =&gt; band.event.id === eventId)?.overlappingMain || [];
+  if (overlaps.length) html += &#x27;&lt;div class=&quot;insp-overlap-warn&quot;&gt;Also on the main schedule at this time: &#x27; + overlaps.map(event =&gt; esc(event.title)).join(&#x27;, &#x27;) + &#x27;. Review whether both belong here.&lt;/div&gt;&#x27;;
+  const related = Store.getEvents(dayId).filter(event =&gt; event.id !== evt.id &amp;&amp;
+    isEventEffectiveMain(event, groups) !== main &amp;&amp; eventsOverlap(evt, event));
+  if (related.length) html += &#x27;&lt;details class=&quot;event-related&quot;&gt;&lt;summary&gt;&#x27; + (main ? &#x27;Concurrent events during this block&#x27; : &#x27;Main schedule during this assignment&#x27;) + &#x27; (&#x27; + related.length + &#x27;)&lt;/summary&gt;&lt;ul&gt;&#x27; +
+    related.map(event =&gt; &#x27;&lt;li&gt;&#x27; + esc(event.startTime + &#x27;–&#x27; + event.endTime + &#x27; · &#x27; + event.title) + &#x27;&lt;/li&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/ul&gt;&lt;/details&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;insp-delete-zone&quot;&gt;&lt;button class=&quot;delete-btn&quot; id=&quot;insp-evt-delete&quot;&#x27; + disabledAttr + &#x27;&gt;Delete Event&lt;/button&gt;&lt;/div&gt;&#x27;;
-
   panel.innerHTML = html;
   wireEventInspector(panel, dayId, eventId);
 }
@@ -14145,10 +14140,12 @@ function wireEventInspector(panel, dayId, eventId) {
       let val;
       if (el.type === &#x27;checkbox&#x27;) val = el.checked;
       else val = typeof el.value === &#x27;string&#x27; ? el.value.trim() : el.value;
-      Store.updateEvent(dayId, eventId, { [field]: val });
+      const current = Store.getEvents(dayId).find(event =&gt; event.id === eventId);
+      const placement = isEventEffectiveMain(current, Store.getGroups()) ? &#x27;main&#x27; : &#x27;concurrent&#x27;;
+      Store.updateEvent(dayId, eventId, { [field]: val, ...(field === &#x27;isBreak&#x27; ? { placement } : {}) });
       renderActiveDay();
       sessionSave();
-      if (field === &#x27;isBreak&#x27; || field === &#x27;isMainEvent&#x27;) {
+      if (field === &#x27;isBreak&#x27;) {
         renderInspector();
         const next = panel.querySelector(selector);
         if (next) next.focus();
@@ -14175,18 +14172,21 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit(&#x27;#insp-evt-break&#x27;, &#x27;isBreak&#x27;, true);
   wireBandEventFields(panel, dayId, eventId);
 
-  // Highlight override (only present for limited-scope groups)
-  const mainCheckbox = panel.querySelector(&#x27;#insp-evt-main&#x27;);
-  if (mainCheckbox) {
-    autoCommit(&#x27;#insp-evt-main&#x27;, &#x27;isMainEvent&#x27;, true);
-  }
+  panel.querySelectorAll(&#x27;[name=&quot;event-placement&quot;]&#x27;).forEach(input =&gt; input.addEventListener(&#x27;change&#x27;, () =&gt; {
+    saveUndoState();
+    Store.updateEvent(dayId, eventId, { placement: input.value });
+    renderActiveDay(); sessionSave(); renderInspector();
+    panel.querySelector(&#x27;#&#x27; + input.id)?.focus();
+    checkTimeConflict(dayId, eventId);
+  }));
 
-  // Group change — auto-derive isMainEvent from group scope and re-render inspector
+  // Attendance changes retain the section shown when this edit began.
   const groupSelect = panel.querySelector(&#x27;#insp-evt-group&#x27;);
   if (groupSelect) {
     groupSelect.addEventListener(&#x27;change&#x27;, () =&gt; {
       saveUndoState();
-      const updates = { groupId: groupSelect.value };
+      const current = Store.getEvents(dayId).find(event =&gt; event.id === eventId);
+      const updates = { groupId: groupSelect.value, placement: isEventEffectiveMain(current, Store.getGroups()) ? &#x27;main&#x27; : &#x27;concurrent&#x27; };
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
       sessionSave();
@@ -14216,18 +14216,19 @@ function renderNoteInspector(panel, dayId, noteId) {
   const textReadOnly = readOnly ? &#x27; readonly&#x27; : &#x27;&#x27;;
   const disabledAttr = readOnly ? &#x27; disabled&#x27; : &#x27;&#x27;;
 
-  let html = &#x27;&lt;div class=&quot;insp-header&quot;&gt;&lt;h3 style=&quot;margin:0;&quot;&gt;Note&lt;/h3&gt;&lt;button class=&quot;insp-close&quot; id=&quot;insp-close&quot; title=&quot;Back to Setup&quot;&gt;\u2715&lt;/button&gt;&lt;/div&gt;&#x27;;
+  let html = &#x27;&lt;div class=&quot;insp-header&quot;&gt;&lt;h3 style=&quot;margin:0;&quot;&gt;Notes &amp;amp; Reminders&lt;/h3&gt;&lt;button class=&quot;insp-close&quot; id=&quot;insp-close&quot; title=&quot;Back to Setup&quot;&gt;\u2715&lt;/button&gt;&lt;/div&gt;&#x27;;
   if (readOnly) {
     html += &#x27;&lt;div class=&quot;insp-readonly-note&quot;&gt;Read-only. Click &lt;strong&gt;Edit&lt;/strong&gt;.&lt;/div&gt;&#x27;;
   }
 
-  html += &#x27;&lt;label for=&quot;insp-note-cat&quot;&gt;Category&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-hint&quot;&gt;An untimed reminder at the bottom of this day’s page.&lt;/p&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;insp-note-cat&quot;&gt;Heading (optional)&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-note-cat&quot; value=&quot;&#x27; + esc(note.category) + &#x27;&quot; placeholder=&quot;e.g., Medical, TDY&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
 
-  html += &#x27;&lt;label for=&quot;insp-note-text&quot;&gt;Text&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;textarea id=&quot;insp-note-text&quot; placeholder=&quot;Type the note&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(note.text) + &#x27;&lt;/textarea&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;insp-note-text&quot;&gt;Reminder&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;textarea id=&quot;insp-note-text&quot; placeholder=&quot;What people need to remember&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(note.text) + &#x27;&lt;/textarea&gt;&#x27;;
 
-  html += &#x27;&lt;div class=&quot;insp-delete-zone&quot;&gt;&lt;button class=&quot;delete-btn&quot; id=&quot;insp-note-delete&quot;&#x27; + disabledAttr + &#x27;&gt;Delete Note&lt;/button&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;insp-delete-zone&quot;&gt;&lt;button class=&quot;delete-btn&quot; id=&quot;insp-note-delete&quot;&#x27; + disabledAttr + &#x27;&gt;Delete Reminder&lt;/button&gt;&lt;/div&gt;&#x27;;
 
   panel.innerHTML = html;
   wireNoteInspector(panel, dayId, noteId);
@@ -14526,6 +14527,7 @@ function openAddEvent(dayId) {
     startTime: minutesToTime(startMin),
     endTime: minutesToTime(Math.min(startMin + 60, 1440)),
     groupId: defaultGroup ? defaultGroup.id : &#x27;&#x27;,
+    placement: &#x27;main&#x27;,
   });
   sessionSave();
   renderActiveDay();
@@ -14573,10 +14575,15 @@ function checkTimeConflict(dayId, eventId) {
   const groups = Store.getGroups();
   const { mainBands } = classifyEvents(Store.getEvents(dayId), groups);
   const band = mainBands.find(b =&gt; b.event.id === eventId);
-  if (!band || band.event.isBreak || band.tier !== &#x27;main&#x27;) return;
-  if (band.overlappingMain &amp;&amp; band.overlappingMain.length &gt; 0) {
-    const names = band.overlappingMain.map(c =&gt; c.title).join(&#x27;, &#x27;);
+  const conflicts = band &amp;&amp; !band.event.isBreak &amp;&amp; band.tier === &#x27;main&#x27; ? band.overlappingMain || [] : [];
+  if (conflicts.length) {
+    const names = conflicts.map(c =&gt; c.title).join(&#x27;, &#x27;);
     toast(&#x27;Schedule conflict: overlaps with &#x27; + names);
+  } else {
+    // Moving an assignment to Concurrent resolves this main/main warning.
+    // Do not leave the old toast contradicting the newly selected section.
+    const notice = document.getElementById(&#x27;toast&#x27;);
+    if (notice?.textContent.startsWith(&#x27;Schedule conflict:&#x27;)) notice.classList.remove(&#x27;show&#x27;);
   }
 }
 
@@ -14642,6 +14649,7 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
     Store.updateEvent(dayId, eventId, updates);
     renderActiveDay();
     sessionSave();
+    updateFlightEditorTimeContext(panel, Store.getEvents(dayId).find(event =&gt; event.id === eventId));
     checkTimeConflict(dayId, eventId);
   });
   // Also commit on Enter key
@@ -14655,37 +14663,69 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
 /* Small additions to existing inspector/Customize surfaces, using normal Store
  * edits so workbook saves, recovery, versions and Undo/Redo retain the choices.
  */
-function renderAttendeeFormatting(event, disabled) {
+function renderAttendeeFormatting(event, disabled, prefix = &#x27;insp&#x27;) {
   const mode = event.attendeeFormat || &#x27;text&#x27;;
-  const options = [[&#x27;text&#x27;, &#x27;Text as entered&#x27;], [&#x27;suggested&#x27;, &#x27;Suggest from separators&#x27;], [&#x27;lines&#x27;, &#x27;One person per line&#x27;], [&#x27;spaces&#x27;, &#x27;Each space separates a surname&#x27;]];
-  return &#x27;&lt;details class=&quot;attendee-preview&quot;&gt;&lt;summary&gt;Format names for Bands&lt;/summary&gt;&lt;label for=&quot;insp-attendee-format&quot;&gt;Separate entries&lt;/label&gt;&lt;select id=&quot;insp-attendee-format&quot;&#x27; + disabled + &#x27;&gt;&#x27; +
+  const options = [[&#x27;text&#x27;, &#x27;Keep text as entered&#x27;], [&#x27;suggested&#x27;, &#x27;Separate at commas, ; or &amp;&#x27;], [&#x27;lines&#x27;, &#x27;One entry per line&#x27;], [&#x27;spaces&#x27;, &#x27;One surname per space&#x27;]];
+  return &#x27;&lt;div class=&quot;attendee-format&quot;&gt;&lt;label for=&quot;&#x27; + prefix + &#x27;-attendee-format&quot;&gt;Name layout&lt;/label&gt;&lt;select id=&quot;&#x27; + prefix + &#x27;-attendee-format&quot;&#x27; + disabled + &#x27;&gt;&#x27; +
     options.map(([value, label]) =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + (mode === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + label + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) +
-    &#x27;&lt;/select&gt;&lt;div id=&quot;insp-attendee-preview&quot; role=&quot;status&quot;&gt;&#x27; + attendeePreviewHTML(event) + &#x27;&lt;/div&gt;&lt;/details&gt;&#x27;;
+    &#x27;&lt;/select&gt;&lt;details class=&quot;attendee-preview&quot; open&#x27; + (event.attendees?.trim() ? &#x27;&#x27; : &#x27; hidden&#x27;) + &#x27;&gt;&lt;summary&gt;Print preview&lt;/summary&gt;&lt;div id=&quot;&#x27; + prefix + &#x27;-attendee-preview&quot;&gt;&#x27; + attendeePreviewHTML(event) + &#x27;&lt;/div&gt;&lt;/details&gt;&lt;/div&gt;&#x27;;
 }
 
 function attendeePreviewHTML(event) {
   const parsed = parsePersonnelInput(event.attendees || &#x27;&#x27;, event.attendeeFormat || &#x27;text&#x27;);
-  return &#x27;&lt;p&gt;&#x27; + esc(parsed.notice) + &#x27;&lt;/p&gt;&#x27; + (parsed.mode === &#x27;text&#x27;
-    ? &#x27;&lt;div class=&quot;attendee-preview-list&quot;&gt;&#x27; + esc(parsed.raw || &#x27;No specific people entered.&#x27;) + &#x27;&lt;/div&gt;&#x27;
-    : &#x27;&lt;p&gt;&lt;strong&gt;&#x27; + parsed.entries.length + &#x27; entries will print&lt;/strong&gt;&lt;/p&gt;&lt;div class=&quot;attendee-preview-list&quot;&gt;&#x27; + parsed.entries.map(esc).join(&#x27;; &#x27;) + &#x27;&lt;/div&gt;&#x27;) +
-    &#x27;&lt;p&gt;POCs stay separate. Complete entries print as shown; no name parts are guessed or removed.&lt;/p&gt;&#x27;;
+  return (parsed.mode === &#x27;text&#x27; ? &#x27;&#x27; : &#x27;&lt;p class=&quot;attendee-count&quot; role=&quot;status&quot;&gt;&#x27; + parsed.entries.length + (parsed.entries.length === 1 ? &#x27; entry&#x27; : &#x27; entries&#x27;) + &#x27; · entered order&lt;/p&gt;&#x27;) +
+    &#x27;&lt;div class=&quot;attendee-preview-list&quot;&gt;&#x27; + (parsed.mode === &#x27;text&#x27; ? esc(parsed.raw) : parsed.entries.map(esc).join(&#x27;; &#x27;)) + &#x27;&lt;/div&gt;&#x27; +
+    &#x27;&lt;p&gt;&#x27; + esc(parsed.notice) + &#x27;&lt;/p&gt;&#x27; +
+    (parsed.entries.length &gt;= 8 ? &#x27;&lt;p&gt;Long lists use compact roster type. Every entry stays with this event. Use surnames if appropriate; the app never shortens names.&lt;/p&gt;&#x27; : &#x27;&#x27;);
+}
+
+function updateAttendeePreview(panel, event, prefix = &#x27;insp&#x27;) {
+  const target = panel.querySelector(&#x27;#&#x27; + prefix + &#x27;-attendee-preview&#x27;);
+  if (!target || !event) return;
+  target.innerHTML = attendeePreviewHTML(event);
+  target.closest(&#x27;details&#x27;).hidden = !event.attendees?.trim();
+}
+
+function flightEditorSummary(activity, event) {
+  return (activity.flight || &#x27;New flight&#x27;) + &#x27; · &#x27; + (activity.title || &#x27;Add activity&#x27;) + &#x27; · &#x27; + activity.startTime + &#x27;–&#x27; + activity.endTime +
+    (event &amp;&amp; flightTimeNeedsReview(activity, event) ? &#x27; · Review times&#x27; : &#x27;&#x27;);
+}
+
+function flightTimeNeedsReview(activity, event) {
+  return !isValidScheduleTime(activity.startTime) || !isValidScheduleTime(activity.endTime) ||
+    activity.startTime &gt;= activity.endTime || activity.startTime &lt; event.startTime || activity.endTime &gt; event.endTime;
+}
+
+function updateFlightEditorTimeContext(panel, event) {
+  if (!event) return;
+  panel.querySelectorAll(&#x27;[data-flight-index]&#x27;).forEach(item =&gt; {
+    const activity = event.flightActivities?.[Number(item.dataset.flightIndex)];
+    if (!activity) return;
+    item.querySelector(&#x27;summary&#x27;).textContent = flightEditorSummary(activity, event);
+    item.querySelector(&#x27;[data-flight-full-time]&#x27;).textContent = &#x27;Use event time (&#x27; + event.startTime + &#x27;–&#x27; + event.endTime + &#x27;)&#x27;;
+    const warning = item.querySelector(&#x27;.flight-time-warning&#x27;);
+    warning.textContent = &#x27;Review this activity’s times: keep them within &#x27; + event.startTime + &#x27;–&#x27; + event.endTime + &#x27;.&#x27;;
+    warning.hidden = !flightTimeNeedsReview(activity, event);
+  });
 }
 
 function renderBandEventFields(event, readOnly) {
   const disabled = readOnly ? &#x27; disabled&#x27; : &#x27;&#x27;;
   const activities = event.flightActivities || [];
   let html = &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-emphasis&quot;&#x27; +
-    (event.emphasized ? &#x27; checked&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt; Emphasize in Bands&lt;/label&gt;&lt;/div&gt;&#x27;;
+    (event.emphasized ? &#x27; checked&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt; Emphasize this event&lt;/label&gt;&lt;p class=&quot;insp-hint&quot;&gt;Makes a main band an anchor, or highlights a concurrent event. Does not change who attends or where it is listed.&lt;/p&gt;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;details class=&quot;flight-editor&quot;&#x27; + (activities.length ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;Flight activities&#x27; + (activities.length ? &#x27; (&#x27; + activities.length + &#x27;)&#x27; : &#x27;&#x27;) + &#x27;&lt;/summary&gt;&#x27;;
-  html += &#x27;&lt;p class=&quot;insp-context-note&quot;&gt;Add each flight’s activity within this event. Use the same time window for shared training, or add separate timed activities.&lt;/p&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-context-note&quot;&gt;Add one activity per flight, or several timed activities for each flight. New activities start with this event’s full time window.&lt;/p&gt;&#x27;;
   activities.forEach((activity, index) =&gt; {
-    html += &#x27;&lt;div class=&quot;flight-editor-item&quot; data-flight-index=&quot;&#x27; + index + &#x27;&quot;&gt;&#x27;;
+    html += &#x27;&lt;details class=&quot;flight-editor-item&quot; data-flight-index=&quot;&#x27; + index + &#x27;&quot;&#x27; + (index === activities.length - 1 ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;&#x27; + esc(flightEditorSummary(activity, event)) + &#x27;&lt;/summary&gt;&#x27;;
     const field = (key, label, time) =&gt; &#x27;&lt;label for=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot;&gt;&#x27; + label + &#x27;&lt;/label&gt;&lt;input id=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot; data-flight-field=&quot;&#x27; + key + &#x27;&quot; type=&quot;text&quot; value=&quot;&#x27; + esc(activity[key]) + &#x27;&quot;&#x27; + (time ? &#x27; maxlength=&quot;5&quot;&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt;&#x27;;
     html += field(&#x27;flight&#x27;, &#x27;Flight&#x27;) + field(&#x27;title&#x27;, &#x27;Activity&#x27;);
     html += &#x27;&lt;div class=&quot;field-row&quot;&gt;&lt;div&gt;&#x27; + field(&#x27;startTime&#x27;, &#x27;Start&#x27;, true) + &#x27;&lt;/div&gt;&lt;div&gt;&#x27; + field(&#x27;endTime&#x27;, &#x27;End&#x27;, true) + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
-    html += field(&#x27;location&#x27;, &#x27;Location&#x27;) + field(&#x27;poc&#x27;, &#x27;POC&#x27;);
+    html += &#x27;&lt;button class=&quot;btn flight-use-event-time&quot; type=&quot;button&quot; data-flight-full-time=&quot;&#x27; + index + &#x27;&quot;&#x27; + disabled + &#x27;&gt;Use event time (&#x27; + esc(event.startTime + &#x27;–&#x27; + event.endTime) + &#x27;)&lt;/button&gt;&#x27;;
+    html += &#x27;&lt;p class=&quot;flight-time-warning insp-overlap-warn&quot; role=&quot;status&quot;&#x27; + (flightTimeNeedsReview(activity, event) ? &#x27;&#x27; : &#x27; hidden&#x27;) + &#x27;&gt;Review this activity’s times: keep them within &#x27; + esc(event.startTime + &#x27;–&#x27; + event.endTime) + &#x27;.&lt;/p&gt;&#x27;;
+    html += field(&#x27;location&#x27;, &#x27;Location (optional)&#x27;) + field(&#x27;poc&#x27;, &#x27;Point of contact (optional)&#x27;);
     html += &#x27;&lt;label for=&quot;flight-&#x27; + index + &#x27;-description&quot;&gt;Instructions&lt;/label&gt;&lt;textarea id=&quot;flight-&#x27; + index + &#x27;-description&quot; data-flight-field=&quot;description&quot;&#x27; + disabled + &#x27;&gt;&#x27; + esc(activity.description) + &#x27;&lt;/textarea&gt;&#x27;;
-    html += &#x27;&lt;button class=&quot;btn&quot; type=&quot;button&quot; data-remove-flight=&quot;&#x27; + index + &#x27;&quot;&#x27; + disabled + &#x27;&gt;Remove activity&lt;/button&gt;&lt;/div&gt;&#x27;;
+    html += &#x27;&lt;button class=&quot;btn&quot; type=&quot;button&quot; data-remove-flight=&quot;&#x27; + index + &#x27;&quot;&#x27; + disabled + &#x27;&gt;Remove activity&lt;/button&gt;&lt;/details&gt;&#x27;;
   });
   return html + &#x27;&lt;button class=&quot;btn&quot; type=&quot;button&quot; id=&quot;insp-add-flight&quot;&#x27; + disabled + &#x27;&gt;+ Flight activity&lt;/button&gt;&lt;/details&gt;&#x27;;
 }
@@ -14694,10 +14734,10 @@ function wireBandEventFields(panel, dayId, eventId) {
   const current = () =&gt; Store.getEvents(dayId).find(event =&gt; event.id === eventId);
   const update = updates =&gt; {
     saveUndoState(); Store.updateEvent(dayId, eventId, updates); renderActiveDay(); sessionSave();
+    updateFlightEditorTimeContext(panel, current());
   };
   const preview = () =&gt; {
-    const target = panel.querySelector(&#x27;#insp-attendee-preview&#x27;);
-    if (target &amp;&amp; current()) target.innerHTML = attendeePreviewHTML(current());
+    updateAttendeePreview(panel, current());
   };
   panel.querySelector(&#x27;#insp-evt-attendees&#x27;)?.addEventListener(&#x27;input&#x27;, preview);
   panel.querySelector(&#x27;#insp-attendee-format&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; {
@@ -14724,6 +14764,15 @@ function wireBandEventFields(panel, dayId, eventId) {
       activities[index] = next; update({ flightActivities: activities });
     });
   });
+  panel.querySelectorAll(&#x27;[data-flight-full-time]&#x27;).forEach(button =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
+    const event = current(), index = Number(button.dataset.flightFullTime);
+    const activities = structuredClone(event.flightActivities || []);
+    activities[index].startTime = event.startTime; activities[index].endTime = event.endTime;
+    update({ flightActivities: activities });
+    const item = button.closest(&#x27;[data-flight-index]&#x27;);
+    item.querySelector(&#x27;[data-flight-field=&quot;startTime&quot;]&#x27;).value = event.startTime;
+    item.querySelector(&#x27;[data-flight-field=&quot;endTime&quot;]&#x27;).value = event.endTime;
+  }));
   panel.querySelectorAll(&#x27;[data-remove-flight]&#x27;).forEach(button =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
     update({ flightActivities: current().flightActivities.filter((_, index) =&gt; index !== Number(button.dataset.removeFlight)) });
     renderInspector(); document.querySelector(&#x27;#insp-add-flight&#x27;)?.focus();

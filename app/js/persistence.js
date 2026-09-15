@@ -48,9 +48,9 @@ let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
 const SCHEDULE_WORKBOOK_FILE_TYPE = 'dayschedule';
-// Version 2 protects nested flight activities and Bands settings from being
-// silently removed by a version-1-only app. Existing version-1 files still open.
-const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 2;
+// Version 3 protects explicit event placement from being silently dropped by
+// older apps. Version 1/2 workbooks keep their original inferred placement.
+const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 3;
 const SCHEDULE_WORKBOOK_DEFAULT_FILENAME = 'DaySchedule.schedule';
 
 let _undoSaveTimer = null;
@@ -1113,7 +1113,7 @@ function parseScheduleWorkbookContent(content, fileName) {
   let workbookData = null;
   let activeSchedule = null;
   if (isWorkbook) {
-    if (parsed.schemaVersion !== undefined && ![1, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
+    if (parsed.schemaVersion !== undefined && ![1, 2, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
       throw new Error('This workbook uses an unsupported format version. Open it in the app version that created it; the file has not been changed.');
     }
     const entries = Array.isArray(parsed.schedules) && parsed.schedules.length ? parsed.schedules : [parsed.schedule];

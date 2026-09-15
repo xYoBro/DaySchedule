@@ -104,7 +104,7 @@ describe('Editor — reliability and keyboard regressions', () => {
     assert(!opener.closest('[inert]'));
   });
 
-  it('refreshes track badges and controls immediately after toggling Break', async () => {
+  it('keeps explicit placement and keyboard focus after toggling meal or break', async () => {
     resetUiHarnessState();
     const seeded = await seedUiScheduleFile('Break state', { skin: 'bands' });
     await openSchedule(seeded.fileName);
@@ -115,7 +115,9 @@ describe('Editor — reliability and keyboard regressions', () => {
     const toggle = document.getElementById('insp-evt-break');
     toggle.checked = true;
     toggle.dispatchEvent(new Event('change'));
-    assert(document.querySelector('.insp-summary-pills').textContent.includes('Break'));
+    assert(document.querySelector('#insp-placement-concurrent').checked);
+    assert(document.querySelector('#insp-evt-break').checked);
+    assert.equal(Store.getEvents(dayId).find(event => event.id === evt.id).placement, 'concurrent');
     assert.equal(document.getElementById('insp-evt-main'), null);
     assert.equal(document.activeElement.id, 'insp-evt-break');
   });

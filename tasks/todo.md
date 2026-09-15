@@ -1,5 +1,32 @@
 # Reliability release
 
+## Make Bands authoring clear for a first-time editor — 2026-09-14
+
+- [x] Review event creation, Quick Edit, attendees, flights, reminders and setup
+  in the real app; preserve the approved paper layout and familiar editor shell.
+- [x] Replace implicit audience/override placement with a visible Main schedule
+  / Concurrent event choice. Keep attendance, placement and emphasis separate;
+  preserve existing workbook appearance and protect the new setting on save.
+- [x] Organize event fields in reading order, make name formatting/preview clear,
+  improve flight entry and reminders, and surface all Bands settings coherently.
+- [x] Verify new-author workflows, placement independence, field preservation,
+  keyboard/mobile use, Undo/Redo, Quick Edit and saved workbook compatibility.
+- [x] Review final screenshots and print regressions, rebuild distributions and
+  document the control-to-output mapping and any remaining usability limits.
+
+Baseline: merged 6198feb, with the prior 400-case stress pass and 644 harness
+checks. Verification used Chromium/WebKit; Firefox startup remains
+blocked in this environment. Reviewed risks: migration, shared classification, stale
+Quick Edit controls, and destructive interpretation of free-text attendees.
+
+Result: explicit placement, independent attendance/emphasis, live multiline roster
+preview in both editors, expandable flights with parent-time feedback, clearer
+reminders and heading settings. Format 3 protects the new placement field.
+666 harness checks, two complete new-author journeys, 96 randomized renders,
+192 randomized UI sequences, twelve Letter PDF pages and nine packaging checks
+passed, along with Chromium/WebKit embed and local-file startup checks.
+Build: 2026-09-14+3af976eceef6. Evidence and limits: support/docs/BANDS-AUTHORING.md.
+
 ## Seeded Bands and editor stress testing — 2026-09-14
 
 - [x] Establish the current build/browser baseline on merged main.

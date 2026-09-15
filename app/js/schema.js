@@ -101,6 +101,7 @@ function normalizeEvent(raw) {
     attendees:   normalizeText(raw.attendees),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
+    ...(['main', 'concurrent'].includes(raw.placement) ? { placement: raw.placement } : {}),
     ...(raw.emphasized != null ? { emphasized: !!raw.emphasized } : {}),
     ...(raw.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(raw.attendeeFormat) } : {}),
     ...(Array.isArray(raw.flightActivities) ? { flightActivities: normalizeFlightActivities(raw.flightActivities) } : {}),

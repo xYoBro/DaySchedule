@@ -2,6 +2,8 @@
 
 Build: `2026-09-14+424ea8544b5c`.
 
+The subsequent [authoring pass](BANDS-AUTHORING.md) replaces override controls with explicit placement and advances new saves to format 3.
+
 Subsequent randomized testing and corrections are recorded in [Bands and editor stress test](BANDS-STRESS-TEST.md). The results below describe the initial integration session.
 
 The approved day-first prototype now runs inside the main app. The existing toolbar, day tabs, Quick Edit, Customize and inspector remain the editing shell. The old attached-event Bands renderer and whole-page print shrinking have been replaced by one shared paper renderer and fitter. The isolated prototype remains banked under `output/prototypes/day-first-adaptive/`.

@@ -8,7 +8,7 @@ function loadApprovedBands(id) {
 }
 
 describe('Bands — approved app integration', () => {
-  it('opens legacy workbooks, saves version 2 and rejects unsupported future versions', () => {
+  it('opens legacy workbooks, saves version 3 and rejects unsupported future versions', () => {
     const legacy = structuredClone(APPROVED_BAND_EXAMPLES);
     legacy.schemaVersion = 1;
     legacy.schedules.forEach(schedule => {
@@ -20,10 +20,10 @@ describe('Bands — approved app integration', () => {
     resetUiHarnessState();
     loadParsedScheduleData(parseScheduleWorkbookContent(JSON.stringify(legacy)));
     const saved = getScheduleWorkbookSnapshot();
-    assert.equal(saved.schemaVersion, 2);
+    assert.equal(saved.schemaVersion, 3);
     assert(Store.getDays().length > 0);
     assert.equal(Store.getDays()[0].events[0].attendeeFormat, undefined);
-    saved.schemaVersion = 3;
+    saved.schemaVersion = 4;
     assert.throws(() => parseScheduleWorkbookContent(JSON.stringify(saved)));
   });
 
@@ -139,7 +139,7 @@ describe('Bands — approved app integration', () => {
     const select = document.getElementById('insp-attendee-format');
     assert.equal(select.value, 'text');
     select.value = 'suggested'; select.dispatchEvent(new Event('change', { bubbles: true }));
-    assert(document.getElementById('insp-attendee-preview').textContent.includes('3 entries will print'));
+    assert(document.getElementById('insp-attendee-preview').textContent.includes('3 entries · entered order'));
     assert.deepEqual(Array.from(document.querySelectorAll('[data-event-id="' + event.id + '"] [data-person]'), node => node.dataset.person), ['John Doe','Alex Smith','Dmitri Chan']);
     assert.equal(Store.getEvents(day.id).find(item => item.id === event.id).attendees, text);
     const cases = [

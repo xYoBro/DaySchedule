@@ -39,6 +39,13 @@ function specimen(seed) {
         description:rng() < .35 ? '' : eid + ' instructions ' + prose(profile === 'overload' ? 40 : profile === 'long' ? 20 : int(2,9)),
         location:rng() < .3 ? '' : eid + ' room ' + prose(profile === 'long' ? 12 : int(0,2)),
         poc:rng() < .4 ? '' : 'MSgt Contact' + index,attendees:'',attendeeFormat:'text'};
+      // Mix legacy inference with explicit choices that contradict old flags.
+      // Keep intended section counts independent of that classification rule.
+      if ((seed + index) % 2 === 0) {
+        event.placement = main ? 'main' : 'concurrent';
+        event.groupId = main ? 'group1' : 'all';
+        event.isMainEvent = !main;
+      }
       const count = !main ? profile === 'roster40' && index === mains ? 40 : profile === 'overload' && index === mains ? 200 : pick([0,1,2,3,8,15]) : 0;
       const mode = count === 40 ? 'suggested' : pick(['text','suggested','lines','spaces']);
       const list = Array.from({length:count}, (_, i) => mode === 'spaces' ? pick(['Doe','Smith','Chan','Bell']) : (rng() < .15 ? 'Alex ' : '') + names[i % names.length]);

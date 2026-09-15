@@ -1,37 +1,69 @@
 /* Small additions to existing inspector/Customize surfaces, using normal Store
  * edits so workbook saves, recovery, versions and Undo/Redo retain the choices.
  */
-function renderAttendeeFormatting(event, disabled) {
+function renderAttendeeFormatting(event, disabled, prefix = 'insp') {
   const mode = event.attendeeFormat || 'text';
-  const options = [['text', 'Text as entered'], ['suggested', 'Suggest from separators'], ['lines', 'One person per line'], ['spaces', 'Each space separates a surname']];
-  return '<details class="attendee-preview"><summary>Format names for Bands</summary><label for="insp-attendee-format">Separate entries</label><select id="insp-attendee-format"' + disabled + '>' +
+  const options = [['text', 'Keep text as entered'], ['suggested', 'Separate at commas, ; or &'], ['lines', 'One entry per line'], ['spaces', 'One surname per space']];
+  return '<div class="attendee-format"><label for="' + prefix + '-attendee-format">Name layout</label><select id="' + prefix + '-attendee-format"' + disabled + '>' +
     options.map(([value, label]) => '<option value="' + value + '"' + (mode === value ? ' selected' : '') + '>' + label + '</option>').join('') +
-    '</select><div id="insp-attendee-preview" role="status">' + attendeePreviewHTML(event) + '</div></details>';
+    '</select><details class="attendee-preview" open' + (event.attendees?.trim() ? '' : ' hidden') + '><summary>Print preview</summary><div id="' + prefix + '-attendee-preview">' + attendeePreviewHTML(event) + '</div></details></div>';
 }
 
 function attendeePreviewHTML(event) {
   const parsed = parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text');
-  return '<p>' + esc(parsed.notice) + '</p>' + (parsed.mode === 'text'
-    ? '<div class="attendee-preview-list">' + esc(parsed.raw || 'No specific people entered.') + '</div>'
-    : '<p><strong>' + parsed.entries.length + ' entries will print</strong></p><div class="attendee-preview-list">' + parsed.entries.map(esc).join('; ') + '</div>') +
-    '<p>POCs stay separate. Complete entries print as shown; no name parts are guessed or removed.</p>';
+  return (parsed.mode === 'text' ? '' : '<p class="attendee-count" role="status">' + parsed.entries.length + (parsed.entries.length === 1 ? ' entry' : ' entries') + ' · entered order</p>') +
+    '<div class="attendee-preview-list">' + (parsed.mode === 'text' ? esc(parsed.raw) : parsed.entries.map(esc).join('; ')) + '</div>' +
+    '<p>' + esc(parsed.notice) + '</p>' +
+    (parsed.entries.length >= 8 ? '<p>Long lists use compact roster type. Every entry stays with this event. Use surnames if appropriate; the app never shortens names.</p>' : '');
+}
+
+function updateAttendeePreview(panel, event, prefix = 'insp') {
+  const target = panel.querySelector('#' + prefix + '-attendee-preview');
+  if (!target || !event) return;
+  target.innerHTML = attendeePreviewHTML(event);
+  target.closest('details').hidden = !event.attendees?.trim();
+}
+
+function flightEditorSummary(activity, event) {
+  return (activity.flight || 'New flight') + ' · ' + (activity.title || 'Add activity') + ' · ' + activity.startTime + '–' + activity.endTime +
+    (event && flightTimeNeedsReview(activity, event) ? ' · Review times' : '');
+}
+
+function flightTimeNeedsReview(activity, event) {
+  return !isValidScheduleTime(activity.startTime) || !isValidScheduleTime(activity.endTime) ||
+    activity.startTime >= activity.endTime || activity.startTime < event.startTime || activity.endTime > event.endTime;
+}
+
+function updateFlightEditorTimeContext(panel, event) {
+  if (!event) return;
+  panel.querySelectorAll('[data-flight-index]').forEach(item => {
+    const activity = event.flightActivities?.[Number(item.dataset.flightIndex)];
+    if (!activity) return;
+    item.querySelector('summary').textContent = flightEditorSummary(activity, event);
+    item.querySelector('[data-flight-full-time]').textContent = 'Use event time (' + event.startTime + '–' + event.endTime + ')';
+    const warning = item.querySelector('.flight-time-warning');
+    warning.textContent = 'Review this activity’s times: keep them within ' + event.startTime + '–' + event.endTime + '.';
+    warning.hidden = !flightTimeNeedsReview(activity, event);
+  });
 }
 
 function renderBandEventFields(event, readOnly) {
   const disabled = readOnly ? ' disabled' : '';
   const activities = event.flightActivities || [];
   let html = '<div class="insp-toggle-section"><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-emphasis"' +
-    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize in Bands</label></div>';
+    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize this event</label><p class="insp-hint">Makes a main band an anchor, or highlights a concurrent event. Does not change who attends or where it is listed.</p></div>';
   html += '<details class="flight-editor"' + (activities.length ? ' open' : '') + '><summary>Flight activities' + (activities.length ? ' (' + activities.length + ')' : '') + '</summary>';
-  html += '<p class="insp-context-note">Add each flight’s activity within this event. Use the same time window for shared training, or add separate timed activities.</p>';
+  html += '<p class="insp-context-note">Add one activity per flight, or several timed activities for each flight. New activities start with this event’s full time window.</p>';
   activities.forEach((activity, index) => {
-    html += '<div class="flight-editor-item" data-flight-index="' + index + '">';
+    html += '<details class="flight-editor-item" data-flight-index="' + index + '"' + (index === activities.length - 1 ? ' open' : '') + '><summary>' + esc(flightEditorSummary(activity, event)) + '</summary>';
     const field = (key, label, time) => '<label for="flight-' + index + '-' + key + '">' + label + '</label><input id="flight-' + index + '-' + key + '" data-flight-field="' + key + '" type="text" value="' + esc(activity[key]) + '"' + (time ? ' maxlength="5"' : '') + disabled + '>';
     html += field('flight', 'Flight') + field('title', 'Activity');
     html += '<div class="field-row"><div>' + field('startTime', 'Start', true) + '</div><div>' + field('endTime', 'End', true) + '</div></div>';
-    html += field('location', 'Location') + field('poc', 'POC');
+    html += '<button class="btn flight-use-event-time" type="button" data-flight-full-time="' + index + '"' + disabled + '>Use event time (' + esc(event.startTime + '–' + event.endTime) + ')</button>';
+    html += '<p class="flight-time-warning insp-overlap-warn" role="status"' + (flightTimeNeedsReview(activity, event) ? '' : ' hidden') + '>Review this activity’s times: keep them within ' + esc(event.startTime + '–' + event.endTime) + '.</p>';
+    html += field('location', 'Location (optional)') + field('poc', 'Point of contact (optional)');
     html += '<label for="flight-' + index + '-description">Instructions</label><textarea id="flight-' + index + '-description" data-flight-field="description"' + disabled + '>' + esc(activity.description) + '</textarea>';
-    html += '<button class="btn" type="button" data-remove-flight="' + index + '"' + disabled + '>Remove activity</button></div>';
+    html += '<button class="btn" type="button" data-remove-flight="' + index + '"' + disabled + '>Remove activity</button></details>';
   });
   return html + '<button class="btn" type="button" id="insp-add-flight"' + disabled + '>+ Flight activity</button></details>';
 }
@@ -40,10 +72,10 @@ function wireBandEventFields(panel, dayId, eventId) {
   const current = () => Store.getEvents(dayId).find(event => event.id === eventId);
   const update = updates => {
     saveUndoState(); Store.updateEvent(dayId, eventId, updates); renderActiveDay(); sessionSave();
+    updateFlightEditorTimeContext(panel, current());
   };
   const preview = () => {
-    const target = panel.querySelector('#insp-attendee-preview');
-    if (target && current()) target.innerHTML = attendeePreviewHTML(current());
+    updateAttendeePreview(panel, current());
   };
   panel.querySelector('#insp-evt-attendees')?.addEventListener('input', preview);
   panel.querySelector('#insp-attendee-format')?.addEventListener('change', event => {
@@ -70,6 +102,15 @@ function wireBandEventFields(panel, dayId, eventId) {
       activities[index] = next; update({ flightActivities: activities });
     });
   });
+  panel.querySelectorAll('[data-flight-full-time]').forEach(button => button.addEventListener('click', () => {
+    const event = current(), index = Number(button.dataset.flightFullTime);
+    const activities = structuredClone(event.flightActivities || []);
+    activities[index].startTime = event.startTime; activities[index].endTime = event.endTime;
+    update({ flightActivities: activities });
+    const item = button.closest('[data-flight-index]');
+    item.querySelector('[data-flight-field="startTime"]').value = event.startTime;
+    item.querySelector('[data-flight-field="endTime"]').value = event.endTime;
+  }));
   panel.querySelectorAll('[data-remove-flight]').forEach(button => button.addEventListener('click', () => {
     update({ flightActivities: current().flightActivities.filter((_, index) => index !== Number(button.dataset.removeFlight)) });
     renderInspector(); document.querySelector('#insp-add-flight')?.focus();
