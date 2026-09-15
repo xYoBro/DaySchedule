@@ -40,9 +40,9 @@ function clearDaggerFootnotes() { _daggerFootnotes = []; }
 // Skin dispatcher registry
 const SKIN_RENDERERS = {
   bands: function(dayId, day, options) { return renderDayBody_band(dayId, day, options); },
-  grid:  function(dayId, day) { return typeof renderDayBody_grid   === 'function' ? renderDayBody_grid(dayId, day)   : ''; },
-  cards: function(dayId, day) { return typeof renderDayBody_cards  === 'function' ? renderDayBody_cards(dayId, day)  : ''; },
-  phases:function(dayId, day) { return typeof renderDayBody_phases === 'function' ? renderDayBody_phases(dayId, day) : ''; },
+  grid: function(dayId, day, options) { return renderDayBody_grid(dayId, day, options); },
+  cards: function(dayId, day, options) { return renderDayBody_cards(dayId, day, options); },
+  phases: function(dayId, day, options) { return renderDayBody_phases(dayId, day, options); },
 };
 
 // Shared reference to current schedule file data for theme access.
@@ -74,18 +74,11 @@ function renderDay(dayId) {
 
   // Set skin class on page
   const page = container.closest('.page') || container;
-  page.className = 'page skin-' + theme.skin + (theme.skin === 'bands' ? ' bands-screen band-page' : '');
-
-  // Dispatch to skin renderer
-  const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
+  page.className = 'page skin-' + theme.skin + (theme.skin === 'bands' ? ' bands-screen band-page' : ' alternate-page');
 
   let html = '';
   if (theme.skin === 'bands') html = BandLayout.page(day, { interactive: true });
-  else {
-    html += renderHeader(day);
-    html += renderer(dayId, day, { interactive: true });
-    html += renderFooter();
-  }
+  else html = AlternateViews.page(day, theme.skin, { interactive: true });
   container.innerHTML = html;
 
   if (theme.skin === 'bands') {
@@ -96,7 +89,14 @@ function renderDay(dayId) {
     if (!result.fits) notice.textContent = 'This day exceeds the readable one-page limits. All content remains here for editing. Reduce or revise the content before printing.';
     container.appendChild(notice);
   }
-  else applyPrintScaling();
+  else {
+    removePrintScaling(page);
+    const result = AlternateViews.fit(container.querySelector('.alternate-sheet'));
+    const notice = document.createElement('div');
+    notice.className = 'alternate-fit-notice'; notice.setAttribute('role', 'status');
+    if (!result.fits) notice.textContent = 'This day exceeds the readable one-page limits in this view. All content remains available for editing. Review the content or choose Readable pages when printing.';
+    container.appendChild(notice);
+  }
   if (typeof syncPreviewSelection === 'function') syncPreviewSelection();
 }
 
@@ -159,16 +159,6 @@ function renderFooter() {
   const printDate = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
   const parts = [f.contact, f.poc ? 'Schedule POC: ' + f.poc : '', 'Printed: ' + printDate].filter(Boolean);
   return '<div class="footer">' + esc(parts.join(' \u00b7 ')) + '</div>';
-}
-
-// Until the other layouts receive their own design review, retain newly added
-// flight details in their existing event content rather than dropping the data.
-function renderFlightDetails(event) {
-  if (!event.flightActivities?.length) return '';
-  return '<span class="flight-details-plain">' + event.flightActivities.map(activity =>
-    '<span class="flight-detail-line"><strong>' + esc(activity.flight || 'Unnamed flight') + '</strong> · ' +
-    [activity.startTime + '-' + activity.endTime, activity.title, activity.location,
-      activity.poc ? 'POC: ' + activity.poc : '', activity.description].filter(Boolean).map(esc).join(' · ') + '</span>').join('') + '</span>';
 }
 
 function formatDateDisplay(dateStr) {

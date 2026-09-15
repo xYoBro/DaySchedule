@@ -6,14 +6,14 @@
  *   getPrintDays(options)         — copies selected/filtered data without changing Store
  *   printActiveDay()              — prints the currently active day
  *   printAllDays()                — builds all days into hidden container, prints
- *   applyPrintScaling(forPrint)   — 3-stage adaptive CSS compression + zoom fallback
- *   applyPrintScalingToPage(page, forPrint) — scales a single .page element
+ *   applyPrintScaling(forPrint)   — bounded fitting for the selected paper renderer
+ *   applyPrintScalingToPage(page, forPrint) — fits a single .page without scaling the whole sheet
  *   removePrintScaling(page)      — removes all scaling CSS vars and zoom
  *
  * REQUIRES:
  *   app-state.js    — Store.getActiveDay(), Store.getDays(), Store.getGroups(), Store.getNotes()
  *   ui-core.js      — toast(), openModal(), closeModal()
- *   render.js       — renderDay(), renderHeader(), SKIN_RENDERERS, renderFooter()
+ *   render.js       — renderDay(); band-layout.js, alternate-views.js — paper renderers
  *   data-helpers.js — getAudienceHandoutEvents(), getScheduleReviewIssues()
  *   constants.js    — LAYOUT_TARGETS
  *
@@ -22,7 +22,7 @@
  *   events.js    — openPrintReview() (Ctrl+P and toolbar button)
  *
  * SIDE EFFECTS:
- *   Registers beforeprint listener → prepares fresh full readable output unless
+ *   Registers beforeprint listener → prepares fresh full bounded output unless
  *     an explicit app print request has selected other options
  *   Registers afterprint listener → clears output and re-renders active day
  *   Creates/reuses #printContainer element on document.body
@@ -39,7 +39,7 @@ function normalizePrintOptions(options) {
     dayIds: knownDays.filter(id => requestedDays.includes(id)),
     audienceId: Store.getGroup(opts.audienceId) ? opts.audienceId : '',
     detail: opts.detail === 'overview' ? 'overview' : 'full',
-    mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin === 'bands' || opts.mode === 'fit' ? 'fit' : 'readable',
+    mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin !== 'bands' && opts.mode === 'readable' ? 'readable' : 'fit',
   };
 }
 
@@ -56,7 +56,6 @@ function getPrintDays(options) {
 function buildPrintMarkup(options) {
   const opts = normalizePrintOptions(options);
   const theme = getScheduleTheme(getCurrentScheduleFileData() && getCurrentScheduleFileData().theme);
-  const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
   const audience = Store.getGroup(opts.audienceId);
   return getPrintDays(opts).map(day => {
     if (theme.skin === 'bands') {
@@ -64,16 +63,10 @@ function buildPrintMarkup(options) {
         opts.detail === 'overview' ? 'Overview: event notes omitted.' : '', audience || opts.detail === 'overview' ? 'Day notes included.' : ''].filter(Boolean).join(' ');
       return '<div class="page print-page skin-bands band-page print-fit" data-print-mode="fit" data-print-day="' + esc(day.id) + '">' + BandLayout.page(day, { handout }) + '</div>';
     }
-    let html = '<div class="page print-page skin-' + esc(theme.skin) + ' print-' + opts.mode + '" data-print-mode="' + opts.mode + '" data-print-day="' + esc(day.id) + '">';
-    html += renderHeader(day);
-    if (audience || opts.detail === 'overview') {
-      html += '<div class="print-handout-label">' + esc(audience ? 'Audience: ' + audience.name + ' · Primary audience events and breaks included. ' : '');
-      if (opts.detail === 'overview') html += 'Overview · Event notes omitted. ';
-      html += 'Day notes included.</div>';
-    }
-    html += renderer(day.id, day, { printMode: opts.mode });
-    html += renderFooter() + '</div>';
-    return html;
+    const handout = [audience ? 'Audience: ' + audience.name + '. Primary audience events and breaks included.' : '',
+      opts.detail === 'overview' ? 'Overview: event notes omitted.' : '', audience || opts.detail === 'overview' ? 'Day notes included.' : ''].filter(Boolean).join(' ');
+    return '<div class="page print-page alternate-page skin-' + esc(theme.skin) + ' print-' + opts.mode + '" data-print-mode="' + opts.mode + '" data-print-day="' + esc(day.id) + '">' +
+      AlternateViews.page(day, theme.skin, { printMode: opts.mode, handout }) + '</div>';
   }).join('');
 }
 
@@ -83,7 +76,10 @@ function layoutPrintPages(container) {
   container.querySelectorAll('.print-page').forEach(page => {
     const sheet = page.querySelector('.band-sheet');
     if (sheet) { BandLayout.fit(sheet); page.dataset.printPaginated = 'true'; }
-    else applyPrintScalingToPage(page, true);
+    else {
+      applyPrintScalingToPage(page, true);
+      if (page.querySelector('.alternate-sheet:not(.av-natural)')) page.dataset.printPaginated = 'true';
+    }
   });
 }
 
@@ -116,7 +112,7 @@ function measurePrintPlan(options) {
         estimatedPages: opts.mode === 'fit' || (page.dataset.printPaginated === 'true' && !page.classList.contains('bands-print-natural'))
           ? 1 : Math.max(1, Math.ceil(height / ((10.32 * 96) - 48))),
         smallestTextPt: (textSizes.length ? Math.min(...textSizes) : 12) * scale * 0.75,
-        fits: !page.querySelector('.band-sheet[data-fit="false"]'),
+        fits: !page.querySelector('.band-sheet[data-fit="false"], .alternate-sheet[data-fit="false"]'),
       };
       const day = days.get(metrics.dayId);
       if (day) {
@@ -159,7 +155,7 @@ function openPrintReview() {
   html += '<label for="printDetail">Details</label><select id="printDetail"><option value="full">Full details</option><option value="overview">Overview — omit event notes</option></select>';
   html += '<label for="printMode">Page layout</label><select id="printMode">' + (banded
     ? '<option value="fit">Letter portrait — one day per page</option>'
-    : '<option value="readable">Readable pages — allow more than one page per day</option><option value="fit">Fit each day on one page — may make text small</option>') + '</select></div>';
+    : '<option value="fit">Letter portrait — one day per page</option><option value="readable">Readable pages — allow more than one page per day</option>') + '</select></div>';
   html += '<div id="printReviewSummary" role="status" aria-live="polite"></div>';
   html += '<details class="print-review-checks"><summary id="printReviewCheckCount">Schedule checks</summary><ul id="printReviewIssues"></ul></details>';
   html += '<div class="modal-actions"><button type="button" class="btn" id="printReviewCancel">Cancel</button><button type="button" class="btn btn-primary" id="printReviewConfirm">Print</button></div>';
@@ -183,6 +179,9 @@ function openPrintReview() {
     if (banded) {
       summary += '<p>Half-inch margins, a reserved notes area and bounded text sizes. Print at actual size on US Letter; duplex can put the next day on the reverse.</p>';
       if (metrics.some(page => !page.fits)) summary += '<p class="print-review-warning">A selected day exceeds the readable one-page limits. Review its content before printing; no names or event details will be clipped to make it fit.</p>';
+    } else if (opts.mode === 'fit') {
+      summary += '<p>US Letter portrait, half-inch margins and bounded text sizes. Print at actual size.</p>';
+      if (metrics.some(page => !page.fits)) summary += '<p class="print-review-warning">A day exceeds the readable one-page limits. Review its content or choose Readable pages; no names or details will be clipped.</p>';
     } else if (small.length) {
       summary += '<p class="print-review-warning">Text may be as small as ' + Math.min(...small.map(page => page.smallestTextPt)).toFixed(1) + ' pt. ';
       summary += opts.mode === 'fit'
@@ -288,7 +287,7 @@ function printSchedule(options) {
       }
       try {
         layoutPrintPages(job.container);
-        if (job.container.querySelector('.band-sheet[data-fit="false"]')) {
+        if (job.container.querySelector('.band-sheet[data-fit="false"], .alternate-sheet[data-fit="false"]')) {
           clearPrintJob();
           toast('A day exceeds the readable one-page limits. Review the schedule before printing.', 6000);
           return;
@@ -324,142 +323,9 @@ function applyPrintScaling(forPrint) {
 function applyPrintScalingToPage(page, forPrint) {
   const bandSheet = page.querySelector('.band-sheet');
   if (bandSheet) { removePrintScaling(page); BandLayout.fit(bandSheet); return; }
-  // For print: usable area = 11in - 0.3in @page margins - 0.38in padding,
-  // minus 48px safety margin for browser rendering differences.
-  // For screen: match the .page card's min-height (11in = 1056px).
-  // scrollHeight includes padding (border-box), so no subtraction needed.
-  const maxH = forPrint
-    ? (10.32 * 96) - 48   // print: ~943px
-    : (11 * 96) - 10;      // screen: 1046px (page card minus small buffer)
-
-  // Reset any previous scaling
+  const alternateSheet = page.querySelector('.alternate-sheet');
+  if (alternateSheet) { removePrintScaling(page); AlternateViews.fit(alternateSheet); return; }
   removePrintScaling(page);
-  if (forPrint && page.dataset.printMode === 'readable') return;
-
-  // For print: force print-width measurement (8.2in) since screen preview
-  // may be narrower. For screen preview: measure at actual rendered width
-  // so scaling matches what the user sees.
-  const origWidth = page.style.width;
-  const origMinH = page.style.minHeight;
-  const origMaxH = page.style.maxHeight;
-  const origOverflow = page.style.overflow;
-  if (forPrint) page.style.width = '8.2in';
-  page.style.minHeight = '0';
-  page.style.maxHeight = 'none';
-  page.style.overflow = 'visible';
-
-  // For print: force footer to 5px margin during measurement — screen mode
-  // uses margin-top:auto which absorbs flex space and masks true content height.
-  // For screen preview: leave auto margin alone so footer stays at page bottom.
-  const footer = page.querySelector('.footer');
-  const origFooterMargin = footer ? footer.style.marginTop : '';
-  if (forPrint && footer) footer.style.marginTop = '5px';
-
-  let contentH = page.scrollHeight;
-
-  if (contentH <= maxH) {
-    page.style.width = origWidth;
-    page.style.minHeight = origMinH;
-    page.style.maxHeight = origMaxH;
-    page.style.overflow = origOverflow;
-    if (footer) footer.style.marginTop = origFooterMargin;
-    return;
-  }
-
-  // Three-stage bottom-up compression: compress lowest-priority content first,
-  // only touching primary band content as a last resort.
-  const lerp = (range, f) => range[1] + (range[0] - range[1]) * f;
-  const T = LAYOUT_TARGETS;
-
-  // Stage 1: Notes, footer, concurrent detail fonts
-  const s1Need = contentH - maxH;
-  const s1Factor = Math.max(0, Math.min(1, 1 - (s1Need / (maxH * 0.15))));
-  page.style.setProperty('--notes-fs', lerp(T.notes.fs, s1Factor) + 'px');
-  page.style.setProperty('--notes-lh', lerp(T.notes.lineH, s1Factor));
-  page.style.setProperty('--conc-detail-fs', lerp(T.conc.detailFs, s1Factor) + 'px');
-  page.style.setProperty('--conc-time-fs', lerp(T.conc.timeFs, s1Factor) + 'px');
-  page.style.setProperty('--conc-title-fs', lerp(T.conc.titleFs, s1Factor) + 'px');
-
-  void page.offsetHeight; // force reflow so scrollHeight reads updated layout
-  contentH = page.scrollHeight;
-  if (contentH <= maxH) {
-    page.style.width = origWidth;
-    page.style.minHeight = origMinH;
-    page.style.maxHeight = origMaxH;
-    page.style.overflow = origOverflow;
-    if (footer) footer.style.marginTop = origFooterMargin;
-    return;
-  }
-
-  // Stage 2: Supporting band padding, meta/description fonts, tags
-  const s2Need = contentH - maxH;
-  const s2Factor = Math.max(0, Math.min(1, 1 - (s2Need / (maxH * 0.25))));
-  page.style.setProperty('--band-sup-pad-v', lerp(T.band.supPadV, s2Factor) + 'px');
-  page.style.setProperty('--band-desc-fs', lerp(T.band.descFs, s2Factor) + 'px');
-  page.style.setProperty('--band-meta-fs', lerp(T.band.metaFs, s2Factor) + 'px');
-  page.style.setProperty('--band-tag-fs', lerp(T.band.tagFs, s2Factor) + 'px');
-  page.style.setProperty('--band-time-end-fs', lerp(T.band.timeEndFs, s2Factor) + 'px');
-  page.style.setProperty('--band-time-dur-fs', lerp(T.band.timeDurFs, s2Factor) + 'px');
-
-  void page.offsetHeight; // force reflow so scrollHeight reads updated layout
-  contentH = page.scrollHeight;
-  if (contentH <= maxH) {
-    page.style.width = origWidth;
-    page.style.minHeight = origMinH;
-    page.style.maxHeight = origMaxH;
-    page.style.overflow = origOverflow;
-    if (footer) footer.style.marginTop = origFooterMargin;
-    return;
-  }
-
-  // Stage 3: Primary band content — only as a last resort
-  const s3Need = contentH - maxH;
-  const s3Factor = Math.max(0, Math.min(1, 1 - (s3Need / (maxH * 0.25))));
-  page.style.setProperty('--band-main-pad-v', lerp(T.band.mainPadV, s3Factor) + 'px');
-  page.style.setProperty('--band-main-pad-h', lerp(T.band.mainPadH, s3Factor) + 'px');
-  page.style.setProperty('--band-title-fs', lerp(T.band.titleFs, s3Factor) + 'px');
-  page.style.setProperty('--band-time-start-fs', lerp(T.band.timeStartFs, s3Factor) + 'px');
-
-  // Re-measure after all CSS var compression
-  contentH = page.scrollHeight;
-
-  // Restore measurement overrides
-  page.style.width = origWidth;
-  page.style.minHeight = origMinH;
-  page.style.maxHeight = origMaxH;
-  page.style.overflow = origOverflow;
-  if (footer) footer.style.marginTop = origFooterMargin;
-
-  if (contentH <= maxH) return;
-
-  // Screen: never zoom — stretch the page to the content height instead.
-  // (Bands positions events absolutely, so the page cannot grow on its own.)
-  // Microscopic-but-fits is worse than a tall, readable page; the density
-  // warning already steers users to Grid/Cards/Phases. Print still zooms.
-  if (!forPrint) {
-    page.style.minHeight = contentH + 'px';
-    return;
-  }
-
-  // Final fallback (print only): zoom shrinks actual layout dimensions.
-  // zoom affects layout flow (unlike transform:scale which is visual-only),
-  // so the print engine sees the zoomed box size for pagination.
-  let scale = maxH / contentH;
-  page.style.zoom = scale;
-  page.dataset.printScaled = '1';
-
-  // Force min-height:0 so the stylesheet's 11in floor doesn't reassert at
-  // the zoomed size (11in * 0.95 = 10.45in can still overflow).
-  page.style.minHeight = '0';
-
-  // Browser zoom rounding can leave the final rendered box a few pixels taller
-  // than scrollHeight predicted. Re-measure the actual box and correct once.
-  void page.offsetHeight;
-  const renderedHeight = page.getBoundingClientRect().height;
-  if (renderedHeight > maxH) {
-    scale = scale * (maxH / renderedHeight) * 0.995;
-    page.style.zoom = scale;
-  }
 }
 
 function removePrintScaling(page) {
@@ -479,7 +345,7 @@ function removePrintScaling(page) {
 }
 
 // Browser File → Print does not go through printSchedule. Build current full
-// readable pages synchronously; beforeprint cannot wait for image decoding.
+// bounded pages synchronously; beforeprint cannot wait for image decoding.
 // An app-requested print retains its deliberate day/audience/detail/Fit choices.
 window.addEventListener('beforeprint', () => {
   try {

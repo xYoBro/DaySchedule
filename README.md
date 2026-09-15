@@ -39,7 +39,7 @@ Earlier releases used a connected `app/data` directory with a file for each sche
 
 ## Layouts and printing
 
-Four layouts show the same schedule: **Bands** for a main track with concurrent events, **Grid** for time and audience lanes, **Cards** for audience panels, and **Phases** for longer exercises. The selected layout applies to the schedule.
+Four layouts show the same schedule: **Bands** for a main track with concurrent events, **Grid** for a chronological table, **Cards** for complete main events and assigned commitments, and **Phases** for activities grouped under their main block. The selected layout applies to the schedule.
 
 An **Audience** is a group or section. Primary audiences normally appear on the main track. Supporting or unassigned events need **Main Track** enabled to join it. **Specific People** describes people who need something different from the audience's main activity. Concurrent events are allowed; check overlap warnings in the context of the people involved.
 
@@ -55,7 +55,7 @@ Existing version-1 and version-2 workbooks still open in their original sections
 
 Screen and print use the same Bands renderer. Fitting reduces spacing before type, with floors of 9 pt for details, 10.5 pt for small-event names, 9.5 pt for large-roster names and 11.5 pt for main titles. Navigation labels have an 8 pt floor; the footer uses 7 pt. Lighter days gain larger main text and more space, up to a cap. If a complete day cannot fit, the editor retains all its content and shows a warning. App printing is blocked, and native printing shows a not-ready notice for that day instead of issuing a partial schedule. Print at actual size on Letter, with browser headers/footers off; duplex can put the next day on the reverse.
 
-Grid, Cards and Phases retain **Readable pages** and **Fit each day on one page**. Readable pages may span sheets; Fit may produce small text. Browser **File → Print** prepares fresh full-detail output for all days using each layout's policy. Use app Print review for particular days, audiences or overview. These other layouts retain flight-activity text; their design review follows the Bands integration.
+Grid, Cards and Phases now default to **Fit each day on one page**: Letter portrait, half-inch margins, complete event records and bounded type sizes. They share the optional logo, title/subtitle and reserved Notes & Reminders space. Fit blocks printing when a day exceeds the readable limits; **Readable pages** is an explicit alternative that may span sheets. Browser **File → Print** prepares fresh output for all days using each layout's policy. Use app Print review for particular days, audiences or overview. See the [alternate-view guide](support/docs/ALTERNATE-VIEWS.md) for reading paths, print limits and verification.
 
 An audience handout includes primary-audience events and breaks. It is a filtered presentation, not a redaction tool: review named exceptions and day notes before sharing. Check the browser's print preview as paper settings affect the result. When embedded, open the standalone app in its own tab for printing so the host page is not included.
 
@@ -134,7 +134,7 @@ node support/tests/test-print-pdf.cjs
 node support/tests/test-bands-pdf.cjs
 ```
 
-The general PDF suite checks 48 synthetic event descriptions in Grid, Cards and Phases, both print modes, and Letter/A4 output. The dedicated Bands suite covers eight Letter pages: main-only, 15 surnames, 40 surnames with timed flights, and fifteen concurrent events, plus explicit overflow blocking. See the [Bands stress-test record](support/docs/BANDS-STRESS-TEST.md) for tested engines and remaining release checks.
+The general PDF suite checks explicit Fit blocking and complete Readable output for 48 synthetic events in Grid, Cards and Phases, including Letter/A4. The dedicated Bands suite covers eight Letter pages: main-only, 15 surnames, 40 surnames with timed flights, and fifteen concurrent events, plus explicit overflow blocking. Run `node support/tests/test-alternate-views.cjs` for fixed and seeded alternate-view cases, mobile editing and actual PDFs. `python3 support/tests/build-alternate-review.py` verifies physical page bounds and builds a portable visual comparison (requires pdfplumber, pypdf and Poppler). See the [alternate-view guide](support/docs/ALTERNATE-VIEWS.md) and [Bands stress-test record](support/docs/BANDS-STRESS-TEST.md) for evidence and limits.
 
 For the complete new-author workflow (including keyboard, mobile, multiline names, flights, reminders and download/reopen), run `node support/tests/test-authoring-ui.cjs`. See the [Bands authoring guide](support/docs/BANDS-AUTHORING.md) for the control-to-output mapping and design rationale.
 

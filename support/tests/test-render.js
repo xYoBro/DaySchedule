@@ -229,82 +229,40 @@ describe('UI Harness — render and skins', () => {
     assert(!band.querySelector('h3').textContent.includes('Bldg 200 Apron'));
   });
 
-  it('repeats event time without collapsing the title hierarchy', () => {
+  it('keeps one complete event record with distinct time and location fields', () => {
     ['grid', 'cards', 'phases'].forEach(skin => {
-      resetUiHarnessState();
-      const seeded = seedUiSchedule({ skin: skin });
-
-      renderDay(seeded.day1.id);
-
-      if (skin === 'grid') {
-        const cell = Array.from(document.querySelectorAll('.grid-cell')).find(node => node.textContent.includes('Weapons Qualification'));
-        assert.equal(cell.querySelector('.grid-cell-title').textContent.trim(), 'Weapons Qualification');
-        assert.equal(cell.querySelector('.grid-cell-time').textContent.trim(), '0830–1030');
-        assert(cell.querySelector('.grid-cell-meta-line').textContent.includes('Range 3'), 'grid should keep location in secondary metadata');
-      }
-
-      if (skin === 'cards') {
-        const card = Array.from(document.querySelectorAll('.cards-event')).find(node => node.textContent.includes('Weapons Qualification'));
-        assert.equal(card.querySelector('.cards-event-title').textContent.trim(), 'Weapons Qualification');
-        assert.equal(card.querySelector('.cards-event-time').textContent.trim(), '0830–1030');
-        assert(card.querySelector('.cards-event-meta').textContent.includes('Range 3'), 'cards should keep location in secondary metadata');
-      }
-
-      if (skin === 'phases') {
-        const task = Array.from(document.querySelectorAll('.phase-task')).find(node => node.textContent.includes('Weapons Qualification'));
-        assert(task.querySelector('.phase-task-meta').textContent.includes('0830–1030'), 'phases should repeat time in task metadata');
-      }
+      resetUiHarnessState(); const seeded = seedUiSchedule({ skin }); renderDay(seeded.day1.id);
+      const event = Store.getEvents(seeded.day1.id).find(event => event.title === 'Weapons Qualification');
+      const records = document.querySelectorAll('#scheduleContainer article[data-event-id="' + event.id + '"]');
+      assert.equal(records.length, 1);
+      assert(records[0].querySelector('h3').textContent.includes(event.title));
+      assert.equal(records[0].querySelector('.av-time').textContent, '0830–1030');
+      assert(records[0].querySelector('.av-location').textContent.includes('Range 3'));
+      assert(!records[0].querySelector('h3').textContent.includes('Range 3'));
     });
   });
 
-  it('shows exception nudges when limited events overlap a shared block', () => {
+  it('links every overlapping main block to the complete concurrent assignment', () => {
     ['grid', 'cards', 'phases'].forEach(skin => {
-      resetUiHarnessState();
-      const seeded = seedUiSchedule({ skin: skin });
-      Store.addEvent(seeded.day1.id, {
-        title: 'All-Hands Cyber Awareness',
-        startTime: '1500',
-        endTime: '1530',
-        groupId: 'grp_all',
-        isMainEvent: true,
-      });
-      Store.addEvent(seeded.day1.id, {
-        title: 'Convoy Ops Brief',
-        startTime: '1400',
-        endTime: '1530',
-        groupId: 'grp_chiefs',
-        attendees: 'MSgt Franklin',
-      });
-
+      resetUiHarnessState(); const seeded = seedUiSchedule({ skin });
+      const main = Store.addEvent(seeded.day1.id, { title: 'All-Hands Cyber Awareness', startTime: '1500', endTime: '1530', groupId: 'grp_all', isMainEvent: true });
+      const task = Store.addEvent(seeded.day1.id, { title: 'Convoy Ops Brief', startTime: '1400', endTime: '1530', groupId: 'grp_chiefs', attendees: 'MSgt Franklin' });
       renderDay(seeded.day1.id);
-
-      assert(
-        document.getElementById('scheduleContainer').textContent.includes('Exceptions: Flight Chiefs'),
-        skin + ' should nudge users when a shared event has limited-audience exceptions'
-      );
-      assert(
-        document.getElementById('scheduleContainer').textContent.includes('MSgt Franklin'),
-        skin + ' should surface named exceptions inline with the exception note'
-      );
+      const card = document.querySelector('.av-main[data-event-id="' + main.id + '"]');
+      assert(card.querySelector('[data-event-ref="' + task.id + '"]'));
+      const record = document.querySelector('.av-concurrent[data-event-id="' + task.id + '"]');
+      assert(record.textContent.includes('MSgt Franklin'));
+      assert.equal(document.querySelectorAll('.av-event[data-event-id="' + task.id + '"]').length, 1);
     });
   });
 
-  it('grid skin renders shared banners and continuation cells as clickable elements', () => {
-    resetUiHarnessState();
-    const seeded = seedUiSchedule({ skin: 'grid' });
-    Store.addEvent(seeded.day1.id, {
-      title: 'Mid-Block Check',
-      startTime: '1300',
-      endTime: '1330',
-      groupId: 'grp_all',
-      isMainEvent: true,
+  it('grid events remain keyboard selectable without continuation duplicates', () => {
+    resetUiHarnessState(); const seeded = seedUiSchedule({ skin: 'grid' }); renderDay(seeded.day1.id);
+    Store.getEvents(seeded.day1.id).forEach(event => {
+      const records = document.querySelectorAll('.av-event[data-event-id="' + event.id + '"]');
+      assert.equal(records.length, 1); assert.equal(records[0].tabIndex, 0);
+      assert.equal(records[0].tagName, 'ARTICLE');
     });
-
-    renderDay(seeded.day1.id);
-
-    assert(document.querySelector('.grid-banner[data-event-id]'), 'grid skin should render shared banners');
-    assert(document.querySelector('.grid-banner-stack'), 'grid shared banners should render a centered content stack');
-    assert(document.querySelector('.grid-cell-cont[data-event-id]'), 'grid continuation cells should keep event ids');
   });
 
   it('grid skin keeps limited events visible when a shared event starts in the same slot', () => {
@@ -343,75 +301,33 @@ describe('UI Harness — render and skins', () => {
     assert(document.getElementById('scheduleContainer').textContent.includes('Formation'));
     assert(document.getElementById('scheduleContainer').textContent.includes('Commander Opening Remarks'));
     assert(
-      Array.from(document.querySelectorAll('#scheduleContainer .grid-banner[data-event-id]'))
+      Array.from(document.querySelectorAll('#scheduleContainer .av-main[data-event-id]'))
         .some(node => node.textContent.includes('Commander Opening Remarks')),
       'the same-start commander remarks banner should render alongside formation'
     );
-    assert.equal(
-      Array.from(document.querySelectorAll('#scheduleContainer .grid-slot > .grid-time-col'))
-        .filter(node => node.textContent.trim() === '0700').length,
-      1,
-      'same-start shared banners should stay grouped under one visible time row'
-    );
+    assert.equal(document.querySelectorAll('#scheduleContainer .av-main .av-time').length,
+      Store.getEvents(seeded.day1.id).filter(event => isEventEffectiveMain(event, Store.getGroups())).length);
+
   });
 
-  it('grid skin stacks overlapping events in a group lane instead of hiding the later event', () => {
-    resetUiHarnessState();
-    const seeded = seedUiSchedule({ skin: 'grid' });
-    const overlap = Store.addEvent(seeded.day1.id, {
-      title: 'Second Qualification Block',
-      startTime: '0845',
-      endTime: '0945',
-      description: 'Intentional overlap to verify lane stacking.',
-      location: 'Range 2',
-      groupId: 'grp_chiefs',
-    });
-
+  it('grid presents overlapping assignments as separate complete rows in start order', () => {
+    resetUiHarnessState(); const seeded = seedUiSchedule({ skin: 'grid' });
+    const overlap = Store.addEvent(seeded.day1.id, { title: 'Second Qualification Block', startTime: '0845', endTime: '0945', description: 'Overlap detail retained.', location: 'Range 2', groupId: 'grp_chiefs' });
     renderDay(seeded.day1.id);
-
-    assert(
-      document.querySelector('.grid-cell[data-event-id="' + overlap.id + '"]'),
-      'the later overlapping event should still render as a selectable grid cell'
-    );
-    assert(
-      Array.from(document.querySelectorAll('#scheduleContainer .grid-cell-stack'))
-        .some(node => node.textContent.includes('Weapons Qualification') && node.textContent.includes('Second Qualification Block')),
-      'overlapping lane events should be visibly stacked together at the later start time'
-    );
+    const record = document.querySelector('.av-event[data-event-id="' + overlap.id + '"]');
+    assert(record.textContent.includes('Overlap detail retained.')); assert(record.textContent.includes('Range 2'));
+    const times = Array.from(document.querySelectorAll('.av-event .av-time'), node => node.textContent.slice(0, 4));
+    assert.equal(JSON.stringify(times), JSON.stringify(times.slice().sort()));
   });
 
-  it('highlighted limited-audience events render on the main track in every structured skin', () => {
+  it('legacy main placement is retained independently of visual emphasis in all alternate views', () => {
     ['grid', 'cards', 'phases'].forEach(skin => {
-      resetUiHarnessState();
-      const seeded = seedUiSchedule({ skin: skin });
-      const highlighted = Store.addEvent(seeded.day1.id, {
-        title: 'Commander-Highlighted SNCO Sync',
-        startTime: '1530',
-        endTime: '1600',
-        groupId: 'grp_snco',
-        isMainEvent: true,
-      });
-
+      resetUiHarnessState(); const seeded = seedUiSchedule({ skin });
+      const event = Store.addEvent(seeded.day1.id, { title: 'SNCO Sync', startTime: '1530', endTime: '1600', groupId: 'grp_snco', isMainEvent: true });
       renderDay(seeded.day1.id);
-
-      if (skin === 'grid') {
-        assert(
-          document.querySelector('.grid-banner[data-event-id="' + highlighted.id + '"]'),
-          'grid should place highlighted limited events in the shared banner track'
-        );
-      }
-      if (skin === 'cards') {
-        assert(
-          document.querySelector('.cards-shared-item[data-event-id="' + highlighted.id + '"]'),
-          'cards should place highlighted limited events in the shared timeline'
-        );
-      }
-      if (skin === 'phases') {
-        assert(
-          document.querySelector('.phase-header[data-event-id="' + highlighted.id + '"]'),
-          'phases should place highlighted limited events as phase headers'
-        );
-      }
+      const record = document.querySelector('.av-main[data-event-id="' + event.id + '"]');
+      assert(record); assert(!record.classList.contains('av-emphasized'));
+      assert(record.textContent.includes(Store.getGroup('grp_snco').name));
     });
   });
 
@@ -443,52 +359,26 @@ describe('UI Harness — render and skins', () => {
     assert(document.getElementById('scheduleContainer').textContent.includes('SABC Refresher'), 'grid should show short medical events that begin under shared banners');
   });
 
-  it('grid warns when overlapping events share the same group lane', () => {
-    resetUiHarnessState();
-    const seeded = seedUiSchedule({ skin: 'grid' });
-    Store.addEvent(seeded.day1.id, {
-      title: 'Second Qualification Block',
-      startTime: '0845',
-      endTime: '0945',
-      description: 'Intentional overlap to verify warning copy.',
-      location: 'Range 2',
-      groupId: 'grp_chiefs',
-    });
-
+  it('keeps schedule review warnings separate from the printed comparison table', () => {
+    resetUiHarnessState(); const seeded = seedUiSchedule({ skin: 'grid' });
+    Store.addEvent(seeded.day1.id, { title: 'Second Qualification Block', startTime: '0845', endTime: '0945', groupId: 'grp_chiefs' });
     renderDay(seeded.day1.id);
-
-    const note = document.querySelector('.grid-view-note');
-    assert(note, 'grid should warn when one lane contains overlapping events');
-    assert(note.textContent.includes('Use Cards or Phases'), 'grid warning should point to layouts that show every event');
+    assert(getScheduleReviewIssues([Store.getDay(seeded.day1.id)], Store.getGroups()).length > 0);
+    assert(!document.querySelector('.grid-view-note'));
+    assert(!document.getElementById('scheduleContainer').textContent.includes('Use Cards or Phases'));
   });
 
-  it('uses contrasting text colors for group-colored labels', () => {
-    resetUiHarnessState();
-    const seeded = seedUiSchedule({ skin: 'grid' });
-    Store.updateGroup('grp_chiefs', { color: '#fff3a0' });
-    Store.updateGroup('grp_mx', { color: '#1f3a5f' });
-
-    renderDay(seeded.day1.id);
-
-    const gridHeader = Array.from(document.querySelectorAll('.grid-group-col'))
-      .find(node => node.textContent.includes('Flight Chiefs'));
-    const darkLabel = document.querySelector('.grid-group-col[style*="#1f3a5f"]');
-    const chiefsEvent = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Weapons Qualification');
-    const mxEvent = Store.getEvents(seeded.day1.id).find(evt => evt.title === 'Aircraft Launch Sim');
-    const chiefsCell = document.querySelector('.grid-cell[data-event-id="' + chiefsEvent.id + '"]');
-    const mxCell = document.querySelector('.grid-cell[data-event-id="' + mxEvent.id + '"]');
-    const chiefsAudience = chiefsCell.querySelector('.grid-cell-audience');
-    const mxAudience = mxCell.querySelector('.grid-cell-audience');
-
-    assert(gridHeader, 'grid header should exist for the updated group');
-    assert(gridHeader.getAttribute('style').includes('color:#1d1d1f'), 'light group colors should use dark text');
-    assert(darkLabel && darkLabel.getAttribute('style').includes('color:#ffffff'), 'dark group colors should keep white text');
-    assert(chiefsCell.getAttribute('style').includes('--grid-accent:#fff3a0'), 'grid event rails should use the group color');
-    assert(chiefsCell.getAttribute('style').includes('--grid-accent-text:#1d1d1f'), 'light grid event accents should use dark text');
-    assert(chiefsAudience.textContent.includes('Flight Chiefs'), 'grid event cards should label the audience without relying on color alone');
-    assert(mxCell.getAttribute('style').includes('--grid-accent:#1f3a5f'), 'grid event rails should follow updated dark group colors');
-    assert(mxCell.getAttribute('style').includes('--grid-accent-text:#ffffff'), 'dark grid event accents should use white text');
-    assert(mxAudience.textContent.includes('Maintenance'), 'grid event cards should include the group label');
+  it('prints audience labels as text without relying on group colors', () => {
+    ['grid', 'cards', 'phases'].forEach(skin => {
+      resetUiHarnessState(); const seeded = seedUiSchedule({ skin });
+      Store.updateGroup('grp_chiefs', { color: '#fff3a0' }); Store.updateGroup('grp_mx', { color: '#1f3a5f' }); renderDay(seeded.day1.id);
+      ['Weapons Qualification', 'Aircraft Launch Sim'].forEach(title => {
+        const event = Store.getEvents(seeded.day1.id).find(event => event.title === title);
+        const record = document.querySelector('.av-event[data-event-id="' + event.id + '"]');
+        assert(record.querySelector('.av-audience').textContent.includes(Store.getGroup(event.groupId).name));
+        assert(!record.getAttribute('style'));
+      });
+    });
   });
 
   it('cards and phases skins expose attendee details in event content', () => {

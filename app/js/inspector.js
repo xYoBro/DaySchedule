@@ -283,12 +283,12 @@ function renderSettingsModal(modal) {
   html += '<label class="settings-label" for="settings-title">Schedule title</label>';
   html += '<p class="insp-hint">An organization name, event title, or anything that describes this schedule.</p>';
   html += '<input type="text" class="settings-input" id="settings-title" value="' + esc(title) + '">';
-  html += '<label class="settings-label" for="settings-contact">' + (currentTheme.skin === 'bands' ? 'Subtitle (optional)' : 'Header line (optional)') + '</label>';
+  html += '<label class="settings-label" for="settings-contact">Subtitle (optional)</label>';
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
   html += '<label class="settings-label" for="settings-poc">Schedule point of contact (optional)</label>';
   html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '" placeholder="MSgt Doe">';
   html += '</div><div class="settings-section"><div class="settings-section-title">Logo</div>';
-  if (currentTheme.skin === 'bands') {
+  {
     const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
     html += '<label class="insp-toggle-label"><input type="checkbox" id="settings-band-logo"' + (bandSettings.showLogo ? ' checked' : '') + '> Show logo space (1 × 1 inch)</label>';
     html += '<p class="insp-hint">At the left of the heading. Turn off to give the title more room.</p>';
@@ -300,7 +300,7 @@ function renderSettingsModal(modal) {
     html += '<button class="btn" id="settings-logo-remove">Remove logo</button></div>';
   }
   html += '</div>';
-  if (currentTheme.skin === 'bands') {
+  {
     const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
     html += '<div class="settings-section"><div class="settings-section-title">Notes &amp; Reminders</div><label class="settings-label" for="settings-band-notes">Space at the bottom of each day</label><select class="settings-input" id="settings-band-notes">' +
       [[90, '1¼ inches — usual choice'], [108, '1½ inches'], [144, '2 inches']].map(([value, label]) => '<option value="' + value + '"' + (bandSettings.notesHeight === value ? ' selected' : '') + '>' + label + '</option>').join('') + '</select><p class="insp-hint">Use + Reminder to add untimed notes. More space here leaves less room for events.</p></div>';
@@ -442,8 +442,7 @@ function wireSettingsModal(modal) {
       const parsed = parseHexColor(color);
       return parsed && parsed.alpha < 1;
     });
-    const skin = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin;
-    const textRoles = skin === 'bands' ? ['text', 'textSecondary', 'textMuted', 'accent'] : ['text', 'textSecondary', 'textMuted'];
+    const textRoles = ['text', 'textSecondary', 'textMuted', 'accent'];
     const low = textRoles.some(key =>
       ['bg', 'surface'].some(surface => getColorContrast(colors[key], colors[surface]) < 4.5));
     warning.textContent = transparent ? 'Transparent colors depend on the surface behind them. Choose opaque colors for predictable contrast.'

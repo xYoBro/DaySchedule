@@ -40,6 +40,7 @@ The primary product is a local `.schedule` workbook containing multiple schedule
 | `app/js/themes.js` | Schedule palettes and editor chrome theme |
 | `app/js/skin-*.js` | Layout adapters/renderers |
 | `app/js/band-layout.js` | Shared Bands model, renderer and physical fitter |
+| `app/js/alternate-views.js`, `app/css/alternate-views.css` | Cards/Grid/Phases record semantics, layouts and bounded fitting; scoped independently of Bands |
 | `app/js/band-editor.js`, `personnel-input.js` | Additive event controls and explicit attendee parsing |
 | `app/js/band-palettes.js` | Approved paper palette roles |
 | `app/js/library.js` | Start screen, create/open, legacy library, Help |
@@ -58,7 +59,7 @@ Scripts are classic scripts with shared runtime bindings. Their order is part of
 
 1. `constants` → `app-state` → `utils` → `ui-core`.
 2. `schema` → `personnel-input` → `data-helpers` → `persistence` → `storage` → `band-palettes` → `themes`.
-3. `band-layout` → the four `skin-*` files → `library` → `versions`.
+3. `band-layout` → `alternate-views` → the four `skin-*` files → `library` → `versions`.
 4. `render` → `workbook-ui` → `print` → `events` → `inspector` → `band-editor`.
 5. `data/scheduledata.js` → `init.js`.
 

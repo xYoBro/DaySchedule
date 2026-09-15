@@ -97,9 +97,9 @@ const SKIN_NAMES = ['bands', 'grid', 'cards', 'phases'];
 
 const SKIN_LABELS = {
   bands: { name: 'Bands', desc: 'Main track + concurrent' },
-  grid: { name: 'Grid', desc: 'Time \u00d7 groups' },
-  cards: { name: 'Cards', desc: 'Group detail' },
-  phases: { name: 'Phases', desc: 'Field exercises' },
+  grid: { name: 'Grid', desc: 'Chronological table' },
+  cards: { name: 'Cards', desc: 'Main & assigned events' },
+  phases: { name: 'Phases', desc: 'Activities by main block' },
 };
 
 // File-supplied theme values are untrusted (they bypass event/group

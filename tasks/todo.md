@@ -1,5 +1,38 @@
 # Reliability release
 
+## Refine Cards, Grid and Phases — 2026-09-14
+
+- [x] Commit and push the completed authoring work (3adfd88 on main).
+- [x] Inspect the alternate renderers, print contracts and prior design research.
+- [x] Give each view a distinct, chronological reading path with complete event
+  records, consistent attendance/logistics, overlap references and nested flights.
+- [x] Share optional page furniture and bounded fitting across these views;
+  preserve readable multi-page output for exceptional data, with explicit Fit
+  overflow rather than whole-page shrinking or omitted details.
+- [x] Exercise main-only, light, 15/40-name, flight, gap, spanning, missing-field
+  and dense cases in Chromium/WebKit; inspect actual color and grayscale PDFs.
+- [x] Verify editor interactions, saved data, frozen Bands, build and embed
+  regressions. Document evidence, limits and the final review branch.
+
+Scope: alternate schedule views only, on codex/refine-alternate-views. No
+heartbeat. The approved Bands renderer, fitter, palettes and CSS are frozen;
+SHA-256 baseline is in ignored output/alternate-views. Existing authoring UI and
+schema remain unchanged; existing logo/reminder-space controls are available in
+all layouts. Baseline: 666 browser harness checks, two new-author
+journeys, 96 randomized day renders, 192 UI sequences and twelve Letter PDF
+pages passed on the exact 3adfd88 source. Firefox cannot launch in this runtime.
+Risks: event duplication, incorrect phase containment, free-text interpretation,
+long records and physical pagination. Tests must verify every event and field,
+not only the overall page count.
+
+Completed: distinct Cards/Grid/Phases layouts, complete records and shared bounded
+paper fitting. Passed 676 harness checks, two new-author journeys, 294 day
+renders, six mobile editing journeys, 58 audited Letter PDF pages, heavy print
+overflow/Readable checks, nine packaging checks and both-engine embed/file boot.
+Frozen Bands files match their hashes and eight print pages are pixel-identical.
+Review and limitations: support/docs/ALTERNATE-VIEWS.md. Portable print comparison
+is in ignored output/alternate-views/review.html and Views-comparison.pdf.
+
 ## Make Bands authoring clear for a first-time editor — 2026-09-14
 
 - [x] Review event creation, Quick Edit, attendees, flights, reminders and setup
