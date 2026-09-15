@@ -194,3 +194,108 @@ describe('Bands authoring — explicit choices', () => {
     assert(!document.querySelector('.flight-editor-item summary').textContent.includes('Review times'));
   });
 });
+
+// Release audit regressions: assert the intended result, not just a valid value.
+describe('Authoring and handoff — release audit', () => {
+  function seed() {
+    resetUiHarnessState();
+    const { day1 } = seedUiSchedule({ skin: 'bands' });
+    const event = day1.events[0];
+    Store.updateEvent(day1.id, event.id, { startTime: '0800', endTime: '0830', placement: 'main' });
+    selectEntity('event', day1.id, event.id);
+    return { day: Store.getDay(day1.id), event };
+  }
+  it('edits Start then End as one range, preserving the intended later start', () => {
+    const { day, event } = seed();
+    const start = document.getElementById('insp-evt-start'), end = document.getElementById('insp-evt-end');
+    start.focus(); start.value = '0905'; end.focus();
+    assert.equal(start.value, '0905', 'keep draft while entering its partner');
+    assert.equal(event.startTime, '0800', 'do not persist an incomplete range');
+    end.value = '0937'; document.getElementById('insp-evt-title').focus();
+    assert.deepEqual([event.startTime, event.endTime], ['0905', '0937']);
+    assert(BandLayout.page(day).includes('0905-0937'));
+  });
+  it('supports End then Start when moving an event earlier', () => {
+    const { event } = seed();
+    const start = document.getElementById('insp-evt-start'), end = document.getElementById('insp-evt-end');
+    end.focus(); end.value = '07:37'; start.focus();
+    assert.equal(end.value, '07:37');
+    start.value = '07:05'; document.getElementById('insp-evt-title').focus();
+    assert.deepEqual([event.startTime, event.endTime], ['0705', '0737']);
+  });
+  it('keeps the selected event identity when an empty title is restored', () => {
+    const { event } = seed();
+    const title = document.getElementById('insp-evt-title'), before = event.title;
+    title.focus(); title.value = ''; title.dispatchEvent(new Event('input'));
+    document.getElementById('insp-evt-start').focus();
+    assert.equal(event.title, before);
+    assert.equal(document.getElementById('insp-event-identity').textContent, before);
+  });
+  it('explains a rejected range beside the fields and retains the last valid pair', () => {
+    const { event } = seed();
+    const start = document.getElementById('insp-evt-start'), end = document.getElementById('insp-evt-end');
+    start.focus(); start.value = '2500'; end.focus(); end.value = '2600';
+    document.getElementById('insp-evt-title').focus();
+    assert.deepEqual([event.startTime, event.endTime], ['0800', '0830']);
+    const feedback = document.getElementById('insp-time-feedback');
+    assert(!feedback.hidden && feedback.textContent.includes('Time change not applied') && feedback.textContent.includes('0800–0830'));
+  });
+  it('retains named assignments by default in group handouts, lists exclusions and keeps their conflict checks', () => {
+    const { day } = seed();
+    const first = Store.addEvent(day.id, { title: 'Records review', startTime: '1200', endTime: '1300', placement: 'concurrent', groupId: '', attendees: 'Chan; Bell', attendeeFormat: 'suggested' });
+    const second = Store.addEvent(day.id, { title: 'Equipment issue', startTime: '1230', endTime: '1330', placement: 'concurrent', groupId: '', attendees: 'Chan; Doe', attendeeFormat: 'suggested' });
+    const html = buildPrintMarkup({ audienceId: 'grp_all' });
+    assert(html.includes('Records review') && html.includes('Equipment issue'));
+    openPrintReview();
+    const audience = document.getElementById('printAudience'); audience.value = 'grp_all'; audience.dispatchEvent(new Event('change'));
+    const named = document.getElementById('printIncludeNamed'); assert(named.checked);
+    named.checked = false; named.dispatchEvent(new Event('change'));
+    const omissions = document.getElementById('printOmissions');
+    assert(!omissions.hidden && omissions.textContent.includes(first.title) && omissions.textContent.includes(second.title));
+    assert(document.getElementById('printReviewIssues').textContent.includes('matching attendee entries'));
+    assert(document.querySelector('.print-review-checks').open);
+    assert(!buildPrintMarkup({ audienceId: 'grp_all', includeNamed: false }).includes('Records review'));
+    assert(day.events.includes(first) && day.events.includes(second), 'filtering never edits the workbook');
+    closeModal('printReviewModal');
+  });
+  it('links overlapping named assignments in the event editor without flagging intentional main exceptions', () => {
+    const { day } = seed();
+    Store.updateEvent(day.id, day.events[0].id, { startTime: '1200', endTime: '1400', attendees: 'Chan', attendeeFormat: 'lines' });
+    const first = Store.addEvent(day.id, { title: 'Records review', startTime: '1200', endTime: '1300', placement: 'concurrent', groupId: '', attendees: 'Chan', attendeeFormat: 'lines' });
+    const second = Store.addEvent(day.id, { title: 'Equipment issue', startTime: '1230', endTime: '1330', placement: 'concurrent', groupId: '', attendees: 'Chan', attendeeFormat: 'lines' });
+    selectEntity('event', day.id, first.id);
+    const review = document.getElementById('insp-assignment-review');
+    assert(review.textContent.includes('confirm identity'));
+    assert.equal(review.querySelectorAll('[data-review-event]').length, 1);
+    review.querySelector('button').click(); assert.equal(_selection.entityId, second.id);
+    const names = document.getElementById('insp-evt-attendees'); names.value = 'Smith'; names.dispatchEvent(new Event('input'));
+    assert(document.getElementById('insp-assignment-review').hidden, 'resolved warning clears while typing');
+  });
+  it('keeps legacy export separate from workbook backup and does not acknowledge unsaved workbook edits', async () => {
+    seed(); markDirty();
+    const originalPicker = window.showSaveFilePicker, originalDownload = window.triggerDownload;
+    window.showSaveFilePicker = undefined; window.triggerDownload = () => {};
+    try {
+      await saveDataFile();
+      assert(isDirty(), 'partial export must never mark the complete workbook saved');
+      assert(!_manualDraftExported);
+      assert(document.getElementById('toast').textContent.includes('current schedule only'));
+      openSettingsModal('advanced');
+      const legacy = document.querySelector('.legacy-export');
+      assert(!legacy.open && legacy.textContent.includes('Excludes other schedules and saved versions'));
+      assert(!document.getElementById('settings-save-schedule-file').closest('details'), 'complete save stays visible');
+      closeSettingsModal();
+    } finally { window.showSaveFilePicker = originalPicker; window.triggerDownload = originalDownload; }
+  });
+  it('opens a downloaded workbook without inventing an edit, then identifies a real edit', async () => {
+    seed();
+    const snapshot = getScheduleWorkbookSnapshot(), original = Store.getPersistedState();
+    await openImportedLocalDraft(original, 'October.schedule', original.title, snapshot.schedule);
+    assert(!isDirty()); assert.equal(document.getElementById('saveIndicator').textContent, 'Opened');
+    const button = document.getElementById('editorManualExportBtn');
+    markDirty();
+    assert.equal(document.getElementById('editorManualExportBtn'), button, 'a blur commit must not replace the Save click target');
+    assert(document.getElementById('editorAccessText').textContent.includes('new download'));
+    assert.equal(document.getElementById('saveIndicator').textContent, 'Unsaved');
+  });
+});

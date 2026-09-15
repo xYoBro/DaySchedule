@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "output/playwright/alternate-views"
 DEST = ROOT / "output/alternate-views"
 VIEWS = ["cards", "grid", "phases"]
-SAMPLES = ["normal", "forty", "light", "main", "mono"]
+SAMPLES = ["groups", "normal", "forty", "stress", "light", "main", "mono"]
 
 
 def main():
@@ -40,15 +40,21 @@ def main():
 
     writer = PdfWriter()
     images = {}
+    samples = {}
+    evidence = json.loads((SOURCE / "results.json").read_text())
     for view in VIEWS:
         for sample in SAMPLES:
             file = SOURCE / f"{view}-{sample}.pdf"
-            if sample in ("normal", "forty"):
-                label = "15 surnames" if sample == "normal" else "40 surnames + timed flights"
+            if sample in ("groups", "normal", "forty", "stress"):
+                label = {"groups": "Group exercise", "normal": "15 surnames", "forty": "40 surnames and flights", "stress": "15 concurrent events"}[sample]
                 writer.append(file, outline_item=f"{view.title()} — {label}")
             prefix = DEST / f"{view}-{sample}-print"
             subprocess.run(["pdftoppm", "-scale-to", "1400", "-png", str(file), str(prefix)], check=True)
-            for day in (1, 2):
+            with pdfplumber.open(file) as pdf:
+                count = len(pdf.pages)
+            record = next((r for r in evidence if r["skin"] == view and r["sample"] == sample and r["engine"] == "chromium"), None)
+            samples[f"{view}-{sample}"] = {"pages": count, "fits": all(d["fit"] for d in record["days"]) if record else sample == "mono"}
+            for day in range(1, count + 1):
                 data = Path(f"{prefix}-{day}.png").read_bytes()
                 images[f"{view}-{sample}-{day}"] = "data:image/png;base64," + base64.b64encode(data).decode()
     writer.write(DEST / "Views-comparison.pdf")
@@ -64,16 +70,16 @@ select:focus-visible,a:focus-visible{outline:3px solid #2c5d96;outline-offset:3p
 </style><header><h1>Cards, Grid &amp; Phases</h1>
 <p>Actual print output, with synthetic examples. This comparison never opens or changes your schedule.</p>
 <div class="controls"><label>View<select id="view"><option value="cards">Cards</option><option value="grid">Grid</option><option value="phases">Phases</option></select></label>
-<label>Example<select id="sample"><option value="normal">15 surnames</option><option value="forty">40 surnames + timed flights</option><option value="light">Light day · no logo</option><option value="main">Main events only</option><option value="mono">40 surnames · grayscale</option></select></label>
-<label>Day<select id="day"><option value="1">Saturday</option><option value="2" selected>Sunday</option></select></label></div></header>
-<main><p id="purpose" aria-live="polite"></p><img id="page" alt="Schedule print proof"><p><a href="Views-comparison.pdf">Open the 12-page PDF comparison</a> · Each displayed page is US Letter.</p></main>
-<script>const images=__IMAGES__;
-const purpose={cards:'Main events and concurrent assignments have separate, chronological reading paths.',grid:'Every event appears once, in start-time order. Busy days continue down the left column, then down the right.',phases:'Contained activities sit under their main block. Assignments that span blocks or fall in gaps remain separate.'};
+<label>Example<select id="sample"><option value="groups">Four-group exercise</option><option value="normal">15 surnames</option><option value="forty">40 surnames + timed flights</option><option value="stress">15 concurrent events · long details</option><option value="light">Light day · no logo</option><option value="main">Main events only</option><option value="mono">Four-group exercise · grayscale</option></select></label>
+<label>Printed page<select id="day"></select></label></div></header>
+<main><p id="purpose"></p><p id="fit" role="status"></p><img id="page" alt="Schedule print proof"><p><a href="Views-comparison.pdf">Open the PDF comparison</a> · Each displayed page is US Letter.</p></main>
+<script>const images=__IMAGES__,samples=__SAMPLES__;
+const purpose={cards:'A shared timeline above each group’s complete agenda. Find your group once, then read down its panel.',grid:'Time × group columns. Shared events span the groups; continuing assignments join cells without duplicating event details.',phases:'Named phases progress vertically. Related tasks sit beneath their phase; assignments outside a phase stay independent.'};
 const view=document.querySelector('#view'),sample=document.querySelector('#sample'),day=document.querySelector('#day'),page=document.querySelector('#page');
-function render(){page.src=images[view.value+'-'+sample.value+'-'+day.value];page.alt=view.selectedOptions[0].text+' — '+sample.selectedOptions[0].text+' — '+day.selectedOptions[0].text;document.querySelector('#purpose').textContent=purpose[view.value]}
-[view,sample,day].forEach(control=>control.addEventListener('change',render));render();</script></html>'''
-    (DEST / "review.html").write_text(html.replace("__IMAGES__", json.dumps(images)))
-    print(f"Verified {len(results)} PDFs, {sum(len(r['pages']) for r in results)} Letter pages; built portable review and 12-page PDF.")
+function render(reset){const key=view.value+'-'+sample.value,meta=samples[key];if(reset){day.replaceChildren(...Array.from({length:meta.pages},(_,i)=>new Option('Page '+(i+1),String(i+1))))}page.src=images[key+'-'+day.value];page.alt=view.selectedOptions[0].text+' — '+sample.selectedOptions[0].text+' — '+day.selectedOptions[0].text;document.querySelector('#purpose').textContent=purpose[view.value];document.querySelector('#fit').textContent=meta.fits?'Fits one Letter page per day.':'Exceeds one-page Fit in this view. Showing explicit Readable output across '+meta.pages+' pages; no content is omitted.'}
+[view,sample].forEach(control=>control.addEventListener('change',()=>render(true)));day.addEventListener('change',()=>render(false));render(true);</script></html>'''
+    (DEST / "review.html").write_text(html.replace("__IMAGES__", json.dumps(images)).replace("__SAMPLES__", json.dumps(samples)))
+    print(f"Verified {len(results)} PDFs, {sum(len(r['pages']) for r in results)} Letter pages; built portable review and comparison PDF.")
 
 
 if __name__ == "__main__":

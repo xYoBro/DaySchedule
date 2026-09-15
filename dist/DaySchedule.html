@@ -2413,17 +2413,8 @@ body {
   gap: 8px;
   margin-top: 20px;
 }
-.library-home-rule {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 11px;
-  border-radius: 999px;
-  background: #f7f8fa;
-  border: 1px solid #e4e7ec;
-  font-size: 12px;
-  font-weight: 600;
-  color: #344054;
-}
+.library-home-rule { display: inline; font-size: 12px; color: var(--chrome-text-secondary); }
+.library-home-rule + .library-home-rule::before { content: '→'; margin-right: 8px; }
 .library-home code,
 .library-connect-summary code {
   background: rgba(15, 23, 42, 0.06);
@@ -3216,9 +3207,9 @@ body {
   border-color: #444466;
 }
 [data-editor-theme="dark"] .btn-primary {
-  background: #5b8def;
+  background: #315fac;
   color: white;
-  border-color: #5b8def;
+  border-color: #739aea;
 }
 [data-editor-theme="dark"] .btn:hover { background: #3a3a5c; }
 [data-editor-theme="dark"] .inspector input,
@@ -3254,11 +3245,7 @@ body {
   border-color: rgba(91, 141, 239, 0.14);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
 }
-[data-editor-theme="dark"] .library-home-rule {
-  background: rgba(91, 141, 239, 0.12);
-  border-color: rgba(91, 141, 239, 0.22);
-  color: #d8e5ff;
-}
+[data-editor-theme="dark"] .library-home-rule { color: #d8e5ff; }
 [data-editor-theme="dark"] .library-advanced-summary {
   color: #c7cbe0;
 }
@@ -4400,6 +4387,100 @@ textarea:focus-visible,
   .toolbar-right { flex-wrap: wrap; max-width: 100%; }
 }
 
+/* Authoring controls only: the approved paper renderers remain independent. */
+@media screen {
+  .toolbar { flex-wrap: wrap; gap: 8px 16px; }
+  .toolbar-left { flex: 1 1 auto; min-width: 0; }
+  .toolbar-days { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .toolbar-days .day-tabs { min-width: 0; }
+  .toolbar-days > .btn { white-space: nowrap; }
+  .toolbar-right { gap: 6px; }
+  .toolbar-view { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--chrome-text-secondary); }
+  .toolbar-view select { height: 44px; min-width: 88px; font: inherit; color: var(--chrome-text); background: var(--chrome-surface); border: 1px solid var(--chrome-border); border-radius: 8px; padding: 0 8px; }
+  .toolbar #daySheetBtn { background: var(--chrome-surface); color: var(--chrome-text); box-shadow: none; border: 1px solid var(--chrome-border); }
+  .toolbar .tb-create-btn.btn-primary { background: rgb(var(--app-accent)); color: white; }
+  .editor-access-bar { padding-top: 5px; padding-bottom: 5px; }
+  .editor-access-mode { display: none; }
+  .editor-access-message { font-size: 12px; line-height: 1.4; }
+  .save-opened { color: var(--chrome-text-secondary); }
+  .inspector .insp-header { position: sticky; top: -16px; z-index: 2; background: var(--chrome-surface); margin: -16px -16px 12px; padding: 12px 16px 8px; border-bottom: 1px solid var(--chrome-border); }
+  .inspector #insp-event-identity { margin: 0; font-size: 14px; line-height: 1.3; text-transform: none; letter-spacing: 0; color: var(--chrome-text); overflow-wrap: anywhere; }
+  .inspector .insp-save-hint { margin: 0 0 8px; }
+  .inspector .event-field-section { margin-top: 12px; padding-top: 12px; }
+  .inspector .event-field-section h4 { margin-bottom: 4px; }
+  .inspector label { margin-top: 8px; font-size: 11px; text-transform: none; letter-spacing: 0; }
+  .inspector select { height: 44px; }
+  .inspector .event-placement { margin-top: 12px; }
+  .inspector .placement-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .inspector .placement-option { display: flex; min-height: 64px; margin: 0; padding: 8px; }
+  .inspector .placement-option small { font-size: 11px; line-height: 1.3; }
+  .inspector .insp-link { display: inline-flex; align-items: center; padding: 4px 0; border: 0; background: transparent; color: rgb(var(--app-accent)); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+  .inspector .event-people > summary { padding: 10px 0; min-height: 44px; }
+  .inspector .event-people > .insp-hint { margin: 4px 0 6px; }
+  .inspector .attendee-preview p { margin: 6px 0; }
+  .inspector .event-options { margin: 14px 0; padding: 6px 10px 10px; border: 1px solid var(--chrome-border); border-radius: 8px; min-width: 0; }
+  .inspector .event-options legend { font-size: 12px; font-weight: 600; padding: 0 4px; }
+  .inspector label.insp-toggle-label { display: flex; align-items: center; gap: 8px; margin: 0; min-height: 44px; font-size: 13px; font-weight: 500; text-transform: none; color: var(--chrome-text); }
+  .inspector label.insp-toggle-label input { width: 16px; height: 16px; flex: 0 0 auto; margin: 0; }
+  .inspector .event-options .insp-hint { margin: 0 0 4px 24px; font-size: 11px; line-height: 1.4; }
+  .inspector .flight-editor > summary { min-height: 44px; padding: 10px 0; }
+  .inspector .insp-delete-zone { position: static; background: transparent; margin-top: 14px; }
+  .inspector .delete-btn { width: auto; padding: 6px 12px; font-size: 12px; border-color: var(--chrome-border); color: var(--chrome-text-secondary); }
+  .inspector .delete-btn:hover { color: #b42318; border-color: #b42318; }
+  .time-edit-feedback, #insp-assignment-review { font-size: 12px; line-height: 1.45; color: var(--chrome-text); border-left: 3px solid #b47521; padding: 8px 10px; margin: 10px 0; background: var(--chrome-surface); }
+  #insp-assignment-review p { margin: 6px 0 0; }
+  .legacy-export { margin-top: 20px; }
+  .legacy-export summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .legacy-export summary::before { content: '▸'; }
+  .legacy-export[open] summary::before { content: '▾'; }
+  .legacy-export .settings-export-row { flex-wrap: wrap; }
+  .print-omissions { border-left: 3px solid #b47521; padding: 8px 12px; margin: 12px 0; font-size: 13px; line-height: 1.4; }
+  .print-omissions ul { margin: 6px 0; padding-left: 18px; }
+  #printNamedOptions label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  #printNamedOptions input { flex: 0 0 auto; }
+  .print-review-checks[open] { margin-top: 12px; }
+  .print-review-checks summary { min-height: 44px; padding: 10px 0; }
+  [data-editor-theme="dark"] .inspector .insp-link { color: #a9c7ff; }
+  [data-editor-theme="dark"] .tb-back { color: #a9c7ff; }
+  [data-editor-theme="dark"] :is(button, input, select, textarea, [role="button"]):focus-visible { outline-color: #a9c7ff; }
+}
+@media screen and (min-width: 761px) and (max-width: 1600px) {
+  .toolbar-left { flex-basis: 100%; }
+  .toolbar-days { margin-left: auto; }
+  .toolbar-right { margin-left: auto; }
+}
+@media screen and (max-width: 760px) {
+  .toolbar { padding: 6px 12px; gap: 6px; }
+  .toolbar-left { gap: 4px; }
+  .toolbar-days { flex: 1 1 100%; width: 100%; }
+  .toolbar-days .day-tabs { flex: 1 1 auto; order: 0; width: 0; }
+  .toolbar-days .btn { padding: 4px 8px; font-size: 11px; }
+  .toolbar-right { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .toolbar-right .btn { padding: 4px 5px; font-size: 11px; }
+  .tb-create-group { display: contents; }
+  .toolbar-right #daySheetBtn { grid-column: 3; grid-row: 1; }
+  .toolbar-right #overflowMenu { grid-column: 4; grid-row: 1; justify-self: end; }
+  .toolbar-view { grid-column: 1 / span 2; grid-row: 2; }
+  .toolbar-view select { flex: 1; min-width: 0; font-size: 14px; }
+  .toolbar-right #customizeBtn { grid-column: 3; grid-row: 2; }
+  .toolbar-right #printBtn { grid-column: 4; grid-row: 2; }
+  .editor-access-bar { flex-wrap: nowrap; gap: 8px; }
+  .editor-access-text { flex: 1; min-width: 0; }
+  .editor-access-actions { flex: 0 0 auto; }
+  .editor-access-actions .btn { font-size: 11px; padding: 4px 8px; }
+  .editor-access-message { font-size: 11px; }
+  .editor-access-local { flex-direction: row; align-items: center; }
+  .editor-access-local .editor-access-actions { width: auto; }
+  .inspector input[type="text"], .inspector input[type="date"], .inspector textarea, .inspector select,
+  .settings-panel input[type="text"], .settings-panel select { font-size: 16px; }
+  .inspector .insp-header { position: static; }
+}
+@media screen {
+  .inspector .attendee-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .inspector .attendee-heading label { font-size: 14px; font-weight: 600; margin: 0; }
+  .inspector .placement-option strong { font-size: 12px; }
+}
+
 </style>
   <style>
 /* Scoped paper styles from the approved day-first prototype. */
@@ -4777,8 +4858,7 @@ textarea:focus-visible,
 .alternate-sheet .av-body { flex-shrink:0 }
 .alternate-sheet .av-section-heading { font-size:11pt; font-weight:700; margin-bottom:5pt; line-height:1.2 }
 .alternate-sheet .av-primary-heading { color:var(--av-heading-ink); background:var(--sch-accent); padding:5pt 7pt; font-size:13pt }
-.alternate-sheet .av-primary-heading small,.alternate-sheet .av-grid-head small { font-size:9pt; font-weight:400; margin-left:6pt }
-.alternate-sheet .av-grid-head small { display:block; margin-left:0; margin-top:2pt }
+.alternate-sheet .av-primary-heading small { font-size:9pt; font-weight:400; margin-left:6pt }
 .alternate-sheet .av-empty { padding:6pt 0; color:var(--sch-text-secondary) }
 .alternate-sheet .av-event { padding:var(--av-gap) 6pt; overflow-wrap:anywhere; break-inside:avoid; position:relative; border:.6pt solid var(--sch-border); margin:0; border-radius:3pt; background:var(--sch-bg) }
 .alternate-sheet .av-event[tabindex] { cursor:pointer }
@@ -4787,7 +4867,7 @@ textarea:focus-visible,
 .alternate-sheet .av-event.selected { outline:1.5pt solid var(--sch-accent); outline-offset:1pt }
 .alternate-sheet .av-event-heading { display:flex; align-items:baseline; justify-content:space-between; gap:6pt }
 .alternate-sheet .av-event-heading h3 { font-size:var(--av-small-title); font-weight:500; line-height:1.17 }
-.alternate-sheet .av-time { font-size:var(--av-time); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; flex-shrink:0 }
+.alternate-sheet .av-time { font-size:var(--av-time); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; flex-shrink:0; order:2 }
 .alternate-sheet .av-event-content { margin-top:min(2pt,var(--av-gap)) }
 .alternate-sheet .av-event-content:empty { display:none }
 .alternate-sheet .av-main { background:var(--sch-surface); border-left:2pt solid var(--sch-accent); padding-top:calc(var(--av-gap) + var(--av-main-extra,0pt)); padding-bottom:calc(var(--av-gap) + var(--av-main-extra,0pt)) }
@@ -4820,7 +4900,7 @@ textarea:focus-visible,
 .alternate-sheet .av-references { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:2pt 5pt; margin-top:3pt; font-size:9pt; color:var(--sch-text-secondary) }
 .alternate-sheet .av-reference-list { display:flex; flex-wrap:wrap; gap:3pt }
 .alternate-sheet .av-reference-list .av-number { margin:0 }
-.alternate-sheet .av-flights { margin-top:4pt; border-top:.6pt solid var(--sch-border); font-size:var(--av-detail) }
+.alternate-sheet .av-flights { clear:both; margin-top:4pt; border-top:.6pt solid var(--sch-border); font-size:var(--av-detail) }
 .alternate-sheet .av-flight { display:grid; grid-template-columns:48pt minmax(0,1fr) minmax(80pt,30%); gap:6pt; padding:min(3pt,var(--av-gap)) 0; border-bottom:.5pt solid var(--sch-border) }
 .alternate-sheet .av-flight:last-child { border-bottom:0; padding-bottom:0 }
 .alternate-sheet .av-flight-name { font-size:var(--av-detail) }
@@ -4832,65 +4912,59 @@ textarea:focus-visible,
 .alternate-sheet .av-flow[data-columns="2"] { grid-template-columns:1fr 1fr }
 .alternate-sheet .av-column { display:grid; gap:var(--av-gap) }
 .alternate-sheet .av-flow[data-columns="1"] { gap:var(--av-gap) }
-.alternate-sheet .av-main-list { display:grid; gap:var(--av-gap) }
-.alternate-sheet .av-concurrent-section { margin-top:9pt }
-.alternate-sheet .av-cards-columns { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:14pt; align-items:start }
-.alternate-sheet .av-cards-columns .av-concurrent-section { margin-top:0 }
-.alternate-sheet .av-cards-columns .av-concurrent-section>.av-section-heading { padding:5pt 0; font-size:13pt }
-.alternate-sheet .av-cards-columns .av-main .av-event-heading { display:flex; flex-wrap:wrap }
-.alternate-sheet .av-cards-columns .av-main .av-logistics { order:3; width:100%; justify-content:flex-start }
-.alternate-sheet .av-cards-columns .av-main .av-references { float:none; margin-left:0 }
-.alternate-sheet .av-cards-columns .av-main .av-time { margin-left:auto }
-.alternate-sheet .av-cards-columns .av-flight { grid-template-columns:36pt minmax(0,1fr) }
-.alternate-sheet .av-cards-columns .av-flight-meta { grid-column:2 }
-.alternate-sheet .av-phase { margin:0; border-bottom:.6pt solid var(--sch-border); padding-bottom:var(--av-gap) }
-.alternate-sheet .av-phase:last-child { padding-bottom:0; border-bottom:0 }
-.alternate-sheet .av-phase-columns,.alternate-sheet .av-phase-segment { display:grid; gap:var(--av-gap) 12pt; align-items:start }
-.alternate-sheet .av-phase-columns[data-columns="2"],.alternate-sheet .av-phase-segment[data-columns="2"] { grid-template-columns:1fr 1fr }
-.alternate-sheet .av-phase .av-main { border-radius:0 }
-.alternate-sheet .av-phase .av-concurrent { border:0; border-radius:0; padding:var(--av-gap) 0; border-bottom:.6pt solid var(--sch-border) }
-.alternate-sheet .av-phase .av-flow { padding:0 8pt }
-.alternate-sheet .av-independent { padding:var(--av-gap) 8pt; border:.6pt solid var(--sch-border) }
-.alternate-sheet .av-independent .av-flow { padding:0 }
-.alternate-sheet .av-independent-label { font-size:9pt; font-weight:500; color:var(--sch-text-secondary); margin:0 0 2pt }
-.alternate-sheet :is(.av-phase-columns[data-columns="2"],.av-phase-segment[data-columns="2"]) .av-main .av-event-heading { display:flex; flex-wrap:wrap }
-.alternate-sheet :is(.av-phase-columns[data-columns="2"],.av-phase-segment[data-columns="2"]) .av-main .av-logistics { order:3; width:100%; justify-content:flex-start }
-.alternate-sheet :is(.av-phase-columns[data-columns="2"],.av-phase-segment[data-columns="2"]) .av-main .av-time { margin-left:auto }
-.alternate-sheet :is(.av-phase-columns[data-columns="2"],.av-phase-segment[data-columns="2"]) .av-main .av-references { display:flex; float:none; margin-left:0; justify-content:flex-start }
-.alternate-sheet :is(.av-phase-columns[data-columns="2"],.av-phase-segment[data-columns="2"]) .av-main .av-flight { grid-template-columns:34pt minmax(0,1fr) }
-.alternate-sheet :is(.av-phase-columns[data-columns="2"],.av-phase-segment[data-columns="2"]) .av-main .av-flight-meta { grid-column:2 }
-.alternate-sheet .av-grid-head { display:grid; grid-template-columns:72pt minmax(0,1.1fr) minmax(0,1fr); gap:6pt; margin:0 0 3pt; padding:0 6pt 3pt; border-bottom:.7pt solid var(--sch-text-muted); font-size:9pt; color:var(--sch-text-secondary) }
-.alternate-sheet .av-grid .av-event { border-radius:0; border:0; border-bottom:.6pt solid var(--sch-text-muted); min-height:22pt }
-.alternate-sheet .av-grid .av-logistics { justify-content:flex-start; margin:0 }
-.alternate-sheet .av-grid .av-emphasized { border-left:3pt solid var(--sch-accent); border-top:.8pt solid var(--sch-accent); border-bottom:.8pt solid var(--sch-accent) }
-.alternate-sheet .av-grid .av-concurrent .av-description { display:inline }
-.alternate-sheet .av-grid .av-people { margin:1pt 0; font-size:max(10.5pt,calc(11pt * var(--av-scale))) }
-.alternate-sheet .av-grid .av-roster { font-size:max(9.5pt,calc(11pt * var(--av-scale))) }
-.alternate-sheet .av-grid .av-table-record { display:grid; grid-template-columns:72pt minmax(0,1.1fr) minmax(0,1fr); gap:0 6pt; padding:var(--av-gap) 6pt }
-.alternate-sheet .av-grid .av-table-record.av-emphasized { padding-left:3pt }
-.alternate-sheet .av-grid .av-table-record.av-main { padding-top:calc(var(--av-gap) + var(--av-main-extra,0pt)); padding-bottom:calc(var(--av-gap) + var(--av-main-extra,0pt)) }
-.alternate-sheet .av-grid .av-table-record .av-time { position:static; font-size:var(--av-time); color:var(--sch-text); padding:0; margin:0; font-weight:600; align-self:start }
-.alternate-sheet .av-grid .av-table-record.av-main .av-time { background:none; color:var(--sch-accent); align-self:start; font-weight:700 }
-.alternate-sheet .av-table-identity h3 { font-size:var(--av-small-title); font-weight:500; line-height:1.17 }
-.alternate-sheet .av-main .av-table-identity h3 { font-size:var(--av-main-title); font-weight:700; color:var(--sch-accent) }
-.alternate-sheet .av-table-details { font-size:var(--av-detail) }
-.alternate-sheet .av-table-details .av-description { display:block!important; margin-top:2pt }
-.alternate-sheet .av-table-details .av-references { float:none; margin:2pt 0 0; justify-content:flex-start }
-.alternate-sheet .av-grid .av-table-roster>.av-people,.alternate-sheet .av-grid .av-flights { grid-column:2 / -1 }
-.alternate-sheet .av-grid .av-table-support { grid-column:2 / -1; display:flow-root; margin-top:1pt }
-.alternate-sheet .av-grid .av-table-support .av-description { display:inline }
-.alternate-sheet .av-grid .av-table-support .av-references { display:inline-flex; float:right; margin:0 0 0 5pt }
-.alternate-sheet .av-grid-flow { display:grid; gap:0 12pt; align-items:start }
-.alternate-sheet .av-grid-flow[data-columns="2"] { grid-template-columns:1fr 1fr }
-.alternate-sheet .av-grid-flow .av-column { gap:0 }
-.alternate-sheet[data-table-columns="2"] .av-grid-head { display:none }
-.alternate-sheet[data-table-columns="2"] .av-table-record { grid-template-columns:56pt minmax(0,1fr); gap:0 5pt }
-.alternate-sheet[data-table-columns="2"] .av-table-details { grid-column:2 }
-.alternate-sheet[data-table-columns="2"] .av-table-support { grid-column:2 }
-.alternate-sheet[data-table-columns="2"] .av-table-support .av-references { display:flex; float:none; margin:2pt 0 0; justify-content:flex-start }
-.alternate-sheet[data-table-columns="2"] .av-table-roster>.av-people { grid-column:2 }
-.alternate-sheet[data-table-columns="2"] .av-flight { grid-template-columns:34pt minmax(0,1fr) }
-.alternate-sheet[data-table-columns="2"] .av-flight-meta { grid-column:2 }
+/* Cards: a shared timeline above complete group agendas. */
+.alternate-sheet .av-shared-timeline { display:grid; grid-template-columns:repeat(var(--av-shared-columns,3),minmax(0,1fr)); gap:6pt; align-items:stretch }
+.alternate-sheet .av-shared-timeline .av-main { border-left-width:.6pt; border-top:2pt solid var(--sch-accent); border-radius:3pt; padding:5pt }
+.alternate-sheet .av-shared-timeline .av-event-heading { display:flex; flex-wrap:wrap; gap:3pt; align-items:flex-start }
+.alternate-sheet .av-shared-timeline .av-event-heading h3 { width:100%; order:2; font-size:max(11.5pt,calc(13pt * var(--av-scale))) }
+.alternate-sheet .av-shared-timeline .av-time { order:1 }
+.alternate-sheet .av-shared-timeline .av-logistics { width:100%; order:3; justify-content:flex-start }
+.alternate-sheet .av-shared-timeline .av-references { display:flex; float:none; justify-content:flex-start; margin-left:0 }
+.alternate-sheet .av-shared-timeline .av-flights { margin-top:3pt }
+.alternate-sheet .av-shared-timeline .av-flight { display:block }
+.alternate-sheet .av-shared-timeline .av-flight-name { display:block; margin-bottom:2pt }
+.alternate-sheet .av-group-panels { display:grid; grid-template-columns:1fr 1fr; align-items:start; gap:10pt; margin-top:10pt }
+.alternate-sheet .av-group-panels[data-columns="1"] { grid-template-columns:1fr }
+.alternate-sheet .av-group-panel { border:.7pt solid var(--sch-border); border-radius:5pt; overflow:hidden; break-inside:avoid }
+.alternate-sheet .av-group-heading { font-size:12pt; padding:5pt 7pt; border-left:4pt solid var(--av-group-color,var(--sch-accent)); background:var(--sch-surface); color:var(--sch-text); font-weight:700 }
+.alternate-sheet .av-group-panel .av-flow { padding:3pt 7pt 5pt }
+.alternate-sheet .av-group-panel .av-concurrent { border:0; border-bottom:.6pt solid var(--sch-border); border-radius:0; padding:var(--av-gap) 0 }
+.alternate-sheet .av-group-panel .av-concurrent.av-emphasized { border-left:3pt solid var(--sch-accent); padding-left:5pt }
+/* Grid: stable group columns, aligned start rows and shared banners. */
+.alternate-sheet .av-matrix { width:100%; table-layout:fixed; border-collapse:collapse; font-size:var(--av-detail) }
+.alternate-sheet .av-matrix caption { text-align:left; font-size:13pt; font-weight:700; padding:5pt 7pt; margin-bottom:5pt; color:var(--av-heading-ink); background:var(--sch-accent) }
+.alternate-sheet .av-matrix caption small { margin-left:6pt; font-size:9pt; font-weight:400 }
+.alternate-sheet .av-clock-column { width:35pt }
+.alternate-sheet .av-matrix th { text-align:left; font-size:9pt; padding:4pt; vertical-align:top; overflow-wrap:anywhere }
+.alternate-sheet .av-matrix thead th { border-bottom:2pt solid var(--av-group-color,var(--sch-accent)); font-size:10pt; color:var(--sch-text) }
+.alternate-sheet .av-matrix tbody th { font-variant-numeric:tabular-nums; font-weight:600; border-bottom:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix td { padding:0; vertical-align:top; border-left:.6pt solid var(--sch-border); border-bottom:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix td:last-child { border-right:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix .av-event { border:0; border-radius:0; padding:var(--av-gap) 5pt }
+.alternate-sheet .av-matrix .av-event+.av-event { border-top:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix .av-event-heading { flex-wrap:wrap; gap:2pt 6pt }
+.alternate-sheet .av-matrix .av-main .av-event-heading { display:grid }
+.alternate-sheet .av-matrix .av-concurrent .av-time { font-weight:500 }
+.alternate-sheet .av-matrix .av-emphasized { border-left:3pt solid var(--sch-accent) }
+.alternate-sheet .av-matrix .av-concurrent .av-flights .av-flight { display:block }
+/* Phases: one vertical progression; only tasks within a phase may use columns. */
+.alternate-sheet .av-phase-sequence { display:block; list-style:none; padding:0; margin:0 }
+.alternate-sheet .av-phase { list-style:none; margin:0; position:relative; break-inside:avoid; border-left:2pt solid var(--sch-accent); border-bottom:.6pt solid var(--sch-border); padding:0 0 var(--av-gap) 7pt }
+.alternate-sheet .av-phase + .av-phase { margin-top:calc(var(--av-gap) + 4pt) }
+.alternate-sheet .av-phase + .av-phase::before { content:'↓'; position:absolute; left:0; top:-11pt; font:9pt/1 Arial; background:var(--sch-bg); color:var(--sch-accent) }
+.alternate-sheet .av-phase>.av-main { border:0; border-radius:0; padding:var(--av-gap) 6pt; background:var(--sch-bg) }
+.alternate-sheet .av-phase>.av-main.av-emphasized { background:var(--sch-surface) }
+.alternate-sheet .av-phase .av-event-heading h3 { font-size:max(11.5pt,calc(15pt * var(--av-scale))) }
+.alternate-sheet .av-phase .av-main .av-event-heading { grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet .av-phase .av-main .av-event-heading .av-logistics { grid-column:1 / -1; grid-row:2; justify-content:flex-start }
+.alternate-sheet .av-phase .av-main .av-time { grid-column:2; grid-row:1; font-size:var(--av-time); font-weight:500 }
+.alternate-sheet .av-phase .av-flow { margin:2pt 0 0 10pt; padding:0 6pt; border-left:.6pt solid var(--sch-border) }
+.alternate-sheet .av-phase .av-concurrent { border:0; border-radius:0; border-bottom:.5pt solid var(--sch-border); padding:var(--av-gap) 0 }
+.alternate-sheet .av-phase .av-concurrent h3 { font-size:var(--av-small-title) }
+.alternate-sheet .av-phase .av-concurrent.av-emphasized { border-left:3pt solid var(--sch-accent); padding-left:5pt }
+.alternate-sheet .av-phase .av-audience { font-size:9pt; margin-bottom:2pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-independent { border-left:2pt dotted var(--sch-text-muted); padding-left:7pt }
+.alternate-sheet .av-independent-label { font-size:9pt; font-weight:500; color:var(--sch-text-secondary); padding:3pt 6pt 0 }
 .alternate-sheet .av-flight.av-varied-logistics { grid-template-columns:36pt minmax(0,1fr)!important }
 .alternate-sheet .av-varied-logistics .av-flight-activity+.av-flight-activity { border-top:.5pt solid var(--sch-border); padding-top:2pt }
 .alternate-sheet .av-notes { height:var(--av-notes-height); min-height:var(--av-notes-height); margin-top:auto; padding-top:5pt; border-top:1pt solid var(--sch-accent); flex-shrink:0 }
@@ -4906,7 +4980,7 @@ textarea:focus-visible,
 .alternate-sheet.av-overflow,.alternate-sheet.av-natural { height:auto; min-height:792pt }
 .alternate-sheet.av-overflow .av-notes,.alternate-sheet.av-natural .av-notes { margin-top:12pt; height:auto }
 .alternate-sheet.av-natural .av-event { break-inside:auto }
-.alternate-fit-notice:not(:empty) { font-size:13px; line-height:1.4; padding:12px 20px; color:var(--app-text); background:var(--app-surface); max-width:816px; border:1px solid var(--app-border) }
+.alternate-fit-notice:not(:empty) { font-size:13px; line-height:1.4; padding:12px 20px; color:var(--chrome-text); background:var(--chrome-surface); max-width:816px; border:1px solid var(--chrome-border) }
 .print-page.alternate-page .note-empty { display:none }
 @page alternate-paper { size:Letter portrait; margin:0 }
 @page alternate-readable { size:auto; margin:.5in }
@@ -4928,9 +5002,89 @@ textarea:focus-visible,
   #printContainer .print-readable .av-natural .av-flow { display:block }
   #printContainer .print-readable .av-natural .av-event { break-inside:auto }
   #printContainer .print-readable .av-natural .av-event-heading { break-after:avoid }
-  #printContainer .print-readable .av-natural .av-grid-row { break-inside:auto }
+  #printContainer .print-readable .av-natural :is(.av-group-panels,.av-shared-timeline) { display:block }
+  #printContainer .print-readable .av-natural .av-group-panel { break-inside:auto }
   #printContainer .print-readable .av-natural .av-header { break-inside:avoid }
 }
+
+/* Compact layouts retain their organizing axis while reclaiming inner space. */
+.alternate-sheet .av-group-panel.av-group-wide { grid-column:1 / -1 }
+.alternate-sheet .av-matrix thead th:first-child { white-space:nowrap; font-size:9pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-main { padding:3pt 5pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-logistics { font-size:9pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-flight { display:grid; grid-template-columns:45pt minmax(0,1fr) minmax(80pt,30%) }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto; gap:3pt 6pt }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading:not(:has(.av-logistics)) { grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading .av-logistics { grid-column:auto; grid-row:auto; justify-content:flex-end }
+.alternate-sheet.av-compact .av-phase .av-main .av-time { grid-column:auto; grid-row:auto }
+
+.alternate-sheet.av-compact .av-shared-timeline .av-event-heading h3 { width:auto; order:0; flex:1 }
+.alternate-sheet.av-compact .av-shared-timeline .av-event-heading .av-time { order:1 }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading { display:grid; grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading:has(.av-logistics) { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading h3 { order:0; width:auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-logistics { order:1; width:auto; justify-content:flex-end }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-time { order:2 }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-references { float:right; margin-left:7pt }
+
+/* Dense paper keeps the same hierarchy with fewer forced line breaks. */
+.alternate-sheet.av-compact .av-main .av-event-heading:has(.av-logistics) { grid-template-columns:fit-content(50%) minmax(0,1fr) auto }
+.alternate-sheet.av-compact .av-logistics { column-gap:6pt }
+.alternate-sheet.av-compact .av-main .av-references { margin-top:0 }
+.alternate-sheet.av-compact .av-main.av-emphasized .av-time { padding:1pt 3pt }
+.alternate-sheet.av-compact .av-shared-timeline { gap:3pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-main { padding:var(--av-gap) 4pt }
+.alternate-sheet.av-compact .av-group-panels { gap:6pt; margin-top:6pt }
+.alternate-sheet.av-compact .av-group-heading { padding:3pt 5pt; font-size:11pt }
+.alternate-sheet.av-compact .av-group-panel .av-flow { padding:2pt 5pt 3pt }
+.alternate-sheet.av-compact .av-phase { padding-bottom:0 }
+.alternate-sheet.av-compact .av-phase+.av-phase { margin-top:3pt }
+.alternate-sheet.av-compact .av-phase+.av-phase::before { top:-7pt; font-size:8pt }
+.alternate-sheet.av-compact .av-phase .av-flow { margin-top:0 }
+.alternate-sheet.av-compact .av-independent-label { padding-top:0 }
+.alternate-sheet.av-compact .av-audience { margin-bottom:0 }
+/* Full-width headers can keep short references beside their event identity. */
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:baseline; column-gap:6pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main :is(.av-event-heading,.av-event-content) { display:contents }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-event-heading h3 { grid-row:1; grid-column:1; max-width:180pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-logistics { grid-row:1; grid-column:2; justify-content:flex-end }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-time { grid-row:1; grid-column:3 }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-references { grid-row:1; grid-column:4; float:none; margin:0; max-width:180pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main :is(.av-description,.av-people,.av-flights) { grid-column:1 / -1 }
+/* A final text-only density step uses punctuation instead of forced lines.
+ * Names remain bold and complete; rosters and flight activities stay blocks. */
+.alternate-sheet.av-dense { --av-name:max(9.5pt,calc(12pt * var(--av-scale))) }
+.alternate-sheet.av-dense .av-concurrent { display:block }
+.alternate-sheet.av-dense .av-concurrent :is(.av-event-heading,.av-event-content) { display:contents }
+.alternate-sheet.av-dense .av-concurrent h3 { display:inline; margin-right:5pt }
+.alternate-sheet.av-dense .av-concurrent .av-time { float:right; margin-left:5pt; display:inline }
+.alternate-sheet.av-dense .av-concurrent :is(.av-audience,.av-people,.av-logistics,.av-logistics>div,.av-description) { display:inline }
+.alternate-sheet.av-dense .av-concurrent :is(.av-audience,.av-people) { margin-right:5pt }
+.alternate-sheet.av-dense .av-concurrent .av-logistics>div+div::before { content:' · ' }
+.alternate-sheet.av-dense .av-concurrent .av-description::before { content:' · ' }
+.alternate-sheet.av-dense .av-concurrent :is(.av-roster,.av-literal,.av-flights) { display:block }
+.alternate-sheet.av-dense .av-concurrent .av-description { white-space:pre-wrap }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-logistics { display:flex }
+.alternate-sheet.av-dense .av-concurrent .av-people.av-roster { display:block }
+.alternate-sheet.av-dense .av-concurrent .av-people.av-literal { display:block }
+.alternate-sheet.av-compact .av-header { padding-bottom:5pt; margin-bottom:5pt }
+.alternate-sheet.av-compact :is(.av-primary-heading,.av-matrix caption) { padding-top:3pt; padding-bottom:3pt }
+.alternate-sheet.av-compact .av-matrix tbody th { padding-top:var(--av-gap); padding-bottom:var(--av-gap) }
+.alternate-sheet .av-phase-key { display:none }
+.alternate-sheet.av-dense .av-phase-key { display:inline; float:right; margin-top:3pt }
+.alternate-sheet.av-dense .av-independent-label { display:none }
+/* In a dense matrix, the time column already supplies a fixed reading anchor. */
+.alternate-sheet.av-dense .av-matrix .av-main { display:flow-root }
+.alternate-sheet.av-dense .av-matrix .av-main .av-event-heading h3 { display:inline; margin-right:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-logistics { display:inline-flex; margin-right:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-time { float:right; margin-left:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-description { display:inline }
+.alternate-sheet.av-dense .av-matrix .av-main .av-references { display:inline-flex; float:right; margin:0 0 0 5pt }
+
+.alternate-sheet .av-cell-events { column-gap:8pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-description::before { content:' · ' }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-description { display:block }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-description::before { content:none }
 
 </style>
   <script>
@@ -4959,7 +5113,7 @@ textarea:focus-visible,
 // Stamped with the build date and content hash by tools/build-single-html.py; 'dev' when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = '2026-09-15+018fe6707339';
+const APP_VERSION = '2026-09-15+7bb7924abd8d';
 
 const DEFAULT_GROUPS = [
   { id: 'grp_all',     name: 'All Personnel', scope: 'main',    color: '#2558a8' },
@@ -5084,23 +5238,31 @@ const LAYOUT_TARGETS = {
       </button>
       <span class="save-status" id="saveIndicator" role="status" aria-live="polite"></span>
       <div class="tb-sep"></div>
-      <div class="day-tabs" id="dayTabs"></div>
+      <div class="toolbar-days" aria-label="Schedule days">
+        <div class="day-tabs" id="dayTabs"></div>
+        <button class="btn" id="addDayBtn">+ Day</button>
+        <button class="btn" id="daySettingsBtn">Dates &amp; hours</button>
+      </div>
     </div>
     <div class="toolbar-right">
       <div class="tb-create-group" aria-label="Add schedule item">
-        <button class="btn tb-create-btn" id="addDayBtn">+ Day</button>
         <button class="btn tb-create-btn" id="addEventBtn">+ Event</button>
         <button class="btn tb-create-btn" id="addNoteBtn">+ Reminder</button>
       </div>
       <button class="btn" id="daySheetBtn">Quick Edit</button>
       <div class="tb-sep"></div>
+      <label class="toolbar-view" for="viewSelect">View
+        <select id="viewSelect"><option value="bands">Bands</option><option value="grid">Grid</option><option value="cards">Cards</option><option value="phases">Phases</option></select>
+      </label>
       <button class="btn" id="customizeBtn">Customize</button>
+      <button class="btn" id="printBtn">Print</button>
       <div class="tb-overflow" id="overflowMenu">
         <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions" aria-label="More actions" aria-expanded="false" aria-controls="overflowDropdown">&#x2026;</button>
         <div class="tb-overflow-dropdown" id="overflowDropdown">
-          <button class="tb-overflow-item" id="versionsMenuBtn">Versions</button>
+          <button class="tb-overflow-item" id="undoBtn">Undo last edit</button>
+          <button class="tb-overflow-item" id="redoBtn">Redo</button>
           <button class="tb-overflow-item" id="saveScheduleFileBtn">Save .schedule</button>
-          <button class="tb-overflow-item" id="printBtn">Print</button>
+          <button class="tb-overflow-item" id="versionsMenuBtn">Saved versions</button>
           <button class="tb-overflow-item" id="helpBtn">Help</button>
         </div>
       </div>
@@ -5168,7 +5330,7 @@ const LAYOUT_TARGETS = {
           </div>
           <div class="help-item">
             <div class="help-item-label">More</div>
-            <div class="help-item-desc">Versions, Print, and Help.</div>
+            <div class="help-item-desc">Undo, Redo, Saved versions, and Help. Print is on the toolbar.</div>
           </div>
         </div>
       </div>
@@ -5201,6 +5363,18 @@ const LAYOUT_TARGETS = {
             <div class="help-item-desc">Safest answer: one person edits the workbook file at a time.</div>
           </div>
           <div class="help-item">
+            <div class="help-item-label">How do I change dates or event times?</div>
+            <div class="help-item-desc"><strong>Dates &amp; hours</strong> opens day setup. Edit an event’s Start and End in either order; finish both fields before leaving them. Invalid ranges keep the previous times and explain why.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">What does a group handout leave out?</div>
+            <div class="help-item-desc"><strong>Full schedule</strong> includes everything. A group handout keeps shared events and named assignments without a group by default. Print lists excluded events, and schedule checks still cover the selected days in full.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">Which export is my backup?</div>
+            <div class="help-item-desc"><strong>Save .schedule</strong> includes the complete workbook. The legacy .js export in Customize → Export contains only the current schedule, without other schedules or saved versions.</div>
+          </div>
+          <div class="help-item">
             <div class="help-item-label">Main schedule or concurrent event?</div>
             <div class="help-item-desc">Choose <strong>Schedule section</strong> on the event. Then choose who attends. Changing the audience or emphasis keeps the event in its chosen section.</div>
           </div>
@@ -5214,11 +5388,11 @@ const LAYOUT_TARGETS = {
           </div>
           <div class="help-item">
             <div class="help-item-label">Where do I change the look?</div>
-            <div class="help-item-desc">Use <strong>Customize</strong>.</div>
+            <div class="help-item-desc">Use the toolbar’s <strong>View</strong> selector for layouts. <strong>Customize</strong> controls colors, headings, the logo, and audiences.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Where is Save?</div>
-            <div class="help-item-desc">Use <strong>Save .schedule</strong> in the bar under the toolbar, or open the <strong>&hellip;</strong> menu (top right). Once a file is attached the bar button reads <strong>Save Now</strong>.</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> in the bar under the toolbar, or open the <strong>&hellip;</strong> menu (top right). With a writable file it reads <strong>Save Now</strong>; in download mode it reads <strong>Download .schedule</strong>. Send the newest complete workbook copy.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">When should I save?</div>
@@ -6340,10 +6514,13 @@ function buildPhaseGroups(events, groups) {
   return phases.concat(independent).sort((a, b) => compareBandOrder(a.sortEvent, b.sortEvent));
 }
 
-function getAudienceHandoutEvents(events, groups, audienceId) {
+function getAudienceHandoutEvents(events, groups, audienceId, options) {
   if (!audienceId) return (events || []).slice();
+  const includeNamed = options && options.includeNamed;
+  const groupMap = getGroupMap(groups);
   return (events || []).filter(evt => evt.groupId === audienceId || isSharedTrackEvent(evt, groups)
-    || (!evt.groupId && isEventEffectiveMain(evt, groups)));
+    || (!evt.groupId && isEventEffectiveMain(evt, groups))
+    || (includeNamed && !groupMap[evt.groupId] && evt.attendees?.trim()));
 }
 
 // Advisory only: a shared room or overlapping audience can be intentional.
@@ -6696,6 +6873,7 @@ function analyzeDayLayout(events, groups, classified) {
 
 let _fileHandle = null;
 let _scheduleWorkbookHandle = null;
+let _openedWorkbookFileName = '';
 let _scheduleWorkbookData = null;
 let _saveInProgress = false;
 let _workbookSavePromise = null;
@@ -7103,7 +7281,7 @@ function hasScheduleWorkbookHandle() {
 }
 
 function getScheduleWorkbookFileName() {
-  return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : '';
+  return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : _openedWorkbookFileName;
 }
 
 // Detach the current workbook file. Must run before "Start fresh" — otherwise
@@ -7111,6 +7289,7 @@ function getScheduleWorkbookFileName() {
 // silently overwrites that file.
 function clearScheduleWorkbookTarget() {
   _scheduleWorkbookHandle = null;
+  _openedWorkbookFileName = '';
   _scheduleWorkbookData = null;
   _workbookId = null;
   _workbookBaseline = null;
@@ -7996,9 +8175,8 @@ async function saveDataFile() {
         const writable = await _fileHandle.createWritable();
         await writable.write(content);
         await writable.close();
-        sessionSave();
-        if (typeof notifyManualDraftExport === 'function') notifyManualDraftExport();
-        toast('Saved to ' + _fileHandle.name);
+        sessionSave({ skipDirty: true });
+        toast('Exported current schedule only to ' + _fileHandle.name + '. Other schedules and versions are not included.', 6500);
         return true;
       } catch (err) {
         if (err.name === 'AbortError') return false;
@@ -8008,9 +8186,8 @@ async function saveDataFile() {
 
     const blob = new Blob([content], { type: 'text/javascript' });
     triggerDownload(blob, 'scheduledata.js');
-    sessionSave();
-    if (typeof notifyManualDraftExport === 'function') notifyManualDraftExport();
-    toast('Downloaded scheduledata.js. Move it into shared app/data.');
+    sessionSave({ skipDirty: true });
+    toast('Downloaded current schedule only as scheduledata.js. Use Save .schedule for a complete workbook backup.', 6500);
     return true;
   } finally {
     _saveInProgress = false;
@@ -8674,6 +8851,7 @@ function syncEditorChrome() {
     'addDayBtn',
     'daySheetBtn',
     'customizeBtn',
+    'viewSelect',
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = !editable;
@@ -8681,6 +8859,7 @@ function syncEditorChrome() {
 
   const titleInput = document.getElementById('tbTitle');
   if (titleInput) titleInput.disabled = !editable;
+  if (typeof syncAuthoringControls === 'function') syncAuthoringControls();
 }
 
 function hasLocalDraftSession() {
@@ -8695,6 +8874,7 @@ function updateEditorAccessBar(status) {
 
   let text = '';
   let actions = '';
+  let manualButtonLabel;
   if (!_currentFileName) {
     if (!hasLocalDraftSession()) {
       bar.hidden = true;
@@ -8706,12 +8886,17 @@ function updateEditorAccessBar(status) {
       + '<span class="editor-access-message">'
       + (hasWorkbookTarget
           ? 'Autosaves to <strong>' + esc(workbookFileName || '.schedule file') + '</strong>.'
+          : _dirty && (workbookFileName || _manualDraftExported)
+          ? 'Changes need a new download. Keep the newest <strong>.schedule</strong> file.'
           : _manualDraftExported
-          ? 'Saved as a <strong>.schedule</strong> file. Save again after more edits.'
+          ? 'Workbook downloaded. Keep the newest <strong>.schedule</strong> file for handoff.'
+          : workbookFileName
+          ? 'Opened <strong>' + esc(workbookFileName) + '</strong>. After editing, download a new .schedule copy.'
           : 'Save this workbook as a <strong>.schedule</strong> file before closing.')
       + '</span>';
+    manualButtonLabel = hasWorkbookTarget ? 'Save Now' : (_manualDraftExported || workbookFileName ? 'Download .schedule' : 'Save .schedule');
     actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
-      + (hasWorkbookTarget ? 'Save Now' : (_manualDraftExported ? 'Save Again' : 'Save .schedule'))
+      + manualButtonLabel
       + '</button>';
     bar.className = 'editor-access-bar editor-access-local';
   } else if (status.state === 'mine' && status.lock) {
@@ -8739,16 +8924,17 @@ function updateEditorAccessBar(status) {
 
   textEl.textContent = '';
   textEl.innerHTML = text;
-  actionsEl.innerHTML = actions;
+  const existingManual = actionsEl.querySelector('#editorManualExportBtn');
+  if (existingManual && manualButtonLabel) existingManual.textContent = manualButtonLabel;
+  else actionsEl.innerHTML = actions;
   bar.hidden = false;
 
   const manualExportBtn = document.getElementById('editorManualExportBtn');
   if (manualExportBtn) {
     manualExportBtn.onclick = async () => {
-      const saved = typeof saveScheduleWorkbookFile === 'function'
-        ? await saveScheduleWorkbookFile()
-        : await saveDataFile();
-      if (saved) notifyManualDraftExport();
+      if (typeof saveScheduleWorkbookFile === 'function') await saveScheduleWorkbookFile();
+      else await saveDataFile();
+      // The save operation owns its status, including edits made during a write.
     };
     return;
   }
@@ -9109,6 +9295,7 @@ function markDirty() {
   if (!isCurrentScheduleEditable()) return;
   _dirty = true;
   updateSaveIndicator('dirty');
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
   clearTimeout(_autosaveTimer);
   _autosaveTimer = setTimeout(() => autoSave(), AUTOSAVE_DELAY);
 }
@@ -9285,6 +9472,13 @@ function markScheduleWorkbookSaved() {
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 
+function markScheduleWorkbookOpened() {
+  _dirty = false;
+  _manualDraftExported = false;
+  updateSaveIndicator('opened');
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
+}
+
 // Download fallback (Safari/Firefox, or a declined picker): a copy went to
 // Downloads, the file the user opened is untouched. The work is on disk, so
 // the close warning stands down — but the label must not say "Saved".
@@ -9321,6 +9515,10 @@ function updateSaveIndicator(state) {
     el.textContent = 'Downloaded';
     el.title = 'This browser can’t save back to the opened file. A copy went to your Downloads folder — keep the newest one.';
     el.classList.add('save-downloaded');
+  } else if (state === 'opened') {
+    el.textContent = 'Opened';
+    el.title = 'No changes yet. After editing, download a new workbook copy; the opened file is unchanged.';
+    el.classList.add('save-opened');
   } else {
     el.textContent = 'Saved';
     el.classList.add('save-saved');
@@ -9918,10 +10116,10 @@ for (const key of ['forest', 'teal', 'slate', 'plum', 'burgundy', 'copper']) {
 const SKIN_NAMES = ['bands', 'grid', 'cards', 'phases'];
 
 const SKIN_LABELS = {
-  bands: { name: 'Bands', desc: 'Main track + concurrent' },
-  grid: { name: 'Grid', desc: 'Chronological table' },
-  cards: { name: 'Cards', desc: 'Main & assigned events' },
-  phases: { name: 'Phases', desc: 'Activities by main block' },
+  bands: { name: 'Bands', desc: 'Main schedule + assignments' },
+  grid: { name: 'Grid', desc: 'Time × groups' },
+  cards: { name: 'Cards', desc: 'Group agendas' },
+  phases: { name: 'Phases', desc: 'Phase sequence' },
 };
 
 // File-supplied theme values are untrusted (they bypass event/group
@@ -10251,7 +10449,7 @@ const BandLayout = (() => {
  * Bands deliberately keeps its approved renderer, styles and fitting policy.
  */
 const AlternateViews = (() => {
-  const policy = Object.freeze({ detail: 9, name: 10.5, roster: 9.5, title: 11.5, clearance: 4 });
+  const policy = Object.freeze({ detail: 9, name: 10.5, compactName: 9.5, roster: 9.5, title: 11.5, clearance: 4 });
   const ordered = events => events.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
   const time = event => event.startTime + '–' + event.endTime;
 
@@ -10311,29 +10509,16 @@ const AlternateViews = (() => {
   function record(event, data, options) {
     const opts = options || {}, main = data.overlaps.has(event.id), group = data.groups[event.groupId];
     // The group is an attendance field, never a substitute for individual names.
-    const audience = group && !(main && group.name === data.primaryLabel) && !(event.attendees?.trim() && /^specific (people|personnel)$/i.test(group.name.trim())) ? group.name : '';
+    const audience = group && opts.groupLabel !== group.name && !(main && group.name === data.primaryLabel) && !(event.attendees?.trim() && /^specific (people|personnel)$/i.test(group.name.trim())) ? group.name : '';
     const meta = event.location || event.poc ? '<div class="av-logistics">' +
       (event.location ? '<div class="av-location">' + esc(event.location) + '</div>' : '') +
       (event.poc ? '<div class="av-poc">POC: ' + esc(event.poc) + '</div>' : '') + '</div>' : '';
-    if (opts.table) return tableRecord(event, data, opts, main, audience, meta);
     return '<article class="av-event ' + (main ? 'av-main' : 'av-concurrent') + (event.emphasized ? ' av-emphasized' : '') + '" data-event-id="' + esc(event.id) + '"' +
       (opts.interactive ? ' tabindex="0" aria-label="' + esc(event.title + ', ' + time(event) + '. Select to edit.') + '"' : '') + '>' +
-      '<div class="av-event-heading"><h3>' + (!main ? badge(event, data.numbers.get(event.id), false) : '') + esc(event.title) + (main && audience ? '<small class="av-main-audience">' + esc(audience) + '</small>' : '') + '</h3>' + (main || opts.table ? meta : '') + '<span class="av-time">' + esc(time(event)) + '</span></div>' +
+      '<div class="av-event-heading"><span class="av-time">' + esc(time(event)) + '</span><h3>' + (!main ? badge(event, data.numbers.get(event.id), false) : '') + esc(event.title) + (main && audience ? '<small class="av-main-audience">' + esc(audience) + '</small>' : '') + '</h3>' + (main ? meta : '') + '</div>' +
       '<div class="av-event-content">' + (!main && audience ? '<div class="av-audience">' + esc(audience) + '</div>' : '') + personnel(event) +
-      (!main && !opts.table ? meta : '') +
+      (!main ? meta : '') +
       (event.description ? '<p class="av-description">' + esc(event.description) + '</p>' : '') + (main ? references(event, data, opts.interactive) : '') + flights(event) + '</div></article>';
-  }
-
-  function tableRecord(event, data, opts, main, audience, meta) {
-    const parsed = parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text');
-    const roster = parsed.entries.length >= 8;
-    return '<article class="av-event av-table-record ' + (main ? 'av-main' : 'av-concurrent') + (event.emphasized ? ' av-emphasized' : '') + (roster ? ' av-table-roster' : '') +
-      '" data-event-id="' + esc(event.id) + '"' + (opts.interactive ? ' tabindex="0" aria-label="' + esc(event.title + ', ' + time(event) + '. Select to edit.') + '"' : '') + '>' +
-      '<span class="av-time">' + esc(time(event)) + '</span><div class="av-table-identity"><h3>' +
-      (main ? '' : badge(event, data.numbers.get(event.id), false)) + esc(event.title) + '</h3>' +
-      (audience ? '<div class="av-audience">' + esc(audience) + '</div>' : '') + (!roster ? personnel(event) : '') + '</div>' +
-      '<div class="av-table-details">' + meta + '</div>' + (roster ? personnel(event) : '') +
-      (event.description || (data.overlaps.get(event.id) || []).length ? '<div class="av-table-support">' + (event.description ? '<p class="av-description">' + esc(event.description) + '</p>' : '') + (main ? references(event, data, opts.interactive) : '') + '</div>' : '') + flights(event) + '</article>';
   }
 
   function flow(events, data, opts, className) {
@@ -10341,30 +10526,11 @@ const AlternateViews = (() => {
       events.slice().sort((a, b) => data.numbers.get(a.id) - data.numbers.get(b.id)).map(event => record(event, data, opts)).join('') + '</div>';
   }
 
-  const primaryHeading = data => 'Main schedule' + (data.primaryLabel ? '<small>' + esc(data.primaryLabel) + '</small>' : '');
-
-  function cards(day, options) {
-    const data = model(day);
-    return '<div class="av-cards' + (data.mains.length && data.concurrent.length > 3 ? ' av-cards-columns' : '') + '">' + (data.mains.length || !data.concurrent.length ? '<section class="av-main-section"><h2 class="av-section-heading av-primary-heading">' + primaryHeading(data) + '</h2><div class="av-main-list">' +
-      (data.mains.length ? data.mains.map(event => record(event, data, options)).join('') : '<p class="av-empty">No main events scheduled.</p>') + '</div></section>' : '') +
-      (data.concurrent.length ? '<section class="av-concurrent-section"><h2 class="av-section-heading' + (!data.mains.length ? ' av-primary-heading' : '') + '">Concurrent events</h2>' + flow(data.concurrent, data, options) + '</section>' : '') + '</div>';
-  }
-
-  function grid(day, options) {
-    const data = model(day);
-    return '<div class="av-grid"><h2 class="av-section-heading av-primary-heading">' +
-      (!data.mains.length && data.concurrent.length ? 'Concurrent events' : data.concurrent.length ? 'Main schedule &amp; concurrent events' + (data.primaryLabel ? '<small>Main: ' + esc(data.primaryLabel) + '</small>' : '') : primaryHeading(data)) + '</h2>' +
-      '<div class="av-grid-head"><span>Time</span><span>Event / personnel</span><span>Location / POC</span></div>' +
-      '<div class="av-grid-flow">' + (data.events.length ? data.events.map(event => record(event, data, { ...options, table: true })).join('') : '<p class="av-empty">No events scheduled.</p>') + '</div></div>';
-  }
-
-  function phases(day, options) {
-    const data = model(day), phases = buildPhaseGroups(day.events || [], Store.getGroups())
-      .sort((a, b) => a.sortEvent.startTime.localeCompare(b.sortEvent.startTime) || Number(!!b.event) - Number(!!a.event));
-    return '<div class="av-phases"><h2 class="av-section-heading av-primary-heading">' + (data.mains.length || !data.concurrent.length ? primaryHeading(data) : 'Concurrent events') + '</h2><div class="av-phase-columns">' + (phases.length ? phases.map(phase =>
-      '<section class="av-phase' + (phase.event ? '' : ' av-independent') + (phase.tasks.length > 2 || phase.event?.flightActivities?.length || phase.tasks.some(task => parsePersonnelInput(task.event.attendees || '', task.event.attendeeFormat || 'text').entries.length >= 8) ? ' av-phase-wide' : '') + '" aria-label="' + (phase.event ? esc(phase.event.title) : 'Concurrent events') + '">' +
-      (phase.event ? record(phase.event, data, options) : '<h4 class="av-independent-label">Concurrent events</h4>') +
-      (phase.tasks.length ? flow(phase.tasks.map(task => task.event), data, options) : '') + '</section>').join('') : '<p class="av-empty">No events scheduled.</p>') + '</div></div>';
+  function lanes(data) {
+    const resolved = resolveLaneEvents(data.concurrent, Store.getGroups());
+    const active = [...Store.getGroups(), UNASSIGNED_LANE_GROUP];
+    return active.map(group => ({ ...group, events: resolved.filter(event => event.groupId === group.id) }))
+      .filter(group => group.events.length);
   }
 
   function header(day, interactive) {
@@ -10397,12 +10563,12 @@ const AlternateViews = (() => {
     if (paper) colors = { ...colors, bg: '#ffffff', text: '#20262c', textSecondary: '#39424b', textMuted: '#525962', accent: paper.colors[0], surface: paper.colors[2], border: paper.colors[5] };
     const palette = Object.entries(colors).map(([key, value]) => '--sch-' + key.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase()) + ':' + value).join(';');
     const index = Store.getDays().findIndex(item => item.id === day.id) + 1;
-    const body = { cards, grid, phases }[skin] || cards;
+    const body = { cards: renderDayBody_cards, grid: renderDayBody_grid, phases: renderDayBody_phases }[skin] || renderDayBody_cards;
     return '<section class="alternate-sheet av-' + skin + '-sheet" data-fit="true" data-mode="' + (opts.printMode === 'readable' ? 'readable' : 'fit') +
       '" style="--av-notes-height:' + settings.notesHeight + 'pt;--av-heading-ink:' + getContrastingTextColor(colors.accent) + ';' + palette + '">' +
       '<div class="av-print-error"><strong>Schedule not ready to print.</strong><p>This day exceeds the readable one-page limits. Review the content or select Readable pages. No partial schedule is printed.</p></div>' +
       header(day, opts.interactive) + (opts.handout ? '<p class="av-handout">' + esc(opts.handout) + '</p>' : '') +
-      '<div class="av-body">' + body(day, opts) + '</div>' + notes(day, opts.interactive) +
+      '<div class="av-body">' + body(day.id, day, opts) + '</div>' + notes(day, opts.interactive) +
       '<footer class="av-footer"><span>' + (Store.getFooter().poc ? 'Schedule POC: ' + esc(Store.getFooter().poc) : '') + '</span><span>Day ' + index + ' of ' + Store.getDays().length + '</span></footer></section>';
   }
 
@@ -10418,7 +10584,7 @@ const AlternateViews = (() => {
     let best = Infinity, split = 1, width = 50;
     // Measure both widths once per candidate, then find the best whole-record
     // split using prefix sums. This avoids moving every record for every split.
-    for (const candidate of [50, 45, 55, 40, 60]) {
+    for (const candidate of [50, 45, 55, 40, 60, 35, 65]) {
       flow.style.gridTemplateColumns = candidate + 'fr ' + (100 - candidate) + 'fr';
       left.replaceChildren(...records);
       const leftHeights = records.map(node => node.getBoundingClientRect().height);
@@ -10436,20 +10602,12 @@ const AlternateViews = (() => {
     left.replaceChildren(...records.slice(0, split)); right.replaceChildren(...records.slice(split));
   }
 
-  function arrangePhases(container) {
-    const phases = Array.from(container.querySelectorAll('.av-phase'));
-    if (!phases.length) return;
-    container.replaceChildren();
-    let segment = null;
-    phases.forEach(phase => {
-      if (phase.classList.contains('av-phase-wide')) {
-        container.appendChild(phase); segment = null;
-      } else {
-        if (!segment) { segment = document.createElement('div'); segment.className = 'av-phase-segment'; container.appendChild(segment); }
-        segment.appendChild(phase);
-      }
-    });
-    container.querySelectorAll('.av-phase-segment').forEach(segment => arrange(segment, segment.children.length > 1 ? 2 : 1, '.av-phase'));
+  function compactFlow(flow) {
+    arrange(flow, 1);
+    const single = flow.getBoundingClientRect().height;
+    if (Number(flow.dataset.flowCount) < 2) return;
+    arrange(flow, 2);
+    if (flow.getBoundingClientRect().height >= single) arrange(flow, 1);
   }
 
   function geometry(sheet) {
@@ -10474,54 +10632,18 @@ const AlternateViews = (() => {
     sheet.style.setProperty('--av-note-size', '9.5pt');
     if (sheet.querySelector('.av-note-columns').getBoundingClientRect().bottom > sheet.querySelector('.av-notes').getBoundingClientRect().bottom) sheet.style.setProperty('--av-note-size', '9pt');
     const flows = Array.from(sheet.querySelectorAll('.av-flow'));
-    const phaseColumns = sheet.querySelector('.av-phase-columns');
-    const cardColumns = sheet.querySelector('.av-cards-columns') || (sheet.querySelector('.av-cards .av-main') && sheet.querySelectorAll('.av-cards .av-concurrent').length > 3 ? sheet.querySelector('.av-cards') : null);
-    const gridFlow = sheet.querySelector('.av-grid-flow');
-    const set = (scale, gap) => {
+    const layout = sheet.classList.contains('av-cards-sheet') ? layoutDayBody_cards
+      : sheet.classList.contains('av-grid-sheet') ? layoutDayBody_grid : layoutDayBody_phases;
+    const set = (scale, gap, dense = false) => {
       sheet.style.setProperty('--av-scale', String(scale)); sheet.style.setProperty('--av-gap', gap + 'pt');
-      flows.forEach(flow => arrange(flow, cardColumns || (phaseColumns && !flow.closest('.av-phase-wide')) || Number(flow.dataset.flowCount) <= 1 ? 1 : 2));
-      if (phaseColumns) {
-        const hasConcurrent = !!sheet.querySelector('.av-concurrent');
-        sheet.classList.add('av-phases-continuous');
-        flows.forEach(flow => arrange(flow, 1));
-        arrange(phaseColumns, hasConcurrent ? 2 : 1, '.av-phase');
-        const continuousHeight = phaseColumns.getBoundingClientRect().height;
-        sheet.classList.remove('av-phases-continuous');
-        flows.forEach(flow => arrange(flow, flow.closest('.av-phase-wide') && Number(flow.dataset.flowCount) > 1 ? 2 : 1));
-        phaseColumns.dataset.columns = '1'; phaseColumns.style.removeProperty('grid-template-columns');
-        arrangePhases(phaseColumns);
-        if (!hasConcurrent || continuousHeight <= phaseColumns.getBoundingClientRect().height) {
-          sheet.classList.add('av-phases-continuous');
-          flows.forEach(flow => arrange(flow, 1));
-          arrange(phaseColumns, hasConcurrent ? 2 : 1, '.av-phase');
-        }
-      }
-      if (gridFlow) {
-        const columns = gridFlow.querySelectorAll('.av-event').length > 10 ? 2 : 1;
-        sheet.dataset.tableColumns = String(columns); arrange(gridFlow, columns);
-      }
-      if (cardColumns) {
-        cardColumns.classList.add('av-cards-columns');
-        let best = Infinity, chosen = 45;
-        for (const width of [45, 40, 35]) {
-          cardColumns.style.gridTemplateColumns = width + '% minmax(0,1fr)';
-          const height = cardColumns.getBoundingClientRect().height;
-          if (height < best) { best = height; chosen = width; }
-        }
-        cardColumns.style.gridTemplateColumns = chosen + '% minmax(0,1fr)';
-        const besideHeight = cardColumns.getBoundingClientRect().height;
-        cardColumns.classList.remove('av-cards-columns'); cardColumns.style.removeProperty('grid-template-columns');
-        flows.forEach(flow => arrange(flow, Number(flow.dataset.flowCount) > 1 ? 2 : 1));
-        if (besideHeight < cardColumns.getBoundingClientRect().height) {
-          cardColumns.classList.add('av-cards-columns'); cardColumns.style.gridTemplateColumns = chosen + '% minmax(0,1fr)';
-          flows.forEach(flow => arrange(flow, 1));
-        }
-      }
+      sheet.classList.toggle('av-compact', scale <= .95);
+      sheet.classList.toggle('av-dense', dense);
+      layout(sheet);
     };
     let result;
     // Reduce spacing before text. The final preset still respects every floor.
-    for (const [scale, gap] of [[1.08, 5], [1, 5], [1, 3], [1, 1.5], [.95, 1.5], [.9, 1.5], [.85, 1], [.8, .5]]) {
-      set(scale, gap); result = geometry(sheet);
+    for (const [scale, gap, dense] of [[1.08, 5], [1, 5], [1, 3], [1, 1.5], [.95, 1.5], [.9, 1.5], [.85, 1], [.8, .5], [.95, 1.5, true], [.9, 1, true], [.85, .75, true], [.8, .5, true], [.75, .5, true]]) {
+      set(scale, gap, dense); result = geometry(sheet);
       if (result.fits) break;
     }
     if (result.fits) {
@@ -10537,14 +10659,12 @@ const AlternateViews = (() => {
         // type. An overlong record may span pages; its text is never clipped.
         set(1, 4); sheet.classList.add('av-natural'); sheet.dataset.fit = 'true';
         flows.forEach(flow => arrange(flow, 1));
-        if (phaseColumns) arrange(phaseColumns, 1, '.av-phase');
-        if (gridFlow) { sheet.dataset.tableColumns = '1'; arrange(gridFlow, 1); }
       } else sheet.classList.add('av-overflow');
     }
     return { ...result, fits: sheet.dataset.fit === 'true', natural: sheet.classList.contains('av-natural') };
   }
 
-  return { policy, model, record, personnel, flights, cards, grid, phases, page, fit, geometry };
+  return { policy, model, record, personnel, flights, flow, lanes, arrange, compactFlow, page, fit, geometry };
 })();
 
 </script>
@@ -10560,26 +10680,152 @@ function renderDayBody_band(dayId, dayOverride, options) {
 
 </script>
   <script>
-/* Grid view entry point. Shared record and paper policy: alternate-views.js. */
+/* Time × groups matrix. Full shared events span the group columns. Records
+ * occur only at their start; full intervals replace duplicated continuations. */
 function renderDayBody_grid(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
-  return day ? AlternateViews.grid(day, options) : '';
+  if (!day) return '';
+  const data = AlternateViews.model(day), groups = AlternateViews.lanes(data);
+  const slots = [...new Set(data.events.map(event => event.startTime))];
+  const columns = Math.max(1, groups.length);
+  const rows = slots.flatMap(slot => {
+    const mains = data.mains.filter(event => event.startTime === slot).map(event => ({ slot, main: event }));
+    return mains.concat(data.concurrent.some(event => event.startTime === slot) ? [{ slot }] : []);
+  });
+  const coveredUntil = new Map();
+  const markup = rows.map((row, index) => {
+    if (row.main) return '<tr class="av-matrix-main"><th scope="row">' + esc(row.slot) + '</th><td colspan="' + columns + '">' + AlternateViews.record(row.main, data, options) + '</td></tr>';
+    return '<tr class="av-matrix-assignments" data-start="' + esc(row.slot) + '"><th scope="row">' + esc(row.slot) + '</th>' + groups.map(group => {
+      if ((coveredUntil.get(group.id) || 0) > index) return '';
+      const events = group.events.filter(event => event.startTime === row.slot);
+      let next = index + 1;
+      // Join later blank cells only while every event in this cell continues.
+      // Never cross a shared banner or obscure a new assignment in this group.
+      if (events.length) while (next < rows.length && !rows[next].main &&
+        events.every(event => event.endTime > rows[next].slot) &&
+        !group.events.some(event => event.startTime === rows[next].slot)) next++;
+      coveredUntil.set(group.id, next);
+      return '<td data-lane-group="' + esc(group.id) + '" rowspan="' + (next - index) + '">' +
+        AlternateViews.flow(events, data, { ...options, groupLabel: group.name }, 'av-cell-events') + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  return '<div class="av-grid"><table class="av-matrix"><caption>Time × groups' +
+    (data.primaryLabel ? '<small>Main schedule: ' + esc(data.primaryLabel) + '</small>' : '') + '</caption>' +
+    '<colgroup><col class="av-clock-column">' + Array.from({ length: columns }, () => '<col class="av-lane-column">').join('') + '</colgroup>' +
+    '<thead><tr><th scope="col">Starts</th>' + (groups.length ? groups.map(group => '<th scope="col" data-lane-group="' + esc(group.id) + '" style="--av-group-color:' + esc(group.color) + '">' + esc(group.name) + '</th>').join('') : '<th scope="col">Main schedule</th>') + '</tr></thead><tbody>' +
+    (slots.length ? markup : '<tr><td colspan="' + (columns + 1) + '"><p class="av-empty">No events scheduled.</p></td></tr>') + '</tbody></table></div>';
+}
+
+function layoutDayBody_grid(sheet) {
+  const table = sheet.querySelector('.av-matrix'), columns = Array.from(table.querySelectorAll('.av-lane-column'));
+  // Keep each group in a fixed column, but let a detail-heavy audience use
+  // more width. Never turn the matrix into a flowing list to satisfy Fit.
+  columns.forEach(column => column.style.removeProperty('width'));
+  const arrange = () => {
+    table.querySelectorAll('.av-cell-events').forEach(flow => {
+      if (flow.getBoundingClientRect().width * .75 > 300) AlternateViews.compactFlow(flow);
+      else AlternateViews.arrange(flow, 1);
+    });
+  };
+  if (columns.length === 2) {
+    let best = Infinity, width = 50;
+    const available = table.getBoundingClientRect().width - 35 / .75;
+    for (const candidate of [50, 60, 40, 70, 30, 80, 20, 65, 75]) {
+      columns[0].style.width = available * candidate / 100 + 'px'; columns[1].style.width = available * (100 - candidate) / 100 + 'px';
+      arrange();
+      const height = table.getBoundingClientRect().height;
+      if (height < best) { best = height; width = candidate; }
+    }
+    columns[0].style.width = available * width / 100 + 'px'; columns[1].style.width = available * (100 - width) / 100 + 'px';
+  }
+  arrange();
 }
 
 </script>
   <script>
-/* Cards view entry point. Shared record and paper policy: alternate-views.js. */
+/* Group agendas beneath a shared timeline. Group membership is the organizing
+ * axis; fitting may change panel widths, never move events between groups. */
 function renderDayBody_cards(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
-  return day ? AlternateViews.cards(day, options) : '';
+  if (!day) return '';
+  const data = AlternateViews.model(day), groups = AlternateViews.lanes(data);
+  return '<div class="av-cards"><section class="av-shared"><h2 class="av-section-heading av-primary-heading">Main schedule' +
+    (data.primaryLabel ? '<small>' + esc(data.primaryLabel) + '</small>' : '') + '</h2><div class="av-shared-timeline">' +
+    (data.mains.length ? data.mains.map(event => AlternateViews.record(event, data, options)).join('') : '<p class="av-empty">No main events scheduled.</p>') + '</div></section>' +
+    (groups.length ? '<div class="av-group-panels">' + groups.map(group => '<section class="av-group-panel" data-lane-group="' + esc(group.id) + '">' +
+      '<h2 class="av-group-heading" style="--av-group-color:' + esc(group.color) + '">' + esc(group.name) + '</h2>' +
+      AlternateViews.flow(group.events, data, { ...options, groupLabel: group.name }) + '</section>').join('') + '</div>' : '') + '</div>';
+}
+
+function layoutDayBody_cards(sheet) {
+  const timeline = sheet.querySelector('.av-shared-timeline');
+  const mains = Array.from(timeline.querySelectorAll('.av-main'));
+  let height = Infinity, sharedColumns = 1;
+  for (const count of [Math.min(3, Math.max(1, mains.length)), Math.min(2, Math.max(1, mains.length))]) {
+    timeline.style.setProperty('--av-shared-columns', count);
+    let position = 0;
+    mains.forEach((event, index) => {
+      const wide = !!event.querySelector('.av-flights') || (index === mains.length - 1 && position === 0);
+      event.classList.toggle('av-shared-wide', wide);
+      event.style.gridColumn = wide ? '1 / -1' : '';
+      position = wide ? 0 : (position + 1) % count;
+    });
+    const measured = timeline.getBoundingClientRect().height;
+    if (measured < height) { height = measured; sharedColumns = count; }
+  }
+  timeline.style.setProperty('--av-shared-columns', sharedColumns);
+  let position = 0;
+  mains.forEach((event, index) => {
+    const wide = !!event.querySelector('.av-flights') || (index === mains.length - 1 && position === 0);
+    event.classList.toggle('av-shared-wide', wide); event.style.gridColumn = wide ? '1 / -1' : '';
+    position = wide ? 0 : (position + 1) % sharedColumns;
+  });
+  const panels = sheet.querySelector('.av-group-panels');
+  if (!panels) return;
+  const groups = Array.from(panels.querySelectorAll('.av-group-panel'));
+  const heavy = groups.filter(group => group.querySelectorAll('.av-event').length > 4);
+  panels.dataset.columns = groups.length === 1 ? '1' : '2';
+  groups.forEach(group => group.classList.toggle('av-group-wide', groups.length === 1 || heavy.includes(group)));
+  groups.forEach(group => AlternateViews.arrange(group.querySelector('.av-flow'), group.classList.contains('av-group-wide') && group.querySelectorAll('.av-event').length > 3 ? 2 : 1));
+  panels.style.removeProperty('grid-template-columns');
+  if (groups.length === 2 && !heavy.length) {
+    let best = Infinity, width = 50;
+    for (const candidate of [50, 60, 40, 70, 30]) {
+      panels.style.gridTemplateColumns = candidate + 'fr ' + (100 - candidate) + 'fr';
+      const height = panels.getBoundingClientRect().height;
+      if (height < best) { best = height; width = candidate; }
+    }
+    panels.style.gridTemplateColumns = width + 'fr ' + (100 - width) + 'fr';
+  }
 }
 
 </script>
   <script>
-/* Phases view entry point. Shared record and paper policy: alternate-views.js. */
+/* A vertical sequence of named phases, with contained tasks nested beneath
+ * each phase. Spanning/gap assignments keep an explicit independent position. */
 function renderDayBody_phases(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
-  return day ? AlternateViews.phases(day, options) : '';
+  if (!day) return '';
+  const data = AlternateViews.model(day), phases = [];
+  buildPhaseGroups(day.events || [], Store.getGroups())
+    .sort((a, b) => a.sortEvent.startTime.localeCompare(b.sortEvent.startTime) || Number(!!b.event) - Number(!!a.event))
+    .forEach(phase => {
+      const previous = phases[phases.length - 1];
+      if (!phase.event && previous && !previous.event && previous.label === phase.label) previous.tasks.push(...phase.tasks);
+      else phases.push({ ...phase, tasks: phase.tasks.slice() });
+    });
+  return '<div class="av-phases"><h2 class="av-section-heading av-primary-heading">Phases' +
+    (data.primaryLabel ? '<small>Main schedule: ' + esc(data.primaryLabel) + '</small>' : '') +
+    (phases.some(phase => !phase.event) ? '<small class="av-phase-key">Dotted rail: independent tasks</small>' : '') + '</h2><ol class="av-phase-sequence" aria-label="Phase sequence">' +
+    (phases.length ? phases.map(phase => '<li class="av-phase' + (phase.event ? '' : ' av-independent') + '"' + (!phase.event ? ' aria-label="' + esc(phase.label) + '"' : '') + '>' +
+      (phase.event ? AlternateViews.record(phase.event, data, options) : '<h3 class="av-independent-label">' + esc(phase.label) + '</h3>') +
+      (phase.tasks.length ? AlternateViews.flow(phase.tasks.map(task => task.event), data, options) : '') + '</li>').join('') : '<li class="av-empty">No events scheduled.</li>') + '</ol></div>';
+}
+
+function layoutDayBody_phases(sheet) {
+  sheet.querySelectorAll('.av-phase .av-flow').forEach(flow => {
+    AlternateViews.compactFlow(flow);
+  });
 }
 
 </script>
@@ -10791,7 +11037,7 @@ function hideLibrary() {
   document.querySelector('.app-body').style.display = '';
   // Imports can render while the library hides the editor. Physical paper
   // fitting needs visible dimensions, so measure again after revealing it.
-  if (document.querySelector('.band-sheet')) renderActiveDay();
+  if (document.querySelector('.band-sheet, .alternate-sheet')) renderActiveDay();
   syncHelpEntryPoints();
 }
 
@@ -10980,7 +11226,10 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
-  sessionSave((typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) ? { skipDirty: true } : undefined);
+  _openedWorkbookFileName = sourceFileName;
+  if (hasScheduleWorkbookHandle()) markScheduleWorkbookSaved();
+  else markScheduleWorkbookOpened();
+  sessionSave({ skipDirty: true });
   toast('Opened ' + sourceFileName);
 }
 
@@ -11856,7 +12105,7 @@ function renderWorkbookSwitcher() {
   const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
   btn.hidden = false;
   label.textContent = entries.length === 1 ? '1 schedule' : entries.length + ' schedules';
-  btn.title = 'Schedules in this workbook';
+  btn.title = 'Manage schedules: open, copy onto new dates, or archive';
 }
 
 function getFilteredWorkbookEntries() {
@@ -11884,7 +12133,7 @@ function renderWorkbookModal() {
   let html = '<div class="workbook-head">'
     + '<div>'
     + '<h2 id="workbookModal-heading">Workbook Schedules</h2>'
-    + '<p class="workbook-desc">One .schedule file can hold years of drills. Search, open, or create the next one here.</p>'
+    + '<p class="workbook-desc">One workbook file holds multiple schedules. Open a schedule, start a blank one, or copy the current schedule onto new dates.</p>'
     + '</div>'
     + '<button class="modal-close-btn" id="workbookCloseBtn" aria-label="Close">&times;</button>'
     + '</div>'
@@ -12104,6 +12353,7 @@ function normalizePrintOptions(options) {
   return {
     dayIds: knownDays.filter(id => requestedDays.includes(id)),
     audienceId: Store.getGroup(opts.audienceId) ? opts.audienceId : '',
+    includeNamed: opts.includeNamed !== false,
     detail: opts.detail === 'overview' ? 'overview' : 'full',
     mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin !== 'bands' && opts.mode === 'readable' ? 'readable' : 'fit',
   };
@@ -12113,7 +12363,7 @@ function getPrintDays(options) {
   const opts = normalizePrintOptions(options);
   return Store.getDays().filter(day => opts.dayIds.includes(day.id)).map(day => ({
     ...day,
-    events: getAudienceHandoutEvents(day.events, Store.getGroups(), opts.audienceId)
+    events: getAudienceHandoutEvents(day.events, Store.getGroups(), opts.audienceId, opts)
       .map(evt => opts.detail === 'overview' ? { ...evt, description: '' } : { ...evt }),
     notes: (day.notes || []).map(note => ({ ...note })),
   }));
@@ -12215,26 +12465,39 @@ function openPrintReview() {
     html += '<label><input type="checkbox" name="printDay" value="' + esc(day.id) + '" checked> ' + esc(label) + '</label>';
   });
   html += '</fieldset><div class="print-review-fields">';
-  html += '<label for="printAudience">Audience</label><select id="printAudience"><option value="">Everyone</option>';
-  Store.getGroups().forEach(group => { html += '<option value="' + esc(group.id) + '">' + esc(group.name) + '</option>'; });
-  html += '</select><p class="print-review-hint">An audience handout includes primary audience events and breaks. Review named exceptions and day notes before sharing.</p>';
+  html += '<label for="printAudience">What to print</label><select id="printAudience"><option value="">Full schedule — all events and assignments</option>';
+  Store.getGroups().forEach(group => { html += '<option value="' + esc(group.id) + '">Group handout: ' + esc(group.name) + '</option>'; });
+  html += '</select><div id="printNamedOptions" hidden><label><input type="checkbox" id="printIncludeNamed" checked> Include named assignments without a group</label><p class="print-review-hint">We cannot infer which group a person belongs to. Keep these assignments unless you have reviewed them. Shared events and day reminders are included.</p></div>';
   html += '<label for="printDetail">Details</label><select id="printDetail"><option value="full">Full details</option><option value="overview">Overview — omit event notes</option></select>';
   html += '<label for="printMode">Page layout</label><select id="printMode">' + (banded
     ? '<option value="fit">Letter portrait — one day per page</option>'
     : '<option value="fit">Letter portrait — one day per page</option><option value="readable">Readable pages — allow more than one page per day</option>') + '</select></div>';
   html += '<div id="printReviewSummary" role="status" aria-live="polite"></div>';
+  html += '<div id="printOmissions" class="print-omissions" role="status" hidden></div>';
+  html += '<p class="print-review-hint">Schedule checks cover all events on the selected days, including any excluded from this handout.</p>';
   html += '<details class="print-review-checks"><summary id="printReviewCheckCount">Schedule checks</summary><ul id="printReviewIssues"></ul></details>';
   html += '<div class="modal-actions"><button type="button" class="btn" id="printReviewCancel">Cancel</button><button type="button" class="btn btn-primary" id="printReviewConfirm">Print</button></div>';
   modal.innerHTML = html;
   const readOptions = () => normalizePrintOptions({
     dayIds: Array.from(modal.querySelectorAll('[name="printDay"]:checked')).map(input => input.value),
     audienceId: modal.querySelector('#printAudience').value,
+    includeNamed: modal.querySelector('#printIncludeNamed').checked,
     detail: modal.querySelector('#printDetail').value,
     mode: modal.querySelector('#printMode').value,
   });
   const refresh = () => {
     const opts = readOptions();
     const fullDays = getPrintDays({ ...opts, detail: 'full' });
+    const sourceDays = Store.getDays().filter(day => opts.dayIds.includes(day.id));
+    const excluded = sourceDays.flatMap(day => {
+      const included = new Set(fullDays.find(item => item.id === day.id).events.map(event => event.id));
+      return day.events.filter(event => !included.has(event.id)).map(event => ({ day, event }));
+    });
+    modal.querySelector('#printNamedOptions').hidden = !opts.audienceId;
+    const omissions = modal.querySelector('#printOmissions');
+    omissions.hidden = !excluded.length;
+    omissions.innerHTML = excluded.length ? '<strong>' + excluded.length + ' event(s) excluded from this handout</strong><ul>' + excluded.map(({ day, event }) =>
+      '<li>' + esc((day.label || day.date) + ' · ' + event.startTime + '–' + event.endTime + ' · ' + event.title) + '</li>').join('') + '</ul>' : '';
     const events = fullDays.flatMap(day => day.events);
     const omitted = opts.detail === 'overview' ? events.filter(evt => evt.description).length : 0;
     const metrics = measurePrintPlan(opts);
@@ -12256,9 +12519,10 @@ function openPrintReview() {
     }
     summary += '<p class="print-review-hint">Check your browser’s print preview before sharing. Paper and printer settings can change pagination.</p>';
     modal.querySelector('#printReviewSummary').innerHTML = summary;
-    const issues = getScheduleReviewIssues(fullDays, Store.getGroups());
+    const issues = getScheduleReviewIssues(sourceDays, Store.getGroups());
     modal.querySelector('#printReviewCheckCount').textContent = issues.length ? issues.length + ' schedule check(s) to review' : 'No schedule checks flagged';
     modal.querySelector('#printReviewIssues').innerHTML = issues.map(issue => '<li>' + esc(issue.message) + '</li>').join('');
+    modal.querySelector('.print-review-checks').open = issues.length > 0;
     modal.querySelector('#printReviewConfirm').disabled = opts.dayIds.length === 0 || metrics.some(page => page.fits === false);
   };
   modal.querySelectorAll('input, select').forEach(input => input.addEventListener('change', refresh));
@@ -12631,7 +12895,7 @@ document.addEventListener('keydown', e => {
  *   #helpBtn           — help button (overflow)
  *   #overflowMenu      — overflow menu container
  *   #customizeBtn      — customize button
- *   #printBtn          — print button (overflow)
+ *   #printBtn          — print review button (toolbar)
  *   #daySheetBtn       — opens day event sheet modal
  *   #settingsModal     — settings modal overlay
  *   #dayEventSheetModal — day event sheet modal overlay
@@ -12684,7 +12948,7 @@ function renderInspector() {
   const panel = document.getElementById('inspectorPanel');
   if (!panel) return;
   clearDeleteTimer();
-  wireEditabilityGuard(panel, '#insp-close, .insp-day-header', renderInspector);
+  wireEditabilityGuard(panel, '#insp-close, .insp-day-header, [data-review-event]', renderInspector);
 
   if (_selection.type === 'event' && _selection.dayId && _selection.entityId) {
     renderEventInspector(panel, _selection.dayId, _selection.entityId);
@@ -12817,11 +13081,12 @@ function wireScheduleSetup(panel) {
 
 // ── Settings Modal ────────────────────────────────────────────────────────
 
-function openSettingsModal() {
+function openSettingsModal(tab) {
   if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
     toast('Read-only. Click Edit.');
     return;
   }
+  if (['basics', 'look', 'audiences', 'advanced'].includes(tab)) _settingsActiveTab = tab;
   const modal = document.getElementById('settingsModalContent');
   renderSettingsModal(modal);
   openModal('settingsModal');
@@ -12968,18 +13233,18 @@ function renderSettingsModal(modal) {
   html += '<div class="settings-section-title">Export</div>';
   html += '<div class="settings-export-row">';
   html += '<div class="settings-export-copy">';
-  html += '<div class="settings-export-label">Schedule File</div>';
-  html += '<div class="settings-export-hint">Portable full schedule file with theme, versions, and activity.</div>';
+  html += '<div class="settings-export-label">Complete workbook</div>';
+  html += '<div class="settings-export-hint">All schedules, appearance and saved versions in one .schedule file. Use this for backup or handoff. One person edits the shared file at a time.</div>';
   html += '</div>';
   html += '<button class="btn settings-export-btn" id="settings-save-schedule-file">Save .schedule</button>';
   html += '</div>';
-  html += '<div class="settings-export-row">';
+  html += '<details class="legacy-export"><summary>Legacy compatibility</summary><div class="settings-export-row">';
   html += '<div class="settings-export-copy">';
-  html += '<div class="settings-export-label">Manual File Export</div>';
-  html += '<div class="settings-export-hint">Backup only, or use it when auto-save is unavailable.</div>';
+  html += '<div class="settings-export-label">Current schedule only</div>';
+  html += '<div class="settings-export-hint">Legacy .js format. Excludes other schedules and saved versions. This is not a workbook backup.</div>';
   html += '</div>';
-  html += '<button class="btn settings-export-btn" id="settings-save-file">Manual Export</button>';
-  html += '</div>';
+  html += '<button class="btn settings-export-btn" id="settings-save-file">Export current schedule (.js)</button>';
+  html += '</div></details>';
   html += '</div>';
   html += '</section>';
   html += '</div>';
@@ -13193,16 +13458,9 @@ function wireSettingsModal(modal) {
   modal.querySelectorAll('.skin-option').forEach(function(opt) {
     opt.addEventListener('click', function() {
       const skin = opt.getAttribute('data-skin');
-      saveUndoState();
-      const fileData = getCurrentScheduleFileData();
-      if (fileData) {
-        if (!fileData.theme) fileData.theme = {};
-        fileData.theme.skin = skin;
-      }
-      sessionSave();
+      setScheduleView(skin);
       renderSettingsModal(modal);
       renderActiveDay();
-      toast('Layout: ' + (SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin));
     });
   });
 
@@ -13686,14 +13944,6 @@ function wireDayEventSheetModal(modal, dayId) {
       // Normalize only parseable text; preserve exact minutes and reject blanks.
       if (isUsableTimeEntry(input.value)) input.value = normalizeTime(input.value);
       const relatedTarget = e.relatedTarget;
-      const field = input.getAttribute('data-field');
-      const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
-      const startCandidate = startInput ? normalizeTime(startInput.value) : '';
-      const endCandidate = endInput ? normalizeTime(endInput.value) : '';
-      const stagePairedEndEdit = field === 'startTime'
-        && startCandidate
-        && endCandidate
-        && timeToMinutes(startCandidate) >= timeToMinutes(endCandidate);
       const isSameRowTimeInput = (target) => !!(
         target &&
         target !== input &&
@@ -13706,10 +13956,9 @@ function wireDayEventSheetModal(modal, dayId) {
         if (!modal.contains(input)) return;
         if (isSameRowTimeInput(document.activeElement)) return;
         commitDayEventSheetTimeRange(modal, dayId, eventId, {
-          focusInfo,
-          allowStartTimeStaging: stagePairedEndEdit
+          focusInfo
         });
-      }, stagePairedEndEdit ? 80 : 0);
+      }, 0); // Let the next control receive focus before rebuilding the worksheet.
     });
     input.addEventListener('keydown', (e) => {
       const fieldOrder = ['startTime', 'endTime', 'title', 'groupId', 'location'];
@@ -13880,15 +14129,20 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
   if (!evt) return;
 
   const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
-  if ((startInput && !isUsableTimeEntry(startInput.value)) || (endInput && !isUsableTimeEntry(endInput.value))) {
-    if (startInput) startInput.value = evt.startTime;
-    if (endInput) endInput.value = evt.endTime;
-    toast('Times use 24-hour HHMM, e.g. 0730.');
-    return;
+  const result = readEventTimeRange(startInput, endInput);
+  let feedback = modal.querySelector('#daySheetTimeFeedback');
+  if (!feedback) {
+    feedback = document.createElement('p'); feedback.id = 'daySheetTimeFeedback';
+    feedback.className = 'time-edit-feedback'; feedback.setAttribute('role', 'status'); feedback.hidden = true;
+    modal.querySelector('.day-sheet-table').before(feedback);
   }
-  const startTime = startInput ? normalizeTime(startInput.value) : evt.startTime;
-  const endTime = endInput ? normalizeTime(endInput.value) : evt.endTime;
-  const updates = { startTime, endTime };
+  if (result.error) {
+    startInput.value = evt.startTime; endInput.value = evt.endTime;
+    feedback.textContent = 'Time change not applied to ' + evt.title + '. ' + result.error + ' Kept ' + evt.startTime + '–' + evt.endTime + '.';
+    feedback.hidden = false; toast(feedback.textContent, 6500); return;
+  }
+  feedback.hidden = true;
+  const updates = result.updates, { startTime, endTime } = updates;
 
   if (startTime === evt.startTime && endTime === evt.endTime) {
     // Unchanged: skip the undo entry, the dirty write, the conflict toast and
@@ -13900,28 +14154,6 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
       const target = modal.querySelector('[data-event-id="' + focusInfo.eventId + '"][data-focus="' + focusInfo.field + '"]');
       if (target && target.focus) target.focus();
     }
-    return;
-  }
-
-  if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
-    if (options && options.allowStartTimeStaging && startTime !== evt.startTime && endTime === evt.endTime) {
-      if (startInput) startInput.value = startTime;
-      if (endInput) endInput.value = endTime;
-      setTimeout(() => {
-        const current = getDayEventSheetTimeInputs(modal, eventId);
-        const currentStart = current.startInput ? normalizeTime(current.startInput.value) : '';
-        const currentEnd = current.endInput ? normalizeTime(current.endInput.value) : '';
-        if (currentStart === startTime && currentEnd === endTime) {
-          commitDayEventSheetTimeRange(modal, dayId, eventId, {
-            focusInfo: options.focusInfo
-          });
-        }
-      }, 140);
-      return;
-    }
-    if (startInput) startInput.value = evt.startTime;
-    if (endInput) endInput.value = evt.endTime;
-    toast('End time must be after start time.');
     return;
   }
 
@@ -13945,32 +14177,31 @@ function renderEventInspector(panel, dayId, eventId) {
   const readOnly = typeof isCurrentScheduleEditable === 'function' ? !isCurrentScheduleEditable() : false;
   const textReadOnly = readOnly ? ' readonly' : '';
   const disabledAttr = readOnly ? ' disabled' : '';
-  let html = '<div class="insp-header"><h3 style="margin:0;">Event</h3><button class="insp-close" id="insp-close" title="Back to Setup">✕</button></div>';
+  let html = '<div class="insp-header"><h3 id="insp-event-identity">' + esc(evt.title) + '</h3><button class="insp-close" id="insp-close" title="Dates & hours" aria-label="Close event; return to dates and hours">✕</button></div>';
   html += readOnly ? '<div class="insp-readonly-note">Read-only. Click <strong>Edit</strong>.</div>'
     : '<p class="insp-hint insp-save-hint">Changes update the preview as you type.</p>';
 
   html += '<label for="insp-evt-title">Event title</label><input type="text" id="insp-evt-title" value="' + esc(evt.title) + '"' + textReadOnly + '>';
   html += '<div class="field-row"><div><label for="insp-evt-start">Start time</label><input type="text" id="insp-evt-start" value="' + esc(evt.startTime) + '" placeholder="0700" maxlength="5" class="time-input"' + textReadOnly + '></div>';
   html += '<div><label for="insp-evt-end">End time</label><input type="text" id="insp-evt-end" value="' + esc(evt.endTime) + '" placeholder="0800" maxlength="5" class="time-input"' + textReadOnly + '></div></div>';
-  html += '<fieldset class="event-placement"><legend>Schedule section</legend>';
-  [['main', 'Main schedule', 'A band in the day’s main sequence.'], ['concurrent', 'Concurrent event', 'A separate assignment, listed below the main bands.']].forEach(([value, label, hint]) => {
+  html += '<fieldset class="event-placement"><legend>Schedule section</legend><div class="placement-choices">';
+  [['main', 'Main schedule', 'The day’s main sequence.'], ['concurrent', 'Concurrent event', 'A separate assignment.']].forEach(([value, label, hint]) => {
     html += '<label class="placement-option"><input type="radio" name="event-placement" id="insp-placement-' + value + '" value="' + value + '"' + ((main ? 'main' : 'concurrent') === value ? ' checked' : '') + disabledAttr + '><span><strong>' + label + '</strong><small>' + hint + '</small></span></label>';
   });
-  html += '</fieldset>';
+  html += '</div></fieldset>';
 
-  html += '<section class="event-field-section"><h4>Who attends</h4><label for="insp-evt-group">Audience</label><select id="insp-evt-group"' + disabledAttr + '><option value="">Specific people / other (enter below)</option>';
+  html += '<section class="event-field-section"><div class="attendee-heading"><label for="insp-evt-group">Who attends</label><button class="insp-link" type="button" id="insp-manage-audiences"' + disabledAttr + '>Manage audiences</button></div><select id="insp-evt-group"' + disabledAttr + '><option value="">Specific people / other (enter below)</option>';
   groups.forEach(g => { html += '<option value="' + esc(g.id) + '"' + (g.id === evt.groupId ? ' selected' : '') + '>' + esc(g.name) + '</option>'; });
   html += '</select><details class="event-people"' + (showPeople ? ' open' : '') + '><summary>Specific people or attendance details</summary><label for="insp-evt-attendees">Names or attendance details' + (evt.groupId ? ' (optional)' : '') + '</label>';
-  html += '<p class="insp-hint" id="insp-people-hint">Leave blank if the whole audience attends. For a named assignment, enter everyone who must attend. Surnames or full names are both fine.</p>';
+  html += '<p class="insp-hint" id="insp-people-hint">' + (evt.groupId ? 'Leave blank for the whole audience, or enter the people assigned. ' : 'Enter everyone assigned to this event. ') + 'Surnames or full names are fine.</p>';
   html += '<textarea id="insp-evt-attendees" rows="2" aria-describedby="insp-people-hint" placeholder="Doe; Smith; Chan"' + textReadOnly + '>' + esc(evt.attendees) + '</textarea>';
-  html += renderAttendeeFormatting(evt, disabledAttr) + '</details></section>';
+  html += renderAttendeeFormatting(evt, disabledAttr) + '</details></section><div id="insp-assignment-review" aria-live="polite"></div>';
 
   html += '<section class="event-field-section"><h4>Where &amp; what to know</h4>';
   html += '<label for="insp-evt-loc">Location (optional)</label><input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '" placeholder="Building or room"' + textReadOnly + '>';
   html += '<label for="insp-evt-poc">Point of contact (optional)</label><input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '" placeholder="MSgt Doe"' + textReadOnly + '>';
   html += '<label for="insp-evt-desc">Event instructions (optional)</label><textarea id="insp-evt-desc" placeholder="What to bring, preparation, or reporting instructions"' + textReadOnly + '>' + esc(evt.description) + '</textarea></section>';
   html += renderBandEventFields(evt, readOnly);
-  html += '<div class="insp-toggle-section"><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (evt.isBreak ? ' checked' : '') + disabledAttr + '> This is a meal or break</label><p class="insp-hint">Keeps the selected schedule section. Use emphasis above to make it an anchor.</p></div>';
 
   const { mainBands } = classifyEvents(Store.getEvents(dayId), groups);
   const overlaps = mainBands.find(band => band.event.id === eventId)?.overlappingMain || [];
@@ -13982,6 +14213,7 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '<div class="insp-delete-zone"><button class="delete-btn" id="insp-evt-delete"' + disabledAttr + '>Delete Event</button></div>';
   panel.innerHTML = html;
   wireEventInspector(panel, dayId, eventId);
+  updateAssignmentReview(panel, dayId, eventId);
 }
 
 function wireEventInspector(panel, dayId, eventId) {
@@ -14000,6 +14232,8 @@ function wireEventInspector(panel, dayId, eventId) {
       Store.updateEvent(dayId, eventId, { [field]: val, ...(field === 'isBreak' ? { placement } : {}) });
       renderActiveDay();
       sessionSave();
+      if (field === 'title') panel.querySelector('#insp-event-identity').textContent = val || 'Untitled event';
+      if (['attendees', 'location', 'title'].includes(field)) updateAssignmentReview(panel, dayId, eventId);
       if (field === 'isBreak') {
         renderInspector();
         const next = panel.querySelector(selector);
@@ -14017,15 +14251,17 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit('#insp-evt-title', 'title');
   wireRequiredTextField(panel.querySelector('#insp-evt-title'), 'Untitled event', (value) => {
     Store.updateEvent(dayId, eventId, { title: value });
+    panel.querySelector('#insp-event-identity').textContent = value;
+    updateAssignmentReview(panel, dayId, eventId);
   }, 'Events need a title — restored the previous one.');
-  wireTimeInput(panel, '#insp-evt-start', 'startTime', dayId, eventId);
-  wireTimeInput(panel, '#insp-evt-end', 'endTime', dayId, eventId);
+  wireEventTimeRange(panel, dayId, eventId);
   autoCommit('#insp-evt-attendees', 'attendees');
   autoCommit('#insp-evt-desc', 'description');
   autoCommit('#insp-evt-loc', 'location');
   autoCommit('#insp-evt-poc', 'poc');
   autoCommit('#insp-evt-break', 'isBreak', true);
   wireBandEventFields(panel, dayId, eventId);
+  panel.querySelector('#insp-manage-audiences').onclick = () => openSettingsModal('audiences');
 
   panel.querySelectorAll('[name="event-placement"]').forEach(input => input.addEventListener('change', () => {
     saveUndoState();
@@ -14173,11 +14409,36 @@ function renderActiveDay() {
     // screen looking live — and browser-menu print would print it.
     const container = document.getElementById('scheduleContainer');
     if (container) {
-      container.innerHTML = '<div class="empty-state"><strong>No days yet.</strong> Click <strong>+ Day</strong> to start this schedule.</div>';
+      container.innerHTML = '<div class="empty-state"><strong>Start with the first day.</strong><p>Add a day, then set its date and hours.</p><button class="btn btn-primary" id="addFirstDayBtn">+ Add first day</button></div>';
+      container.querySelector('#addFirstDayBtn').onclick = () => document.getElementById('addDayBtn')?.click();
     }
   }
   renderDayTabs();
   syncPreviewSelection();
+  syncAuthoringControls();
+}
+
+function syncAuthoringControls() {
+  const theme = getScheduleTheme(getCurrentScheduleFileData()?.theme);
+  const view = document.getElementById('viewSelect');
+  if (view) view.value = theme.skin;
+  const editable = isCurrentScheduleEditable();
+  const day = Store.getDay(Store.getActiveDay());
+  document.getElementById('addEventBtn')?.classList.toggle('btn-primary', !!day && !day.events.length);
+  [['undoBtn', !_undoStack.length || !editable], ['redoBtn', !_redoStack.length || !editable], ['printBtn', !Store.getDays().length]].forEach(([id, disabled]) => {
+    const button = document.getElementById(id); if (button) button.disabled = disabled;
+  });
+  if (view) view.disabled = !editable;
+}
+
+function setScheduleView(skin) {
+  if (!SKIN_NAMES.includes(skin) || !isCurrentScheduleEditable()) return;
+  const file = getCurrentScheduleFileData();
+  if (!file || getScheduleTheme(file.theme).skin === skin) return;
+  saveUndoState();
+  file.theme = { ...file.theme, skin };
+  sessionSave(); renderActiveDay();
+  toast('View: ' + SKIN_LABELS[skin].name);
 }
 
 function renderDayTabs() {
@@ -14236,6 +14497,17 @@ function wireToolbar() {
 
   const daySheetBtn = document.getElementById('daySheetBtn');
   if (daySheetBtn) daySheetBtn.onclick = () => openDayEventSheetModal();
+  const dates = document.getElementById('daySettingsBtn');
+  if (dates) dates.onclick = () => {
+    _expandedDayId = Store.getActiveDay(); selectEntity(null);
+    document.querySelector('.insp-day-date')?.focus();
+  };
+  const view = document.getElementById('viewSelect');
+  if (view) view.onchange = () => setScheduleView(view.value);
+  [['undoBtn', undo], ['redoBtn', redo]].forEach(([id, action]) => {
+    const button = document.getElementById(id);
+    if (button) button.onclick = () => { document.getElementById('overflowMenu').classList.remove('open'); action(); syncAuthoringControls(); };
+  });
 
   // Overflow menu toggle
   const overflowBtn = document.getElementById('overflowBtn');
@@ -14442,6 +14714,22 @@ function checkTimeConflict(dayId, eventId) {
   }
 }
 
+function updateAssignmentReview(panel, dayId, eventId) {
+  const target = panel.querySelector('#insp-assignment-review');
+  const day = Store.getDay(dayId);
+  if (!target || !day) return;
+  const issues = getScheduleReviewIssues([day], Store.getGroups()).filter(issue => issue.type === 'overlap' && issue.eventIds.includes(eventId));
+  target.hidden = !issues.length;
+  target.innerHTML = issues.length ? '<strong>Review overlapping assignments</strong>' + issues.map(issue => {
+    const related = day.events.filter(event => event.id !== eventId && issue.eventIds.includes(event.id));
+    return '<p>' + esc(issue.message) + '</p>' + related.map(event => '<button class="insp-link" type="button" data-review-event="' + esc(event.id) + '">Open ' + esc(event.title) + ' · ' + esc(event.startTime + '–' + event.endTime) + '</button>').join('');
+  }).join('') : '';
+  target.querySelectorAll('[data-review-event]').forEach(button => button.onclick = () => {
+    selectEntity('event', dayId, button.dataset.reviewEvent);
+    panel.querySelector('#insp-evt-title')?.focus();
+  });
+}
+
 function eventTimeRangeIsValid(dayId, eventId, updates) {
   const evt = Store.getEvents(dayId).find(item => item.id === eventId);
   if (!evt) return true;
@@ -14476,40 +14764,59 @@ function isUsableTimeEntry(raw) {
   return !!value && isValidScheduleTime(normalizeTime(value));
 }
 
-function wireTimeInput(panel, selector, field, dayId, eventId) {
-  const input = panel.querySelector(selector);
-  if (!input) return;
-  input.addEventListener('blur', () => {
-    if (!isUsableTimeEntry(input.value)) {
-      const evt = Store.getEvents(dayId).find(item => item.id === eventId);
-      if (evt) input.value = evt[field];
-      toast('Times use 24-hour HHMM, e.g. 0730.');
-      return;
-    }
-    const normalized = normalizeTime(input.value);
-    const updates = { [field]: normalized };
+function readEventTimeRange(startInput, endInput) {
+  if (!isUsableTimeEntry(startInput.value) || !isUsableTimeEntry(endInput.value)) {
+    return { error: 'Use 24-hour times, such as 0730 or 07:30.' };
+  }
+  const updates = { startTime: normalizeTime(startInput.value), endTime: normalizeTime(endInput.value) };
+  return timeToMinutes(updates.endTime) > timeToMinutes(updates.startTime)
+    ? { updates } : { error: 'End time must be after start time.' };
+}
+
+// Start and End form one edit. Moving between them must not validate against
+// the old partner value. Commit synchronously on leaving the pair, before a
+// Save/Print click can capture the previous range. No timing guesses required.
+function wireEventTimeRange(panel, dayId, eventId) {
+  const start = panel.querySelector('#insp-evt-start'), end = panel.querySelector('#insp-evt-end');
+  const feedback = document.createElement('p');
+  feedback.id = 'insp-time-feedback'; feedback.className = 'time-edit-feedback';
+  feedback.setAttribute('role', 'status'); feedback.hidden = true;
+  start.closest('.field-row').after(feedback);
+  const commit = () => {
     const current = Store.getEvents(dayId).find(item => item.id === eventId);
-    if (current && current[field] === normalized) {
-      // Nothing changed: no undo entry, no dirty write, no conflict toast.
-      input.value = normalized;
+    if (!current) return;
+    const result = readEventTimeRange(start, end);
+    if (result.error) {
+      start.value = current.startTime; end.value = current.endTime;
+      feedback.textContent = 'Time change not applied. ' + result.error + ' Kept ' + current.startTime + '–' + current.endTime + '.';
+      feedback.hidden = false;
+      toast(feedback.textContent, 6500);
       return;
     }
-    if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
-      if (current) input.value = current[field];
-      toast('End time must be after start time.');
-      return;
-    }
-    input.value = normalized;
-    saveUndoState();
-    Store.updateEvent(dayId, eventId, updates);
-    renderActiveDay();
-    sessionSave();
+    feedback.hidden = true;
+    start.value = result.updates.startTime; end.value = result.updates.endTime;
+    if (current.startTime === start.value && current.endTime === end.value) return;
+    saveUndoState(); Store.updateEvent(dayId, eventId, result.updates);
+    renderActiveDay(); sessionSave();
     updateFlightEditorTimeContext(panel, Store.getEvents(dayId).find(event => event.id === eventId));
     checkTimeConflict(dayId, eventId);
-  });
-  // Also commit on Enter key
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    updateAssignmentReview(panel, dayId, eventId);
+  };
+  [start, end].forEach(input => {
+    input.setAttribute('aria-describedby', feedback.id);
+    input.addEventListener('input', () => { feedback.hidden = true; });
+    input.addEventListener('blur', event => {
+      const withinPair = event.relatedTarget === start || event.relatedTarget === end;
+      if (!withinPair || !readEventTimeRange(start, end).error) commit();
+    });
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); commit(); }
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation();
+        const current = Store.getEvents(dayId).find(item => item.id === eventId);
+        if (current) { start.value = current.startTime; end.value = current.endTime; feedback.hidden = true; }
+      }
+    });
   });
 }
 
@@ -14567,13 +14874,16 @@ function updateFlightEditorTimeContext(panel, event) {
 function renderBandEventFields(event, readOnly) {
   const disabled = readOnly ? ' disabled' : '';
   const activities = event.flightActivities || [];
-  let html = '<div class="insp-toggle-section"><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-emphasis"' +
-    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize this event</label><p class="insp-hint">Makes a main band an anchor, or highlights a concurrent event. Does not change who attends or where it is listed.</p></div>';
+  let html = '<fieldset class="event-options"><legend>Event options</legend><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-emphasis"' +
+    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize this event</label>';
+  html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (event.isBreak ? ' checked' : '') + disabled + '> This is a meal or break</label><p class="insp-hint">Emphasis highlights the event. Meals and breaks skip conflict checks; shared main breaks stay in group handouts.</p></fieldset>';
   html += '<details class="flight-editor"' + (activities.length ? ' open' : '') + '><summary>Flight activities' + (activities.length ? ' (' + activities.length + ')' : '') + '</summary>';
-  html += '<p class="insp-context-note">Add one activity per flight, or several timed activities for each flight. New activities start with this event’s full time window.</p>';
+  const names = [...new Set([...Store.getGroups().map(group => group.name), ...Store.getDays().flatMap(day => day.events.flatMap(item => (item.flightActivities || []).map(activity => activity.flight)))].filter(Boolean))];
+  html += '<datalist id="flight-name-options">' + names.map(name => '<option value="' + esc(name) + '"></option>').join('') + '</datalist>';
+  html += '<p class="insp-context-note">Add one activity per flight, or several timed activities. Use a group name or type a flight; this does not create an audience. New activities use the event’s times.</p>';
   activities.forEach((activity, index) => {
     html += '<details class="flight-editor-item" data-flight-index="' + index + '"' + (index === activities.length - 1 ? ' open' : '') + '><summary>' + esc(flightEditorSummary(activity, event)) + '</summary>';
-    const field = (key, label, time) => '<label for="flight-' + index + '-' + key + '">' + label + '</label><input id="flight-' + index + '-' + key + '" data-flight-field="' + key + '" type="text" value="' + esc(activity[key]) + '"' + (time ? ' maxlength="5"' : '') + disabled + '>';
+    const field = (key, label, time) => '<label for="flight-' + index + '-' + key + '">' + label + '</label><input id="flight-' + index + '-' + key + '" data-flight-field="' + key + '" type="text" value="' + esc(activity[key]) + '"' + (time ? ' maxlength="5"' : '') + (key === 'flight' ? ' list="flight-name-options"' : '') + disabled + '>';
     html += field('flight', 'Flight') + field('title', 'Activity');
     html += '<div class="field-row"><div>' + field('startTime', 'Start', true) + '</div><div>' + field('endTime', 'End', true) + '</div></div>';
     html += '<button class="btn flight-use-event-time" type="button" data-flight-full-time="' + index + '"' + disabled + '>Use event time (' + esc(event.startTime + '–' + event.endTime) + ')</button>';
@@ -14596,7 +14906,7 @@ function wireBandEventFields(panel, dayId, eventId) {
   };
   panel.querySelector('#insp-evt-attendees')?.addEventListener('input', preview);
   panel.querySelector('#insp-attendee-format')?.addEventListener('change', event => {
-    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview();
+    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview(); updateAssignmentReview(panel, dayId, eventId);
   });
   panel.querySelector('#insp-evt-emphasis')?.addEventListener('change', event => update({ emphasized: event.target.checked }));
   panel.querySelector('#insp-add-flight')?.addEventListener('click', () => {

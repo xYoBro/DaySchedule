@@ -209,7 +209,7 @@ describe('inspector — settings and event details copy', () => {
     const panel = document.getElementById('inspectorPanel');
     const text = panel.textContent;
 
-    assert(text.includes('Audience'));
+    assert(text.includes('Who attends'));
     assert(text.includes('Names or attendance details'));
     assert(text.includes('Main schedule'));
     assert(text.includes('Concurrent event'));
@@ -239,7 +239,7 @@ describe('inspector — settings and event details copy', () => {
     const stored = Store.getEvents(day.id).find(item => item.id === evt.id);
     assert.equal(stored.endTime, '1100');
     assert.equal(endInput.value, '1100');
-    assert.equal(document.getElementById('toast').textContent, 'End time must be after start time.');
+    assert(document.getElementById('toast').textContent.includes('Time change not applied. End time must be after start time.'));
   });
 
   it('explains shared-time exceptions in event details', () => {

@@ -31,6 +31,7 @@
 
 let _fileHandle = null;
 let _scheduleWorkbookHandle = null;
+let _openedWorkbookFileName = '';
 let _scheduleWorkbookData = null;
 let _saveInProgress = false;
 let _workbookSavePromise = null;
@@ -438,7 +439,7 @@ function hasScheduleWorkbookHandle() {
 }
 
 function getScheduleWorkbookFileName() {
-  return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : '';
+  return _scheduleWorkbookHandle && _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : _openedWorkbookFileName;
 }
 
 // Detach the current workbook file. Must run before "Start fresh" — otherwise
@@ -446,6 +447,7 @@ function getScheduleWorkbookFileName() {
 // silently overwrites that file.
 function clearScheduleWorkbookTarget() {
   _scheduleWorkbookHandle = null;
+  _openedWorkbookFileName = '';
   _scheduleWorkbookData = null;
   _workbookId = null;
   _workbookBaseline = null;
@@ -1331,9 +1333,8 @@ async function saveDataFile() {
         const writable = await _fileHandle.createWritable();
         await writable.write(content);
         await writable.close();
-        sessionSave();
-        if (typeof notifyManualDraftExport === 'function') notifyManualDraftExport();
-        toast('Saved to ' + _fileHandle.name);
+        sessionSave({ skipDirty: true });
+        toast('Exported current schedule only to ' + _fileHandle.name + '. Other schedules and versions are not included.', 6500);
         return true;
       } catch (err) {
         if (err.name === 'AbortError') return false;
@@ -1343,9 +1344,8 @@ async function saveDataFile() {
 
     const blob = new Blob([content], { type: 'text/javascript' });
     triggerDownload(blob, 'scheduledata.js');
-    sessionSave();
-    if (typeof notifyManualDraftExport === 'function') notifyManualDraftExport();
-    toast('Downloaded scheduledata.js. Move it into shared app/data.');
+    sessionSave({ skipDirty: true });
+    toast('Downloaded current schedule only as scheduledata.js. Use Save .schedule for a complete workbook backup.', 6500);
     return true;
   } finally {
     _saveInProgress = false;

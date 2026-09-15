@@ -1,4 +1,48 @@
 describe('UI Harness — alternate-view interactions', () => {
+  it('fits alternate paper after the library reveals the editor', () => {
+    ['cards', 'grid', 'phases'].forEach(skin => {
+      resetUiHarnessState(); const seeded = seedUiSchedule({ skin });
+      Store.getDay(seeded.day1.id).events = [];
+      Store.addEvent(seeded.day1.id, { title: 'Opening brief', startTime: '0800', endTime: '0900', placement: 'main' });
+      document.querySelector('.app-body').style.display = 'none';
+      renderActiveDay(); hideLibrary();
+      assert.equal(document.querySelector('.alternate-sheet').dataset.fit, 'true', 'Fit after revealing ' + skin);
+    });
+  });
+  it('preserves group comparison, group agendas and a vertical phase sequence', () => {
+    ['cards', 'grid', 'phases'].forEach(skin => {
+      resetUiHarnessState(); const seeded = seedUiSchedule({ skin });
+      Store.getDay(seeded.day1.id).events = [];
+      const groups = Store.getGroups().filter(group => group.scope !== 'main');
+      const a = groups[0]; assert(a, 'Fixture has a limited audience');
+      const b = Store.addGroup({ name: 'Second team', scope: 'limited', color: '#556677' });
+      const main = Store.addEvent(seeded.day1.id, { title: 'Field exercise', startTime: '0900', endTime: '1200', placement: 'main' });
+      const first = Store.addEvent(seeded.day1.id, { title: 'Radio check', startTime: '0900', endTime: '1000', groupId: a.id, placement: 'concurrent' });
+      const second = Store.addEvent(seeded.day1.id, { title: 'Route planning', startTime: '0900', endTime: '1000', groupId: b.id, placement: 'concurrent' });
+      Store.addEvent(seeded.day1.id, { title: 'Next team task', startTime: '0930', endTime: '1000', groupId: b.id, placement: 'concurrent' });
+      renderActiveDay();
+      if (skin === 'cards') {
+        const panels = document.querySelectorAll('.av-group-panel'); assert.equal(panels.length, 2);
+        assert(panels[0].querySelector('[data-event-id="' + first.id + '"]'));
+        assert(panels[1].querySelector('[data-event-id="' + second.id + '"]'));
+        assert(document.querySelector('.av-shared-timeline [data-event-id="' + main.id + '"]'));
+      } else if (skin === 'grid') {
+        const table = document.querySelector('table.av-matrix'); assert(table);
+        assert(table.querySelector('thead').textContent.includes(a.name));
+        assert(table.querySelector('thead').textContent.includes(b.name));
+        const row = table.querySelector('[data-event-id="' + first.id + '"]').closest('tr');
+        assert(row.querySelector('[data-event-id="' + second.id + '"]'), 'Same start time is aligned across groups');
+        assert(row.querySelector('[data-lane-group="' + a.id + '"] [data-event-id="' + first.id + '"]'));
+        assert.equal(row.querySelector('[data-lane-group="' + a.id + '"]').rowSpan, 2, 'Continuing work joins later empty cells without repeating its record');
+      } else {
+        const sequence = document.querySelector('ol.av-phase-sequence'); assert(sequence);
+        assert.equal(getComputedStyle(sequence).display, 'block');
+        const phase = sequence.querySelector('[data-event-id="' + main.id + '"]').closest('.av-phase');
+        assert(phase.querySelector('[data-event-id="' + first.id + '"]'));
+        assert(phase.querySelector('[data-event-id="' + second.id + '"]'));
+      }
+    });
+  });
   it('selects events by keyboard and follows matching concurrent references', () => {
     ['cards', 'grid', 'phases'].forEach(skin => {
       resetUiHarnessState(); const seeded = seedUiSchedule({ skin });

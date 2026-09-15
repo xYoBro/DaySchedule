@@ -1,5 +1,17 @@
 # Reliability release lessons
 
+- Fitting a matrix includes its clock cells: fixed vertical padding can make
+  every short row taller than its content. Measure cell padding, forced field
+  breaks and repeated headings before lowering type. Preserve the organizing
+  axis of each view and every roster entry.
+- Keep a consistent short-event treatment across columns. Width-dependent
+  rearrangement can fit while moving names and contacts to surprising places.
+  Let a compact format recover space, then choose the largest type that fits.
+- Clear floating references before nested flight details. Otherwise a float
+  can narrow the first flight row while later rows use the full width, moving
+  location/POC columns. Assert both float clearance and aligned logistics;
+  inspect the actual PDF even when content, bounds and page-count tests pass.
+
 - Evaluate external critiques against confirmed user decisions. Full time
   overlap is the correct meaning of the “Concurrent events” references; keep
   one complete record and repeat only its shared number beside overlapping
@@ -149,3 +161,32 @@
   than by JSON key order.
 - Parent-time edits must refresh flight controls and flag out-of-range activities,
   even when their entry details are collapsed.
+# View identity and control affordances
+
+- Improving a view must preserve the task it supports. Grid compares time ×
+  groups; Cards collects each group's agenda below a shared timeline; Phases
+  communicates a vertical sequence with nested tasks. Do not convert them all to
+  main/concurrent lists, even when geometry and content tests pass. Test those
+  structures with a multi-group exercise, not only a Bands-oriented roster.
+- Static instructions must not look like buttons. Verify the apparent controls
+  in the user's screenshot, and distinguish a read-only print comparison from
+  the working application when opening review material.
+
+- Physical fitting must run after a hidden editor is revealed for every paper
+  renderer. A test that immediately rerenders after opening can mask an initial
+  false overflow warning; assert the first visible frame before any extra render.
+
+## Bounded authoring and handoff — 2026-09-15
+
+- Start and End are one range edit. Preserve an incomplete draft when moving
+  between them, commit valid pairs before Save/Print captures state, and show
+  the retained range next to the fields when rejecting a change.
+- A save-status update during blur must preserve the button receiving the next
+  click. Replacing that DOM node can swallow Save even when the data committed.
+- A current-schedule export cannot acknowledge a full-workbook save. Label its
+  exclusions and keep its status separate from the workbook's dirty revision.
+- Print group membership cannot be inferred from surnames. Retain ungrouped
+  named assignments by default, list exclusions, and review conflicts against
+  the unfiltered selected days.
+- Capture visual theme changes with animations disabled or after transitions
+  settle; an intermediate background can falsely suggest unreadable contrast.

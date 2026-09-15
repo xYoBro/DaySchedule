@@ -195,6 +195,7 @@ describe('UI Harness — app shell', () => {
     let saveCalls = 0;
     window.saveScheduleWorkbookFile = async () => {
       saveCalls += 1;
+      markScheduleWorkbookDownloaded();
       return true;
     };
 
@@ -207,9 +208,9 @@ describe('UI Harness — app shell', () => {
 
     assert.equal(saveCalls, 1, 'schedule save action should stay available from the persistent warning');
     assert.equal(document.getElementById('editorAccessBar').hidden, false, 'warning should remain visible after export');
-    assert(document.getElementById('editorAccessText').textContent.includes('Saved as a'));
+    assert(document.getElementById('editorAccessText').textContent.includes('Workbook downloaded'));
     assert(document.getElementById('editorAccessText').textContent.includes('.schedule'));
-    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Save Again');
+    assert.equal(document.getElementById('editorManualExportBtn').textContent, 'Download .schedule');
   });
 
   it('library presents only the simple workbook actions when folder access is unavailable', async () => {
@@ -1185,7 +1186,7 @@ describe('Quick Edit — invalid end time is reverted', () => {
     assert.equal(stored.endTime, '1400', 'invalid end must not be committed');
     const refreshed = document.querySelector('#dayEventSheetModalContent .day-sheet-time-input[data-event-id="' + evt.id + '"][data-field="endTime"]');
     assert.equal(refreshed.value, '1400', 'input must show the restored value');
-    assert.equal(document.getElementById('toast').textContent, 'End time must be after start time.');
+    assert(document.getElementById('toast').textContent.includes('End time must be after start time.'));
     closeDayEventSheetModal();
   });
 
@@ -1203,7 +1204,7 @@ describe('Quick Edit — invalid end time is reverted', () => {
     startInput.dispatchEvent(new Event('blur'));
     await wait(60);
     assert.equal(Store.getEvents(day.id).find(e => e.id === evt.id).startTime, '0800', 'blank must not become 0000');
-    assert.equal(document.getElementById('toast').textContent, 'Times use 24-hour HHMM, e.g. 0730.');
+    assert(document.getElementById('toast').textContent.includes('Use 24-hour times'));
     closeDayEventSheetModal();
   });
 });

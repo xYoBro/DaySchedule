@@ -10,6 +10,8 @@ const engines = require(process.env.DAYSCHEDULE_PLAYWRIGHT_MODULE || 'playwright
 const fixture = require('./fixtures/bands-approved.json');
 const { specimen } = require('./fixtures/bands-random.cjs');
 const root = path.resolve(__dirname, '../..');
+const skins = (process.env.DAYSCHEDULE_VIEW_SKINS || 'cards,grid,phases').split(',');
+assert(skins.length && skins.every(skin => ['cards', 'grid', 'phases'].includes(skin)), 'Known view selection');
 const output = path.join(root, process.env.DAYSCHEDULE_VIEW_OUTPUT || 'output/playwright/alternate-views');
 const compact = value => value.replace(/\s/g, '');
 const server = http.createServer((request, response) => {
@@ -20,6 +22,7 @@ const server = http.createServer((request, response) => {
 });
 
 function workbook(sample) {
+  if (sample === 'groups') return structuredClone(require('./fixtures/alternate-groups.json'));
   const book = structuredClone(fixture);
   book.activeScheduleId = ['main', 'normal', 'forty', 'stress'].includes(sample) ? sample : 'normal';
   const schedule = book.schedules.find(schedule => schedule.id === book.activeScheduleId);
@@ -88,7 +91,21 @@ async function checkPage(page, book, skin, sample, generatedNames) {
           check(Number(number?.textContent) === concurrent.indexOf(event) + 1, event.id + ': number');
         }
       });
+      if (skin === 'cards') {
+        const panels = Array.from(sheet.querySelectorAll('.av-group-panel'));
+        concurrent.forEach(event => {
+          const panel = panels.find(node => node.querySelector('[data-event-id="' + event.id + '"]'));
+          check(!!panel && panel.dataset.laneGroup === (map[event.groupId] ? event.groupId : ''), 'Card group membership ' + event.id);
+        });
+      }
+      if (skin === 'phases') check(getComputedStyle(sheet.querySelector('.av-phase-sequence')).display === 'block', 'Vertical phase progression');
       if (skin === 'grid') {
+        check(!!sheet.querySelector('table.av-matrix'), 'Time × groups table');
+        concurrent.forEach(event => {
+          const record = records.find(node => node.dataset.eventId === event.id), cell = record?.closest('td');
+          check(cell?.dataset.laneGroup === (map[event.groupId] ? event.groupId : ''), 'Grid group column ' + event.id);
+          check(record?.closest('tr').dataset.start === event.startTime, 'Grid start row ' + event.id);
+        });
         const times = records.map(node => day.events.find(event => event.id === node.dataset.eventId).startTime);
         check(JSON.stringify(times) === JSON.stringify(times.slice().sort()), 'Grid start order');
       }
@@ -98,18 +115,28 @@ async function checkPage(page, book, skin, sample, generatedNames) {
       });
       const size = node => parseFloat(getComputedStyle(node).fontSize) * .75;
       sheet.querySelectorAll('.av-description,.av-location,.av-poc,.av-note,.av-flight,.av-audience').forEach(node => check(size(node) >= 8.99, 'Detail font floor ' + node.className));
-      sheet.querySelectorAll('.av-people').forEach(node => check(size(node) >= (node.classList.contains('av-roster') ? 9.49 : 10.49), 'Name font floor'));
+      sheet.querySelectorAll('.av-people').forEach(node => check(size(node) >= (node.classList.contains('av-roster') || sheet.classList.contains('av-dense') ? 9.49 : 10.49), 'Name font floor'));
       sheet.querySelectorAll('.av-main h3').forEach(node => check(size(node) >= 11.49, 'Main title floor'));
       check(!sheet.querySelector('h3 img'), 'Unescaped title');
       const fit = sheet.dataset.fit === 'true', rect = sheet.getBoundingClientRect();
+      const fitted = sheet.style.cssText;
+      AlternateViews.fit(sheet);
+      check(sheet.dataset.fit === String(fit) && sheet.style.cssText === fitted, 'Stable repeat fitting');
       check(Math.abs(rect.width * .75 - 612) < .1, 'Letter width');
       if (fit) {
         check(Math.abs(rect.height * .75 - 792) < .1, 'Letter height');
         check(AlternateViews.geometry(sheet).fits, 'Actual geometry');
+        sheet.querySelectorAll('.av-event:has(.av-flights)').forEach(record => {
+          const flights = record.querySelector('.av-flights'), refs = record.querySelector('.av-references');
+          if (refs) check(flights.getBoundingClientRect().top >= refs.getBoundingClientRect().bottom - 1, 'Flight details clear references');
+          const columns = Array.from(flights.querySelectorAll('.av-flight:not(.av-varied-logistics)>.av-flight-meta'), node => node.getBoundingClientRect().left);
+          check(columns.length < 2 || Math.max(...columns) - Math.min(...columns) < 1, 'Aligned flight logistics');
+        });
       } else check(document.querySelector('.alternate-fit-notice').textContent.length > 0, 'Missing overflow notice');
       const logo = sheet.querySelector('.av-logo');
       if (logo) { const box = logo.getBoundingClientRect(); check(Math.abs(box.width * .75 - 72) < .1 && Math.abs(box.height * .75 - 72) < .1, 'Logo size'); }
       check(sheet.querySelector('.av-notes .av-section-heading').textContent === 'Notes & Reminders', 'Notes heading');
+      if (fit) check(Math.abs(sheet.querySelector('.av-notes').getBoundingClientRect().height * .75 - getBandSettings(getCurrentScheduleFileData().theme).notesHeight) < .1, 'Reserved reminder space');
       return { day: day.id, fit, scale: Number(sheet.style.getPropertyValue('--av-scale')), events: records.length, errors };
     });
     // Active-day navigation is allowed; event data and workbook settings aren't.
@@ -128,11 +155,12 @@ async function main() {
         const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
         const errors = []; page.on('pageerror', error => errors.push(error.message));
         await page.goto('http://127.0.0.1:' + server.address().port + '/app/index.html'); await page.evaluate(() => appReady);
-        for (const skin of ['cards', 'grid', 'phases']) for (const sample of ['empty', 'light', 'main', 'concurrent', 'normal', 'forty', 'stress', 'edges']) {
+        const samples = process.env.DAYSCHEDULE_VIEW_RANDOM_ONLY === '1' ? [] : ['groups', 'empty', 'light', 'main', 'concurrent', 'normal', 'forty', 'stress', 'edges'];
+        for (const skin of skins) for (const sample of samples) {
           const book = workbook(sample), result = await checkPage(page, book, skin, sample); result.engine = engine;
           assert(result.unchanged, 'Renderer changed saved data'); result.days.forEach(day => assert.deepEqual(day.errors, [], engine + '/' + skin + '/' + sample + '/' + day.day));
-          if (['empty', 'light', 'main', 'concurrent', 'normal', 'forty'].includes(sample)) result.days.forEach(day => assert(day.fit, engine + '/' + skin + '/' + sample + '/' + day.day + ' should fit'));
-          if (['normal', 'forty', 'light'].includes(sample)) await page.locator('.alternate-sheet').screenshot({ path: path.join(output, engine + '-' + skin + '-' + sample + '.png') });
+          result.days.forEach(day => assert(day.fit, engine + '/' + skin + '/' + sample + '/' + day.day + ' should fit'));
+          if (['groups', 'normal', 'forty', 'light'].includes(sample)) await page.locator('.alternate-sheet').screenshot({ path: path.join(output, engine + '-' + skin + '-' + sample + '.png') });
           if (engine === 'chromium') {
             const mode = result.days.every(day => day.fit) ? 'fit' : 'readable';
             await page.evaluate(async mode => { window.print = () => window.dispatchEvent(new Event('beforeprint')); await printSchedule({ mode }); }, mode);
@@ -161,14 +189,14 @@ async function main() {
         }
         for (let seed = 1; seed <= Number(process.env.DAYSCHEDULE_VIEW_SEEDS || 16); seed++) {
           const generated = specimen(seed);
-          for (const skin of ['cards', 'grid', 'phases']) {
+          for (const skin of skins) {
             const result = await checkPage(page, generated.workbook, skin, 'seed-' + seed, generated.expected);
             result.days.forEach(day => assert.deepEqual(day.errors, [], engine + '/' + skin + '/seed-' + seed + '/' + day.day));
             assert(result.unchanged); results.push({ ...result, engine, random: true, seed, profile: generated.profile });
           }
         }
         console.log(engine, 'seeded layout cases passed');
-        for (const skin of ['cards', 'grid', 'phases']) {
+        for (const skin of skins) {
           await checkPage(page, workbook('normal'), skin, 'mobile');
           await page.setViewportSize({ width: 390, height: 844 });
           assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
@@ -181,8 +209,8 @@ async function main() {
           await page.screenshot({ path: path.join(output, engine + '-' + skin + '-mobile.png') });
           await page.locator('#insp-close').click();
           await page.setViewportSize({ width: 1440, height: 1200 });
-          const book = workbook('forty');
-          book.schedules.find(schedule => schedule.id === 'forty').theme.palette = 'mono';
+          const book = workbook('groups');
+          book.schedules.find(schedule => schedule.id === 'groups').theme.palette = 'mono';
           const mono = await checkPage(page, book, skin, 'mono');
           mono.days.forEach(day => assert(day.fit && !day.errors.length));
           if (engine === 'chromium') {

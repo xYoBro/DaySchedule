@@ -35,7 +35,7 @@ function renderWorkbookSwitcher() {
   const entries = typeof getScheduleWorkbookEntries === 'function' ? getScheduleWorkbookEntries() : [];
   btn.hidden = false;
   label.textContent = entries.length === 1 ? '1 schedule' : entries.length + ' schedules';
-  btn.title = 'Schedules in this workbook';
+  btn.title = 'Manage schedules: open, copy onto new dates, or archive';
 }
 
 function getFilteredWorkbookEntries() {
@@ -63,7 +63,7 @@ function renderWorkbookModal() {
   let html = '<div class="workbook-head">'
     + '<div>'
     + '<h2 id="workbookModal-heading">Workbook Schedules</h2>'
-    + '<p class="workbook-desc">One .schedule file can hold years of drills. Search, open, or create the next one here.</p>'
+    + '<p class="workbook-desc">One workbook file holds multiple schedules. Open a schedule, start a blank one, or copy the current schedule onto new dates.</p>'
     + '</div>'
     + '<button class="modal-close-btn" id="workbookCloseBtn" aria-label="Close">&times;</button>'
     + '</div>'

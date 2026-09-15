@@ -6,7 +6,10 @@ The existing toolbar, day tabs, inspector, Quick Edit and Customize remain.
 
 ## Enter an event
 
-1. Choose **+ Event**. Enter the title and start/end times.
+1. Choose **+ Event**. Enter the title and start/end times. You can edit Start
+   and End in either order. An incomplete range stays visible while moving
+   between the fields; leaving an invalid pair restores the previous times
+   with an explanation beside the fields.
 2. Choose **Main schedule** or **Concurrent event** under **Schedule section**.
    New events start on the main schedule. Changing the audience, meal/break
    flag or emphasis keeps the selected section.
@@ -19,7 +22,14 @@ The existing toolbar, day tabs, inspector, Quick Edit and Customize remain.
 
 On an ordinary main event, the optional name controls start collapsed. They
 open for a concurrent assignment, specific audience or existing attendee text.
-**All event options** in Quick Edit opens this same full editor.
+**All event options** in Quick Edit opens this same full editor. The event
+title stays visible while scrolling the desktop inspector. **Dates & hours**
+returns to day setup; **More → Undo last edit / Redo** recovers changes.
+
+Use **Manage audiences** beside **Who attends** to add or adjust groups.
+Overlapping assignments with matching name entries show a linked review notice
+as you edit. Confirm identity: matching surnames can belong to different people.
+An intentional main/concurrent exception does not produce that warning.
 
 ## Names
 
@@ -65,10 +75,36 @@ expands for editing; add another entry for another activity by the same flight.
 changes, out-of-range activities show **Review times**, including in collapsed
 entry headings. The app does not silently shift custom flight times.
 
+The Flight field suggests existing audience and flight names but accepts free
+text. Typing a flight name does not create or change an audience.
+
 Audience roles are **Shared** and **Specific**. They describe the audience;
 they do not move events when edited. They retain their existing role in the
 main heading and other views. The user's established attendance rule remains:
 people assigned to a concurrent event attend it during its stated interval.
+
+## Print and hand off
+
+**View** on the toolbar switches layouts. **Customize** retains headings,
+colors, audiences, the optional logo and reminder space. **Print** is on the
+toolbar; **More** contains Undo/Redo and Saved versions.
+
+Print defaults to **Full schedule — all events and assignments**. A **Group
+handout** includes shared main events, that group's events and reminders.
+**Include named assignments without a group** starts checked because the app
+cannot infer a person's group from their name. The dialog lists every excluded
+event and still checks all events on the selected days for conflicts.
+
+Use **Save .schedule** for a complete workbook, including sibling schedules
+and saved versions. **Opened** means an imported file has no edits yet.
+**Unsaved** means work needs saving. In a browser without file autosave,
+**Download .schedule** creates a new copy; **Downloaded** confirms the browser
+sent it to Downloads. Send the newest copy and agree on one editor at a time.
+With a writable file, use **Save Now** and wait for **Saved**.
+
+**Customize → Export → Legacy compatibility** exports only the current
+schedule as `.js`. It excludes other schedules and saved versions and does not
+mark unsaved workbook edits as saved. Use it only for legacy compatibility.
 
 ## Compatibility
 
@@ -127,3 +163,29 @@ releases, native dialogs, physical printing and live SharePoint deployment
 remain separate checks. A short observed exercise with unfamiliar authors
 should test whether they can create an ordinary event, a named exception and
 a flight block without coaching; this pass does not claim that result.
+
+## Authoring and handoff verification — 2026-09-15
+
+The bounded readiness pass addresses paired time edits, full-workbook handoff,
+explicit print filtering, contextual audience management, linked assignment
+checks, and compact desktop/mobile controls. It leaves the approved Bands
+renderer, fitter, palettes and paper stylesheet unchanged.
+
+The regression journey is `support/tests/test-authoring-handoff.cjs`. It starts
+with an empty workbook, creates two schedules, preserves a named version,
+prints a 40-surname assignment with flight activities and six reminders, then
+saves and reopens the full workbook. It also checks explicit print exclusions,
+legacy export status, Undo/Redo, 44px toolbar targets and keyboard modal return.
+Set `DAYSCHEDULE_TEST_DIST=1` to exercise the built app and
+`DAYSCHEDULE_HANDOFF_OUTPUT` to choose an evidence directory. Browser and
+Playwright module options are the same as the earlier authoring test.
+
+Build `2026-09-15+7bb7924abd8d` passes 696 unit/persistence/UI harness checks
+across Chromium and WebKit, both authoring journeys, full-workbook save/reopen,
+PDF regressions and nine build checks. The release-file journey retains two
+schedules and a named version, with no page errors. Both distributions pass
+local-file and embedded-host checks. Evidence is under
+`output/playwright/authoring-handoff/`.
+
+This is automated regression and expert visual review. It does not replace
+observing a new author or testing the real deployment's file/print dialogs.

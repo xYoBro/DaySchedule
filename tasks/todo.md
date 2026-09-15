@@ -1,5 +1,50 @@
 # Reliability release
 
+## Fit the restored alternate views — 2026-09-15
+
+- [x] Measure dense days and reclaim padding, unnecessary line breaks and empty
+  cells within Cards' group panels, Grid's matrix and Phases' vertical sequence.
+- [x] Fit the ordinary 15-name and exceptional 40-surname examples, plus the
+  15-event stress sample, on one portrait Letter sheet per day. Keep complete
+  records, half-inch margins, logo size and reserved reminders; bound type size.
+- [x] Require these cases in both browser engines, inspect actual PDFs and
+  verify all names, fields, physical bounds, interactions and unchanged Bands.
+- [x] Rebuild the working comparison and update capacity evidence/documentation.
+
+Scope: only alternate renderers/styles/fitting and their verification. Baseline
+680 browser checks and 306 alternate day renders passed on the restored views;
+current dense overflows are the target regression. No whole-page scaling or
+conversion back to band-like lists. No changes to the approved Bands files.
+
+Completed: all fixed examples fit in Chromium and WebKit. Verified 306 day
+renders, 680 browser harness checks, 57 physical Letter PDF pages, 42 portable
+review images, working-app controls, explicit oversized-print behavior and
+unchanged Bands hashes/eight-page proof. Built both distributions and passed
+packaging/embed checks. Changes remain local on the review branch.
+
+## Restore alternate-view identities — 2026-09-15
+
+- [x] Reproduce the home-screen false-button affordance; make instructions look
+  like instructions and verify real Open/Create/Save behavior still works.
+- [x] Restore Grid's time × group matrix, Cards' shared timeline and group
+  panels, and Phases' vertical progression, using original commits/specs.
+- [x] Add a multi-group exercise and identity regressions, preserving complete
+  names, fields, overlap references, flight detail and bounded paper fitting.
+- [x] Inspect old/new views, dense and light examples, actual PDFs and interactive
+  preview; rebuild and verify both browser engines and unchanged Bands.
+
+Correction to c0e25f7: fitting and content checks passed but failed to test the
+views' original purposes. Scope stays on alternate views plus the pictured
+misleading affordance. Never replace group comparison with a chronological list
+just to make it fit. Original reference commits: c0cf60e (Grid), efe0854 (Cards),
+5b071fb (Phases); mature baseline 3adfd88. Shared paper furniture is acceptable;
+the content organization must remain distinct. Overflow is preferable to
+silently abandoning the selected view's information structure.
+
+Capacity follow-up: the initial restoration overflowed dense examples. The
+subsequent fitting pass above resolves the 15-name, 40-surname with flights and
+15-concurrent-event specimens while retaining all three organizing axes.
+
 ## Refine Cards, Grid and Phases — 2026-09-14
 
 - [x] Commit and push the completed authoring work (3adfd88 on main).
@@ -494,3 +539,40 @@ live browser, main-only/40-person samples fit, but padding is 20 pt, Sunday's
 roster moves from reference 7 to the end, and timed-flight text falls to 7.395 pt.
 Risks: corrected margins reduce available space; enforce truthful capacity
 reporting instead of hiding fields or scaling the whole page.
+
+## Bounded authoring and handoff pass — 2026-09-15
+
+User authorized all readiness-audit fixes. Preserve the approved Bands renderer,
+its CSS/palettes, all alternate-view work already in this checkout, and the
+familiar editor shell. No deployment or new automation.
+
+- [x] Fix paired event time editing in inspector and Quick Edit; visible invalid
+  range feedback; regression coverage for both edit orders and exact minutes.
+- [x] Make full-workbook save the normal handoff; isolate and accurately label
+  current-schedule legacy export; distinguish opened/downloaded/dirty states.
+- [x] Make group print handouts explicit, retain ungrouped named assignments by
+  default, show omitted events, and retain whole-schedule conflict context.
+- [x] Compact event entry; sticky event identity; concise options, contextual
+  audience management, flight name suggestions, live linked assignment checks.
+- [x] Add discoverable date management, View, Print and Undo/Redo; improve empty
+  states and responsive chrome; retain usable controls and existing shortcuts.
+- [x] Update in-app Help, README and authoring guidance; add meaningful scenario
+  regressions and complete fresh-author, handoff, PDF, browser and build checks.
+
+Files: app shell/editor/storage/persistence/print/data helpers and shared editor
+CSS; tests and authoring docs. No schema change or new runtime dependency.
+Risks: focus/blur event ordering, legacy save/recovery semantics, print filters,
+small-screen toolbar capacity, read-only sessions and unchanged Bands output.
+
+Completed in build `2026-09-15+7bb7924abd8d`. Chromium/WebKit pass 696
+harness checks and real-app workflows, both authoring journeys, the final
+release-file handoff with two schedules and a saved version, and embed/file
+startup checks. Nine build checks pass. Eight Bands PDF pages plus the complete
+40-name authored specimen pass; 114 alternate day renders and 57 PDF pages pass.
+The authored page has half-inch margins and 12pt roster names. Frozen Bands
+hashes are unchanged. Desktop, mobile, dark and PDF output were inspected.
+
+No commit, push or deployment. Human novice observation and actual deployment
+file/print dialogs remain external validation. Detailed review and trial goals:
+`output/playwright/authoring-handoff/REVIEW.md`.
+Suggested commit: `fix(authoring): clarify time edits, printing and workbook handoff`.

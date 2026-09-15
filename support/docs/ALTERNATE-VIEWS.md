@@ -1,116 +1,136 @@
-# Cards, Grid and Phases
+# Alternate views: restore the original purposes
 
-Implemented on `codex/refine-alternate-views`, based on main `3adfd88`.
-The approved Bands renderer, fitter, palettes and stylesheet are unchanged.
+Status: local revision on `codex/refine-alternate-views`, based on `c0e25f7`.
+Not merged. Bands remains unchanged. The representative dense examples now
+fit one Letter sheet per day in every alternate view; see the capacity table.
 
-## Reading paths
+## What the original views were
 
-| View | Purpose | Dense days |
+The April 11 design specification and original implementation commits describe
+three different tasks, not three styles of the Bands composition:
+
+| View | Original purpose | Restored structure |
 | --- | --- | --- |
-| Cards | Read a complete main event or assigned commitment. | Measures main/assignment columns against a wide main section with two assignment columns. |
-| Grid | Find an event by start time, with its full time interval. | Continues down the left column, then down the right. Each event appears once. |
-| Phases | See activities in the context of a main block. | Keeps phases intact; measures continuous columns against full-width complex phases. |
+| Grid | Compare groups at the same time. | Time × group matrix; main events span group columns. |
+| Cards | Read a group's complete agenda. | Shared timeline above dedicated group panels. |
+| Phases | Follow an exercise's named phases. | One vertical sequence of phase headers and nested tasks. |
 
-Grid is now a chronological table rather than audience lanes with repeated
-continuation cells. Phases retains the existing containment rule: only an
-assignment wholly inside one eligible main block nests beneath that block.
-Spanning assignments and assignments in gaps remain independent records.
-References appear beside every main event with a strict time overlap; touching
-endpoints do not overlap. References and record numbers share one model.
+Sources: [original specification](superpowers/specs/2026-04-11-themes-design.md),
+`c0cf60e` (Grid), `efe0854` (Cards), `5b071fb` (Phases), and the mature renderers
+in `3adfd88`. The previous revision's chronological ledger and main/assignment
+columns passed content and fit checks but lost the original organizing axes.
+Those checks did not establish design fidelity.
 
-The main schedule has larger titles and stronger section treatment. Names are
-prominent without making every concurrent title bold. Only the saved emphasis
-setting highlights an event; roster length never chooses emphasis. Flights
-remain inside their parent event, with internal activity times. Changing venues
-and POCs stay beside the activity they describe.
+Supporting research: Nielsen Norman Group describes cards as containers for
+related information ([Cards: UI-Component Definition](https://www.nngroup.com/articles/cards-component/)).
+Its [comparison-table guidance](https://www.nngroup.com/articles/comparison-tables/)
+supports consistent row and column headings and alignment. Applying those
+principles here means grouping an agenda by audience in Cards, and preserving
+time alignment across audiences in Grid. This is a design inference, not a
+usability study of DaySchedule. Original product intent governs the restoration.
 
-These choices apply the earlier research principles of grouping, consistent
-reading order, restrained hierarchy and preserving context. They are design
-judgments, not evidence that this specific layout has passed novice-user testing.
+## Rendering and data
 
-## Existing controls
+Each skin owns its structure and arrangement in `skin-cards.js`, `skin-grid.js`
+and `skin-phases.js`. `alternate-views.js` shares complete event records, explicit
+name parsing, paper furniture, strict overlap references and bounded fitting.
+The fitter no longer replaces a matrix or phase sequence with a generic list.
 
-No new workbook fields or editor workflow are introduced. Placement, attendance,
-free-text/name-list formatting, emphasis and flight activities use the same
-controls as Bands. The familiar Customize dialog now exposes its existing
-one-inch logo toggle and reminder-space choice in all layouts. The title is
-free text, with an optional subtitle. These settings are still stored under
-`theme.bands` for workbook compatibility and are shared when switching views.
+Grid prints each event once at its start, with its full interval. A cell joins
+subsequent empty rows only while all its events are still running, without
+crossing a shared banner or hiding a new assignment. Row heights accommodate
+text and are not proportional to minutes. Cards preserves each group's complete
+agenda, with two internal columns when a large panel needs them. Main timeline
+cards retain their metadata; wide flight blocks and a final lone card can span
+the shared timeline. Grid measures group widths and chooses one or two columns
+inside a busy cell without moving records to a different group or start time. Phases keeps complete tasks within a single parent only
+when the existing containment rule allows it. Adjacent independent clusters may
+share a label, but never acquire an invented parent. Phase timing still uses the
+existing event model; no untimed-phase or trigger fields have been added. In
+the tightest format, a single dotted-rail key replaces repeated independent-task
+headings. Contained tasks remain nested; the phase sequence never flows across
+columns.
 
-Event selection, keyboard activation, numbered-reference navigation, reminder
-editing and header customization work from all three paper previews. Renderers
-read normalized data; fitting changes DOM arrangement, never event data.
+All names and details remain, including literal free text, duplicate attendee
+entries and changing flight locations/POCs. No surname inference, automatic
+roster highlighting or automatic attendance reclassification is introduced.
+Group headings replace redundant audience labels within those same panels or
+columns. References use full time overlap, excluding touching endpoints.
 
-## Paper contract
+The existing editor controls, themes, optional one-inch logo, free title/subtitle,
+manual emphasis and Notes & Reminders space remain. The pictured Open/Edit/Save
+pills were static spans, not broken action handlers; they now look like plain
+instructions. Actual Open/Create/Save actions are unchanged. A second defect
+found during live review is fixed: alternate paper now refits after the library
+reveals the editor, preventing false initial overflow warnings.
 
-Default **Fit each day on one page** is US Letter portrait with half-inch margins.
-The logo is an optional one-inch square. Notes & Reminders reserves 1¼ inches by
-default, with existing 1½-inch and 2-inch choices. Fitting tries whole-record
-arrangements and reduces spacing before type. It never zooms the whole sheet.
+## Paper limits and current capacity
 
-Minimums are 9 pt for details, 10.5 pt for short/literal attendee lists, 9.5 pt
-for parsed rosters of eight or more entries, 10 pt for concurrent titles and
-11.5 pt for main titles. Badges and the footer use 8 pt. Main type and spacing
-grow on lighter days, within caps. Every entered name remains available;
-literal text is not split or converted to surnames.
+Fit remains Letter portrait with half-inch margins and 1¼ inches reserved for
+notes by default. The existing larger reminder-area choices remain. Fitting
+reduces whitespace before text, never zooms the whole page and never drops fields.
+Floors: details 9 pt; ordinary small/literal attendee lists 10.5 pt, reducing to
+9.5 pt in the final compact treatment; large parsed rosters 9.5 pt; concurrent
+titles 10 pt; main titles 11.5 pt; badges/footer 8 pt. Compact lists still use the
+largest type that fits. Short assignments use punctuated inline fields; large
+rosters and literal multiline entries remain complete blocks. Times occupy the
+first line even when a title wraps. No roster is split between event records.
 
-When Fit cannot meet these limits, the editor shows all content with an overflow
-notice. App printing blocks that job. Native printing produces an explicit
-not-ready notice rather than a clipped schedule. **Readable pages** remains an
-explicit alternative that can span sheets at comfortable type. It does not
-satisfy the one-day-per-sheet contract and is never silently selected.
+| Example | Cards | Grid | Phases |
+| --- | --- | --- | --- |
+| Four-group exercise, both days | Fits | Fits | Fits |
+| Empty, light, main-only, concurrent-only | Fits | Fits | Fits |
+| Normal 15-surname Saturday / Sunday | Fits / Fits | Fits / Fits | Fits / Fits |
+| 40 surnames + flights, both days | Fits | Fits | Fits |
+| Long 15-concurrent-event stress example, both days | Fits | Fits | Fits |
 
-## Verification — 2026-09-15
+The fixed examples are enforced in Chromium and WebKit, including long titles,
+locations, missing optional fields, full-time overlaps and assignments in gaps.
+One-page capacity is finite: larger notes reservations, many groups or arbitrary
+amounts of text may still exceed the bounds. Bands retains its approved fitter.
 
-- Chromium 147 and WebKit 26.4: 676 harness checks, real-app journeys and two
-  complete new-author journeys passed. Event/ref/notes editing and logo/reminder
-  settings have alternate-view coverage.
-- 294 day renders: 90 fixed examples, 192 generated cases (16 two-day seeds ×
-  three views × two engines), and 12 Mono renders. Checks preserve every event,
-  field, attendee entry, flight detail and reminder, verify numbering/overlaps,
-  enforce type floors and detect mutation of persisted event data.
-- All three views fit both normal 15-surname days and both 40-surname days,
-  including timed flights, on one Letter page each. Main-only, light, empty and
-  concurrent-only fixtures also fit. The deliberately longer 15-concurrent-event
-  fixture overflows in Cards and Phases; Grid fits its Sunday only. Generated
-  overflow is an expected outcome, not a promise that arbitrary input fits.
-- Six narrow-screen event/reminder editing journeys passed at 390 px, with no
-  document-width overflow. Keyboard interactions are covered in the harness.
-- Actual Chromium PDFs: 27 files / 58 Letter pages. Extracted text checks retain
-  fields and names; a separate physical audit checks half-inch text bounds and
-  the 8 pt auxiliary floor. Representative normal, dense, light and grayscale
-  pages were visually reviewed. Field-specific floors are checked in the DOM.
-- Heavy 48-event print fixture: six Fit jobs blocked as expected; six explicit
-  Readable PDFs preserve all descriptions in Letter/A4 output.
-- Bands: all four frozen source files match their baseline SHA-256 hashes;
-  eight before/after print pages are pixel-identical. Its PDF/overflow suite passed.
-- Nine packaging checks and Chromium/WebKit embed, CSP, remount, download,
-  local-file boot and cross-origin save checks passed. Both distributions rebuilt.
+Fit blocks oversized app print jobs; native printing issues a not-ready notice
+instead of partial content. Explicit Readable output retains all information
+across additional sheets. It remains available for oversized data and does not satisfy the
+one-day-per-sheet requirement; the representative review examples use Fit. The comparison
+uses actual PDF page counts, not a misleading Saturday/Sunday selector on a
+multi-page output.
 
-Firefox could not launch in this runtime. These checks do not certify actual
-Safari/Edge applications, native print dialogs, physical printers or a live
-SharePoint installation. Real readers should still review comprehension on paper.
+## Verification and review
 
-## Reproduce and review
+- 680 browser harness checks and real-app journeys passed across both engines.
+  New red-to-green regressions cover the false-button styling, group membership,
+  matrix alignment/continuation cells, vertical phases and library-reveal fitting.
+- 306 day renders passed independent content, name, group/row placement,
+  interval-reference, type-floor, repeat-fitting stability, reminder reservation
+  and data-preservation checks in Chromium 147
+  and WebKit 26.4. Includes 16 two-day seeds per view and engine, fixed examples,
+  six narrow-screen event/reminder editing journeys and Mono rendering.
+- 30 actual PDF files / 57 Letter pages passed physical text bounds and minimum
+  glyph-size checks. Print review caught and corrected floating references
+  displacing flight logistics; clearance and alignment now have explicit
+  regressions. Field-specific floors are
+  checked in the DOM; representative actual PDF pages are visually reviewed.
+- Heavy 48-event tests passed explicit Fit blocking and complete Readable output
+  on Letter/A4. The approved eight-page Bands PDF suite passed; frozen Bands
+  source hashes match. Both distribution builds pass nine packaging checks.
+- Chromium/WebKit embed, file boot, CSP, remount and save checks passed. The
+  working-app review's Load, view switching and edit-preservation paths passed.
+  All 42 displayed PDF images and comparison selectors passed local-file checks.
+- Firefox could not launch in this runtime. Native file/print dialogs, physical
+  printers, live SharePoint and comprehension by real readers remain unverified.
 
-Set `DAYSCHEDULE_PLAYWRIGHT_MODULE` if Playwright is outside the usual module
-path and `DAYSCHEDULE_BROWSERS=chromium,webkit` to select tested engines.
+Run the regular browser harness with `node support/tests/test-browser.cjs`.
+For the matrix, run `node support/tests/test-alternate-views.cjs`; set
+`DAYSCHEDULE_BROWSERS`, `DAYSCHEDULE_VIEW_SKINS` or `DAYSCHEDULE_VIEW_SEEDS` for
+focused replay, `DAYSCHEDULE_VIEW_RANDOM_ONLY=1` to replay seeds separately,
+and `DAYSCHEDULE_PLAYWRIGHT_MODULE` if Playwright is installed outside the
+default module path.
 
-```sh
-node support/tests/test-alternate-views.cjs
-python3 support/tests/build-alternate-review.py
-node support/tests/test-browser.cjs
-node support/tests/test-authoring-ui.cjs
-node support/tests/test-print-pdf.cjs
-node support/tests/test-bands-pdf.cjs
-python3 tools/test-builds.py
-node tools/test-embed.cjs
-```
-
-`DAYSCHEDULE_VIEW_SEEDS` controls the random sample count (default 16).
-The review builder requires pdfplumber, pypdf and Poppler's pdftoppm.
-Evidence is ignored under `output/playwright/alternate-views` and
-`output/alternate-views`. The latter contains a standalone `review.html` with
-30 switchable print images, a 12-page `Views-comparison.pdf` and the physical
-audit JSON. It uses synthetic fixtures, makes no network requests and never
-opens the app or changes its saved schedule. No heartbeat was created.
+`python3 support/tests/build-alternate-review.py` requires pdfplumber, pypdf and
+Poppler. It builds ignored `output/alternate-views/review.html` and
+`Views-comparison.pdf` from real PDF output. The portable comparison is read-only.
+`support/tests/alternate-integration.html` is a separate developer page using the
+actual app; serve it on an isolated loopback origin. It loads synthetic data only
+when Load example is chosen. Production app bundles contain neither developer
+fixture data nor the fixture loader. No heartbeat was created.

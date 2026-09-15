@@ -38,6 +38,7 @@ function normalizePrintOptions(options) {
   return {
     dayIds: knownDays.filter(id => requestedDays.includes(id)),
     audienceId: Store.getGroup(opts.audienceId) ? opts.audienceId : '',
+    includeNamed: opts.includeNamed !== false,
     detail: opts.detail === 'overview' ? 'overview' : 'full',
     mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin !== 'bands' && opts.mode === 'readable' ? 'readable' : 'fit',
   };
@@ -47,7 +48,7 @@ function getPrintDays(options) {
   const opts = normalizePrintOptions(options);
   return Store.getDays().filter(day => opts.dayIds.includes(day.id)).map(day => ({
     ...day,
-    events: getAudienceHandoutEvents(day.events, Store.getGroups(), opts.audienceId)
+    events: getAudienceHandoutEvents(day.events, Store.getGroups(), opts.audienceId, opts)
       .map(evt => opts.detail === 'overview' ? { ...evt, description: '' } : { ...evt }),
     notes: (day.notes || []).map(note => ({ ...note })),
   }));
@@ -149,26 +150,39 @@ function openPrintReview() {
     html += '<label><input type="checkbox" name="printDay" value="' + esc(day.id) + '" checked> ' + esc(label) + '</label>';
   });
   html += '</fieldset><div class="print-review-fields">';
-  html += '<label for="printAudience">Audience</label><select id="printAudience"><option value="">Everyone</option>';
-  Store.getGroups().forEach(group => { html += '<option value="' + esc(group.id) + '">' + esc(group.name) + '</option>'; });
-  html += '</select><p class="print-review-hint">An audience handout includes primary audience events and breaks. Review named exceptions and day notes before sharing.</p>';
+  html += '<label for="printAudience">What to print</label><select id="printAudience"><option value="">Full schedule — all events and assignments</option>';
+  Store.getGroups().forEach(group => { html += '<option value="' + esc(group.id) + '">Group handout: ' + esc(group.name) + '</option>'; });
+  html += '</select><div id="printNamedOptions" hidden><label><input type="checkbox" id="printIncludeNamed" checked> Include named assignments without a group</label><p class="print-review-hint">We cannot infer which group a person belongs to. Keep these assignments unless you have reviewed them. Shared events and day reminders are included.</p></div>';
   html += '<label for="printDetail">Details</label><select id="printDetail"><option value="full">Full details</option><option value="overview">Overview — omit event notes</option></select>';
   html += '<label for="printMode">Page layout</label><select id="printMode">' + (banded
     ? '<option value="fit">Letter portrait — one day per page</option>'
     : '<option value="fit">Letter portrait — one day per page</option><option value="readable">Readable pages — allow more than one page per day</option>') + '</select></div>';
   html += '<div id="printReviewSummary" role="status" aria-live="polite"></div>';
+  html += '<div id="printOmissions" class="print-omissions" role="status" hidden></div>';
+  html += '<p class="print-review-hint">Schedule checks cover all events on the selected days, including any excluded from this handout.</p>';
   html += '<details class="print-review-checks"><summary id="printReviewCheckCount">Schedule checks</summary><ul id="printReviewIssues"></ul></details>';
   html += '<div class="modal-actions"><button type="button" class="btn" id="printReviewCancel">Cancel</button><button type="button" class="btn btn-primary" id="printReviewConfirm">Print</button></div>';
   modal.innerHTML = html;
   const readOptions = () => normalizePrintOptions({
     dayIds: Array.from(modal.querySelectorAll('[name="printDay"]:checked')).map(input => input.value),
     audienceId: modal.querySelector('#printAudience').value,
+    includeNamed: modal.querySelector('#printIncludeNamed').checked,
     detail: modal.querySelector('#printDetail').value,
     mode: modal.querySelector('#printMode').value,
   });
   const refresh = () => {
     const opts = readOptions();
     const fullDays = getPrintDays({ ...opts, detail: 'full' });
+    const sourceDays = Store.getDays().filter(day => opts.dayIds.includes(day.id));
+    const excluded = sourceDays.flatMap(day => {
+      const included = new Set(fullDays.find(item => item.id === day.id).events.map(event => event.id));
+      return day.events.filter(event => !included.has(event.id)).map(event => ({ day, event }));
+    });
+    modal.querySelector('#printNamedOptions').hidden = !opts.audienceId;
+    const omissions = modal.querySelector('#printOmissions');
+    omissions.hidden = !excluded.length;
+    omissions.innerHTML = excluded.length ? '<strong>' + excluded.length + ' event(s) excluded from this handout</strong><ul>' + excluded.map(({ day, event }) =>
+      '<li>' + esc((day.label || day.date) + ' · ' + event.startTime + '–' + event.endTime + ' · ' + event.title) + '</li>').join('') + '</ul>' : '';
     const events = fullDays.flatMap(day => day.events);
     const omitted = opts.detail === 'overview' ? events.filter(evt => evt.description).length : 0;
     const metrics = measurePrintPlan(opts);
@@ -190,9 +204,10 @@ function openPrintReview() {
     }
     summary += '<p class="print-review-hint">Check your browser’s print preview before sharing. Paper and printer settings can change pagination.</p>';
     modal.querySelector('#printReviewSummary').innerHTML = summary;
-    const issues = getScheduleReviewIssues(fullDays, Store.getGroups());
+    const issues = getScheduleReviewIssues(sourceDays, Store.getGroups());
     modal.querySelector('#printReviewCheckCount').textContent = issues.length ? issues.length + ' schedule check(s) to review' : 'No schedule checks flagged';
     modal.querySelector('#printReviewIssues').innerHTML = issues.map(issue => '<li>' + esc(issue.message) + '</li>').join('');
+    modal.querySelector('.print-review-checks').open = issues.length > 0;
     modal.querySelector('#printReviewConfirm').disabled = opts.dayIds.length === 0 || metrics.some(page => page.fits === false);
   };
   modal.querySelectorAll('input, select').forEach(input => input.addEventListener('change', refresh));

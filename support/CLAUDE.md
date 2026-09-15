@@ -40,7 +40,7 @@ The primary product is a local `.schedule` workbook containing multiple schedule
 | `app/js/themes.js` | Schedule palettes and editor chrome theme |
 | `app/js/skin-*.js` | Layout adapters/renderers |
 | `app/js/band-layout.js` | Shared Bands model, renderer and physical fitter |
-| `app/js/alternate-views.js`, `app/css/alternate-views.css` | Cards/Grid/Phases record semantics, layouts and bounded fitting; scoped independently of Bands |
+| `app/js/alternate-views.js`, `app/css/alternate-views.css` | Shared alternate record semantics, paper furniture and bounded fitting; each skin owns its arrangement, independently of Bands |
 | `app/js/band-editor.js`, `personnel-input.js` | Additive event controls and explicit attendee parsing |
 | `app/js/band-palettes.js` | Approved paper palette roles |
 | `app/js/library.js` | Start screen, create/open, legacy library, Help |

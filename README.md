@@ -8,16 +8,21 @@ Licensed under the [MIT License](LICENSE). The generated app also includes the l
 
 1. Open `app/index.html`, or open the built `dist/DaySchedule.html` as a local file.
 2. Choose **Create** for a new workbook or **Open .schedule** for an existing one.
-3. Build your day with **+ Day**, **+ Event**, and **+ Note**. **Quick Edit** gives you a worksheet with one row per event.
-4. Save the workbook. A `.schedule` file can hold several schedules; use the toolbar switcher to move between them.
+3. Build your day with **+ Day**, **+ Event**, and **+ Reminder**. **Quick Edit** gives you a worksheet with one row per event.
+4. Use **Dates & hours** for day setup, **View** to switch layouts, and **Print** to review the handout.
+5. Save the workbook. A `.schedule` file can hold several schedules; use the toolbar switcher to move between them.
 
 In a standalone Chrome or Edge tab, supported file access lets the app autosave edits to the file after the first save. Wait for **Saved** before closing or handing off. The start screen can offer **Continue** to recover a draft or reopen a remembered file; the browser may ask for permission again.
 
 Safari and Firefox use download-based saving. **Downloaded** means a fresh copy was sent to Downloads; the file you opened is unchanged. Keep the newest copy. Embedded browsers may also restrict native file access: open the standalone app in its own tab when you need file autosave.
 
+**Opened** means a file was loaded without edits; **Unsaved** means changes need saving. In a download-only browser, use **Download .schedule** after editing and send the newest file. **Customize → Export** provides full-workbook backup. Its collapsed **Legacy compatibility** export contains only the current schedule, without other schedules or saved versions.
+
 Browser recovery storage protects work when available. It is separate from saving the workbook, and it can be unavailable, cleared, or full. Keep saved copies of important work.
 
 The recovery copy includes the whole workbook, archived schedules, and version history. On **Continue**, a clean remembered workbook reloads the latest file. If local edits and the file have both changed, the app offers **Cancel** or **Keep Both**. Keep Both puts recovered copies alongside the latest file's schedules for you to compare. A changed file also pauses background autosave; use **Save Now** to review it.
+
+Edit an event’s Start and End in either order. A valid range updates the preview; an incomplete pair stays visible while you move between the two fields. If you leave an invalid pair, the app restores both previous times and explains what was kept. **More → Undo last edit / Redo** and the standard keyboard shortcuts recover edits.
 
 ## Manage and reuse schedules
 
@@ -25,13 +30,13 @@ The workbook switcher can search, open, create, and duplicate schedules. **Archi
 
 Use **Duplicate Current** to copy a schedule. Its optional **New first date** shifts all day dates by the same offset, preserving their spacing. Review the dates before **Create Copy**. You can also clear contacts and event POCs, notes, or specific people when preparing the next exercise. The original schedule stays available.
 
-**More → Versions** supports named snapshots, restore, rename, and delete, and shows the approximate workbook size. Versions include appearance settings and logos. Deleting unneeded versions can reduce file size; archiving a schedule retains its contents.
+**More → Saved versions** supports named snapshots, restore, rename, and delete, and shows the approximate workbook size. Versions include appearance settings and logos. Deleting unneeded versions can reduce file size; archiving a schedule retains its contents.
 
 ## Work with a team
 
 Use **one editor at a time** for a shared workbook. Agree on who has it, wait for **Saved**, then hand off. Files reached through a Teams or SharePoint synced folder are shared through that service; a separately downloaded copy is a different file.
 
-Before major changes, use **More → Versions** to save a named version. Versions live inside the workbook; restoring one first backs up the current state. Version history travels with copies of the file.
+Before major changes, use **More → Saved versions** to save a named version. Versions live inside the workbook; restoring one first backs up the current state. Version history travels with copies of the file.
 
 There is no server coordinating simultaneous edits. File checks and browser warnings cannot make a network drive or sync service atomic. Keep the one-editor rule even when the app detects a changed file.
 
@@ -39,9 +44,9 @@ Earlier releases used a connected `app/data` directory with a file for each sche
 
 ## Layouts and printing
 
-Four layouts show the same schedule: **Bands** for a main track with concurrent events, **Grid** for a chronological table, **Cards** for complete main events and assigned commitments, and **Phases** for activities grouped under their main block. The selected layout applies to the schedule.
+Four layouts show the same schedule: **Bands** for a main track with concurrent events, **Grid** for time × group comparison, **Cards** for group agendas beneath a shared timeline, and **Phases** for a vertical sequence of named blocks and nested tasks. The selected layout applies to the schedule.
 
-An **Audience** is a group or section. Primary audiences normally appear on the main track. Supporting or unassigned events need **Main Track** enabled to join it. **Specific People** describes people who need something different from the audience's main activity. Concurrent events are allowed; check overlap warnings in the context of the people involved.
+An **Audience** describes who attends. Choose **Main schedule** or **Concurrent event** independently on each event. For a named assignment, choose an audience or **Specific people / other**, then enter everyone who must attend. Matching attendee entries produce a linked review notice when assignments overlap; confirm identity, since two people can share a surname. Intentional main/concurrent exceptions are kept separate from those conflicts.
 
 Use the app's **Print** action or `Ctrl/Cmd+P` to review days, audience and detail. Schedule checks flag dates, ranges and possible assignment conflicts for review.
 
@@ -55,9 +60,9 @@ Existing version-1 and version-2 workbooks still open in their original sections
 
 Screen and print use the same Bands renderer. Fitting reduces spacing before type, with floors of 9 pt for details, 10.5 pt for small-event names, 9.5 pt for large-roster names and 11.5 pt for main titles. Navigation labels have an 8 pt floor; the footer uses 7 pt. Lighter days gain larger main text and more space, up to a cap. If a complete day cannot fit, the editor retains all its content and shows a warning. App printing is blocked, and native printing shows a not-ready notice for that day instead of issuing a partial schedule. Print at actual size on Letter, with browser headers/footers off; duplex can put the next day on the reverse.
 
-Grid, Cards and Phases now default to **Fit each day on one page**: Letter portrait, half-inch margins, complete event records and bounded type sizes. They share the optional logo, title/subtitle and reserved Notes & Reminders space. Fit blocks printing when a day exceeds the readable limits; **Readable pages** is an explicit alternative that may span sheets. Browser **File → Print** prepares fresh output for all days using each layout's policy. Use app Print review for particular days, audiences or overview. See the [alternate-view guide](support/docs/ALTERNATE-VIEWS.md) for reading paths, print limits and verification.
+Grid, Cards and Phases default to **Fit each day on one page**: Letter portrait, half-inch margins, complete event records and bounded type sizes. The 15-name, 40-surname with flights, and 15-concurrent-event examples fit in all three views. They share the optional logo, title/subtitle and reserved Notes & Reminders space while keeping distinct content structures. Fitting reduces spacing and unnecessary line breaks before using smaller type. Fit blocks printing when a day exceeds the readable limits; **Readable pages** is an explicit alternative that may span sheets. Browser **File → Print** prepares fresh output for all days using each layout's policy. Use app Print review for particular days, audiences or overview. See the [alternate-view guide](support/docs/ALTERNATE-VIEWS.md) for reading paths, print limits and verification.
 
-An audience handout includes primary-audience events and breaks. It is a filtered presentation, not a redaction tool: review named exceptions and day notes before sharing. Check the browser's print preview as paper settings affect the result. When embedded, open the standalone app in its own tab for printing so the host page is not included.
+**Print → Full schedule** includes all events and assignments. A **Group handout** includes that group, shared main events, reminders, and named assignments without a group by default. The app cannot infer group membership from names. If you explicitly exclude those assignments, Print lists each omitted event. Schedule checks still cover all events on the selected days, including exclusions. A group handout is a filtered presentation, not a redaction tool. Check the browser's print preview as paper settings affect the result. When embedded, open the standalone app in its own tab for printing so the host page is not included.
 
 **Customize → Look** offers preset palettes and editable custom colors with a text-contrast warning. The editor's light/dark toggle is separate from the schedule's printed appearance.
 

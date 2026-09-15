@@ -3,7 +3,7 @@
  * Bands deliberately keeps its approved renderer, styles and fitting policy.
  */
 const AlternateViews = (() => {
-  const policy = Object.freeze({ detail: 9, name: 10.5, roster: 9.5, title: 11.5, clearance: 4 });
+  const policy = Object.freeze({ detail: 9, name: 10.5, compactName: 9.5, roster: 9.5, title: 11.5, clearance: 4 });
   const ordered = events => events.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
   const time = event => event.startTime + '–' + event.endTime;
 
@@ -63,29 +63,16 @@ const AlternateViews = (() => {
   function record(event, data, options) {
     const opts = options || {}, main = data.overlaps.has(event.id), group = data.groups[event.groupId];
     // The group is an attendance field, never a substitute for individual names.
-    const audience = group && !(main && group.name === data.primaryLabel) && !(event.attendees?.trim() && /^specific (people|personnel)$/i.test(group.name.trim())) ? group.name : '';
+    const audience = group && opts.groupLabel !== group.name && !(main && group.name === data.primaryLabel) && !(event.attendees?.trim() && /^specific (people|personnel)$/i.test(group.name.trim())) ? group.name : '';
     const meta = event.location || event.poc ? '<div class="av-logistics">' +
       (event.location ? '<div class="av-location">' + esc(event.location) + '</div>' : '') +
       (event.poc ? '<div class="av-poc">POC: ' + esc(event.poc) + '</div>' : '') + '</div>' : '';
-    if (opts.table) return tableRecord(event, data, opts, main, audience, meta);
     return '<article class="av-event ' + (main ? 'av-main' : 'av-concurrent') + (event.emphasized ? ' av-emphasized' : '') + '" data-event-id="' + esc(event.id) + '"' +
       (opts.interactive ? ' tabindex="0" aria-label="' + esc(event.title + ', ' + time(event) + '. Select to edit.') + '"' : '') + '>' +
-      '<div class="av-event-heading"><h3>' + (!main ? badge(event, data.numbers.get(event.id), false) : '') + esc(event.title) + (main && audience ? '<small class="av-main-audience">' + esc(audience) + '</small>' : '') + '</h3>' + (main || opts.table ? meta : '') + '<span class="av-time">' + esc(time(event)) + '</span></div>' +
+      '<div class="av-event-heading"><span class="av-time">' + esc(time(event)) + '</span><h3>' + (!main ? badge(event, data.numbers.get(event.id), false) : '') + esc(event.title) + (main && audience ? '<small class="av-main-audience">' + esc(audience) + '</small>' : '') + '</h3>' + (main ? meta : '') + '</div>' +
       '<div class="av-event-content">' + (!main && audience ? '<div class="av-audience">' + esc(audience) + '</div>' : '') + personnel(event) +
-      (!main && !opts.table ? meta : '') +
+      (!main ? meta : '') +
       (event.description ? '<p class="av-description">' + esc(event.description) + '</p>' : '') + (main ? references(event, data, opts.interactive) : '') + flights(event) + '</div></article>';
-  }
-
-  function tableRecord(event, data, opts, main, audience, meta) {
-    const parsed = parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text');
-    const roster = parsed.entries.length >= 8;
-    return '<article class="av-event av-table-record ' + (main ? 'av-main' : 'av-concurrent') + (event.emphasized ? ' av-emphasized' : '') + (roster ? ' av-table-roster' : '') +
-      '" data-event-id="' + esc(event.id) + '"' + (opts.interactive ? ' tabindex="0" aria-label="' + esc(event.title + ', ' + time(event) + '. Select to edit.') + '"' : '') + '>' +
-      '<span class="av-time">' + esc(time(event)) + '</span><div class="av-table-identity"><h3>' +
-      (main ? '' : badge(event, data.numbers.get(event.id), false)) + esc(event.title) + '</h3>' +
-      (audience ? '<div class="av-audience">' + esc(audience) + '</div>' : '') + (!roster ? personnel(event) : '') + '</div>' +
-      '<div class="av-table-details">' + meta + '</div>' + (roster ? personnel(event) : '') +
-      (event.description || (data.overlaps.get(event.id) || []).length ? '<div class="av-table-support">' + (event.description ? '<p class="av-description">' + esc(event.description) + '</p>' : '') + (main ? references(event, data, opts.interactive) : '') + '</div>' : '') + flights(event) + '</article>';
   }
 
   function flow(events, data, opts, className) {
@@ -93,30 +80,11 @@ const AlternateViews = (() => {
       events.slice().sort((a, b) => data.numbers.get(a.id) - data.numbers.get(b.id)).map(event => record(event, data, opts)).join('') + '</div>';
   }
 
-  const primaryHeading = data => 'Main schedule' + (data.primaryLabel ? '<small>' + esc(data.primaryLabel) + '</small>' : '');
-
-  function cards(day, options) {
-    const data = model(day);
-    return '<div class="av-cards' + (data.mains.length && data.concurrent.length > 3 ? ' av-cards-columns' : '') + '">' + (data.mains.length || !data.concurrent.length ? '<section class="av-main-section"><h2 class="av-section-heading av-primary-heading">' + primaryHeading(data) + '</h2><div class="av-main-list">' +
-      (data.mains.length ? data.mains.map(event => record(event, data, options)).join('') : '<p class="av-empty">No main events scheduled.</p>') + '</div></section>' : '') +
-      (data.concurrent.length ? '<section class="av-concurrent-section"><h2 class="av-section-heading' + (!data.mains.length ? ' av-primary-heading' : '') + '">Concurrent events</h2>' + flow(data.concurrent, data, options) + '</section>' : '') + '</div>';
-  }
-
-  function grid(day, options) {
-    const data = model(day);
-    return '<div class="av-grid"><h2 class="av-section-heading av-primary-heading">' +
-      (!data.mains.length && data.concurrent.length ? 'Concurrent events' : data.concurrent.length ? 'Main schedule &amp; concurrent events' + (data.primaryLabel ? '<small>Main: ' + esc(data.primaryLabel) + '</small>' : '') : primaryHeading(data)) + '</h2>' +
-      '<div class="av-grid-head"><span>Time</span><span>Event / personnel</span><span>Location / POC</span></div>' +
-      '<div class="av-grid-flow">' + (data.events.length ? data.events.map(event => record(event, data, { ...options, table: true })).join('') : '<p class="av-empty">No events scheduled.</p>') + '</div></div>';
-  }
-
-  function phases(day, options) {
-    const data = model(day), phases = buildPhaseGroups(day.events || [], Store.getGroups())
-      .sort((a, b) => a.sortEvent.startTime.localeCompare(b.sortEvent.startTime) || Number(!!b.event) - Number(!!a.event));
-    return '<div class="av-phases"><h2 class="av-section-heading av-primary-heading">' + (data.mains.length || !data.concurrent.length ? primaryHeading(data) : 'Concurrent events') + '</h2><div class="av-phase-columns">' + (phases.length ? phases.map(phase =>
-      '<section class="av-phase' + (phase.event ? '' : ' av-independent') + (phase.tasks.length > 2 || phase.event?.flightActivities?.length || phase.tasks.some(task => parsePersonnelInput(task.event.attendees || '', task.event.attendeeFormat || 'text').entries.length >= 8) ? ' av-phase-wide' : '') + '" aria-label="' + (phase.event ? esc(phase.event.title) : 'Concurrent events') + '">' +
-      (phase.event ? record(phase.event, data, options) : '<h4 class="av-independent-label">Concurrent events</h4>') +
-      (phase.tasks.length ? flow(phase.tasks.map(task => task.event), data, options) : '') + '</section>').join('') : '<p class="av-empty">No events scheduled.</p>') + '</div></div>';
+  function lanes(data) {
+    const resolved = resolveLaneEvents(data.concurrent, Store.getGroups());
+    const active = [...Store.getGroups(), UNASSIGNED_LANE_GROUP];
+    return active.map(group => ({ ...group, events: resolved.filter(event => event.groupId === group.id) }))
+      .filter(group => group.events.length);
   }
 
   function header(day, interactive) {
@@ -149,12 +117,12 @@ const AlternateViews = (() => {
     if (paper) colors = { ...colors, bg: '#ffffff', text: '#20262c', textSecondary: '#39424b', textMuted: '#525962', accent: paper.colors[0], surface: paper.colors[2], border: paper.colors[5] };
     const palette = Object.entries(colors).map(([key, value]) => '--sch-' + key.replace(/[A-Z]/g, letter => '-' + letter.toLowerCase()) + ':' + value).join(';');
     const index = Store.getDays().findIndex(item => item.id === day.id) + 1;
-    const body = { cards, grid, phases }[skin] || cards;
+    const body = { cards: renderDayBody_cards, grid: renderDayBody_grid, phases: renderDayBody_phases }[skin] || renderDayBody_cards;
     return '<section class="alternate-sheet av-' + skin + '-sheet" data-fit="true" data-mode="' + (opts.printMode === 'readable' ? 'readable' : 'fit') +
       '" style="--av-notes-height:' + settings.notesHeight + 'pt;--av-heading-ink:' + getContrastingTextColor(colors.accent) + ';' + palette + '">' +
       '<div class="av-print-error"><strong>Schedule not ready to print.</strong><p>This day exceeds the readable one-page limits. Review the content or select Readable pages. No partial schedule is printed.</p></div>' +
       header(day, opts.interactive) + (opts.handout ? '<p class="av-handout">' + esc(opts.handout) + '</p>' : '') +
-      '<div class="av-body">' + body(day, opts) + '</div>' + notes(day, opts.interactive) +
+      '<div class="av-body">' + body(day.id, day, opts) + '</div>' + notes(day, opts.interactive) +
       '<footer class="av-footer"><span>' + (Store.getFooter().poc ? 'Schedule POC: ' + esc(Store.getFooter().poc) : '') + '</span><span>Day ' + index + ' of ' + Store.getDays().length + '</span></footer></section>';
   }
 
@@ -170,7 +138,7 @@ const AlternateViews = (() => {
     let best = Infinity, split = 1, width = 50;
     // Measure both widths once per candidate, then find the best whole-record
     // split using prefix sums. This avoids moving every record for every split.
-    for (const candidate of [50, 45, 55, 40, 60]) {
+    for (const candidate of [50, 45, 55, 40, 60, 35, 65]) {
       flow.style.gridTemplateColumns = candidate + 'fr ' + (100 - candidate) + 'fr';
       left.replaceChildren(...records);
       const leftHeights = records.map(node => node.getBoundingClientRect().height);
@@ -188,20 +156,12 @@ const AlternateViews = (() => {
     left.replaceChildren(...records.slice(0, split)); right.replaceChildren(...records.slice(split));
   }
 
-  function arrangePhases(container) {
-    const phases = Array.from(container.querySelectorAll('.av-phase'));
-    if (!phases.length) return;
-    container.replaceChildren();
-    let segment = null;
-    phases.forEach(phase => {
-      if (phase.classList.contains('av-phase-wide')) {
-        container.appendChild(phase); segment = null;
-      } else {
-        if (!segment) { segment = document.createElement('div'); segment.className = 'av-phase-segment'; container.appendChild(segment); }
-        segment.appendChild(phase);
-      }
-    });
-    container.querySelectorAll('.av-phase-segment').forEach(segment => arrange(segment, segment.children.length > 1 ? 2 : 1, '.av-phase'));
+  function compactFlow(flow) {
+    arrange(flow, 1);
+    const single = flow.getBoundingClientRect().height;
+    if (Number(flow.dataset.flowCount) < 2) return;
+    arrange(flow, 2);
+    if (flow.getBoundingClientRect().height >= single) arrange(flow, 1);
   }
 
   function geometry(sheet) {
@@ -226,54 +186,18 @@ const AlternateViews = (() => {
     sheet.style.setProperty('--av-note-size', '9.5pt');
     if (sheet.querySelector('.av-note-columns').getBoundingClientRect().bottom > sheet.querySelector('.av-notes').getBoundingClientRect().bottom) sheet.style.setProperty('--av-note-size', '9pt');
     const flows = Array.from(sheet.querySelectorAll('.av-flow'));
-    const phaseColumns = sheet.querySelector('.av-phase-columns');
-    const cardColumns = sheet.querySelector('.av-cards-columns') || (sheet.querySelector('.av-cards .av-main') && sheet.querySelectorAll('.av-cards .av-concurrent').length > 3 ? sheet.querySelector('.av-cards') : null);
-    const gridFlow = sheet.querySelector('.av-grid-flow');
-    const set = (scale, gap) => {
+    const layout = sheet.classList.contains('av-cards-sheet') ? layoutDayBody_cards
+      : sheet.classList.contains('av-grid-sheet') ? layoutDayBody_grid : layoutDayBody_phases;
+    const set = (scale, gap, dense = false) => {
       sheet.style.setProperty('--av-scale', String(scale)); sheet.style.setProperty('--av-gap', gap + 'pt');
-      flows.forEach(flow => arrange(flow, cardColumns || (phaseColumns && !flow.closest('.av-phase-wide')) || Number(flow.dataset.flowCount) <= 1 ? 1 : 2));
-      if (phaseColumns) {
-        const hasConcurrent = !!sheet.querySelector('.av-concurrent');
-        sheet.classList.add('av-phases-continuous');
-        flows.forEach(flow => arrange(flow, 1));
-        arrange(phaseColumns, hasConcurrent ? 2 : 1, '.av-phase');
-        const continuousHeight = phaseColumns.getBoundingClientRect().height;
-        sheet.classList.remove('av-phases-continuous');
-        flows.forEach(flow => arrange(flow, flow.closest('.av-phase-wide') && Number(flow.dataset.flowCount) > 1 ? 2 : 1));
-        phaseColumns.dataset.columns = '1'; phaseColumns.style.removeProperty('grid-template-columns');
-        arrangePhases(phaseColumns);
-        if (!hasConcurrent || continuousHeight <= phaseColumns.getBoundingClientRect().height) {
-          sheet.classList.add('av-phases-continuous');
-          flows.forEach(flow => arrange(flow, 1));
-          arrange(phaseColumns, hasConcurrent ? 2 : 1, '.av-phase');
-        }
-      }
-      if (gridFlow) {
-        const columns = gridFlow.querySelectorAll('.av-event').length > 10 ? 2 : 1;
-        sheet.dataset.tableColumns = String(columns); arrange(gridFlow, columns);
-      }
-      if (cardColumns) {
-        cardColumns.classList.add('av-cards-columns');
-        let best = Infinity, chosen = 45;
-        for (const width of [45, 40, 35]) {
-          cardColumns.style.gridTemplateColumns = width + '% minmax(0,1fr)';
-          const height = cardColumns.getBoundingClientRect().height;
-          if (height < best) { best = height; chosen = width; }
-        }
-        cardColumns.style.gridTemplateColumns = chosen + '% minmax(0,1fr)';
-        const besideHeight = cardColumns.getBoundingClientRect().height;
-        cardColumns.classList.remove('av-cards-columns'); cardColumns.style.removeProperty('grid-template-columns');
-        flows.forEach(flow => arrange(flow, Number(flow.dataset.flowCount) > 1 ? 2 : 1));
-        if (besideHeight < cardColumns.getBoundingClientRect().height) {
-          cardColumns.classList.add('av-cards-columns'); cardColumns.style.gridTemplateColumns = chosen + '% minmax(0,1fr)';
-          flows.forEach(flow => arrange(flow, 1));
-        }
-      }
+      sheet.classList.toggle('av-compact', scale <= .95);
+      sheet.classList.toggle('av-dense', dense);
+      layout(sheet);
     };
     let result;
     // Reduce spacing before text. The final preset still respects every floor.
-    for (const [scale, gap] of [[1.08, 5], [1, 5], [1, 3], [1, 1.5], [.95, 1.5], [.9, 1.5], [.85, 1], [.8, .5]]) {
-      set(scale, gap); result = geometry(sheet);
+    for (const [scale, gap, dense] of [[1.08, 5], [1, 5], [1, 3], [1, 1.5], [.95, 1.5], [.9, 1.5], [.85, 1], [.8, .5], [.95, 1.5, true], [.9, 1, true], [.85, .75, true], [.8, .5, true], [.75, .5, true]]) {
+      set(scale, gap, dense); result = geometry(sheet);
       if (result.fits) break;
     }
     if (result.fits) {
@@ -289,12 +213,10 @@ const AlternateViews = (() => {
         // type. An overlong record may span pages; its text is never clipped.
         set(1, 4); sheet.classList.add('av-natural'); sheet.dataset.fit = 'true';
         flows.forEach(flow => arrange(flow, 1));
-        if (phaseColumns) arrange(phaseColumns, 1, '.av-phase');
-        if (gridFlow) { sheet.dataset.tableColumns = '1'; arrange(gridFlow, 1); }
       } else sheet.classList.add('av-overflow');
     }
     return { ...result, fits: sheet.dataset.fit === 'true', natural: sheet.classList.contains('av-natural') };
   }
 
-  return { policy, model, record, personnel, flights, cards, grid, phases, page, fit, geometry };
+  return { policy, model, record, personnel, flights, flow, lanes, arrange, compactFlow, page, fit, geometry };
 })();

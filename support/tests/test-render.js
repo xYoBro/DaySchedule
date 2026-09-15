@@ -375,7 +375,8 @@ describe('UI Harness — render and skins', () => {
       ['Weapons Qualification', 'Aircraft Launch Sim'].forEach(title => {
         const event = Store.getEvents(seeded.day1.id).find(event => event.title === title);
         const record = document.querySelector('.av-event[data-event-id="' + event.id + '"]');
-        assert(record.querySelector('.av-audience').textContent.includes(Store.getGroup(event.groupId).name));
+        const audience = record.querySelector('.av-audience') || record.closest('.av-group-panel')?.querySelector('.av-group-heading') || document.querySelector('.av-matrix thead [data-lane-group="' + event.groupId + '"]');
+        assert(audience.textContent.includes(Store.getGroup(event.groupId).name));
         assert(!record.getAttribute('style'));
       });
     });

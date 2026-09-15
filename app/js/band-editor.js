@@ -50,13 +50,16 @@ function updateFlightEditorTimeContext(panel, event) {
 function renderBandEventFields(event, readOnly) {
   const disabled = readOnly ? ' disabled' : '';
   const activities = event.flightActivities || [];
-  let html = '<div class="insp-toggle-section"><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-emphasis"' +
-    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize this event</label><p class="insp-hint">Makes a main band an anchor, or highlights a concurrent event. Does not change who attends or where it is listed.</p></div>';
+  let html = '<fieldset class="event-options"><legend>Event options</legend><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-emphasis"' +
+    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize this event</label>';
+  html += '<label class="insp-toggle-label"><input type="checkbox" id="insp-evt-break"' + (event.isBreak ? ' checked' : '') + disabled + '> This is a meal or break</label><p class="insp-hint">Emphasis highlights the event. Meals and breaks skip conflict checks; shared main breaks stay in group handouts.</p></fieldset>';
   html += '<details class="flight-editor"' + (activities.length ? ' open' : '') + '><summary>Flight activities' + (activities.length ? ' (' + activities.length + ')' : '') + '</summary>';
-  html += '<p class="insp-context-note">Add one activity per flight, or several timed activities for each flight. New activities start with this event’s full time window.</p>';
+  const names = [...new Set([...Store.getGroups().map(group => group.name), ...Store.getDays().flatMap(day => day.events.flatMap(item => (item.flightActivities || []).map(activity => activity.flight)))].filter(Boolean))];
+  html += '<datalist id="flight-name-options">' + names.map(name => '<option value="' + esc(name) + '"></option>').join('') + '</datalist>';
+  html += '<p class="insp-context-note">Add one activity per flight, or several timed activities. Use a group name or type a flight; this does not create an audience. New activities use the event’s times.</p>';
   activities.forEach((activity, index) => {
     html += '<details class="flight-editor-item" data-flight-index="' + index + '"' + (index === activities.length - 1 ? ' open' : '') + '><summary>' + esc(flightEditorSummary(activity, event)) + '</summary>';
-    const field = (key, label, time) => '<label for="flight-' + index + '-' + key + '">' + label + '</label><input id="flight-' + index + '-' + key + '" data-flight-field="' + key + '" type="text" value="' + esc(activity[key]) + '"' + (time ? ' maxlength="5"' : '') + disabled + '>';
+    const field = (key, label, time) => '<label for="flight-' + index + '-' + key + '">' + label + '</label><input id="flight-' + index + '-' + key + '" data-flight-field="' + key + '" type="text" value="' + esc(activity[key]) + '"' + (time ? ' maxlength="5"' : '') + (key === 'flight' ? ' list="flight-name-options"' : '') + disabled + '>';
     html += field('flight', 'Flight') + field('title', 'Activity');
     html += '<div class="field-row"><div>' + field('startTime', 'Start', true) + '</div><div>' + field('endTime', 'End', true) + '</div></div>';
     html += '<button class="btn flight-use-event-time" type="button" data-flight-full-time="' + index + '"' + disabled + '>Use event time (' + esc(event.startTime + '–' + event.endTime) + ')</button>';
@@ -79,7 +82,7 @@ function wireBandEventFields(panel, dayId, eventId) {
   };
   panel.querySelector('#insp-evt-attendees')?.addEventListener('input', preview);
   panel.querySelector('#insp-attendee-format')?.addEventListener('change', event => {
-    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview();
+    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview(); updateAssignmentReview(panel, dayId, eventId);
   });
   panel.querySelector('#insp-evt-emphasis')?.addEventListener('change', event => update({ emphasized: event.target.checked }));
   panel.querySelector('#insp-add-flight')?.addEventListener('click', () => {
