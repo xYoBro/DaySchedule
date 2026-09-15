@@ -28,6 +28,12 @@ async function realApp(browser, origin, name) {
   await page.goto(origin + '/app/index.html');
   await page.waitForFunction(() => document.getElementById('libraryView').classList.contains('active'));
   assert.equal(await page.locator('#libraryContinueStrip').isVisible(), false);
+  const instructions = await page.locator('.library-home-rule').evaluateAll(nodes => nodes.map(node => {
+    const style = getComputedStyle(node);
+    return { focusable: node.tabIndex >= 0, border: style.borderWidth, radius: style.borderRadius };
+  }));
+  assert(!instructions.some(item => !item.focusable && item.border !== '0px' && item.radius !== '0px'),
+    'Static Open/Edit/Save instructions must not look like bordered pill buttons.');
   const cards = await page.locator('.library-start-card').evaluateAll(elements => elements.map(el => {
     const box = el.getBoundingClientRect(); return { x: box.x, right: box.right, top: box.top, bottom: box.bottom, width: box.width };
   }));

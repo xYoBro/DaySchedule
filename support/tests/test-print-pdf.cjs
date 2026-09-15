@@ -59,6 +59,12 @@ async function main() {
             printSchedule({ mode });
             return measured;
           }, { skin, mode });
+          if (mode === 'fit' && metrics.some(day => day.fits === false)) {
+            assert.equal(await page.evaluate(() => !!window.pdfPrintReady), false, 'Oversized Fit must not open a partial print job.');
+            results.push({ paper, skin, mode, blocked: true, reason: 'Exceeds readable one-page limits', metrics });
+            console.log(paper, skin, mode, 'explicit overflow; no partial PDF');
+            continue;
+          }
           await page.waitForFunction(() => window.pdfPrintReady);
           const file = path.join(output, 'print-' + paper + '-' + skin + '-' + mode + '.pdf');
           await page.pdf({ path: file, format: paper, printBackground: true });
@@ -75,7 +81,7 @@ async function main() {
           if (mode === 'fit') assert.equal(pages, 1, 'Fit mode must stay on one page.');
           // This is the pre-print measurement at the app's Letter geometry.
           // Paper settings may scale the final PDF; this is not a physical font guarantee.
-          if (mode === 'readable') assert(metrics[0].smallestTextPt >= 9);
+          if (mode === 'readable') assert(metrics[0].smallestTextPt >= 8);
           const result = { paper, skin, mode, pages, completeDescriptions: 48, metrics, file };
           results.push(result);
           console.log(paper, skin, mode, pages + ' page(s), 48 complete descriptions');

@@ -1,0 +1,245 @@
+/* All rules are scoped to alternate paper. The approved Bands CSS is frozen. */
+.page.alternate-page { display:block; width:612pt; min-width:612pt; max-width:none; min-height:0; height:auto; padding:0; margin:0 auto; flex:0 0 auto; background:transparent; box-shadow:none; overflow:visible; border:0 }
+.alternate-sheet,.alternate-sheet * { box-sizing:border-box; min-width:0 }
+.alternate-sheet { width:612pt; height:792pt; padding:36pt; display:flex; flex-direction:column; flex-shrink:0; text-align:left; font-family:Arial,Helvetica,sans-serif; font-synthesis:none; color:var(--sch-text); background:var(--sch-bg); box-shadow:0 3px 16px #0002; line-height:1.2; --av-scale:1; --av-gap:5pt; --av-detail:max(9pt,calc(10pt * var(--av-scale))); --av-small-title:max(10pt,calc(11pt * var(--av-scale))); --av-main-title:max(11.5pt,calc(14pt * var(--av-scale))); --av-time:max(9pt,calc(10pt * var(--av-scale))); --av-name:max(10.5pt,calc(12pt * var(--av-scale))); font-size:var(--av-detail) }
+.alternate-sheet h2,.alternate-sheet h3,.alternate-sheet h4,.alternate-sheet p { margin:0 }
+.alternate-sheet .av-header { display:grid; grid-template-columns:72pt minmax(0,1fr) auto; align-items:center; gap:14pt; padding-bottom:10pt; margin-bottom:10pt; border-bottom:1.5pt solid var(--sch-accent); flex-shrink:0 }
+.alternate-sheet .av-header.av-no-logo { grid-template-columns:minmax(0,1fr) auto; min-height:52pt }
+.alternate-sheet .av-logo { width:72pt; height:72pt; display:flex; justify-content:center; align-items:center; border:.6pt solid var(--sch-text-muted); text-align:center; font-size:8pt; font-weight:700; letter-spacing:.6pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-logo:has(img) { border:0 }
+.alternate-sheet .av-logo img { width:72pt; height:72pt; object-fit:contain }
+.alternate-sheet .av-page-title { font-size:var(--av-title,19pt); line-height:1.13; font-weight:700; color:var(--sch-accent); overflow-wrap:anywhere }
+.alternate-sheet .av-subtitle { font-size:10pt; color:var(--sch-text-secondary); margin-top:4pt; overflow-wrap:anywhere }
+.alternate-sheet .av-day { text-align:right; max-width:145pt; overflow-wrap:anywhere }
+.alternate-sheet .av-day h2 { font-size:18pt; color:var(--sch-accent); line-height:1.1 }
+.alternate-sheet .av-day p { font-size:9.5pt; margin-top:5pt }
+.alternate-sheet .av-body { flex-shrink:0 }
+.alternate-sheet .av-section-heading { font-size:11pt; font-weight:700; margin-bottom:5pt; line-height:1.2 }
+.alternate-sheet .av-primary-heading { color:var(--av-heading-ink); background:var(--sch-accent); padding:5pt 7pt; font-size:13pt }
+.alternate-sheet .av-primary-heading small { font-size:9pt; font-weight:400; margin-left:6pt }
+.alternate-sheet .av-empty { padding:6pt 0; color:var(--sch-text-secondary) }
+.alternate-sheet .av-event { padding:var(--av-gap) 6pt; overflow-wrap:anywhere; break-inside:avoid; position:relative; border:.6pt solid var(--sch-border); margin:0; border-radius:3pt; background:var(--sch-bg) }
+.alternate-sheet .av-event[tabindex] { cursor:pointer }
+.alternate-sheet .av-event:focus-visible,.alternate-sheet .av-header:focus-visible { outline:2pt solid var(--sch-accent); outline-offset:2pt }
+.alternate-sheet .av-event:hover { box-shadow:inset 0 0 0 .7pt var(--sch-text-muted) }
+.alternate-sheet .av-event.selected { outline:1.5pt solid var(--sch-accent); outline-offset:1pt }
+.alternate-sheet .av-event-heading { display:flex; align-items:baseline; justify-content:space-between; gap:6pt }
+.alternate-sheet .av-event-heading h3 { font-size:var(--av-small-title); font-weight:500; line-height:1.17 }
+.alternate-sheet .av-time { font-size:var(--av-time); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; flex-shrink:0; order:2 }
+.alternate-sheet .av-event-content { margin-top:min(2pt,var(--av-gap)) }
+.alternate-sheet .av-event-content:empty { display:none }
+.alternate-sheet .av-main { background:var(--sch-surface); border-left:2pt solid var(--sch-accent); padding-top:calc(var(--av-gap) + var(--av-main-extra,0pt)); padding-bottom:calc(var(--av-gap) + var(--av-main-extra,0pt)) }
+.alternate-sheet .av-main .av-event-heading h3 { font-size:var(--av-main-title); font-weight:700; color:var(--sch-accent) }
+.alternate-sheet .av-main .av-time { font-size:max(10pt,calc(11pt * var(--av-scale))) }
+.alternate-sheet .av-main-audience { font-weight:400; font-size:9pt; color:var(--sch-text-secondary); margin-left:5pt }
+.alternate-sheet .av-main .av-event-content { display:flow-root }
+.alternate-sheet .av-main .av-event-heading { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline }
+.alternate-sheet .av-main .av-event-heading:has(.av-logistics) { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto }
+.alternate-sheet .av-main .av-logistics { display:flex; margin:0; justify-content:flex-end }
+.alternate-sheet .av-main .av-description { display:inline }
+.alternate-sheet .av-main .av-references { display:inline-flex; float:right; margin:2pt 0 0 7pt }
+.alternate-sheet .av-emphasized { border:1pt solid var(--sch-accent); border-left-width:4pt }
+.alternate-sheet .av-main.av-emphasized .av-time { padding:2pt 4pt; background:var(--sch-accent); color:var(--av-heading-ink); border-radius:2pt }
+.alternate-sheet .av-concurrent.av-emphasized { background:var(--sch-surface) }
+.alternate-sheet .av-audience { color:var(--sch-text-secondary); font-size:var(--av-detail); margin-bottom:2pt }
+.alternate-sheet .av-people { margin:min(2pt,var(--av-gap)) 0 min(3pt,var(--av-gap)); font-size:var(--av-name); font-weight:700; line-height:1.22; color:var(--sch-text) }
+.alternate-sheet .av-roster { font-size:max(9.5pt,calc(11pt * var(--av-scale))); line-height:1.24 }
+.alternate-sheet .av-people span::after { content:';'; margin-right:.2em; font-weight:400 }
+.alternate-sheet .av-people span:last-child::after { content:''; margin:0 }
+.alternate-sheet .av-literal { white-space:pre-wrap; font-size:var(--av-name) }
+.alternate-sheet .av-logistics { display:flex; flex-wrap:wrap; gap:1pt 9pt; font-size:var(--av-detail); color:var(--sch-text-secondary); line-height:1.2 }
+.alternate-sheet .av-concurrent .av-logistics { display:flex }
+.alternate-sheet .av-description { font-size:var(--av-detail); color:var(--sch-text-secondary); white-space:pre-wrap; margin-top:min(2pt,var(--av-gap)); line-height:1.2 }
+.alternate-sheet .av-number { display:inline-flex; align-items:center; justify-content:center; width:11pt; height:11pt; border:.65pt solid var(--sch-text-muted); border-radius:50%; padding:0; margin:0 4pt 0 0; background:var(--sch-bg); color:var(--sch-accent); font:600 8pt/1 Arial,sans-serif; vertical-align:.7pt; flex-shrink:0 }
+.alternate-sheet .av-number-wide { width:16pt }
+.alternate-sheet button.av-number { cursor:pointer; position:relative }
+.alternate-sheet button.av-number::after { content:''; position:absolute; inset:-5pt -1pt }
+.alternate-sheet .av-number:focus-visible { outline:2pt solid var(--sch-accent); outline-offset:2pt }
+.alternate-sheet .av-references { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:2pt 5pt; margin-top:3pt; font-size:9pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-reference-list { display:flex; flex-wrap:wrap; gap:3pt }
+.alternate-sheet .av-reference-list .av-number { margin:0 }
+.alternate-sheet .av-flights { clear:both; margin-top:4pt; border-top:.6pt solid var(--sch-border); font-size:var(--av-detail) }
+.alternate-sheet .av-flight { display:grid; grid-template-columns:48pt minmax(0,1fr) minmax(80pt,30%); gap:6pt; padding:min(3pt,var(--av-gap)) 0; border-bottom:.5pt solid var(--sch-border) }
+.alternate-sheet .av-flight:last-child { border-bottom:0; padding-bottom:0 }
+.alternate-sheet .av-flight-name { font-size:var(--av-detail) }
+.alternate-sheet .av-flight-activity + .av-flight-activity { margin-top:min(3pt,var(--av-gap)) }
+.alternate-sheet .av-flight-time { font-variant-numeric:tabular-nums; margin-right:5pt; white-space:nowrap }
+.alternate-sheet .av-flight-title { font-weight:500 }
+.alternate-sheet .av-flight-meta { color:var(--sch-text-secondary); margin-top:1pt }
+.alternate-sheet .av-flow { display:grid; gap:0 12pt; align-items:start }
+.alternate-sheet .av-flow[data-columns="2"] { grid-template-columns:1fr 1fr }
+.alternate-sheet .av-column { display:grid; gap:var(--av-gap) }
+.alternate-sheet .av-flow[data-columns="1"] { gap:var(--av-gap) }
+/* Cards: a shared timeline above complete group agendas. */
+.alternate-sheet .av-shared-timeline { display:grid; grid-template-columns:repeat(var(--av-shared-columns,3),minmax(0,1fr)); gap:6pt; align-items:stretch }
+.alternate-sheet .av-shared-timeline .av-main { border-left-width:.6pt; border-top:2pt solid var(--sch-accent); border-radius:3pt; padding:5pt }
+.alternate-sheet .av-shared-timeline .av-event-heading { display:flex; flex-wrap:wrap; gap:3pt; align-items:flex-start }
+.alternate-sheet .av-shared-timeline .av-event-heading h3 { width:100%; order:2; font-size:max(11.5pt,calc(13pt * var(--av-scale))) }
+.alternate-sheet .av-shared-timeline .av-time { order:1 }
+.alternate-sheet .av-shared-timeline .av-logistics { width:100%; order:3; justify-content:flex-start }
+.alternate-sheet .av-shared-timeline .av-references { display:flex; float:none; justify-content:flex-start; margin-left:0 }
+.alternate-sheet .av-shared-timeline .av-flights { margin-top:3pt }
+.alternate-sheet .av-shared-timeline .av-flight { display:block }
+.alternate-sheet .av-shared-timeline .av-flight-name { display:block; margin-bottom:2pt }
+.alternate-sheet .av-group-panels { display:grid; grid-template-columns:1fr 1fr; align-items:start; gap:10pt; margin-top:10pt }
+.alternate-sheet .av-group-panels[data-columns="1"] { grid-template-columns:1fr }
+.alternate-sheet .av-group-panel { border:.7pt solid var(--sch-border); border-radius:5pt; overflow:hidden; break-inside:avoid }
+.alternate-sheet .av-group-heading { font-size:12pt; padding:5pt 7pt; border-left:4pt solid var(--av-group-color,var(--sch-accent)); background:var(--sch-surface); color:var(--sch-text); font-weight:700 }
+.alternate-sheet .av-group-panel .av-flow { padding:3pt 7pt 5pt }
+.alternate-sheet .av-group-panel .av-concurrent { border:0; border-bottom:.6pt solid var(--sch-border); border-radius:0; padding:var(--av-gap) 0 }
+.alternate-sheet .av-group-panel .av-concurrent.av-emphasized { border-left:3pt solid var(--sch-accent); padding-left:5pt }
+/* Grid: stable group columns, aligned start rows and shared banners. */
+.alternate-sheet .av-matrix { width:100%; table-layout:fixed; border-collapse:collapse; font-size:var(--av-detail) }
+.alternate-sheet .av-matrix caption { text-align:left; font-size:13pt; font-weight:700; padding:5pt 7pt; margin-bottom:5pt; color:var(--av-heading-ink); background:var(--sch-accent) }
+.alternate-sheet .av-matrix caption small { margin-left:6pt; font-size:9pt; font-weight:400 }
+.alternate-sheet .av-clock-column { width:35pt }
+.alternate-sheet .av-matrix th { text-align:left; font-size:9pt; padding:4pt; vertical-align:top; overflow-wrap:anywhere }
+.alternate-sheet .av-matrix thead th { border-bottom:2pt solid var(--av-group-color,var(--sch-accent)); font-size:10pt; color:var(--sch-text) }
+.alternate-sheet .av-matrix tbody th { font-variant-numeric:tabular-nums; font-weight:600; border-bottom:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix td { padding:0; vertical-align:top; border-left:.6pt solid var(--sch-border); border-bottom:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix td:last-child { border-right:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix .av-event { border:0; border-radius:0; padding:var(--av-gap) 5pt }
+.alternate-sheet .av-matrix .av-event+.av-event { border-top:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix .av-event-heading { flex-wrap:wrap; gap:2pt 6pt }
+.alternate-sheet .av-matrix .av-main .av-event-heading { display:grid }
+.alternate-sheet .av-matrix .av-concurrent .av-time { font-weight:500 }
+.alternate-sheet .av-matrix .av-emphasized { border-left:3pt solid var(--sch-accent) }
+.alternate-sheet .av-matrix .av-concurrent .av-flights .av-flight { display:block }
+/* Phases: one vertical progression; only tasks within a phase may use columns. */
+.alternate-sheet .av-phase-sequence { display:block; list-style:none; padding:0; margin:0 }
+.alternate-sheet .av-phase { list-style:none; margin:0; position:relative; break-inside:avoid; border-left:2pt solid var(--sch-accent); border-bottom:.6pt solid var(--sch-border); padding:0 0 var(--av-gap) 7pt }
+.alternate-sheet .av-phase + .av-phase { margin-top:calc(var(--av-gap) + 4pt) }
+.alternate-sheet .av-phase + .av-phase::before { content:'↓'; position:absolute; left:0; top:-11pt; font:9pt/1 Arial; background:var(--sch-bg); color:var(--sch-accent) }
+.alternate-sheet .av-phase>.av-main { border:0; border-radius:0; padding:var(--av-gap) 6pt; background:var(--sch-bg) }
+.alternate-sheet .av-phase>.av-main.av-emphasized { background:var(--sch-surface) }
+.alternate-sheet .av-phase .av-event-heading h3 { font-size:max(11.5pt,calc(15pt * var(--av-scale))) }
+.alternate-sheet .av-phase .av-main .av-event-heading { grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet .av-phase .av-main .av-event-heading .av-logistics { grid-column:1 / -1; grid-row:2; justify-content:flex-start }
+.alternate-sheet .av-phase .av-main .av-time { grid-column:2; grid-row:1; font-size:var(--av-time); font-weight:500 }
+.alternate-sheet .av-phase .av-flow { margin:2pt 0 0 10pt; padding:0 6pt; border-left:.6pt solid var(--sch-border) }
+.alternate-sheet .av-phase .av-concurrent { border:0; border-radius:0; border-bottom:.5pt solid var(--sch-border); padding:var(--av-gap) 0 }
+.alternate-sheet .av-phase .av-concurrent h3 { font-size:var(--av-small-title) }
+.alternate-sheet .av-phase .av-concurrent.av-emphasized { border-left:3pt solid var(--sch-accent); padding-left:5pt }
+.alternate-sheet .av-phase .av-audience { font-size:9pt; margin-bottom:2pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-independent { border-left:2pt dotted var(--sch-text-muted); padding-left:7pt }
+.alternate-sheet .av-independent-label { font-size:9pt; font-weight:500; color:var(--sch-text-secondary); padding:3pt 6pt 0 }
+.alternate-sheet .av-flight.av-varied-logistics { grid-template-columns:36pt minmax(0,1fr)!important }
+.alternate-sheet .av-varied-logistics .av-flight-activity+.av-flight-activity { border-top:.5pt solid var(--sch-border); padding-top:2pt }
+.alternate-sheet .av-notes { height:var(--av-notes-height); min-height:var(--av-notes-height); margin-top:auto; padding-top:5pt; border-top:1pt solid var(--sch-accent); flex-shrink:0 }
+.alternate-sheet .av-notes .av-section-heading { margin-bottom:3pt }
+.alternate-sheet .av-note-columns { display:grid; grid-template-columns:1fr 1fr; gap:16pt }
+.alternate-sheet .av-note { font-size:var(--av-note-size,9.5pt); line-height:1.2; padding-left:8pt; position:relative; margin-bottom:2pt; overflow-wrap:anywhere }
+.alternate-sheet .av-note::before { content:'•'; position:absolute; left:0 }
+.alternate-sheet .av-note .note-select { font:inherit; color:inherit; background:none; border:0; padding:0; margin:0; width:100%; text-align:left; white-space:pre-wrap }
+.alternate-sheet .av-note.selected { outline:1.5pt solid var(--sch-accent); outline-offset:2pt }
+.alternate-sheet .av-footer { display:flex; justify-content:space-between; gap:10pt; flex-shrink:0; padding-top:4pt; margin-top:3pt; border-top:.5pt solid var(--sch-border); font-size:8pt; color:var(--sch-text-secondary); overflow-wrap:anywhere }
+.alternate-sheet .av-handout { font-size:9pt; margin-bottom:6pt; flex-shrink:0 }
+.alternate-sheet .av-print-error { display:none }
+.alternate-sheet.av-overflow,.alternate-sheet.av-natural { height:auto; min-height:792pt }
+.alternate-sheet.av-overflow .av-notes,.alternate-sheet.av-natural .av-notes { margin-top:12pt; height:auto }
+.alternate-sheet.av-natural .av-event { break-inside:auto }
+.alternate-fit-notice:not(:empty) { font-size:13px; line-height:1.4; padding:12px 20px; color:var(--chrome-text); background:var(--chrome-surface); max-width:816px; border:1px solid var(--chrome-border) }
+.print-page.alternate-page .note-empty { display:none }
+@page alternate-paper { size:Letter portrait; margin:0 }
+@page alternate-readable { size:auto; margin:.5in }
+@media print {
+  body.printing-schedule:has(#printContainer .alternate-page.print-fit) { page:alternate-paper }
+  body.printing-schedule:has(#printContainer .alternate-page.print-readable) { page:alternate-readable }
+  #printContainer .page.alternate-page { width:612pt!important; min-width:612pt!important; margin:0!important; padding:0!important; zoom:1!important; page:alternate-paper; break-after:page }
+  #printContainer .page.alternate-page:last-child { break-after:auto }
+  #printContainer .alternate-sheet { box-shadow:none; height:792pt; overflow:visible; margin:0 }
+  .alternate-sheet .av-logo span { visibility:hidden }
+  .alternate-sheet [data-event-id],.alternate-sheet [data-note-id] { outline:none!important; box-shadow:none!important }
+  .alternate-fit-notice { display:none }
+  #printContainer .alternate-sheet[data-fit="false"]>* { display:none!important }
+  #printContainer .alternate-sheet[data-fit="false"]>.av-print-error { display:block!important; font-size:12pt; line-height:1.5 }
+  #printContainer .page.alternate-page.print-readable { width:100%!important; min-width:0!important; page:alternate-readable }
+  #printContainer .print-readable .alternate-sheet { width:100%; padding:0; height:auto; min-height:720pt }
+  #printContainer .print-readable .av-natural { min-height:0; display:block }
+  #printContainer .print-readable .av-natural .av-notes { min-height:var(--av-notes-height); height:auto; margin-top:12pt }
+  #printContainer .print-readable .av-natural .av-flow { display:block }
+  #printContainer .print-readable .av-natural .av-event { break-inside:auto }
+  #printContainer .print-readable .av-natural .av-event-heading { break-after:avoid }
+  #printContainer .print-readable .av-natural :is(.av-group-panels,.av-shared-timeline) { display:block }
+  #printContainer .print-readable .av-natural .av-group-panel { break-inside:auto }
+  #printContainer .print-readable .av-natural .av-header { break-inside:avoid }
+}
+
+/* Compact layouts retain their organizing axis while reclaiming inner space. */
+.alternate-sheet .av-group-panel.av-group-wide { grid-column:1 / -1 }
+.alternate-sheet .av-matrix thead th:first-child { white-space:nowrap; font-size:9pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-main { padding:3pt 5pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-logistics { font-size:9pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-flight { display:grid; grid-template-columns:45pt minmax(0,1fr) minmax(80pt,30%) }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto; gap:3pt 6pt }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading:not(:has(.av-logistics)) { grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading .av-logistics { grid-column:auto; grid-row:auto; justify-content:flex-end }
+.alternate-sheet.av-compact .av-phase .av-main .av-time { grid-column:auto; grid-row:auto }
+
+.alternate-sheet.av-compact .av-shared-timeline .av-event-heading h3 { width:auto; order:0; flex:1 }
+.alternate-sheet.av-compact .av-shared-timeline .av-event-heading .av-time { order:1 }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading { display:grid; grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading:has(.av-logistics) { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading h3 { order:0; width:auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-logistics { order:1; width:auto; justify-content:flex-end }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-time { order:2 }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-references { float:right; margin-left:7pt }
+
+/* Dense paper keeps the same hierarchy with fewer forced line breaks. */
+.alternate-sheet.av-compact .av-main .av-event-heading:has(.av-logistics) { grid-template-columns:fit-content(50%) minmax(0,1fr) auto }
+.alternate-sheet.av-compact .av-logistics { column-gap:6pt }
+.alternate-sheet.av-compact .av-main .av-references { margin-top:0 }
+.alternate-sheet.av-compact .av-main.av-emphasized .av-time { padding:1pt 3pt }
+.alternate-sheet.av-compact .av-shared-timeline { gap:3pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-main { padding:var(--av-gap) 4pt }
+.alternate-sheet.av-compact .av-group-panels { gap:6pt; margin-top:6pt }
+.alternate-sheet.av-compact .av-group-heading { padding:3pt 5pt; font-size:11pt }
+.alternate-sheet.av-compact .av-group-panel .av-flow { padding:2pt 5pt 3pt }
+.alternate-sheet.av-compact .av-phase { padding-bottom:0 }
+.alternate-sheet.av-compact .av-phase+.av-phase { margin-top:3pt }
+.alternate-sheet.av-compact .av-phase+.av-phase::before { top:-7pt; font-size:8pt }
+.alternate-sheet.av-compact .av-phase .av-flow { margin-top:0 }
+.alternate-sheet.av-compact .av-independent-label { padding-top:0 }
+.alternate-sheet.av-compact .av-audience { margin-bottom:0 }
+/* Full-width headers can keep short references beside their event identity. */
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:baseline; column-gap:6pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main :is(.av-event-heading,.av-event-content) { display:contents }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-event-heading h3 { grid-row:1; grid-column:1; max-width:180pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-logistics { grid-row:1; grid-column:2; justify-content:flex-end }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-time { grid-row:1; grid-column:3 }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-references { grid-row:1; grid-column:4; float:none; margin:0; max-width:180pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main :is(.av-description,.av-people,.av-flights) { grid-column:1 / -1 }
+/* A final text-only density step uses punctuation instead of forced lines.
+ * Names remain bold and complete; rosters and flight activities stay blocks. */
+.alternate-sheet.av-dense { --av-name:max(9.5pt,calc(12pt * var(--av-scale))) }
+.alternate-sheet.av-dense .av-concurrent { display:block }
+.alternate-sheet.av-dense .av-concurrent :is(.av-event-heading,.av-event-content) { display:contents }
+.alternate-sheet.av-dense .av-concurrent h3 { display:inline; margin-right:5pt }
+.alternate-sheet.av-dense .av-concurrent .av-time { float:right; margin-left:5pt; display:inline }
+.alternate-sheet.av-dense .av-concurrent :is(.av-audience,.av-people,.av-logistics,.av-logistics>div,.av-description) { display:inline }
+.alternate-sheet.av-dense .av-concurrent :is(.av-audience,.av-people) { margin-right:5pt }
+.alternate-sheet.av-dense .av-concurrent .av-logistics>div+div::before { content:' · ' }
+.alternate-sheet.av-dense .av-concurrent .av-description::before { content:' · ' }
+.alternate-sheet.av-dense .av-concurrent :is(.av-roster,.av-literal,.av-flights) { display:block }
+.alternate-sheet.av-dense .av-concurrent .av-description { white-space:pre-wrap }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-logistics { display:flex }
+.alternate-sheet.av-dense .av-concurrent .av-people.av-roster { display:block }
+.alternate-sheet.av-dense .av-concurrent .av-people.av-literal { display:block }
+.alternate-sheet.av-compact .av-header { padding-bottom:5pt; margin-bottom:5pt }
+.alternate-sheet.av-compact :is(.av-primary-heading,.av-matrix caption) { padding-top:3pt; padding-bottom:3pt }
+.alternate-sheet.av-compact .av-matrix tbody th { padding-top:var(--av-gap); padding-bottom:var(--av-gap) }
+.alternate-sheet .av-phase-key { display:none }
+.alternate-sheet.av-dense .av-phase-key { display:inline; float:right; margin-top:3pt }
+.alternate-sheet.av-dense .av-independent-label { display:none }
+/* In a dense matrix, the time column already supplies a fixed reading anchor. */
+.alternate-sheet.av-dense .av-matrix .av-main { display:flow-root }
+.alternate-sheet.av-dense .av-matrix .av-main .av-event-heading h3 { display:inline; margin-right:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-logistics { display:inline-flex; margin-right:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-time { float:right; margin-left:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-description { display:inline }
+.alternate-sheet.av-dense .av-matrix .av-main .av-references { display:inline-flex; float:right; margin:0 0 0 5pt }
+
+.alternate-sheet .av-cell-events { column-gap:8pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-description::before { content:' · ' }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-description { display:block }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-description::before { content:none }

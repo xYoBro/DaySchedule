@@ -10,6 +10,7 @@
   <title>DaySchedule</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/bands.css">
+  <link rel="stylesheet" href="css/alternate-views.css">
   <script src="js/constants.js"></script>
 </head>
 <body>
@@ -94,23 +95,31 @@
       </button>
       <span class="save-status" id="saveIndicator" role="status" aria-live="polite"></span>
       <div class="tb-sep"></div>
-      <div class="day-tabs" id="dayTabs"></div>
+      <div class="toolbar-days" aria-label="Schedule days">
+        <div class="day-tabs" id="dayTabs"></div>
+        <button class="btn" id="addDayBtn">+ Day</button>
+        <button class="btn" id="daySettingsBtn">Dates &amp; hours</button>
+      </div>
     </div>
     <div class="toolbar-right">
       <div class="tb-create-group" aria-label="Add schedule item">
-        <button class="btn tb-create-btn" id="addDayBtn">+ Day</button>
         <button class="btn tb-create-btn" id="addEventBtn">+ Event</button>
         <button class="btn tb-create-btn" id="addNoteBtn">+ Reminder</button>
       </div>
       <button class="btn" id="daySheetBtn">Quick Edit</button>
       <div class="tb-sep"></div>
+      <label class="toolbar-view" for="viewSelect">View
+        <select id="viewSelect"><option value="bands">Bands</option><option value="grid">Grid</option><option value="cards">Cards</option><option value="phases">Phases</option></select>
+      </label>
       <button class="btn" id="customizeBtn">Customize</button>
+      <button class="btn" id="printBtn">Print</button>
       <div class="tb-overflow" id="overflowMenu">
         <button class="btn tb-overflow-btn" id="overflowBtn" title="More actions" aria-label="More actions" aria-expanded="false" aria-controls="overflowDropdown">&#x2026;</button>
         <div class="tb-overflow-dropdown" id="overflowDropdown">
-          <button class="tb-overflow-item" id="versionsMenuBtn">Versions</button>
+          <button class="tb-overflow-item" id="undoBtn">Undo last edit</button>
+          <button class="tb-overflow-item" id="redoBtn">Redo</button>
           <button class="tb-overflow-item" id="saveScheduleFileBtn">Save .schedule</button>
-          <button class="tb-overflow-item" id="printBtn">Print</button>
+          <button class="tb-overflow-item" id="versionsMenuBtn">Saved versions</button>
           <button class="tb-overflow-item" id="helpBtn">Help</button>
         </div>
       </div>
@@ -178,7 +187,7 @@
           </div>
           <div class="help-item">
             <div class="help-item-label">More</div>
-            <div class="help-item-desc">Versions, Print, and Help.</div>
+            <div class="help-item-desc">Undo, Redo, Saved versions, and Help. Print is on the toolbar.</div>
           </div>
         </div>
       </div>
@@ -211,6 +220,18 @@
             <div class="help-item-desc">Safest answer: one person edits the workbook file at a time.</div>
           </div>
           <div class="help-item">
+            <div class="help-item-label">How do I change dates or event times?</div>
+            <div class="help-item-desc"><strong>Dates &amp; hours</strong> opens day setup. Edit an event’s Start and End in either order; finish both fields before leaving them. Invalid ranges keep the previous times and explain why.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">What does a group handout leave out?</div>
+            <div class="help-item-desc"><strong>Full schedule</strong> includes everything. A group handout keeps shared events and named assignments without a group by default. Print lists excluded events, and schedule checks still cover the selected days in full.</div>
+          </div>
+          <div class="help-item">
+            <div class="help-item-label">Which export is my backup?</div>
+            <div class="help-item-desc"><strong>Save .schedule</strong> includes the complete workbook. The legacy .js export in Customize → Export contains only the current schedule, without other schedules or saved versions.</div>
+          </div>
+          <div class="help-item">
             <div class="help-item-label">Main schedule or concurrent event?</div>
             <div class="help-item-desc">Choose <strong>Schedule section</strong> on the event. Then choose who attends. Changing the audience or emphasis keeps the event in its chosen section.</div>
           </div>
@@ -224,11 +245,11 @@
           </div>
           <div class="help-item">
             <div class="help-item-label">Where do I change the look?</div>
-            <div class="help-item-desc">Use <strong>Customize</strong>.</div>
+            <div class="help-item-desc">Use the toolbar’s <strong>View</strong> selector for layouts. <strong>Customize</strong> controls colors, headings, the logo, and audiences.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">Where is Save?</div>
-            <div class="help-item-desc">Use <strong>Save .schedule</strong> in the bar under the toolbar, or open the <strong>&hellip;</strong> menu (top right). Once a file is attached the bar button reads <strong>Save Now</strong>.</div>
+            <div class="help-item-desc">Use <strong>Save .schedule</strong> in the bar under the toolbar, or open the <strong>&hellip;</strong> menu (top right). With a writable file it reads <strong>Save Now</strong>; in download mode it reads <strong>Download .schedule</strong>. Send the newest complete workbook copy.</div>
           </div>
           <div class="help-item">
             <div class="help-item-label">When should I save?</div>
@@ -340,6 +361,7 @@
   <script src="js/band-palettes.js"></script>
   <script src="js/themes.js"></script>
   <script src="js/band-layout.js"></script>
+  <script src="js/alternate-views.js"></script>
   <script src="js/skin-band.js"></script>
   <script src="js/skin-grid.js"></script>
   <script src="js/skin-cards.js"></script>

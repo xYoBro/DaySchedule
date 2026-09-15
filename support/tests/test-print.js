@@ -51,7 +51,7 @@ describe('UI Harness — print', () => {
     assert(document.querySelector('#scheduleContainer [data-event-id="' + event.id + '"].selected'), 'return from print must preserve the current selection');
   });
 
-  it('applyPrintScalingToPage falls back to zoom when content overflows badly', () => {
+  it('print fitting removes old whole-page zoom even on a legacy page', () => {
     resetUiHarnessState();
 
     const page = document.createElement('div');
@@ -63,39 +63,23 @@ describe('UI Harness — print', () => {
       stubScrollHeight(page, [2000, 2000, 2000]);
       applyPrintScalingToPage(page, true);
 
-      assert.equal(page.dataset.printScaled, '1');
-      assert(parseFloat(page.style.zoom) < 1, 'overflow fallback should zoom the page down');
+      assert.equal(page.dataset.printScaled, undefined);
+      assert.equal(page.style.zoom, '', 'no print fallback may shrink the entire page');
     } finally {
       page.remove();
     }
   });
 
-  it('legacy screen layouts compress the preview page but never zoom it', async () => {
-    resetUiHarnessState();
-    const seeded = seedUiSchedule({ skin: 'phases', dayCount: 2 });
-    let printCalls = 0;
-    const originalPrint = window.print;
-    window.print = () => { printCalls += 1; };
-
-    try {
-      printAllDays();
-      await wait(250);
-      const previewPage = document.getElementById('previewPage');
-      stubScrollHeight(previewPage, [2000, 2000, 2000, 2000]);
-      renderDay(seeded.day1.id);
-
-      assert.equal(printCalls, 1);
-      // Compression stages apply to the preview page (not the print pages)…
-      assert(previewPage.style.getPropertyValue('--notes-fs') !== '', 'compression vars should target the preview page');
-      // …but the screen path must never hit the zoom fallback: the page
-      // stretches to the content height instead of shrinking content below
-      // readability.
-      assert.equal(previewPage.dataset.printScaled, undefined);
-      assert.equal(previewPage.style.zoom, '');
-      assert.equal(previewPage.style.minHeight, '2000px', 'screen page should stretch to the measured content height');
-    } finally {
-      window.print = originalPrint;
-    }
+  it('alternate layouts use bounded text and report oversized content without zoom', () => {
+    resetUiHarnessState(); const seeded = seedUiSchedule({ skin: 'phases' });
+    const event = Store.getEvents(seeded.day1.id)[0];
+    Store.updateEvent(seeded.day1.id, event.id, { description: 'Full instruction retained. '.repeat(2000) });
+    renderDay(seeded.day1.id);
+    const page = document.getElementById('previewPage'), sheet = page.querySelector('.alternate-sheet');
+    assert.equal(sheet.dataset.fit, 'false');
+    assert.equal(page.style.zoom, ''); assert.equal(page.dataset.printScaled, undefined);
+    assert(sheet.textContent.includes('Full instruction retained.'));
+    assert(document.querySelector('.alternate-fit-notice').textContent.includes('readable one-page limits'));
   });
 
   it('dense Bands screen flow preserves original main structure and clears previous layout compression', () => {
@@ -168,7 +152,7 @@ describe('UI Harness — print review and handouts', () => {
     resetUiHarnessState();
     seedUiSchedule({ skin: 'grid' });
     const html = buildPrintMarkup({ detail: 'overview' });
-    assert(html.includes('Overview · Event notes omitted.'));
+    assert(html.includes('Overview: event notes omitted.'));
     assert(!html.includes('Accountability formation.'));
     assert(html.includes('Bldg 200 Apron'));
     assert(html.includes('OCP unless mission tasking requires otherwise.'));
@@ -205,29 +189,23 @@ describe('UI Harness — print review and handouts', () => {
     closeModal('printReviewModal');
   });
 
-  it('warns about small Fit text while leaving the one-page option available', () => {
-    resetUiHarnessState();
-    seedUiSchedule({ skin: 'cards' });
+  it('blocks oversized Fit output and offers an explicit readable-page choice', () => {
+    resetUiHarnessState(); seedUiSchedule({ skin: 'cards' });
     const originalMeasure = window.measurePrintPlan;
-    window.measurePrintPlan = () => [{ estimatedPages: 1, smallestTextPt: 10.5 }];
+    window.measurePrintPlan = () => [{ estimatedPages: 1, smallestTextPt: 9, fits: false }];
     try {
-      openPrintReview();
-      const mode = document.getElementById('printMode');
-      mode.value = 'fit';
-      mode.dispatchEvent(new Event('change'));
-      assert.equal(mode.value, 'fit');
-      assert(document.getElementById('printReviewSummary').textContent.includes('10.5 pt'));
-      assert(document.getElementById('printReviewSummary').textContent.includes('below 12 pt'));
-      assert.equal(document.getElementById('printReviewConfirm').disabled, false);
-    } finally {
-      window.measurePrintPlan = originalMeasure;
-      closeModal('printReviewModal');
-    }
+      openPrintReview(); const mode = document.getElementById('printMode'); mode.value = 'fit'; mode.dispatchEvent(new Event('change'));
+      assert(document.getElementById('printReviewSummary').textContent.includes('bounded text sizes'));
+      assert(document.getElementById('printReviewSummary').textContent.includes('no names or details will be clipped'));
+      assert.equal(document.getElementById('printReviewConfirm').disabled, true);
+      assert(Array.from(mode.options).some(option => option.value === 'readable'));
+    } finally { window.measurePrintPlan = originalMeasure; closeModal('printReviewModal'); }
   });
+
 });
 
 describe('UI Harness — print geometry', () => {
-  it('keeps readable text at least 9 pt across all skins and removes temporary measurement nodes', async () => {
+  it('keeps event details at least 9 pt and auxiliary labels at least 8 pt across alternate skins and removes temporary measurement nodes', async () => {
     // The UI harness deliberately omits the application stylesheet. Geometry
     // assertions need the real CSS, not browser-default button typography.
     const stylesheet = document.createElement('link');
@@ -245,7 +223,11 @@ describe('UI Harness — print geometry', () => {
         const metrics = measurePrintPlan({ mode: 'readable' });
         assert.equal(metrics.length, 1);
         assert.equal(metrics[0].scale, 1);
-        assert(metrics[0].smallestTextPt >= 9, skin + ' should retain readable type');
+        assert(metrics[0].smallestTextPt >= 8, skin + ' should retain auxiliary label floors');
+        const host = document.createElement('div'); host.className = 'print-measurement'; document.body.appendChild(host);
+        preparePrintPages(host, { mode: 'readable' });
+        host.querySelectorAll('.av-description,.av-location,.av-poc,.av-people,.av-flight,.av-note').forEach(node => assert(parseFloat(getComputedStyle(node).fontSize) * .75 >= 8.99, skin + ': ' + node.className));
+        host.remove();
         assert.equal(document.querySelector('.print-measurement'), null);
       });
     } finally {
@@ -310,7 +292,7 @@ describe('UI Harness — print cleanup', () => {
 
 describe('UI Harness — native print lifecycle', () => {
   SKIN_NAMES.forEach(skin => {
-    it('prepares current full readable ' + skin + ' output for browser File → Print', () => {
+    it('prepares current full bounded ' + skin + ' output for browser File → Print', () => {
       window.dispatchEvent(new Event('afterprint'));
       resetUiHarnessState();
       const seeded = seedUiSchedule({ skin, dayCount: 2 });
@@ -329,8 +311,8 @@ describe('UI Harness — native print lifecycle', () => {
         assert(container.textContent.includes('Day 2 Formation'));
         assert(container.textContent.includes('Weapons Qualification'));
         assert(container.textContent.includes('Aircraft Launch Sim'));
-        assert(container.querySelector((skin === 'bands' ? '.print-fit' : '.print-readable') + '.skin-' + skin));
-        if (skin !== 'bands') assert.equal(container.querySelector('.print-fit'), null);
+        assert(container.querySelector('.print-fit.skin-' + skin));
+        assert.equal(container.querySelector('.print-readable'), null);
         assert.equal(new Set(Array.from(container.querySelectorAll('.print-page')).map(page => page.dataset.printDay)).size, 2);
         assert.equal(document.getElementById('scheduleContainer').innerHTML, preview, 'native prep must not rewrite the editor');
         assert.equal(JSON.stringify(Store.getPersistedState()), before);
@@ -366,8 +348,8 @@ describe('UI Harness — native print lifecycle', () => {
         assert(!container.textContent.includes('Day 2 Formation'));
         window.dispatchEvent(new Event('afterprint'));
         window.dispatchEvent(new Event('beforeprint'));
-        assert(container.querySelector(skin === 'bands' ? '.print-fit.band-page' : '.print-readable'));
-        if (skin !== 'bands') assert.equal(container.querySelector('.print-fit'), null);
+        assert(container.querySelector('.print-fit.skin-' + skin));
+        assert.equal(container.querySelector('.print-readable'), null);
         assert(container.textContent.includes('Accountability formation.'));
         assert(container.textContent.includes('Aircraft Launch Sim'));
         assert(container.textContent.includes('Day 2 Formation'));

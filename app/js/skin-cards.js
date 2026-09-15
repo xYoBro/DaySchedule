@@ -1,126 +1,55 @@
-/* ── skin-cards.js ── Contract ────────────────────────────────────────────
- *
- * EXPORTS:
- *   renderDayBody_cards(dayId) → string (HTML)
- *
- * REQUIRES:
- *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js        — esc()
- *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
- *   render.js       — renderNotes(), clearDaggerFootnotes()
- *
- * CONSUMED BY:
- *   render.js — dispatches to this when skin === 'cards'
- * ──────────────────────────────────────────────────────────────────────────── */
-
-function renderDayBody_cards(dayId, dayOverride) {
+/* Group agendas beneath a shared timeline. Group membership is the organizing
+ * axis; fitting may change panel widths, never move events between groups. */
+function renderDayBody_cards(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
   if (!day) return '';
-  const groups = Store.getGroups();
-  const events = day.events.slice().sort(compareBandOrder);
-  const notes = day.notes || Store.getNotes(dayId);
+  const data = AlternateViews.model(day), groups = AlternateViews.lanes(data);
+  return '<div class="av-cards"><section class="av-shared"><h2 class="av-section-heading av-primary-heading">Main schedule' +
+    (data.primaryLabel ? '<small>' + esc(data.primaryLabel) + '</small>' : '') + '</h2><div class="av-shared-timeline">' +
+    (data.mains.length ? data.mains.map(event => AlternateViews.record(event, data, options)).join('') : '<p class="av-empty">No main events scheduled.</p>') + '</div></section>' +
+    (groups.length ? '<div class="av-group-panels">' + groups.map(group => '<section class="av-group-panel" data-lane-group="' + esc(group.id) + '">' +
+      '<h2 class="av-group-heading" style="--av-group-color:' + esc(group.color) + '">' + esc(group.name) + '</h2>' +
+      AlternateViews.flow(group.events, data, { ...options, groupLabel: group.name }) + '</section>').join('') + '</div>' : '') + '</div>';
+}
 
-  clearDaggerFootnotes();
-
-  if (events.length === 0) {
-    let html = '<div class="empty-state">';
-    html += '<p>Click <strong>+ Event</strong> to add your first event.</p>';
-    html += '</div>';
-    if (notes.length > 0) html += renderNotes(notes);
-    return html;
-  }
-
-  // Separate shared/main-track events from group-specific events. Orphaned
-  // and ungrouped events are routed to an "Unassigned" card so they render.
-  const sharedEvents = events.filter(e => isEventEffectiveMain(e, groups));
-  const groupEvents = resolveLaneEvents(events.filter(e => !sharedEvents.includes(e)), groups);
-
-  // Get groups that have events
-  const activeGroupIds = [...new Set(groupEvents.map(e => e.groupId))];
-  const activeGroups = activeGroupIds
-    .map(id => id === '' ? UNASSIGNED_LANE_GROUP : groups.find(g => g.id === id))
-    .filter(Boolean);
-
-  let html = '<div class="cards-schedule">';
-
-  // Shared timeline banner
-  if (sharedEvents.length > 0) {
-    html += '<div class="cards-shared">';
-    html += '<div class="cards-section-label">Main track</div>';
-    sharedEvents.forEach(e => {
-      const sharedExceptions = getSharedEventExceptions(e, events, groups);
-      const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
-      const breakClass = e.isBreak ? ' cards-shared-break' : '';
-      html += '<span class="cards-shared-item' + breakClass + '" data-event-id="' + esc(e.id) + '">';
-      html += '<span class="cards-shared-head">';
-      html += '<span class="cards-shared-title">' + esc(e.title) + '</span>';
-      html += '<span class="cards-shared-time">' + esc(e.startTime + '\u2013' + e.endTime) + '</span>';
-      html += '</span>';
-      const sharedMeta = [];
-      if (e.location) sharedMeta.push('<span>' + esc(e.location) + '</span>');
-      if (e.poc) sharedMeta.push('<span>POC: ' + esc(e.poc) + '</span>');
-      if (sharedMeta.length > 0) {
-        html += '<span class="cards-shared-meta">' + sharedMeta.join('<span class="cards-meta-sep">\u00b7</span>') + '</span>';
-      }
-      const sharedGroup = groups.find(g => g.id === e.groupId) || null;
-      if (sharedGroup || e.attendees) {
-        html += '<span class="cards-shared-meta cards-shared-who">';
-        if (sharedGroup) html += '<span class="skin-group-tag" style="background:' + esc(sharedGroup.color) + ';color:' + esc(getContrastingTextColor(sharedGroup.color)) + ';">' + esc(sharedGroup.name) + '</span>';
-        if (e.attendees) html += '<span>WHO: ' + esc(e.attendees) + '</span>';
-        html += '</span>';
-      }
-      if (exceptionNote) {
-        html += '<span class="cards-shared-exception">Exceptions: ' + esc(exceptionNote) + '</span>';
-      }
-      html += renderFlightDetails(e);
-      if (e.description) html += '<span class="cards-event-detail">' + esc(e.description) + '</span>';
-      html += '</span>';
+function layoutDayBody_cards(sheet) {
+  const timeline = sheet.querySelector('.av-shared-timeline');
+  const mains = Array.from(timeline.querySelectorAll('.av-main'));
+  let height = Infinity, sharedColumns = 1;
+  for (const count of [Math.min(3, Math.max(1, mains.length)), Math.min(2, Math.max(1, mains.length))]) {
+    timeline.style.setProperty('--av-shared-columns', count);
+    let position = 0;
+    mains.forEach((event, index) => {
+      const wide = !!event.querySelector('.av-flights') || (index === mains.length - 1 && position === 0);
+      event.classList.toggle('av-shared-wide', wide);
+      event.style.gridColumn = wide ? '1 / -1' : '';
+      position = wide ? 0 : (position + 1) % count;
     });
-    html += '</div>';
+    const measured = timeline.getBoundingClientRect().height;
+    if (measured < height) { height = measured; sharedColumns = count; }
   }
-
-  // Group cards — 2 columns for ≤4 groups, 3 for more
-  const colCount = activeGroups.length <= 4 ? 2 : 3;
-  if (activeGroups.length > 0) {
-    html += '<div class="cards-grid cards-cols-' + colCount + '">';
-    activeGroups.forEach(g => {
-      const gEvents = groupEvents.filter(e => e.groupId === g.id)
-        .sort(compareBandOrder);
-
-      html += '<div class="cards-card" style="border-top:3px solid ' + esc(g.color) + ';">';
-      // Same colored tag as the other skins: the group color as text over
-      // the card surface has no contrast guarantee for a user-chosen color.
-      html += '<div class="cards-card-header"><span class="cards-card-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
-
-      gEvents.forEach(evt => {
-        html += '<div class="cards-event" data-event-id="' + esc(evt.id) + '">';
-        html += '<div class="cards-event-head">';
-        html += '<div class="cards-event-title">' + esc(evt.title) + '</div>';
-        html += '<div class="cards-event-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</div>';
-        html += '</div>';
-        const meta = [];
-        if (evt.location) meta.push('<span>' + esc(evt.location) + '</span>');
-        if (evt.poc) meta.push('<span>POC: ' + esc(evt.poc) + '</span>');
-        if (meta.length > 0) {
-          html += '<div class="cards-event-meta">' + meta.join('<span class="cards-meta-sep">\u00b7</span>') + '</div>';
-        }
-        if (evt.description) html += '<div class="cards-event-detail">' + esc(evt.description) + '</div>';
-        html += renderFlightDetails(evt);
-        if (evt.attendees) html += '<div class="cards-event-detail">WHO: ' + esc(evt.attendees) + '</div>';
-        html += '</div>';
-      });
-
-      if (gEvents.length === 0) {
-        html += '<div class="cards-event-empty">No events assigned</div>';
-      }
-
-      html += '</div>';
-    });
-    html += '</div>';
+  timeline.style.setProperty('--av-shared-columns', sharedColumns);
+  let position = 0;
+  mains.forEach((event, index) => {
+    const wide = !!event.querySelector('.av-flights') || (index === mains.length - 1 && position === 0);
+    event.classList.toggle('av-shared-wide', wide); event.style.gridColumn = wide ? '1 / -1' : '';
+    position = wide ? 0 : (position + 1) % sharedColumns;
+  });
+  const panels = sheet.querySelector('.av-group-panels');
+  if (!panels) return;
+  const groups = Array.from(panels.querySelectorAll('.av-group-panel'));
+  const heavy = groups.filter(group => group.querySelectorAll('.av-event').length > 4);
+  panels.dataset.columns = groups.length === 1 ? '1' : '2';
+  groups.forEach(group => group.classList.toggle('av-group-wide', groups.length === 1 || heavy.includes(group)));
+  groups.forEach(group => AlternateViews.arrange(group.querySelector('.av-flow'), group.classList.contains('av-group-wide') && group.querySelectorAll('.av-event').length > 3 ? 2 : 1));
+  panels.style.removeProperty('grid-template-columns');
+  if (groups.length === 2 && !heavy.length) {
+    let best = Infinity, width = 50;
+    for (const candidate of [50, 60, 40, 70, 30]) {
+      panels.style.gridTemplateColumns = candidate + 'fr ' + (100 - candidate) + 'fr';
+      const height = panels.getBoundingClientRect().height;
+      if (height < best) { best = height; width = candidate; }
+    }
+    panels.style.gridTemplateColumns = width + 'fr ' + (100 - width) + 'fr';
   }
-
-  html += '</div>';
-
-  if (notes.length > 0) html += renderNotes(notes);
-  return html;
 }

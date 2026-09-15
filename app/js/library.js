@@ -205,7 +205,7 @@ function hideLibrary() {
   document.querySelector('.app-body').style.display = '';
   // Imports can render while the library hides the editor. Physical paper
   // fitting needs visible dimensions, so measure again after revealing it.
-  if (document.querySelector('.band-sheet')) renderActiveDay();
+  if (document.querySelector('.band-sheet, .alternate-sheet')) renderActiveDay();
   syncHelpEntryPoints();
 }
 
@@ -394,7 +394,10 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
-  sessionSave((typeof hasScheduleWorkbookHandle === 'function' && hasScheduleWorkbookHandle()) ? { skipDirty: true } : undefined);
+  _openedWorkbookFileName = sourceFileName;
+  if (hasScheduleWorkbookHandle()) markScheduleWorkbookSaved();
+  else markScheduleWorkbookOpened();
+  sessionSave({ skipDirty: true });
   toast('Opened ' + sourceFileName);
 }
 

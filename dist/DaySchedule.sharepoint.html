@@ -2432,17 +2432,8 @@ body {
   gap: 8px;
   margin-top: 20px;
 }
-.library-home-rule {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 11px;
-  border-radius: 999px;
-  background: #f7f8fa;
-  border: 1px solid #e4e7ec;
-  font-size: 12px;
-  font-weight: 600;
-  color: #344054;
-}
+.library-home-rule { display: inline; font-size: 12px; color: var(--chrome-text-secondary); }
+.library-home-rule + .library-home-rule::before { content: &#x27;→&#x27;; margin-right: 8px; }
 .library-home code,
 .library-connect-summary code {
   background: rgba(15, 23, 42, 0.06);
@@ -3235,9 +3226,9 @@ body {
   border-color: #444466;
 }
 [data-editor-theme=&quot;dark&quot;] .btn-primary {
-  background: #5b8def;
+  background: #315fac;
   color: white;
-  border-color: #5b8def;
+  border-color: #739aea;
 }
 [data-editor-theme=&quot;dark&quot;] .btn:hover { background: #3a3a5c; }
 [data-editor-theme=&quot;dark&quot;] .inspector input,
@@ -3273,11 +3264,7 @@ body {
   border-color: rgba(91, 141, 239, 0.14);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
 }
-[data-editor-theme=&quot;dark&quot;] .library-home-rule {
-  background: rgba(91, 141, 239, 0.12);
-  border-color: rgba(91, 141, 239, 0.22);
-  color: #d8e5ff;
-}
+[data-editor-theme=&quot;dark&quot;] .library-home-rule { color: #d8e5ff; }
 [data-editor-theme=&quot;dark&quot;] .library-advanced-summary {
   color: #c7cbe0;
 }
@@ -4419,6 +4406,100 @@ textarea:focus-visible,
   .toolbar-right { flex-wrap: wrap; max-width: 100%; }
 }
 
+/* Authoring controls only: the approved paper renderers remain independent. */
+@media screen {
+  .toolbar { flex-wrap: wrap; gap: 8px 16px; }
+  .toolbar-left { flex: 1 1 auto; min-width: 0; }
+  .toolbar-days { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .toolbar-days .day-tabs { min-width: 0; }
+  .toolbar-days &gt; .btn { white-space: nowrap; }
+  .toolbar-right { gap: 6px; }
+  .toolbar-view { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--chrome-text-secondary); }
+  .toolbar-view select { height: 44px; min-width: 88px; font: inherit; color: var(--chrome-text); background: var(--chrome-surface); border: 1px solid var(--chrome-border); border-radius: 8px; padding: 0 8px; }
+  .toolbar #daySheetBtn { background: var(--chrome-surface); color: var(--chrome-text); box-shadow: none; border: 1px solid var(--chrome-border); }
+  .toolbar .tb-create-btn.btn-primary { background: rgb(var(--app-accent)); color: white; }
+  .editor-access-bar { padding-top: 5px; padding-bottom: 5px; }
+  .editor-access-mode { display: none; }
+  .editor-access-message { font-size: 12px; line-height: 1.4; }
+  .save-opened { color: var(--chrome-text-secondary); }
+  .inspector .insp-header { position: sticky; top: -16px; z-index: 2; background: var(--chrome-surface); margin: -16px -16px 12px; padding: 12px 16px 8px; border-bottom: 1px solid var(--chrome-border); }
+  .inspector #insp-event-identity { margin: 0; font-size: 14px; line-height: 1.3; text-transform: none; letter-spacing: 0; color: var(--chrome-text); overflow-wrap: anywhere; }
+  .inspector .insp-save-hint { margin: 0 0 8px; }
+  .inspector .event-field-section { margin-top: 12px; padding-top: 12px; }
+  .inspector .event-field-section h4 { margin-bottom: 4px; }
+  .inspector label { margin-top: 8px; font-size: 11px; text-transform: none; letter-spacing: 0; }
+  .inspector select { height: 44px; }
+  .inspector .event-placement { margin-top: 12px; }
+  .inspector .placement-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .inspector .placement-option { display: flex; min-height: 64px; margin: 0; padding: 8px; }
+  .inspector .placement-option small { font-size: 11px; line-height: 1.3; }
+  .inspector .insp-link { display: inline-flex; align-items: center; padding: 4px 0; border: 0; background: transparent; color: rgb(var(--app-accent)); text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
+  .inspector .event-people &gt; summary { padding: 10px 0; min-height: 44px; }
+  .inspector .event-people &gt; .insp-hint { margin: 4px 0 6px; }
+  .inspector .attendee-preview p { margin: 6px 0; }
+  .inspector .event-options { margin: 14px 0; padding: 6px 10px 10px; border: 1px solid var(--chrome-border); border-radius: 8px; min-width: 0; }
+  .inspector .event-options legend { font-size: 12px; font-weight: 600; padding: 0 4px; }
+  .inspector label.insp-toggle-label { display: flex; align-items: center; gap: 8px; margin: 0; min-height: 44px; font-size: 13px; font-weight: 500; text-transform: none; color: var(--chrome-text); }
+  .inspector label.insp-toggle-label input { width: 16px; height: 16px; flex: 0 0 auto; margin: 0; }
+  .inspector .event-options .insp-hint { margin: 0 0 4px 24px; font-size: 11px; line-height: 1.4; }
+  .inspector .flight-editor &gt; summary { min-height: 44px; padding: 10px 0; }
+  .inspector .insp-delete-zone { position: static; background: transparent; margin-top: 14px; }
+  .inspector .delete-btn { width: auto; padding: 6px 12px; font-size: 12px; border-color: var(--chrome-border); color: var(--chrome-text-secondary); }
+  .inspector .delete-btn:hover { color: #b42318; border-color: #b42318; }
+  .time-edit-feedback, #insp-assignment-review { font-size: 12px; line-height: 1.45; color: var(--chrome-text); border-left: 3px solid #b47521; padding: 8px 10px; margin: 10px 0; background: var(--chrome-surface); }
+  #insp-assignment-review p { margin: 6px 0 0; }
+  .legacy-export { margin-top: 20px; }
+  .legacy-export summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .legacy-export summary::before { content: &#x27;▸&#x27;; }
+  .legacy-export[open] summary::before { content: &#x27;▾&#x27;; }
+  .legacy-export .settings-export-row { flex-wrap: wrap; }
+  .print-omissions { border-left: 3px solid #b47521; padding: 8px 12px; margin: 12px 0; font-size: 13px; line-height: 1.4; }
+  .print-omissions ul { margin: 6px 0; padding-left: 18px; }
+  #printNamedOptions label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  #printNamedOptions input { flex: 0 0 auto; }
+  .print-review-checks[open] { margin-top: 12px; }
+  .print-review-checks summary { min-height: 44px; padding: 10px 0; }
+  [data-editor-theme=&quot;dark&quot;] .inspector .insp-link { color: #a9c7ff; }
+  [data-editor-theme=&quot;dark&quot;] .tb-back { color: #a9c7ff; }
+  [data-editor-theme=&quot;dark&quot;] :is(button, input, select, textarea, [role=&quot;button&quot;]):focus-visible { outline-color: #a9c7ff; }
+}
+@media screen and (min-width: 761px) and (max-width: 1600px) {
+  .toolbar-left { flex-basis: 100%; }
+  .toolbar-days { margin-left: auto; }
+  .toolbar-right { margin-left: auto; }
+}
+@media screen and (max-width: 760px) {
+  .toolbar { padding: 6px 12px; gap: 6px; }
+  .toolbar-left { gap: 4px; }
+  .toolbar-days { flex: 1 1 100%; width: 100%; }
+  .toolbar-days .day-tabs { flex: 1 1 auto; order: 0; width: 0; }
+  .toolbar-days .btn { padding: 4px 8px; font-size: 11px; }
+  .toolbar-right { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .toolbar-right .btn { padding: 4px 5px; font-size: 11px; }
+  .tb-create-group { display: contents; }
+  .toolbar-right #daySheetBtn { grid-column: 3; grid-row: 1; }
+  .toolbar-right #overflowMenu { grid-column: 4; grid-row: 1; justify-self: end; }
+  .toolbar-view { grid-column: 1 / span 2; grid-row: 2; }
+  .toolbar-view select { flex: 1; min-width: 0; font-size: 14px; }
+  .toolbar-right #customizeBtn { grid-column: 3; grid-row: 2; }
+  .toolbar-right #printBtn { grid-column: 4; grid-row: 2; }
+  .editor-access-bar { flex-wrap: nowrap; gap: 8px; }
+  .editor-access-text { flex: 1; min-width: 0; }
+  .editor-access-actions { flex: 0 0 auto; }
+  .editor-access-actions .btn { font-size: 11px; padding: 4px 8px; }
+  .editor-access-message { font-size: 11px; }
+  .editor-access-local { flex-direction: row; align-items: center; }
+  .editor-access-local .editor-access-actions { width: auto; }
+  .inspector input[type=&quot;text&quot;], .inspector input[type=&quot;date&quot;], .inspector textarea, .inspector select,
+  .settings-panel input[type=&quot;text&quot;], .settings-panel select { font-size: 16px; }
+  .inspector .insp-header { position: static; }
+}
+@media screen {
+  .inspector .attendee-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .inspector .attendee-heading label { font-size: 14px; font-weight: 600; margin: 0; }
+  .inspector .placement-option strong { font-size: 12px; }
+}
+
 &lt;/style&gt;
   &lt;style&gt;
 /* Scoped paper styles from the approved day-first prototype. */
@@ -4777,6 +4858,254 @@ textarea:focus-visible,
 .flight-detail-line{display:block;margin:4px 0}
 
 &lt;/style&gt;
+  &lt;style&gt;
+/* All rules are scoped to alternate paper. The approved Bands CSS is frozen. */
+.page.alternate-page { display:block; width:612pt; min-width:612pt; max-width:none; min-height:0; height:auto; padding:0; margin:0 auto; flex:0 0 auto; background:transparent; box-shadow:none; overflow:visible; border:0 }
+.alternate-sheet,.alternate-sheet * { box-sizing:border-box; min-width:0 }
+.alternate-sheet { width:612pt; height:792pt; padding:36pt; display:flex; flex-direction:column; flex-shrink:0; text-align:left; font-family:Arial,Helvetica,sans-serif; font-synthesis:none; color:var(--sch-text); background:var(--sch-bg); box-shadow:0 3px 16px #0002; line-height:1.2; --av-scale:1; --av-gap:5pt; --av-detail:max(9pt,calc(10pt * var(--av-scale))); --av-small-title:max(10pt,calc(11pt * var(--av-scale))); --av-main-title:max(11.5pt,calc(14pt * var(--av-scale))); --av-time:max(9pt,calc(10pt * var(--av-scale))); --av-name:max(10.5pt,calc(12pt * var(--av-scale))); font-size:var(--av-detail) }
+.alternate-sheet h2,.alternate-sheet h3,.alternate-sheet h4,.alternate-sheet p { margin:0 }
+.alternate-sheet .av-header { display:grid; grid-template-columns:72pt minmax(0,1fr) auto; align-items:center; gap:14pt; padding-bottom:10pt; margin-bottom:10pt; border-bottom:1.5pt solid var(--sch-accent); flex-shrink:0 }
+.alternate-sheet .av-header.av-no-logo { grid-template-columns:minmax(0,1fr) auto; min-height:52pt }
+.alternate-sheet .av-logo { width:72pt; height:72pt; display:flex; justify-content:center; align-items:center; border:.6pt solid var(--sch-text-muted); text-align:center; font-size:8pt; font-weight:700; letter-spacing:.6pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-logo:has(img) { border:0 }
+.alternate-sheet .av-logo img { width:72pt; height:72pt; object-fit:contain }
+.alternate-sheet .av-page-title { font-size:var(--av-title,19pt); line-height:1.13; font-weight:700; color:var(--sch-accent); overflow-wrap:anywhere }
+.alternate-sheet .av-subtitle { font-size:10pt; color:var(--sch-text-secondary); margin-top:4pt; overflow-wrap:anywhere }
+.alternate-sheet .av-day { text-align:right; max-width:145pt; overflow-wrap:anywhere }
+.alternate-sheet .av-day h2 { font-size:18pt; color:var(--sch-accent); line-height:1.1 }
+.alternate-sheet .av-day p { font-size:9.5pt; margin-top:5pt }
+.alternate-sheet .av-body { flex-shrink:0 }
+.alternate-sheet .av-section-heading { font-size:11pt; font-weight:700; margin-bottom:5pt; line-height:1.2 }
+.alternate-sheet .av-primary-heading { color:var(--av-heading-ink); background:var(--sch-accent); padding:5pt 7pt; font-size:13pt }
+.alternate-sheet .av-primary-heading small { font-size:9pt; font-weight:400; margin-left:6pt }
+.alternate-sheet .av-empty { padding:6pt 0; color:var(--sch-text-secondary) }
+.alternate-sheet .av-event { padding:var(--av-gap) 6pt; overflow-wrap:anywhere; break-inside:avoid; position:relative; border:.6pt solid var(--sch-border); margin:0; border-radius:3pt; background:var(--sch-bg) }
+.alternate-sheet .av-event[tabindex] { cursor:pointer }
+.alternate-sheet .av-event:focus-visible,.alternate-sheet .av-header:focus-visible { outline:2pt solid var(--sch-accent); outline-offset:2pt }
+.alternate-sheet .av-event:hover { box-shadow:inset 0 0 0 .7pt var(--sch-text-muted) }
+.alternate-sheet .av-event.selected { outline:1.5pt solid var(--sch-accent); outline-offset:1pt }
+.alternate-sheet .av-event-heading { display:flex; align-items:baseline; justify-content:space-between; gap:6pt }
+.alternate-sheet .av-event-heading h3 { font-size:var(--av-small-title); font-weight:500; line-height:1.17 }
+.alternate-sheet .av-time { font-size:var(--av-time); font-weight:600; font-variant-numeric:tabular-nums; white-space:nowrap; flex-shrink:0; order:2 }
+.alternate-sheet .av-event-content { margin-top:min(2pt,var(--av-gap)) }
+.alternate-sheet .av-event-content:empty { display:none }
+.alternate-sheet .av-main { background:var(--sch-surface); border-left:2pt solid var(--sch-accent); padding-top:calc(var(--av-gap) + var(--av-main-extra,0pt)); padding-bottom:calc(var(--av-gap) + var(--av-main-extra,0pt)) }
+.alternate-sheet .av-main .av-event-heading h3 { font-size:var(--av-main-title); font-weight:700; color:var(--sch-accent) }
+.alternate-sheet .av-main .av-time { font-size:max(10pt,calc(11pt * var(--av-scale))) }
+.alternate-sheet .av-main-audience { font-weight:400; font-size:9pt; color:var(--sch-text-secondary); margin-left:5pt }
+.alternate-sheet .av-main .av-event-content { display:flow-root }
+.alternate-sheet .av-main .av-event-heading { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline }
+.alternate-sheet .av-main .av-event-heading:has(.av-logistics) { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto }
+.alternate-sheet .av-main .av-logistics { display:flex; margin:0; justify-content:flex-end }
+.alternate-sheet .av-main .av-description { display:inline }
+.alternate-sheet .av-main .av-references { display:inline-flex; float:right; margin:2pt 0 0 7pt }
+.alternate-sheet .av-emphasized { border:1pt solid var(--sch-accent); border-left-width:4pt }
+.alternate-sheet .av-main.av-emphasized .av-time { padding:2pt 4pt; background:var(--sch-accent); color:var(--av-heading-ink); border-radius:2pt }
+.alternate-sheet .av-concurrent.av-emphasized { background:var(--sch-surface) }
+.alternate-sheet .av-audience { color:var(--sch-text-secondary); font-size:var(--av-detail); margin-bottom:2pt }
+.alternate-sheet .av-people { margin:min(2pt,var(--av-gap)) 0 min(3pt,var(--av-gap)); font-size:var(--av-name); font-weight:700; line-height:1.22; color:var(--sch-text) }
+.alternate-sheet .av-roster { font-size:max(9.5pt,calc(11pt * var(--av-scale))); line-height:1.24 }
+.alternate-sheet .av-people span::after { content:&#x27;;&#x27;; margin-right:.2em; font-weight:400 }
+.alternate-sheet .av-people span:last-child::after { content:&#x27;&#x27;; margin:0 }
+.alternate-sheet .av-literal { white-space:pre-wrap; font-size:var(--av-name) }
+.alternate-sheet .av-logistics { display:flex; flex-wrap:wrap; gap:1pt 9pt; font-size:var(--av-detail); color:var(--sch-text-secondary); line-height:1.2 }
+.alternate-sheet .av-concurrent .av-logistics { display:flex }
+.alternate-sheet .av-description { font-size:var(--av-detail); color:var(--sch-text-secondary); white-space:pre-wrap; margin-top:min(2pt,var(--av-gap)); line-height:1.2 }
+.alternate-sheet .av-number { display:inline-flex; align-items:center; justify-content:center; width:11pt; height:11pt; border:.65pt solid var(--sch-text-muted); border-radius:50%; padding:0; margin:0 4pt 0 0; background:var(--sch-bg); color:var(--sch-accent); font:600 8pt/1 Arial,sans-serif; vertical-align:.7pt; flex-shrink:0 }
+.alternate-sheet .av-number-wide { width:16pt }
+.alternate-sheet button.av-number { cursor:pointer; position:relative }
+.alternate-sheet button.av-number::after { content:&#x27;&#x27;; position:absolute; inset:-5pt -1pt }
+.alternate-sheet .av-number:focus-visible { outline:2pt solid var(--sch-accent); outline-offset:2pt }
+.alternate-sheet .av-references { display:flex; align-items:center; flex-wrap:wrap; justify-content:flex-end; gap:2pt 5pt; margin-top:3pt; font-size:9pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-reference-list { display:flex; flex-wrap:wrap; gap:3pt }
+.alternate-sheet .av-reference-list .av-number { margin:0 }
+.alternate-sheet .av-flights { clear:both; margin-top:4pt; border-top:.6pt solid var(--sch-border); font-size:var(--av-detail) }
+.alternate-sheet .av-flight { display:grid; grid-template-columns:48pt minmax(0,1fr) minmax(80pt,30%); gap:6pt; padding:min(3pt,var(--av-gap)) 0; border-bottom:.5pt solid var(--sch-border) }
+.alternate-sheet .av-flight:last-child { border-bottom:0; padding-bottom:0 }
+.alternate-sheet .av-flight-name { font-size:var(--av-detail) }
+.alternate-sheet .av-flight-activity + .av-flight-activity { margin-top:min(3pt,var(--av-gap)) }
+.alternate-sheet .av-flight-time { font-variant-numeric:tabular-nums; margin-right:5pt; white-space:nowrap }
+.alternate-sheet .av-flight-title { font-weight:500 }
+.alternate-sheet .av-flight-meta { color:var(--sch-text-secondary); margin-top:1pt }
+.alternate-sheet .av-flow { display:grid; gap:0 12pt; align-items:start }
+.alternate-sheet .av-flow[data-columns=&quot;2&quot;] { grid-template-columns:1fr 1fr }
+.alternate-sheet .av-column { display:grid; gap:var(--av-gap) }
+.alternate-sheet .av-flow[data-columns=&quot;1&quot;] { gap:var(--av-gap) }
+/* Cards: a shared timeline above complete group agendas. */
+.alternate-sheet .av-shared-timeline { display:grid; grid-template-columns:repeat(var(--av-shared-columns,3),minmax(0,1fr)); gap:6pt; align-items:stretch }
+.alternate-sheet .av-shared-timeline .av-main { border-left-width:.6pt; border-top:2pt solid var(--sch-accent); border-radius:3pt; padding:5pt }
+.alternate-sheet .av-shared-timeline .av-event-heading { display:flex; flex-wrap:wrap; gap:3pt; align-items:flex-start }
+.alternate-sheet .av-shared-timeline .av-event-heading h3 { width:100%; order:2; font-size:max(11.5pt,calc(13pt * var(--av-scale))) }
+.alternate-sheet .av-shared-timeline .av-time { order:1 }
+.alternate-sheet .av-shared-timeline .av-logistics { width:100%; order:3; justify-content:flex-start }
+.alternate-sheet .av-shared-timeline .av-references { display:flex; float:none; justify-content:flex-start; margin-left:0 }
+.alternate-sheet .av-shared-timeline .av-flights { margin-top:3pt }
+.alternate-sheet .av-shared-timeline .av-flight { display:block }
+.alternate-sheet .av-shared-timeline .av-flight-name { display:block; margin-bottom:2pt }
+.alternate-sheet .av-group-panels { display:grid; grid-template-columns:1fr 1fr; align-items:start; gap:10pt; margin-top:10pt }
+.alternate-sheet .av-group-panels[data-columns=&quot;1&quot;] { grid-template-columns:1fr }
+.alternate-sheet .av-group-panel { border:.7pt solid var(--sch-border); border-radius:5pt; overflow:hidden; break-inside:avoid }
+.alternate-sheet .av-group-heading { font-size:12pt; padding:5pt 7pt; border-left:4pt solid var(--av-group-color,var(--sch-accent)); background:var(--sch-surface); color:var(--sch-text); font-weight:700 }
+.alternate-sheet .av-group-panel .av-flow { padding:3pt 7pt 5pt }
+.alternate-sheet .av-group-panel .av-concurrent { border:0; border-bottom:.6pt solid var(--sch-border); border-radius:0; padding:var(--av-gap) 0 }
+.alternate-sheet .av-group-panel .av-concurrent.av-emphasized { border-left:3pt solid var(--sch-accent); padding-left:5pt }
+/* Grid: stable group columns, aligned start rows and shared banners. */
+.alternate-sheet .av-matrix { width:100%; table-layout:fixed; border-collapse:collapse; font-size:var(--av-detail) }
+.alternate-sheet .av-matrix caption { text-align:left; font-size:13pt; font-weight:700; padding:5pt 7pt; margin-bottom:5pt; color:var(--av-heading-ink); background:var(--sch-accent) }
+.alternate-sheet .av-matrix caption small { margin-left:6pt; font-size:9pt; font-weight:400 }
+.alternate-sheet .av-clock-column { width:35pt }
+.alternate-sheet .av-matrix th { text-align:left; font-size:9pt; padding:4pt; vertical-align:top; overflow-wrap:anywhere }
+.alternate-sheet .av-matrix thead th { border-bottom:2pt solid var(--av-group-color,var(--sch-accent)); font-size:10pt; color:var(--sch-text) }
+.alternate-sheet .av-matrix tbody th { font-variant-numeric:tabular-nums; font-weight:600; border-bottom:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix td { padding:0; vertical-align:top; border-left:.6pt solid var(--sch-border); border-bottom:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix td:last-child { border-right:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix .av-event { border:0; border-radius:0; padding:var(--av-gap) 5pt }
+.alternate-sheet .av-matrix .av-event+.av-event { border-top:.6pt solid var(--sch-border) }
+.alternate-sheet .av-matrix .av-event-heading { flex-wrap:wrap; gap:2pt 6pt }
+.alternate-sheet .av-matrix .av-main .av-event-heading { display:grid }
+.alternate-sheet .av-matrix .av-concurrent .av-time { font-weight:500 }
+.alternate-sheet .av-matrix .av-emphasized { border-left:3pt solid var(--sch-accent) }
+.alternate-sheet .av-matrix .av-concurrent .av-flights .av-flight { display:block }
+/* Phases: one vertical progression; only tasks within a phase may use columns. */
+.alternate-sheet .av-phase-sequence { display:block; list-style:none; padding:0; margin:0 }
+.alternate-sheet .av-phase { list-style:none; margin:0; position:relative; break-inside:avoid; border-left:2pt solid var(--sch-accent); border-bottom:.6pt solid var(--sch-border); padding:0 0 var(--av-gap) 7pt }
+.alternate-sheet .av-phase + .av-phase { margin-top:calc(var(--av-gap) + 4pt) }
+.alternate-sheet .av-phase + .av-phase::before { content:&#x27;↓&#x27;; position:absolute; left:0; top:-11pt; font:9pt/1 Arial; background:var(--sch-bg); color:var(--sch-accent) }
+.alternate-sheet .av-phase&gt;.av-main { border:0; border-radius:0; padding:var(--av-gap) 6pt; background:var(--sch-bg) }
+.alternate-sheet .av-phase&gt;.av-main.av-emphasized { background:var(--sch-surface) }
+.alternate-sheet .av-phase .av-event-heading h3 { font-size:max(11.5pt,calc(15pt * var(--av-scale))) }
+.alternate-sheet .av-phase .av-main .av-event-heading { grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet .av-phase .av-main .av-event-heading .av-logistics { grid-column:1 / -1; grid-row:2; justify-content:flex-start }
+.alternate-sheet .av-phase .av-main .av-time { grid-column:2; grid-row:1; font-size:var(--av-time); font-weight:500 }
+.alternate-sheet .av-phase .av-flow { margin:2pt 0 0 10pt; padding:0 6pt; border-left:.6pt solid var(--sch-border) }
+.alternate-sheet .av-phase .av-concurrent { border:0; border-radius:0; border-bottom:.5pt solid var(--sch-border); padding:var(--av-gap) 0 }
+.alternate-sheet .av-phase .av-concurrent h3 { font-size:var(--av-small-title) }
+.alternate-sheet .av-phase .av-concurrent.av-emphasized { border-left:3pt solid var(--sch-accent); padding-left:5pt }
+.alternate-sheet .av-phase .av-audience { font-size:9pt; margin-bottom:2pt; color:var(--sch-text-secondary) }
+.alternate-sheet .av-independent { border-left:2pt dotted var(--sch-text-muted); padding-left:7pt }
+.alternate-sheet .av-independent-label { font-size:9pt; font-weight:500; color:var(--sch-text-secondary); padding:3pt 6pt 0 }
+.alternate-sheet .av-flight.av-varied-logistics { grid-template-columns:36pt minmax(0,1fr)!important }
+.alternate-sheet .av-varied-logistics .av-flight-activity+.av-flight-activity { border-top:.5pt solid var(--sch-border); padding-top:2pt }
+.alternate-sheet .av-notes { height:var(--av-notes-height); min-height:var(--av-notes-height); margin-top:auto; padding-top:5pt; border-top:1pt solid var(--sch-accent); flex-shrink:0 }
+.alternate-sheet .av-notes .av-section-heading { margin-bottom:3pt }
+.alternate-sheet .av-note-columns { display:grid; grid-template-columns:1fr 1fr; gap:16pt }
+.alternate-sheet .av-note { font-size:var(--av-note-size,9.5pt); line-height:1.2; padding-left:8pt; position:relative; margin-bottom:2pt; overflow-wrap:anywhere }
+.alternate-sheet .av-note::before { content:&#x27;•&#x27;; position:absolute; left:0 }
+.alternate-sheet .av-note .note-select { font:inherit; color:inherit; background:none; border:0; padding:0; margin:0; width:100%; text-align:left; white-space:pre-wrap }
+.alternate-sheet .av-note.selected { outline:1.5pt solid var(--sch-accent); outline-offset:2pt }
+.alternate-sheet .av-footer { display:flex; justify-content:space-between; gap:10pt; flex-shrink:0; padding-top:4pt; margin-top:3pt; border-top:.5pt solid var(--sch-border); font-size:8pt; color:var(--sch-text-secondary); overflow-wrap:anywhere }
+.alternate-sheet .av-handout { font-size:9pt; margin-bottom:6pt; flex-shrink:0 }
+.alternate-sheet .av-print-error { display:none }
+.alternate-sheet.av-overflow,.alternate-sheet.av-natural { height:auto; min-height:792pt }
+.alternate-sheet.av-overflow .av-notes,.alternate-sheet.av-natural .av-notes { margin-top:12pt; height:auto }
+.alternate-sheet.av-natural .av-event { break-inside:auto }
+.alternate-fit-notice:not(:empty) { font-size:13px; line-height:1.4; padding:12px 20px; color:var(--chrome-text); background:var(--chrome-surface); max-width:816px; border:1px solid var(--chrome-border) }
+.print-page.alternate-page .note-empty { display:none }
+@page alternate-paper { size:Letter portrait; margin:0 }
+@page alternate-readable { size:auto; margin:.5in }
+@media print {
+  body.printing-schedule:has(#printContainer .alternate-page.print-fit) { page:alternate-paper }
+  body.printing-schedule:has(#printContainer .alternate-page.print-readable) { page:alternate-readable }
+  #printContainer .page.alternate-page { width:612pt!important; min-width:612pt!important; margin:0!important; padding:0!important; zoom:1!important; page:alternate-paper; break-after:page }
+  #printContainer .page.alternate-page:last-child { break-after:auto }
+  #printContainer .alternate-sheet { box-shadow:none; height:792pt; overflow:visible; margin:0 }
+  .alternate-sheet .av-logo span { visibility:hidden }
+  .alternate-sheet [data-event-id],.alternate-sheet [data-note-id] { outline:none!important; box-shadow:none!important }
+  .alternate-fit-notice { display:none }
+  #printContainer .alternate-sheet[data-fit=&quot;false&quot;]&gt;* { display:none!important }
+  #printContainer .alternate-sheet[data-fit=&quot;false&quot;]&gt;.av-print-error { display:block!important; font-size:12pt; line-height:1.5 }
+  #printContainer .page.alternate-page.print-readable { width:100%!important; min-width:0!important; page:alternate-readable }
+  #printContainer .print-readable .alternate-sheet { width:100%; padding:0; height:auto; min-height:720pt }
+  #printContainer .print-readable .av-natural { min-height:0; display:block }
+  #printContainer .print-readable .av-natural .av-notes { min-height:var(--av-notes-height); height:auto; margin-top:12pt }
+  #printContainer .print-readable .av-natural .av-flow { display:block }
+  #printContainer .print-readable .av-natural .av-event { break-inside:auto }
+  #printContainer .print-readable .av-natural .av-event-heading { break-after:avoid }
+  #printContainer .print-readable .av-natural :is(.av-group-panels,.av-shared-timeline) { display:block }
+  #printContainer .print-readable .av-natural .av-group-panel { break-inside:auto }
+  #printContainer .print-readable .av-natural .av-header { break-inside:avoid }
+}
+
+/* Compact layouts retain their organizing axis while reclaiming inner space. */
+.alternate-sheet .av-group-panel.av-group-wide { grid-column:1 / -1 }
+.alternate-sheet .av-matrix thead th:first-child { white-space:nowrap; font-size:9pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-main { padding:3pt 5pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-logistics { font-size:9pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-flight { display:grid; grid-template-columns:45pt minmax(0,1fr) minmax(80pt,30%) }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto; gap:3pt 6pt }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading:not(:has(.av-logistics)) { grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet.av-compact .av-phase .av-main .av-event-heading .av-logistics { grid-column:auto; grid-row:auto; justify-content:flex-end }
+.alternate-sheet.av-compact .av-phase .av-main .av-time { grid-column:auto; grid-row:auto }
+
+.alternate-sheet.av-compact .av-shared-timeline .av-event-heading h3 { width:auto; order:0; flex:1 }
+.alternate-sheet.av-compact .av-shared-timeline .av-event-heading .av-time { order:1 }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading { display:grid; grid-template-columns:minmax(0,1fr) auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading:has(.av-logistics) { grid-template-columns:minmax(0,1fr) minmax(0,.9fr) auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-event-heading h3 { order:0; width:auto }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-logistics { order:1; width:auto; justify-content:flex-end }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-time { order:2 }
+.alternate-sheet .av-shared-timeline .av-shared-wide .av-references { float:right; margin-left:7pt }
+
+/* Dense paper keeps the same hierarchy with fewer forced line breaks. */
+.alternate-sheet.av-compact .av-main .av-event-heading:has(.av-logistics) { grid-template-columns:fit-content(50%) minmax(0,1fr) auto }
+.alternate-sheet.av-compact .av-logistics { column-gap:6pt }
+.alternate-sheet.av-compact .av-main .av-references { margin-top:0 }
+.alternate-sheet.av-compact .av-main.av-emphasized .av-time { padding:1pt 3pt }
+.alternate-sheet.av-compact .av-shared-timeline { gap:3pt }
+.alternate-sheet.av-compact .av-shared-timeline .av-main { padding:var(--av-gap) 4pt }
+.alternate-sheet.av-compact .av-group-panels { gap:6pt; margin-top:6pt }
+.alternate-sheet.av-compact .av-group-heading { padding:3pt 5pt; font-size:11pt }
+.alternate-sheet.av-compact .av-group-panel .av-flow { padding:2pt 5pt 3pt }
+.alternate-sheet.av-compact .av-phase { padding-bottom:0 }
+.alternate-sheet.av-compact .av-phase+.av-phase { margin-top:3pt }
+.alternate-sheet.av-compact .av-phase+.av-phase::before { top:-7pt; font-size:8pt }
+.alternate-sheet.av-compact .av-phase .av-flow { margin-top:0 }
+.alternate-sheet.av-compact .av-independent-label { padding-top:0 }
+.alternate-sheet.av-compact .av-audience { margin-bottom:0 }
+/* Full-width headers can keep short references beside their event identity. */
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main { display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:baseline; column-gap:6pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main :is(.av-event-heading,.av-event-content) { display:contents }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-event-heading h3 { grid-row:1; grid-column:1; max-width:180pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-logistics { grid-row:1; grid-column:2; justify-content:flex-end }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-time { grid-row:1; grid-column:3 }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main .av-references { grid-row:1; grid-column:4; float:none; margin:0; max-width:180pt }
+.alternate-sheet.av-compact :is(.av-matrix,.av-phase) .av-main :is(.av-description,.av-people,.av-flights) { grid-column:1 / -1 }
+/* A final text-only density step uses punctuation instead of forced lines.
+ * Names remain bold and complete; rosters and flight activities stay blocks. */
+.alternate-sheet.av-dense { --av-name:max(9.5pt,calc(12pt * var(--av-scale))) }
+.alternate-sheet.av-dense .av-concurrent { display:block }
+.alternate-sheet.av-dense .av-concurrent :is(.av-event-heading,.av-event-content) { display:contents }
+.alternate-sheet.av-dense .av-concurrent h3 { display:inline; margin-right:5pt }
+.alternate-sheet.av-dense .av-concurrent .av-time { float:right; margin-left:5pt; display:inline }
+.alternate-sheet.av-dense .av-concurrent :is(.av-audience,.av-people,.av-logistics,.av-logistics&gt;div,.av-description) { display:inline }
+.alternate-sheet.av-dense .av-concurrent :is(.av-audience,.av-people) { margin-right:5pt }
+.alternate-sheet.av-dense .av-concurrent .av-logistics&gt;div+div::before { content:&#x27; · &#x27; }
+.alternate-sheet.av-dense .av-concurrent .av-description::before { content:&#x27; · &#x27; }
+.alternate-sheet.av-dense .av-concurrent :is(.av-roster,.av-literal,.av-flights) { display:block }
+.alternate-sheet.av-dense .av-concurrent .av-description { white-space:pre-wrap }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-logistics { display:flex }
+.alternate-sheet.av-dense .av-concurrent .av-people.av-roster { display:block }
+.alternate-sheet.av-dense .av-concurrent .av-people.av-literal { display:block }
+.alternate-sheet.av-compact .av-header { padding-bottom:5pt; margin-bottom:5pt }
+.alternate-sheet.av-compact :is(.av-primary-heading,.av-matrix caption) { padding-top:3pt; padding-bottom:3pt }
+.alternate-sheet.av-compact .av-matrix tbody th { padding-top:var(--av-gap); padding-bottom:var(--av-gap) }
+.alternate-sheet .av-phase-key { display:none }
+.alternate-sheet.av-dense .av-phase-key { display:inline; float:right; margin-top:3pt }
+.alternate-sheet.av-dense .av-independent-label { display:none }
+/* In a dense matrix, the time column already supplies a fixed reading anchor. */
+.alternate-sheet.av-dense .av-matrix .av-main { display:flow-root }
+.alternate-sheet.av-dense .av-matrix .av-main .av-event-heading h3 { display:inline; margin-right:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-logistics { display:inline-flex; margin-right:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-time { float:right; margin-left:5pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-description { display:inline }
+.alternate-sheet.av-dense .av-matrix .av-main .av-references { display:inline-flex; float:right; margin:0 0 0 5pt }
+
+.alternate-sheet .av-cell-events { column-gap:8pt }
+.alternate-sheet.av-dense .av-matrix .av-main .av-description::before { content:&#x27; · &#x27; }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-description { display:block }
+.alternate-sheet.av-dense .av-concurrent:has(.av-roster) .av-description::before { content:none }
+
+&lt;/style&gt;
   &lt;script&gt;
 /* ── constants.js ── Contract ───────────────────────────────────────────────
  *
@@ -4803,7 +5132,7 @@ textarea:focus-visible,
 // Stamped with the build date and content hash by tools/build-single-html.py; &#x27;dev&#x27; when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = &#x27;2026-09-14+3af976eceef6&#x27;;
+const APP_VERSION = &#x27;2026-09-15+7bb7924abd8d&#x27;;
 
 const DEFAULT_GROUPS = [
   { id: &#x27;grp_all&#x27;,     name: &#x27;All Personnel&#x27;, scope: &#x27;main&#x27;,    color: &#x27;#2558a8&#x27; },
@@ -4928,23 +5257,31 @@ const LAYOUT_TARGETS = {
       &lt;/button&gt;
       &lt;span class=&quot;save-status&quot; id=&quot;saveIndicator&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/span&gt;
       &lt;div class=&quot;tb-sep&quot;&gt;&lt;/div&gt;
-      &lt;div class=&quot;day-tabs&quot; id=&quot;dayTabs&quot;&gt;&lt;/div&gt;
+      &lt;div class=&quot;toolbar-days&quot; aria-label=&quot;Schedule days&quot;&gt;
+        &lt;div class=&quot;day-tabs&quot; id=&quot;dayTabs&quot;&gt;&lt;/div&gt;
+        &lt;button class=&quot;btn&quot; id=&quot;addDayBtn&quot;&gt;+ Day&lt;/button&gt;
+        &lt;button class=&quot;btn&quot; id=&quot;daySettingsBtn&quot;&gt;Dates &amp;amp; hours&lt;/button&gt;
+      &lt;/div&gt;
     &lt;/div&gt;
     &lt;div class=&quot;toolbar-right&quot;&gt;
       &lt;div class=&quot;tb-create-group&quot; aria-label=&quot;Add schedule item&quot;&gt;
-        &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addDayBtn&quot;&gt;+ Day&lt;/button&gt;
         &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addEventBtn&quot;&gt;+ Event&lt;/button&gt;
         &lt;button class=&quot;btn tb-create-btn&quot; id=&quot;addNoteBtn&quot;&gt;+ Reminder&lt;/button&gt;
       &lt;/div&gt;
       &lt;button class=&quot;btn&quot; id=&quot;daySheetBtn&quot;&gt;Quick Edit&lt;/button&gt;
       &lt;div class=&quot;tb-sep&quot;&gt;&lt;/div&gt;
+      &lt;label class=&quot;toolbar-view&quot; for=&quot;viewSelect&quot;&gt;View
+        &lt;select id=&quot;viewSelect&quot;&gt;&lt;option value=&quot;bands&quot;&gt;Bands&lt;/option&gt;&lt;option value=&quot;grid&quot;&gt;Grid&lt;/option&gt;&lt;option value=&quot;cards&quot;&gt;Cards&lt;/option&gt;&lt;option value=&quot;phases&quot;&gt;Phases&lt;/option&gt;&lt;/select&gt;
+      &lt;/label&gt;
       &lt;button class=&quot;btn&quot; id=&quot;customizeBtn&quot;&gt;Customize&lt;/button&gt;
+      &lt;button class=&quot;btn&quot; id=&quot;printBtn&quot;&gt;Print&lt;/button&gt;
       &lt;div class=&quot;tb-overflow&quot; id=&quot;overflowMenu&quot;&gt;
         &lt;button class=&quot;btn tb-overflow-btn&quot; id=&quot;overflowBtn&quot; title=&quot;More actions&quot; aria-label=&quot;More actions&quot; aria-expanded=&quot;false&quot; aria-controls=&quot;overflowDropdown&quot;&gt;&amp;#x2026;&lt;/button&gt;
         &lt;div class=&quot;tb-overflow-dropdown&quot; id=&quot;overflowDropdown&quot;&gt;
-          &lt;button class=&quot;tb-overflow-item&quot; id=&quot;versionsMenuBtn&quot;&gt;Versions&lt;/button&gt;
+          &lt;button class=&quot;tb-overflow-item&quot; id=&quot;undoBtn&quot;&gt;Undo last edit&lt;/button&gt;
+          &lt;button class=&quot;tb-overflow-item&quot; id=&quot;redoBtn&quot;&gt;Redo&lt;/button&gt;
           &lt;button class=&quot;tb-overflow-item&quot; id=&quot;saveScheduleFileBtn&quot;&gt;Save .schedule&lt;/button&gt;
-          &lt;button class=&quot;tb-overflow-item&quot; id=&quot;printBtn&quot;&gt;Print&lt;/button&gt;
+          &lt;button class=&quot;tb-overflow-item&quot; id=&quot;versionsMenuBtn&quot;&gt;Saved versions&lt;/button&gt;
           &lt;button class=&quot;tb-overflow-item&quot; id=&quot;helpBtn&quot;&gt;Help&lt;/button&gt;
         &lt;/div&gt;
       &lt;/div&gt;
@@ -5012,7 +5349,7 @@ const LAYOUT_TARGETS = {
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
             &lt;div class=&quot;help-item-label&quot;&gt;More&lt;/div&gt;
-            &lt;div class=&quot;help-item-desc&quot;&gt;Versions, Print, and Help.&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;Undo, Redo, Saved versions, and Help. Print is on the toolbar.&lt;/div&gt;
           &lt;/div&gt;
         &lt;/div&gt;
       &lt;/div&gt;
@@ -5045,6 +5382,18 @@ const LAYOUT_TARGETS = {
             &lt;div class=&quot;help-item-desc&quot;&gt;Safest answer: one person edits the workbook file at a time.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
+            &lt;div class=&quot;help-item-label&quot;&gt;How do I change dates or event times?&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;&lt;strong&gt;Dates &amp;amp; hours&lt;/strong&gt; opens day setup. Edit an event’s Start and End in either order; finish both fields before leaving them. Invalid ranges keep the previous times and explain why.&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;help-item&quot;&gt;
+            &lt;div class=&quot;help-item-label&quot;&gt;What does a group handout leave out?&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;&lt;strong&gt;Full schedule&lt;/strong&gt; includes everything. A group handout keeps shared events and named assignments without a group by default. Print lists excluded events, and schedule checks still cover the selected days in full.&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;help-item&quot;&gt;
+            &lt;div class=&quot;help-item-label&quot;&gt;Which export is my backup?&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;&lt;strong&gt;Save .schedule&lt;/strong&gt; includes the complete workbook. The legacy .js export in Customize → Export contains only the current schedule, without other schedules or saved versions.&lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;help-item&quot;&gt;
             &lt;div class=&quot;help-item-label&quot;&gt;Main schedule or concurrent event?&lt;/div&gt;
             &lt;div class=&quot;help-item-desc&quot;&gt;Choose &lt;strong&gt;Schedule section&lt;/strong&gt; on the event. Then choose who attends. Changing the audience or emphasis keeps the event in its chosen section.&lt;/div&gt;
           &lt;/div&gt;
@@ -5058,11 +5407,11 @@ const LAYOUT_TARGETS = {
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
             &lt;div class=&quot;help-item-label&quot;&gt;Where do I change the look?&lt;/div&gt;
-            &lt;div class=&quot;help-item-desc&quot;&gt;Use &lt;strong&gt;Customize&lt;/strong&gt;.&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;Use the toolbar’s &lt;strong&gt;View&lt;/strong&gt; selector for layouts. &lt;strong&gt;Customize&lt;/strong&gt; controls colors, headings, the logo, and audiences.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
             &lt;div class=&quot;help-item-label&quot;&gt;Where is Save?&lt;/div&gt;
-            &lt;div class=&quot;help-item-desc&quot;&gt;Use &lt;strong&gt;Save .schedule&lt;/strong&gt; in the bar under the toolbar, or open the &lt;strong&gt;&amp;hellip;&lt;/strong&gt; menu (top right). Once a file is attached the bar button reads &lt;strong&gt;Save Now&lt;/strong&gt;.&lt;/div&gt;
+            &lt;div class=&quot;help-item-desc&quot;&gt;Use &lt;strong&gt;Save .schedule&lt;/strong&gt; in the bar under the toolbar, or open the &lt;strong&gt;&amp;hellip;&lt;/strong&gt; menu (top right). With a writable file it reads &lt;strong&gt;Save Now&lt;/strong&gt;; in download mode it reads &lt;strong&gt;Download .schedule&lt;/strong&gt;. Send the newest complete workbook copy.&lt;/div&gt;
           &lt;/div&gt;
           &lt;div class=&quot;help-item&quot;&gt;
             &lt;div class=&quot;help-item-label&quot;&gt;When should I save?&lt;/div&gt;
@@ -6184,10 +6533,13 @@ function buildPhaseGroups(events, groups) {
   return phases.concat(independent).sort((a, b) =&gt; compareBandOrder(a.sortEvent, b.sortEvent));
 }
 
-function getAudienceHandoutEvents(events, groups, audienceId) {
+function getAudienceHandoutEvents(events, groups, audienceId, options) {
   if (!audienceId) return (events || []).slice();
+  const includeNamed = options &amp;&amp; options.includeNamed;
+  const groupMap = getGroupMap(groups);
   return (events || []).filter(evt =&gt; evt.groupId === audienceId || isSharedTrackEvent(evt, groups)
-    || (!evt.groupId &amp;&amp; isEventEffectiveMain(evt, groups)));
+    || (!evt.groupId &amp;&amp; isEventEffectiveMain(evt, groups))
+    || (includeNamed &amp;&amp; !groupMap[evt.groupId] &amp;&amp; evt.attendees?.trim()));
 }
 
 // Advisory only: a shared room or overlapping audience can be intentional.
@@ -6540,6 +6892,7 @@ function analyzeDayLayout(events, groups, classified) {
 
 let _fileHandle = null;
 let _scheduleWorkbookHandle = null;
+let _openedWorkbookFileName = &#x27;&#x27;;
 let _scheduleWorkbookData = null;
 let _saveInProgress = false;
 let _workbookSavePromise = null;
@@ -6947,7 +7300,7 @@ function hasScheduleWorkbookHandle() {
 }
 
 function getScheduleWorkbookFileName() {
-  return _scheduleWorkbookHandle &amp;&amp; _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : &#x27;&#x27;;
+  return _scheduleWorkbookHandle &amp;&amp; _scheduleWorkbookHandle.name ? _scheduleWorkbookHandle.name : _openedWorkbookFileName;
 }
 
 // Detach the current workbook file. Must run before &quot;Start fresh&quot; — otherwise
@@ -6955,6 +7308,7 @@ function getScheduleWorkbookFileName() {
 // silently overwrites that file.
 function clearScheduleWorkbookTarget() {
   _scheduleWorkbookHandle = null;
+  _openedWorkbookFileName = &#x27;&#x27;;
   _scheduleWorkbookData = null;
   _workbookId = null;
   _workbookBaseline = null;
@@ -7840,9 +8194,8 @@ async function saveDataFile() {
         const writable = await _fileHandle.createWritable();
         await writable.write(content);
         await writable.close();
-        sessionSave();
-        if (typeof notifyManualDraftExport === &#x27;function&#x27;) notifyManualDraftExport();
-        toast(&#x27;Saved to &#x27; + _fileHandle.name);
+        sessionSave({ skipDirty: true });
+        toast(&#x27;Exported current schedule only to &#x27; + _fileHandle.name + &#x27;. Other schedules and versions are not included.&#x27;, 6500);
         return true;
       } catch (err) {
         if (err.name === &#x27;AbortError&#x27;) return false;
@@ -7852,9 +8205,8 @@ async function saveDataFile() {
 
     const blob = new Blob([content], { type: &#x27;text/javascript&#x27; });
     triggerDownload(blob, &#x27;scheduledata.js&#x27;);
-    sessionSave();
-    if (typeof notifyManualDraftExport === &#x27;function&#x27;) notifyManualDraftExport();
-    toast(&#x27;Downloaded scheduledata.js. Move it into shared app/data.&#x27;);
+    sessionSave({ skipDirty: true });
+    toast(&#x27;Downloaded current schedule only as scheduledata.js. Use Save .schedule for a complete workbook backup.&#x27;, 6500);
     return true;
   } finally {
     _saveInProgress = false;
@@ -8518,6 +8870,7 @@ function syncEditorChrome() {
     &#x27;addDayBtn&#x27;,
     &#x27;daySheetBtn&#x27;,
     &#x27;customizeBtn&#x27;,
+    &#x27;viewSelect&#x27;,
   ].forEach(id =&gt; {
     const el = document.getElementById(id);
     if (el) el.disabled = !editable;
@@ -8525,6 +8878,7 @@ function syncEditorChrome() {
 
   const titleInput = document.getElementById(&#x27;tbTitle&#x27;);
   if (titleInput) titleInput.disabled = !editable;
+  if (typeof syncAuthoringControls === &#x27;function&#x27;) syncAuthoringControls();
 }
 
 function hasLocalDraftSession() {
@@ -8539,6 +8893,7 @@ function updateEditorAccessBar(status) {
 
   let text = &#x27;&#x27;;
   let actions = &#x27;&#x27;;
+  let manualButtonLabel;
   if (!_currentFileName) {
     if (!hasLocalDraftSession()) {
       bar.hidden = true;
@@ -8550,12 +8905,17 @@ function updateEditorAccessBar(status) {
       + &#x27;&lt;span class=&quot;editor-access-message&quot;&gt;&#x27;
       + (hasWorkbookTarget
           ? &#x27;Autosaves to &lt;strong&gt;&#x27; + esc(workbookFileName || &#x27;.schedule file&#x27;) + &#x27;&lt;/strong&gt;.&#x27;
+          : _dirty &amp;&amp; (workbookFileName || _manualDraftExported)
+          ? &#x27;Changes need a new download. Keep the newest &lt;strong&gt;.schedule&lt;/strong&gt; file.&#x27;
           : _manualDraftExported
-          ? &#x27;Saved as a &lt;strong&gt;.schedule&lt;/strong&gt; file. Save again after more edits.&#x27;
+          ? &#x27;Workbook downloaded. Keep the newest &lt;strong&gt;.schedule&lt;/strong&gt; file for handoff.&#x27;
+          : workbookFileName
+          ? &#x27;Opened &lt;strong&gt;&#x27; + esc(workbookFileName) + &#x27;&lt;/strong&gt;. After editing, download a new .schedule copy.&#x27;
           : &#x27;Save this workbook as a &lt;strong&gt;.schedule&lt;/strong&gt; file before closing.&#x27;)
       + &#x27;&lt;/span&gt;&#x27;;
+    manualButtonLabel = hasWorkbookTarget ? &#x27;Save Now&#x27; : (_manualDraftExported || workbookFileName ? &#x27;Download .schedule&#x27; : &#x27;Save .schedule&#x27;);
     actions = &#x27;&lt;button class=&quot;btn btn-primary&quot; id=&quot;editorManualExportBtn&quot;&gt;&#x27;
-      + (hasWorkbookTarget ? &#x27;Save Now&#x27; : (_manualDraftExported ? &#x27;Save Again&#x27; : &#x27;Save .schedule&#x27;))
+      + manualButtonLabel
       + &#x27;&lt;/button&gt;&#x27;;
     bar.className = &#x27;editor-access-bar editor-access-local&#x27;;
   } else if (status.state === &#x27;mine&#x27; &amp;&amp; status.lock) {
@@ -8583,16 +8943,17 @@ function updateEditorAccessBar(status) {
 
   textEl.textContent = &#x27;&#x27;;
   textEl.innerHTML = text;
-  actionsEl.innerHTML = actions;
+  const existingManual = actionsEl.querySelector(&#x27;#editorManualExportBtn&#x27;);
+  if (existingManual &amp;&amp; manualButtonLabel) existingManual.textContent = manualButtonLabel;
+  else actionsEl.innerHTML = actions;
   bar.hidden = false;
 
   const manualExportBtn = document.getElementById(&#x27;editorManualExportBtn&#x27;);
   if (manualExportBtn) {
     manualExportBtn.onclick = async () =&gt; {
-      const saved = typeof saveScheduleWorkbookFile === &#x27;function&#x27;
-        ? await saveScheduleWorkbookFile()
-        : await saveDataFile();
-      if (saved) notifyManualDraftExport();
+      if (typeof saveScheduleWorkbookFile === &#x27;function&#x27;) await saveScheduleWorkbookFile();
+      else await saveDataFile();
+      // The save operation owns its status, including edits made during a write.
     };
     return;
   }
@@ -8953,6 +9314,7 @@ function markDirty() {
   if (!isCurrentScheduleEditable()) return;
   _dirty = true;
   updateSaveIndicator(&#x27;dirty&#x27;);
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: &#x27;available&#x27;, lock: null });
   clearTimeout(_autosaveTimer);
   _autosaveTimer = setTimeout(() =&gt; autoSave(), AUTOSAVE_DELAY);
 }
@@ -9129,6 +9491,13 @@ function markScheduleWorkbookSaved() {
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: &#x27;available&#x27;, lock: null });
 }
 
+function markScheduleWorkbookOpened() {
+  _dirty = false;
+  _manualDraftExported = false;
+  updateSaveIndicator(&#x27;opened&#x27;);
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: &#x27;available&#x27;, lock: null });
+}
+
 // Download fallback (Safari/Firefox, or a declined picker): a copy went to
 // Downloads, the file the user opened is untouched. The work is on disk, so
 // the close warning stands down — but the label must not say &quot;Saved&quot;.
@@ -9165,6 +9534,10 @@ function updateSaveIndicator(state) {
     el.textContent = &#x27;Downloaded&#x27;;
     el.title = &#x27;This browser can’t save back to the opened file. A copy went to your Downloads folder — keep the newest one.&#x27;;
     el.classList.add(&#x27;save-downloaded&#x27;);
+  } else if (state === &#x27;opened&#x27;) {
+    el.textContent = &#x27;Opened&#x27;;
+    el.title = &#x27;No changes yet. After editing, download a new workbook copy; the opened file is unchanged.&#x27;;
+    el.classList.add(&#x27;save-opened&#x27;);
   } else {
     el.textContent = &#x27;Saved&#x27;;
     el.classList.add(&#x27;save-saved&#x27;);
@@ -9762,10 +10135,10 @@ for (const key of [&#x27;forest&#x27;, &#x27;teal&#x27;, &#x27;slate&#x27;, &#x2
 const SKIN_NAMES = [&#x27;bands&#x27;, &#x27;grid&#x27;, &#x27;cards&#x27;, &#x27;phases&#x27;];
 
 const SKIN_LABELS = {
-  bands: { name: &#x27;Bands&#x27;, desc: &#x27;Main track + concurrent&#x27; },
-  grid: { name: &#x27;Grid&#x27;, desc: &#x27;Time \u00d7 groups&#x27; },
-  cards: { name: &#x27;Cards&#x27;, desc: &#x27;Group detail&#x27; },
-  phases: { name: &#x27;Phases&#x27;, desc: &#x27;Field exercises&#x27; },
+  bands: { name: &#x27;Bands&#x27;, desc: &#x27;Main schedule + assignments&#x27; },
+  grid: { name: &#x27;Grid&#x27;, desc: &#x27;Time × groups&#x27; },
+  cards: { name: &#x27;Cards&#x27;, desc: &#x27;Group agendas&#x27; },
+  phases: { name: &#x27;Phases&#x27;, desc: &#x27;Phase sequence&#x27; },
 };
 
 // File-supplied theme values are untrusted (they bypass event/group
@@ -10090,6 +10463,231 @@ const BandLayout = (() =&gt; {
 
 &lt;/script&gt;
   &lt;script&gt;
+/* Cards, Grid and Phases share record semantics and paper limits, not a layout.
+ * Rendering reads normalized data; fitting only moves whole DOM records.
+ * Bands deliberately keeps its approved renderer, styles and fitting policy.
+ */
+const AlternateViews = (() =&gt; {
+  const policy = Object.freeze({ detail: 9, name: 10.5, compactName: 9.5, roster: 9.5, title: 11.5, clearance: 4 });
+  const ordered = events =&gt; events.slice().sort((a, b) =&gt; a.startTime.localeCompare(b.startTime));
+  const time = event =&gt; event.startTime + &#x27;–&#x27; + event.endTime;
+
+  function model(day) {
+    const groups = getGroupMap(Store.getGroups());
+    const events = ordered(day.events || []);
+    const mains = events.filter(event =&gt; isEventEffectiveMain(event, groups));
+    const concurrent = events.filter(event =&gt; !isEventEffectiveMain(event, groups));
+    const primaryLabels = Store.getGroups().filter(group =&gt; group.scope === &#x27;main&#x27;).map(group =&gt; group.name);
+    return { day, groups, events, mains, concurrent, primaryLabel: primaryLabels.length === 1 ? primaryLabels[0] : &#x27;&#x27;,
+      numbers: new Map(concurrent.map((event, index) =&gt; [event.id, index + 1])),
+      overlaps: new Map(mains.map(main =&gt; [main.id, concurrent.filter(event =&gt; eventsOverlap(main, event))])) };
+  }
+
+  function badge(event, number, interactive) {
+    const attrs = &#x27; class=&quot;av-number&#x27; + (number &gt;= 100 ? &#x27; av-number-wide&#x27; : &#x27;&#x27;) + &#x27;&quot; data-ref-event=&quot;&#x27; + esc(event.id) + &#x27;&quot;&#x27;;
+    return interactive ? &#x27;&lt;button type=&quot;button&quot;&#x27; + attrs + &#x27; data-event-ref=&quot;&#x27; + esc(event.id) + &#x27;&quot; aria-label=&quot;Concurrent event &#x27; + number + &#x27;: &#x27; + esc(event.title) + &#x27;&quot;&gt;&#x27; + number + &#x27;&lt;/button&gt;&#x27;
+      : &#x27;&lt;span&#x27; + attrs + &#x27;&gt;&#x27; + number + &#x27;&lt;/span&gt;&#x27;;
+  }
+
+  function references(event, data, interactive) {
+    const overlaps = data.overlaps.get(event.id) || [];
+    return overlaps.length ? &#x27;&lt;div class=&quot;av-references&quot;&gt;&lt;span&gt;Concurrent events:&lt;/span&gt;&lt;span class=&quot;av-reference-list&quot;&gt;&#x27; +
+      overlaps.map(item =&gt; badge(item, data.numbers.get(item.id), interactive)).join(&#x27;&#x27;) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27; : &#x27;&#x27;;
+  }
+
+  function personnel(event) {
+    const parsed = parsePersonnelInput(event.attendees || &#x27;&#x27;, event.attendeeFormat || &#x27;text&#x27;);
+    if (!parsed.raw.trim()) return &#x27;&#x27;;
+    if (parsed.mode === &#x27;text&#x27;) return &#x27;&lt;div class=&quot;av-people av-literal&quot;&gt;&#x27; + esc(parsed.raw) + &#x27;&lt;/div&gt;&#x27;;
+    return &#x27;&lt;div class=&quot;av-people&#x27; + (parsed.entries.length &gt;= 8 ? &#x27; av-roster&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&#x27; + parsed.entries.map((entry, index) =&gt;
+      &#x27;&lt;span data-person=&quot;&#x27; + esc(entry) + &#x27;&quot; data-entry-index=&quot;&#x27; + index + &#x27;&quot;&gt;&#x27; + esc(entry) + &#x27;&lt;/span&gt;&#x27;).join(&#x27; &#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+
+  function flights(event) {
+    const activities = event.flightActivities || [];
+    if (!activities.length) return &#x27;&#x27;;
+    const groups = new Map();
+    activities.forEach(activity =&gt; {
+      const label = activity.flight || &#x27;Unnamed flight&#x27;;
+      if (!groups.has(label)) groups.set(label, []);
+      groups.get(label).push(activity);
+    });
+    const timed = activities.some(activity =&gt; activity.startTime !== event.startTime || activity.endTime !== event.endTime);
+    const logistics = activity =&gt; [activity.location, activity.poc ? &#x27;POC: &#x27; + activity.poc : &#x27;&#x27;].filter(Boolean).map(esc).join(&#x27;&lt;br&gt;&#x27;);
+    return &#x27;&lt;div class=&quot;av-flights&quot; aria-label=&quot;Flight activities&quot;&gt;&#x27; + Array.from(groups, ([flight, entries]) =&gt; {
+      const sorted = ordered(entries), common = entries.every(a =&gt; a.location === entries[0].location &amp;&amp; a.poc === entries[0].poc);
+      return &#x27;&lt;div class=&quot;av-flight&#x27; + (common ? &#x27;&#x27; : &#x27; av-varied-logistics&#x27;) + &#x27;&quot;&gt;&lt;strong class=&quot;av-flight-name&quot;&gt;&#x27; + esc(flight) + &#x27;&lt;/strong&gt;&lt;div&gt;&#x27; + sorted.map(activity =&gt;
+        &#x27;&lt;div class=&quot;av-flight-activity&quot;&gt;&#x27; + (timed ? &#x27;&lt;span class=&quot;av-flight-time&quot;&gt;&#x27; + esc(time(activity)) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+        &#x27;&lt;span class=&quot;av-flight-title&quot;&gt;&#x27; + esc(activity.title || &#x27;Untitled activity&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+        (activity.description ? &#x27;&lt;p class=&quot;av-description&quot;&gt;&#x27; + esc(activity.description) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+        (!common ? &#x27;&lt;div class=&quot;av-flight-meta&quot;&gt;&#x27; + logistics(activity) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; +
+        (common ? &#x27;&lt;div class=&quot;av-flight-meta&quot;&gt;&#x27; + logistics(sorted[0]) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+    }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+
+  function record(event, data, options) {
+    const opts = options || {}, main = data.overlaps.has(event.id), group = data.groups[event.groupId];
+    // The group is an attendance field, never a substitute for individual names.
+    const audience = group &amp;&amp; opts.groupLabel !== group.name &amp;&amp; !(main &amp;&amp; group.name === data.primaryLabel) &amp;&amp; !(event.attendees?.trim() &amp;&amp; /^specific (people|personnel)$/i.test(group.name.trim())) ? group.name : &#x27;&#x27;;
+    const meta = event.location || event.poc ? &#x27;&lt;div class=&quot;av-logistics&quot;&gt;&#x27; +
+      (event.location ? &#x27;&lt;div class=&quot;av-location&quot;&gt;&#x27; + esc(event.location) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) +
+      (event.poc ? &#x27;&lt;div class=&quot;av-poc&quot;&gt;POC: &#x27; + esc(event.poc) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;;
+    return &#x27;&lt;article class=&quot;av-event &#x27; + (main ? &#x27;av-main&#x27; : &#x27;av-concurrent&#x27;) + (event.emphasized ? &#x27; av-emphasized&#x27; : &#x27;&#x27;) + &#x27;&quot; data-event-id=&quot;&#x27; + esc(event.id) + &#x27;&quot;&#x27; +
+      (opts.interactive ? &#x27; tabindex=&quot;0&quot; aria-label=&quot;&#x27; + esc(event.title + &#x27;, &#x27; + time(event) + &#x27;. Select to edit.&#x27;) + &#x27;&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;av-event-heading&quot;&gt;&lt;span class=&quot;av-time&quot;&gt;&#x27; + esc(time(event)) + &#x27;&lt;/span&gt;&lt;h3&gt;&#x27; + (!main ? badge(event, data.numbers.get(event.id), false) : &#x27;&#x27;) + esc(event.title) + (main &amp;&amp; audience ? &#x27;&lt;small class=&quot;av-main-audience&quot;&gt;&#x27; + esc(audience) + &#x27;&lt;/small&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/h3&gt;&#x27; + (main ? meta : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;av-event-content&quot;&gt;&#x27; + (!main &amp;&amp; audience ? &#x27;&lt;div class=&quot;av-audience&quot;&gt;&#x27; + esc(audience) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) + personnel(event) +
+      (!main ? meta : &#x27;&#x27;) +
+      (event.description ? &#x27;&lt;p class=&quot;av-description&quot;&gt;&#x27; + esc(event.description) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + (main ? references(event, data, opts.interactive) : &#x27;&#x27;) + flights(event) + &#x27;&lt;/div&gt;&lt;/article&gt;&#x27;;
+  }
+
+  function flow(events, data, opts, className) {
+    return &#x27;&lt;div class=&quot;av-flow &#x27; + (className || &#x27;&#x27;) + &#x27;&quot; data-flow-count=&quot;&#x27; + events.length + &#x27;&quot;&gt;&#x27; +
+      events.slice().sort((a, b) =&gt; data.numbers.get(a.id) - data.numbers.get(b.id)).map(event =&gt; record(event, data, opts)).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+
+  function lanes(data) {
+    const resolved = resolveLaneEvents(data.concurrent, Store.getGroups());
+    const active = [...Store.getGroups(), UNASSIGNED_LANE_GROUP];
+    return active.map(group =&gt; ({ ...group, events: resolved.filter(event =&gt; event.groupId === group.id) }))
+      .filter(group =&gt; group.events.length);
+  }
+
+  function header(day, interactive) {
+    const settings = getBandSettings(getCurrentScheduleFileData()?.theme), logo = Store.getLogo();
+    const date = day.date ? formatDateDisplay(day.date).split(&#x27;, &#x27;) : [];
+    const index = Store.getDays().findIndex(item =&gt; item.id === day.id) + 1;
+    const subtitle = Store.getFooter().contact;
+    return &#x27;&lt;header class=&quot;av-header&#x27; + (settings.showLogo ? &#x27;&#x27; : &#x27; av-no-logo&#x27;) + &#x27;&quot;&#x27; +
+      (interactive ? &#x27; data-band-customize tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Customize schedule&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      (settings.showLogo ? &#x27;&lt;div class=&quot;av-logo&quot;&gt;&#x27; + (logo ? &#x27;&lt;img src=&quot;&#x27; + esc(logo) + &#x27;&quot; alt=&quot;Unit logo&quot;&gt;&#x27; : &#x27;&lt;span&gt;UNIT&lt;br&gt;LOGO&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) +
+      &#x27;&lt;div class=&quot;av-heading-text&quot;&gt;&#x27; + (Store.getTitle() ? &#x27;&lt;p class=&quot;av-page-title&quot;&gt;&#x27; + esc(Store.getTitle()) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+      (subtitle ? &#x27;&lt;p class=&quot;av-subtitle&quot;&gt;&#x27; + esc(subtitle) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;div class=&quot;av-day&quot;&gt;&lt;h2&gt;&#x27; + esc(day.label || date[0] || &#x27;Day &#x27; + index) + &#x27;&lt;/h2&gt;&#x27; +
+      (date.length &gt; 1 ? &#x27;&lt;p&gt;&#x27; + esc(date[1]) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;/header&gt;&#x27;;
+  }
+
+  function notes(day, interactive) {
+    const notes = (day.notes || []).filter(note =&gt; interactive || note.category || note.text);
+    const half = Math.ceil(notes.length / 2);
+    return &#x27;&lt;section class=&quot;av-notes&quot;&gt;&lt;h2 class=&quot;av-section-heading&quot;&gt;Notes &amp;amp; Reminders&lt;/h2&gt;&lt;div class=&quot;av-note-columns&quot;&gt;&#x27; +
+      [notes.slice(0, half), notes.slice(half)].map(column =&gt; &#x27;&lt;div&gt;&#x27; + column.map(note =&gt; &#x27;&lt;div class=&quot;av-note&#x27; + (!note.category &amp;&amp; !note.text ? &#x27; note-empty&#x27; : &#x27;&#x27;) + &#x27;&quot; data-note-id=&quot;&#x27; + esc(note.id) + &#x27;&quot;&gt;&#x27; +
+        (interactive ? &#x27;&lt;button type=&quot;button&quot; class=&quot;note-select&quot;&gt;&#x27; : &#x27;&#x27;) + (note.category ? &#x27;&lt;strong&gt;&#x27; + esc(note.category) + &#x27;:&lt;/strong&gt; &#x27; : &#x27;&#x27;) +
+        esc(note.text || (!note.category ? &#x27;Empty note&#x27; : &#x27;&#x27;)) + (interactive ? &#x27;&lt;/button&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;/section&gt;&#x27;;
+  }
+
+  function page(day, skin, options) {
+    const opts = options || {}, settings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    const theme = getScheduleTheme(getCurrentScheduleFileData()?.theme);
+    let colors = Object.assign({}, PALETTES[theme.palette] || PALETTES.classic, theme.palette === &#x27;custom&#x27; ? theme.customColors : {});
+    const paper = BAND_PAPER_THEMES[theme.palette === &#x27;classic&#x27; ? &#x27;airforce&#x27; : theme.palette];
+    if (paper) colors = { ...colors, bg: &#x27;#ffffff&#x27;, text: &#x27;#20262c&#x27;, textSecondary: &#x27;#39424b&#x27;, textMuted: &#x27;#525962&#x27;, accent: paper.colors[0], surface: paper.colors[2], border: paper.colors[5] };
+    const palette = Object.entries(colors).map(([key, value]) =&gt; &#x27;--sch-&#x27; + key.replace(/[A-Z]/g, letter =&gt; &#x27;-&#x27; + letter.toLowerCase()) + &#x27;:&#x27; + value).join(&#x27;;&#x27;);
+    const index = Store.getDays().findIndex(item =&gt; item.id === day.id) + 1;
+    const body = { cards: renderDayBody_cards, grid: renderDayBody_grid, phases: renderDayBody_phases }[skin] || renderDayBody_cards;
+    return &#x27;&lt;section class=&quot;alternate-sheet av-&#x27; + skin + &#x27;-sheet&quot; data-fit=&quot;true&quot; data-mode=&quot;&#x27; + (opts.printMode === &#x27;readable&#x27; ? &#x27;readable&#x27; : &#x27;fit&#x27;) +
+      &#x27;&quot; style=&quot;--av-notes-height:&#x27; + settings.notesHeight + &#x27;pt;--av-heading-ink:&#x27; + getContrastingTextColor(colors.accent) + &#x27;;&#x27; + palette + &#x27;&quot;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;av-print-error&quot;&gt;&lt;strong&gt;Schedule not ready to print.&lt;/strong&gt;&lt;p&gt;This day exceeds the readable one-page limits. Review the content or select Readable pages. No partial schedule is printed.&lt;/p&gt;&lt;/div&gt;&#x27; +
+      header(day, opts.interactive) + (opts.handout ? &#x27;&lt;p class=&quot;av-handout&quot;&gt;&#x27; + esc(opts.handout) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+      &#x27;&lt;div class=&quot;av-body&quot;&gt;&#x27; + body(day.id, day, opts) + &#x27;&lt;/div&gt;&#x27; + notes(day, opts.interactive) +
+      &#x27;&lt;footer class=&quot;av-footer&quot;&gt;&lt;span&gt;&#x27; + (Store.getFooter().poc ? &#x27;Schedule POC: &#x27; + esc(Store.getFooter().poc) : &#x27;&#x27;) + &#x27;&lt;/span&gt;&lt;span&gt;Day &#x27; + index + &#x27; of &#x27; + Store.getDays().length + &#x27;&lt;/span&gt;&lt;/footer&gt;&lt;/section&gt;&#x27;;
+  }
+
+  function arrange(flow, columns, selector) {
+    const records = Array.from(flow.querySelectorAll(selector || &#x27;.av-event&#x27;));
+    if (!records.length) return;
+    flow.replaceChildren(...records); flow.style.removeProperty(&#x27;grid-template-columns&#x27;);
+    flow.dataset.columns = String(columns);
+    if (columns === 1 || records.length &lt; 2) return;
+    const left = document.createElement(&#x27;div&#x27;), right = document.createElement(&#x27;div&#x27;);
+    left.className = right.className = &#x27;av-column&#x27;;
+    flow.replaceChildren(left, right);
+    let best = Infinity, split = 1, width = 50;
+    // Measure both widths once per candidate, then find the best whole-record
+    // split using prefix sums. This avoids moving every record for every split.
+    for (const candidate of [50, 45, 55, 40, 60, 35, 65]) {
+      flow.style.gridTemplateColumns = candidate + &#x27;fr &#x27; + (100 - candidate) + &#x27;fr&#x27;;
+      left.replaceChildren(...records);
+      const leftHeights = records.map(node =&gt; node.getBoundingClientRect().height);
+      right.replaceChildren(...records);
+      const rightHeights = records.map(node =&gt; node.getBoundingClientRect().height);
+      const gap = parseFloat(getComputedStyle(right).rowGap) || 0;
+      let leftHeight = 0, rightHeight = rightHeights.reduce((sum, height) =&gt; sum + height, 0);
+      for (let i = 1; i &lt; records.length; i++) {
+        leftHeight += leftHeights[i - 1]; rightHeight -= rightHeights[i - 1];
+        const height = Math.max(leftHeight + gap * (i - 1), rightHeight + gap * (records.length - i - 1));
+        if (height &lt; best) { best = height; split = i; width = candidate; }
+      }
+    }
+    flow.style.gridTemplateColumns = width + &#x27;fr &#x27; + (100 - width) + &#x27;fr&#x27;;
+    left.replaceChildren(...records.slice(0, split)); right.replaceChildren(...records.slice(split));
+  }
+
+  function compactFlow(flow) {
+    arrange(flow, 1);
+    const single = flow.getBoundingClientRect().height;
+    if (Number(flow.dataset.flowCount) &lt; 2) return;
+    arrange(flow, 2);
+    if (flow.getBoundingClientRect().height &gt;= single) arrange(flow, 1);
+  }
+
+  function geometry(sheet) {
+    const body = sheet.querySelector(&#x27;.av-body&#x27;).getBoundingClientRect(), notes = sheet.querySelector(&#x27;.av-notes&#x27;).getBoundingClientRect();
+    const noteBody = sheet.querySelector(&#x27;.av-note-columns&#x27;).getBoundingClientRect();
+    const footer = sheet.querySelector(&#x27;.av-footer&#x27;).getBoundingClientRect(), box = sheet.getBoundingClientRect();
+    const overflow = Math.max(0, body.bottom + policy.clearance / .75 - notes.top, noteBody.bottom - notes.bottom,
+      footer.bottom - (box.bottom - 48));
+    const tooWide = Array.from(sheet.querySelectorAll(&#x27;.av-event,.av-note,.av-heading-text,.av-day,.av-footer&#x27;))
+      .some(node =&gt; node.scrollWidth &gt; node.clientWidth + 1);
+    return { fits: overflow &lt; .1 &amp;&amp; !tooWide, overflow, tooWide };
+  }
+
+  function fit(sheet) {
+    sheet.classList.remove(&#x27;av-overflow&#x27;, &#x27;av-natural&#x27;);
+    sheet.dataset.fit = &#x27;true&#x27;;
+    sheet.style.setProperty(&#x27;--av-main-extra&#x27;, &#x27;0pt&#x27;);
+    sheet.style.setProperty(&#x27;--av-title&#x27;, &#x27;19pt&#x27;);
+    for (let size = 19; size &gt; 12 &amp;&amp; sheet.querySelector(&#x27;.av-heading-text&#x27;).getBoundingClientRect().height &gt; 100; size -= .5) {
+      sheet.style.setProperty(&#x27;--av-title&#x27;, (size - .5) + &#x27;pt&#x27;);
+    }
+    sheet.style.setProperty(&#x27;--av-note-size&#x27;, &#x27;9.5pt&#x27;);
+    if (sheet.querySelector(&#x27;.av-note-columns&#x27;).getBoundingClientRect().bottom &gt; sheet.querySelector(&#x27;.av-notes&#x27;).getBoundingClientRect().bottom) sheet.style.setProperty(&#x27;--av-note-size&#x27;, &#x27;9pt&#x27;);
+    const flows = Array.from(sheet.querySelectorAll(&#x27;.av-flow&#x27;));
+    const layout = sheet.classList.contains(&#x27;av-cards-sheet&#x27;) ? layoutDayBody_cards
+      : sheet.classList.contains(&#x27;av-grid-sheet&#x27;) ? layoutDayBody_grid : layoutDayBody_phases;
+    const set = (scale, gap, dense = false) =&gt; {
+      sheet.style.setProperty(&#x27;--av-scale&#x27;, String(scale)); sheet.style.setProperty(&#x27;--av-gap&#x27;, gap + &#x27;pt&#x27;);
+      sheet.classList.toggle(&#x27;av-compact&#x27;, scale &lt;= .95);
+      sheet.classList.toggle(&#x27;av-dense&#x27;, dense);
+      layout(sheet);
+    };
+    let result;
+    // Reduce spacing before text. The final preset still respects every floor.
+    for (const [scale, gap, dense] of [[1.08, 5], [1, 5], [1, 3], [1, 1.5], [.95, 1.5], [.9, 1.5], [.85, 1], [.8, .5], [.95, 1.5, true], [.9, 1, true], [.85, .75, true], [.8, .5, true], [.75, .5, true]]) {
+      set(scale, gap, dense); result = geometry(sheet);
+      if (result.fits) break;
+    }
+    if (result.fits) {
+      const spare = sheet.querySelector(&#x27;.av-notes&#x27;).getBoundingClientRect().top - sheet.querySelector(&#x27;.av-body&#x27;).getBoundingClientRect().bottom - 8;
+      const mains = sheet.querySelectorAll(&#x27;.av-main&#x27;).length;
+      if (mains &amp;&amp; spare &gt; 12) sheet.style.setProperty(&#x27;--av-main-extra&#x27;, Math.min(8, spare * .75 / mains / 2) + &#x27;pt&#x27;);
+      result = geometry(sheet);
+    }
+    sheet.dataset.fit = String(result.fits);
+    if (!result.fits) {
+      if (sheet.dataset.mode === &#x27;readable&#x27;) {
+        // Readable pages intentionally flow beyond one sheet at comfortable
+        // type. An overlong record may span pages; its text is never clipped.
+        set(1, 4); sheet.classList.add(&#x27;av-natural&#x27;); sheet.dataset.fit = &#x27;true&#x27;;
+        flows.forEach(flow =&gt; arrange(flow, 1));
+      } else sheet.classList.add(&#x27;av-overflow&#x27;);
+    }
+    return { ...result, fits: sheet.dataset.fit === &#x27;true&#x27;, natural: sheet.classList.contains(&#x27;av-natural&#x27;) };
+  }
+
+  return { policy, model, record, personnel, flights, flow, lanes, arrange, compactFlow, page, fit, geometry };
+})();
+
+&lt;/script&gt;
+  &lt;script&gt;
 /* Bands uses the approved page renderer. Shared dispatch still exposes a body
  * renderer for callers that compose their own shell; the app and print pipeline
  * use BandLayout.page() so header, notes and fitting stay identical.
@@ -10101,485 +10699,152 @@ function renderDayBody_band(dayId, dayOverride, options) {
 
 &lt;/script&gt;
   &lt;script&gt;
-/* ── skin-grid.js ── Contract ─────────────────────────────────────────────
- *
- * EXPORTS:
- *   renderDayBody_grid(dayId) → string (HTML)
- *
- * REQUIRES:
- *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js        — esc(), timeToMinutes(), getContrastingTextColor()
- *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
- *   render.js       — renderNotes(), clearDaggerFootnotes()
- *
- * CONSUMED BY:
- *   render.js — dispatches to this when skin === &#x27;grid&#x27;
- * ──────────────────────────────────────────────────────────────────────────── */
-
-function renderDayBody_grid(dayId, dayOverride) {
+/* Time × groups matrix. Full shared events span the group columns. Records
+ * occur only at their start; full intervals replace duplicated continuations. */
+function renderDayBody_grid(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
   if (!day) return &#x27;&#x27;;
-  const groups = Store.getGroups();
-  const events = day.events.slice().sort(compareBandOrder);
-  const notes = day.notes || Store.getNotes(dayId);
+  const data = AlternateViews.model(day), groups = AlternateViews.lanes(data);
+  const slots = [...new Set(data.events.map(event =&gt; event.startTime))];
+  const columns = Math.max(1, groups.length);
+  const rows = slots.flatMap(slot =&gt; {
+    const mains = data.mains.filter(event =&gt; event.startTime === slot).map(event =&gt; ({ slot, main: event }));
+    return mains.concat(data.concurrent.some(event =&gt; event.startTime === slot) ? [{ slot }] : []);
+  });
+  const coveredUntil = new Map();
+  const markup = rows.map((row, index) =&gt; {
+    if (row.main) return &#x27;&lt;tr class=&quot;av-matrix-main&quot;&gt;&lt;th scope=&quot;row&quot;&gt;&#x27; + esc(row.slot) + &#x27;&lt;/th&gt;&lt;td colspan=&quot;&#x27; + columns + &#x27;&quot;&gt;&#x27; + AlternateViews.record(row.main, data, options) + &#x27;&lt;/td&gt;&lt;/tr&gt;&#x27;;
+    return &#x27;&lt;tr class=&quot;av-matrix-assignments&quot; data-start=&quot;&#x27; + esc(row.slot) + &#x27;&quot;&gt;&lt;th scope=&quot;row&quot;&gt;&#x27; + esc(row.slot) + &#x27;&lt;/th&gt;&#x27; + groups.map(group =&gt; {
+      if ((coveredUntil.get(group.id) || 0) &gt; index) return &#x27;&#x27;;
+      const events = group.events.filter(event =&gt; event.startTime === row.slot);
+      let next = index + 1;
+      // Join later blank cells only while every event in this cell continues.
+      // Never cross a shared banner or obscure a new assignment in this group.
+      if (events.length) while (next &lt; rows.length &amp;&amp; !rows[next].main &amp;&amp;
+        events.every(event =&gt; event.endTime &gt; rows[next].slot) &amp;&amp;
+        !group.events.some(event =&gt; event.startTime === rows[next].slot)) next++;
+      coveredUntil.set(group.id, next);
+      return &#x27;&lt;td data-lane-group=&quot;&#x27; + esc(group.id) + &#x27;&quot; rowspan=&quot;&#x27; + (next - index) + &#x27;&quot;&gt;&#x27; +
+        AlternateViews.flow(events, data, { ...options, groupLabel: group.name }, &#x27;av-cell-events&#x27;) + &#x27;&lt;/td&gt;&#x27;;
+    }).join(&#x27;&#x27;) + &#x27;&lt;/tr&gt;&#x27;;
+  }).join(&#x27;&#x27;);
+  return &#x27;&lt;div class=&quot;av-grid&quot;&gt;&lt;table class=&quot;av-matrix&quot;&gt;&lt;caption&gt;Time × groups&#x27; +
+    (data.primaryLabel ? &#x27;&lt;small&gt;Main schedule: &#x27; + esc(data.primaryLabel) + &#x27;&lt;/small&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/caption&gt;&#x27; +
+    &#x27;&lt;colgroup&gt;&lt;col class=&quot;av-clock-column&quot;&gt;&#x27; + Array.from({ length: columns }, () =&gt; &#x27;&lt;col class=&quot;av-lane-column&quot;&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/colgroup&gt;&#x27; +
+    &#x27;&lt;thead&gt;&lt;tr&gt;&lt;th scope=&quot;col&quot;&gt;Starts&lt;/th&gt;&#x27; + (groups.length ? groups.map(group =&gt; &#x27;&lt;th scope=&quot;col&quot; data-lane-group=&quot;&#x27; + esc(group.id) + &#x27;&quot; style=&quot;--av-group-color:&#x27; + esc(group.color) + &#x27;&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/th&gt;&#x27;).join(&#x27;&#x27;) : &#x27;&lt;th scope=&quot;col&quot;&gt;Main schedule&lt;/th&gt;&#x27;) + &#x27;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#x27; +
+    (slots.length ? markup : &#x27;&lt;tr&gt;&lt;td colspan=&quot;&#x27; + (columns + 1) + &#x27;&quot;&gt;&lt;p class=&quot;av-empty&quot;&gt;No events scheduled.&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&#x27;) + &#x27;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&#x27;;
+}
 
-  clearDaggerFootnotes();
-
-  if (events.length === 0) {
-    let html = &#x27;&lt;div class=&quot;empty-state&quot;&gt;&#x27;;
-    html += &#x27;&lt;p&gt;Click &lt;strong&gt;+ Event&lt;/strong&gt; to add your first event.&lt;/p&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-    if (notes.length &gt; 0) html += renderNotes(notes);
-    return html;
-  }
-
-  // Separate shared/main-track events from group-specific events. Orphaned
-  // and ungrouped events are routed to an &quot;Unassigned&quot; lane so they render.
-  const sharedEvents = events.filter(e =&gt; isEventEffectiveMain(e, groups));
-  const groupEvents = resolveLaneEvents(events.filter(e =&gt; !sharedEvents.includes(e)), groups);
-
-  // Get groups that have events
-  const activeGroupIds = [...new Set(groupEvents.map(e =&gt; e.groupId))];
-  const activeGroups = activeGroupIds
-    .map(id =&gt; id === &#x27;&#x27; ? UNASSIGNED_LANE_GROUP : groups.find(g =&gt; g.id === id))
-    .filter(Boolean);
-
-  // Time rows are keyed by event starts. Boundaries caused duplicate-looking
-  // rows when several main-track events shared the same start time.
-  const timeSlots = Array.from(new Set(events.map(e =&gt; e.startTime)))
-    .sort((a, b) =&gt; timeToMinutes(a) - timeToMinutes(b));
-
-  // CSS grid needs explicit column count
-  const colCount = Math.max(activeGroups.length, 1);
-  let html = &#x27;&lt;div class=&quot;grid-schedule&quot; style=&quot;--grid-cols:&#x27; + colCount + &#x27;;&quot;&gt;&#x27;;
-  const overlapWarnings = getGridLaneOverlapWarnings(activeGroups, groupEvents);
-
-  if (overlapWarnings.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;grid-view-note&quot;&gt;&#x27;;
-    html += &#x27;&lt;strong&gt;Grid view warning:&lt;/strong&gt; &#x27; + esc(summarizeGridOverlapWarnings(overlapWarnings));
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-
-  if (activeGroups.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;grid-header&quot;&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;grid-time-col&quot;&gt;Time&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;grid-lane-head-strip&quot;&gt;&#x27;;
-    activeGroups.forEach(g =&gt; {
-      html += &#x27;&lt;div class=&quot;grid-group-col&quot; style=&quot;background:&#x27; + esc(g.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(g.color)) + &#x27;;&quot;&gt;&#x27; + esc(g.name) + &#x27;&lt;/div&gt;&#x27;;
+function layoutDayBody_grid(sheet) {
+  const table = sheet.querySelector(&#x27;.av-matrix&#x27;), columns = Array.from(table.querySelectorAll(&#x27;.av-lane-column&#x27;));
+  // Keep each group in a fixed column, but let a detail-heavy audience use
+  // more width. Never turn the matrix into a flowing list to satisfy Fit.
+  columns.forEach(column =&gt; column.style.removeProperty(&#x27;width&#x27;));
+  const arrange = () =&gt; {
+    table.querySelectorAll(&#x27;.av-cell-events&#x27;).forEach(flow =&gt; {
+      if (flow.getBoundingClientRect().width * .75 &gt; 300) AlternateViews.compactFlow(flow);
+      else AlternateViews.arrange(flow, 1);
     });
-    html += &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-
-  // Rows
-  timeSlots.forEach(slotStart =&gt; {
-    const sharedAtSlot = sharedEvents.filter(e =&gt; e.startTime === slotStart);
-    const groupRow = renderGridRow(slotStart, activeGroups, groupEvents);
-
-    if (!sharedAtSlot.length &amp;&amp; !groupRow.hasGroupActivity) return;
-
-    html += &#x27;&lt;div class=&quot;grid-slot&quot;&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;grid-time-col&quot;&gt;&#x27; + esc(slotStart) + &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;grid-slot-body&quot;&gt;&#x27;;
-
-    if (sharedAtSlot.length &gt; 0) {
-      html += &#x27;&lt;div class=&quot;grid-main-stack&quot;&gt;&#x27;;
-      sharedAtSlot.forEach(shared =&gt; {
-        html += renderGridBanner(shared, events, groups);
-      });
-      html += &#x27;&lt;/div&gt;&#x27;;
+  };
+  if (columns.length === 2) {
+    let best = Infinity, width = 50;
+    const available = table.getBoundingClientRect().width - 35 / .75;
+    for (const candidate of [50, 60, 40, 70, 30, 80, 20, 65, 75]) {
+      columns[0].style.width = available * candidate / 100 + &#x27;px&#x27;; columns[1].style.width = available * (100 - candidate) / 100 + &#x27;px&#x27;;
+      arrange();
+      const height = table.getBoundingClientRect().height;
+      if (height &lt; best) { best = height; width = candidate; }
     }
-
-    if (groupRow.hasGroupActivity) html += groupRow.html;
-
-    html += &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  });
-
-  html += &#x27;&lt;/div&gt;&#x27;;
-  if (notes.length &gt; 0) html += renderNotes(notes);
-  return html;
-}
-
-function renderGridBanner(shared, events, groups) {
-  const sharedExceptions = getSharedEventExceptions(shared, events, groups);
-  const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
-  const bannerClass = shared.isBreak ? &#x27;grid-banner grid-banner-break&#x27; : &#x27;grid-banner&#x27;;
-  let html = &#x27;&lt;div class=&quot;&#x27; + bannerClass + &#x27;&quot; data-event-id=&quot;&#x27; + esc(shared.id) + &#x27;&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-banner-content&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-banner-stack&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-banner-head&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-banner-title&quot;&gt;&#x27; + esc(shared.title) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-banner-time&quot;&gt;&#x27; + esc(shared.startTime + &#x27;\u2013&#x27; + shared.endTime) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  const bannerMeta = [];
-  if (shared.location) bannerMeta.push(&#x27;&lt;span&gt;&#x27; + esc(shared.location) + &#x27;&lt;/span&gt;&#x27;);
-  if (shared.poc) bannerMeta.push(&#x27;&lt;span&gt;POC: &#x27; + esc(shared.poc) + &#x27;&lt;/span&gt;&#x27;);
-  if (bannerMeta.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;grid-banner-meta&quot;&gt;&#x27; + bannerMeta.join(&#x27;&lt;span class=&quot;grid-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+    columns[0].style.width = available * width / 100 + &#x27;px&#x27;; columns[1].style.width = available * (100 - width) / 100 + &#x27;px&#x27;;
   }
-  // Main-track events kept their audience tag and named people in Bands but
-  // lost both here \u2014 on a printed handout those are the point.
-  const bannerGroup = (groups || []).find(g =&gt; g.id === shared.groupId) || null;
-  if (bannerGroup || shared.attendees) {
-    html += &#x27;&lt;div class=&quot;grid-banner-meta grid-banner-who&quot;&gt;&#x27;;
-    if (bannerGroup) html += &#x27;&lt;span class=&quot;skin-group-tag&quot; style=&quot;background:&#x27; + esc(bannerGroup.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(bannerGroup.color)) + &#x27;;&quot;&gt;&#x27; + esc(bannerGroup.name) + &#x27;&lt;/span&gt;&#x27;;
-    if (shared.attendees) html += &#x27;&lt;span&gt;WHO: &#x27; + esc(shared.attendees) + &#x27;&lt;/span&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-  html += renderFlightDetails(shared);
-  if (shared.description) html += &#x27;&lt;div class=&quot;grid-banner-desc&quot;&gt;&#x27; + esc(shared.description) + &#x27;&lt;/div&gt;&#x27;;
-  if (exceptionNote) {
-    html += &#x27;&lt;div class=&quot;grid-banner-exception&quot;&gt;Exceptions: &#x27; + esc(exceptionNote) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function renderGridRow(slotStart, activeGroups, groupEvents) {
-  const slotMinutes = timeToMinutes(slotStart);
-  let hasGroupActivity = false;
-  let html = &#x27;&lt;div class=&quot;grid-row&quot;&gt;&#x27;;
-
-  activeGroups.forEach(g =&gt; {
-    const startingEvents = groupEvents.filter(e =&gt;
-      e.groupId === g.id &amp;&amp;
-      e.startTime === slotStart
-    );
-    const continuingEvents = groupEvents.filter(e =&gt;
-      e.groupId === g.id &amp;&amp;
-      e.startTime !== slotStart &amp;&amp;
-      timeToMinutes(e.startTime) &lt;= slotMinutes &amp;&amp;
-      timeToMinutes(e.endTime) &gt; slotMinutes
-    );
-    const laneEvents = startingEvents.concat(continuingEvents);
-
-    if (laneEvents.length &gt; 0) hasGroupActivity = true;
-
-    if (laneEvents.length &gt; 0) {
-      html += &#x27;&lt;div class=&quot;grid-cell-stack&quot;&gt;&#x27;;
-      laneEvents.forEach(evt =&gt; {
-        html += renderGridCell(evt, g, evt.startTime !== slotStart);
-      });
-      html += &#x27;&lt;/div&gt;&#x27;;
-      return;
-    }
-
-    html += &#x27;&lt;div class=&quot;grid-cell-stack grid-cell-empty&quot;&gt;&lt;/div&gt;&#x27;;
-  });
-
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return { html, hasGroupActivity };
-}
-
-function renderGridCell(evt, group, isContinuation) {
-  const className = isContinuation ? &#x27;grid-cell grid-cell-cont&#x27; : &#x27;grid-cell&#x27;;
-  const accentText = getContrastingTextColor(group.color);
-  const accentStyle = &#x27;--grid-accent:&#x27; + esc(group.color) + &#x27;;--grid-accent-text:&#x27; + esc(accentText) + &#x27;;&#x27;;
-  let html = &#x27;&lt;div class=&quot;&#x27; + className + &#x27;&quot; style=&quot;&#x27; + accentStyle + &#x27;&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-cell-head&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-cell-title&quot;&gt;&#x27; + esc(evt.title) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-cell-time&quot;&gt;&#x27; + esc(evt.startTime + &#x27;\u2013&#x27; + evt.endTime) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  if (isContinuation) {
-    html += &#x27;&lt;div class=&quot;grid-cell-body&quot;&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;grid-cell-audience&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;grid-cell-meta&quot;&gt;Continues from &#x27; + esc(evt.startTime) + &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-    return html;
-  }
-  html += &#x27;&lt;div class=&quot;grid-cell-body&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;grid-cell-audience&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/div&gt;&#x27;;
-  const meta = [];
-  if (evt.location) meta.push(&#x27;&lt;span&gt;&#x27; + esc(evt.location) + &#x27;&lt;/span&gt;&#x27;);
-  if (evt.poc) meta.push(&#x27;&lt;span&gt;POC: &#x27; + esc(evt.poc) + &#x27;&lt;/span&gt;&#x27;);
-  if (meta.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;grid-cell-meta-line&quot;&gt;&#x27; + meta.join(&#x27;&lt;span class=&quot;grid-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  if (evt.description) html += &#x27;&lt;div class=&quot;grid-cell-meta&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
-  html += renderFlightDetails(evt);
-  if (evt.attendees) html += &#x27;&lt;div class=&quot;grid-cell-meta grid-cell-attendees&quot;&gt;WHO: &#x27; + esc(evt.attendees) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function getGridLaneOverlapWarnings(activeGroups, groupEvents) {
-  const warnings = [];
-
-  activeGroups.forEach(group =&gt; {
-    const eventsForGroup = groupEvents
-      .filter(evt =&gt; evt.groupId === group.id)
-      .slice()
-      .sort((a, b) =&gt; timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-
-    for (let i = 0; i &lt; eventsForGroup.length; i++) {
-      for (let j = i + 1; j &lt; eventsForGroup.length; j++) {
-        const current = eventsForGroup[i];
-        const next = eventsForGroup[j];
-        if (timeToMinutes(next.startTime) &gt;= timeToMinutes(current.endTime)) break;
-        warnings.push({
-          groupName: group.name,
-          titles: [current.title, next.title],
-        });
-      }
-    }
-  });
-
-  return warnings;
-}
-
-function summarizeGridOverlapWarnings(warnings) {
-  const first = warnings[0];
-  const pair = first.titles.join(&#x27; and &#x27;);
-  if (warnings.length === 1) {
-    return pair + &#x27; overlap in &#x27; + first.groupName + &#x27;. Use Cards or Phases to review both events.&#x27;;
-  }
-  return pair + &#x27; overlap in &#x27; + first.groupName + &#x27;, plus &#x27; + (warnings.length - 1) + &#x27; more overlap&#x27; + (warnings.length === 2 ? &#x27;&#x27; : &#x27;s&#x27;) + &#x27;. Use Cards or Phases to review all events.&#x27;;
+  arrange();
 }
 
 &lt;/script&gt;
   &lt;script&gt;
-/* ── skin-cards.js ── Contract ────────────────────────────────────────────
- *
- * EXPORTS:
- *   renderDayBody_cards(dayId) → string (HTML)
- *
- * REQUIRES:
- *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js        — esc()
- *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
- *   render.js       — renderNotes(), clearDaggerFootnotes()
- *
- * CONSUMED BY:
- *   render.js — dispatches to this when skin === &#x27;cards&#x27;
- * ──────────────────────────────────────────────────────────────────────────── */
-
-function renderDayBody_cards(dayId, dayOverride) {
+/* Group agendas beneath a shared timeline. Group membership is the organizing
+ * axis; fitting may change panel widths, never move events between groups. */
+function renderDayBody_cards(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
   if (!day) return &#x27;&#x27;;
-  const groups = Store.getGroups();
-  const events = day.events.slice().sort(compareBandOrder);
-  const notes = day.notes || Store.getNotes(dayId);
+  const data = AlternateViews.model(day), groups = AlternateViews.lanes(data);
+  return &#x27;&lt;div class=&quot;av-cards&quot;&gt;&lt;section class=&quot;av-shared&quot;&gt;&lt;h2 class=&quot;av-section-heading av-primary-heading&quot;&gt;Main schedule&#x27; +
+    (data.primaryLabel ? &#x27;&lt;small&gt;&#x27; + esc(data.primaryLabel) + &#x27;&lt;/small&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/h2&gt;&lt;div class=&quot;av-shared-timeline&quot;&gt;&#x27; +
+    (data.mains.length ? data.mains.map(event =&gt; AlternateViews.record(event, data, options)).join(&#x27;&#x27;) : &#x27;&lt;p class=&quot;av-empty&quot;&gt;No main events scheduled.&lt;/p&gt;&#x27;) + &#x27;&lt;/div&gt;&lt;/section&gt;&#x27; +
+    (groups.length ? &#x27;&lt;div class=&quot;av-group-panels&quot;&gt;&#x27; + groups.map(group =&gt; &#x27;&lt;section class=&quot;av-group-panel&quot; data-lane-group=&quot;&#x27; + esc(group.id) + &#x27;&quot;&gt;&#x27; +
+      &#x27;&lt;h2 class=&quot;av-group-heading&quot; style=&quot;--av-group-color:&#x27; + esc(group.color) + &#x27;&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/h2&gt;&#x27; +
+      AlternateViews.flow(group.events, data, { ...options, groupLabel: group.name }) + &#x27;&lt;/section&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+}
 
-  clearDaggerFootnotes();
-
-  if (events.length === 0) {
-    let html = &#x27;&lt;div class=&quot;empty-state&quot;&gt;&#x27;;
-    html += &#x27;&lt;p&gt;Click &lt;strong&gt;+ Event&lt;/strong&gt; to add your first event.&lt;/p&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-    if (notes.length &gt; 0) html += renderNotes(notes);
-    return html;
-  }
-
-  // Separate shared/main-track events from group-specific events. Orphaned
-  // and ungrouped events are routed to an &quot;Unassigned&quot; card so they render.
-  const sharedEvents = events.filter(e =&gt; isEventEffectiveMain(e, groups));
-  const groupEvents = resolveLaneEvents(events.filter(e =&gt; !sharedEvents.includes(e)), groups);
-
-  // Get groups that have events
-  const activeGroupIds = [...new Set(groupEvents.map(e =&gt; e.groupId))];
-  const activeGroups = activeGroupIds
-    .map(id =&gt; id === &#x27;&#x27; ? UNASSIGNED_LANE_GROUP : groups.find(g =&gt; g.id === id))
-    .filter(Boolean);
-
-  let html = &#x27;&lt;div class=&quot;cards-schedule&quot;&gt;&#x27;;
-
-  // Shared timeline banner
-  if (sharedEvents.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;cards-shared&quot;&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;cards-section-label&quot;&gt;Main track&lt;/div&gt;&#x27;;
-    sharedEvents.forEach(e =&gt; {
-      const sharedExceptions = getSharedEventExceptions(e, events, groups);
-      const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
-      const breakClass = e.isBreak ? &#x27; cards-shared-break&#x27; : &#x27;&#x27;;
-      html += &#x27;&lt;span class=&quot;cards-shared-item&#x27; + breakClass + &#x27;&quot; data-event-id=&quot;&#x27; + esc(e.id) + &#x27;&quot;&gt;&#x27;;
-      html += &#x27;&lt;span class=&quot;cards-shared-head&quot;&gt;&#x27;;
-      html += &#x27;&lt;span class=&quot;cards-shared-title&quot;&gt;&#x27; + esc(e.title) + &#x27;&lt;/span&gt;&#x27;;
-      html += &#x27;&lt;span class=&quot;cards-shared-time&quot;&gt;&#x27; + esc(e.startTime + &#x27;\u2013&#x27; + e.endTime) + &#x27;&lt;/span&gt;&#x27;;
-      html += &#x27;&lt;/span&gt;&#x27;;
-      const sharedMeta = [];
-      if (e.location) sharedMeta.push(&#x27;&lt;span&gt;&#x27; + esc(e.location) + &#x27;&lt;/span&gt;&#x27;);
-      if (e.poc) sharedMeta.push(&#x27;&lt;span&gt;POC: &#x27; + esc(e.poc) + &#x27;&lt;/span&gt;&#x27;);
-      if (sharedMeta.length &gt; 0) {
-        html += &#x27;&lt;span class=&quot;cards-shared-meta&quot;&gt;&#x27; + sharedMeta.join(&#x27;&lt;span class=&quot;cards-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/span&gt;&#x27;;
-      }
-      const sharedGroup = groups.find(g =&gt; g.id === e.groupId) || null;
-      if (sharedGroup || e.attendees) {
-        html += &#x27;&lt;span class=&quot;cards-shared-meta cards-shared-who&quot;&gt;&#x27;;
-        if (sharedGroup) html += &#x27;&lt;span class=&quot;skin-group-tag&quot; style=&quot;background:&#x27; + esc(sharedGroup.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(sharedGroup.color)) + &#x27;;&quot;&gt;&#x27; + esc(sharedGroup.name) + &#x27;&lt;/span&gt;&#x27;;
-        if (e.attendees) html += &#x27;&lt;span&gt;WHO: &#x27; + esc(e.attendees) + &#x27;&lt;/span&gt;&#x27;;
-        html += &#x27;&lt;/span&gt;&#x27;;
-      }
-      if (exceptionNote) {
-        html += &#x27;&lt;span class=&quot;cards-shared-exception&quot;&gt;Exceptions: &#x27; + esc(exceptionNote) + &#x27;&lt;/span&gt;&#x27;;
-      }
-      html += renderFlightDetails(e);
-      if (e.description) html += &#x27;&lt;span class=&quot;cards-event-detail&quot;&gt;&#x27; + esc(e.description) + &#x27;&lt;/span&gt;&#x27;;
-      html += &#x27;&lt;/span&gt;&#x27;;
+function layoutDayBody_cards(sheet) {
+  const timeline = sheet.querySelector(&#x27;.av-shared-timeline&#x27;);
+  const mains = Array.from(timeline.querySelectorAll(&#x27;.av-main&#x27;));
+  let height = Infinity, sharedColumns = 1;
+  for (const count of [Math.min(3, Math.max(1, mains.length)), Math.min(2, Math.max(1, mains.length))]) {
+    timeline.style.setProperty(&#x27;--av-shared-columns&#x27;, count);
+    let position = 0;
+    mains.forEach((event, index) =&gt; {
+      const wide = !!event.querySelector(&#x27;.av-flights&#x27;) || (index === mains.length - 1 &amp;&amp; position === 0);
+      event.classList.toggle(&#x27;av-shared-wide&#x27;, wide);
+      event.style.gridColumn = wide ? &#x27;1 / -1&#x27; : &#x27;&#x27;;
+      position = wide ? 0 : (position + 1) % count;
     });
-    html += &#x27;&lt;/div&gt;&#x27;;
+    const measured = timeline.getBoundingClientRect().height;
+    if (measured &lt; height) { height = measured; sharedColumns = count; }
   }
-
-  // Group cards — 2 columns for ≤4 groups, 3 for more
-  const colCount = activeGroups.length &lt;= 4 ? 2 : 3;
-  if (activeGroups.length &gt; 0) {
-    html += &#x27;&lt;div class=&quot;cards-grid cards-cols-&#x27; + colCount + &#x27;&quot;&gt;&#x27;;
-    activeGroups.forEach(g =&gt; {
-      const gEvents = groupEvents.filter(e =&gt; e.groupId === g.id)
-        .sort(compareBandOrder);
-
-      html += &#x27;&lt;div class=&quot;cards-card&quot; style=&quot;border-top:3px solid &#x27; + esc(g.color) + &#x27;;&quot;&gt;&#x27;;
-      // Same colored tag as the other skins: the group color as text over
-      // the card surface has no contrast guarantee for a user-chosen color.
-      html += &#x27;&lt;div class=&quot;cards-card-header&quot;&gt;&lt;span class=&quot;cards-card-tag&quot; style=&quot;background:&#x27; + esc(g.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(g.color)) + &#x27;;&quot;&gt;&#x27; + esc(g.name) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27;;
-
-      gEvents.forEach(evt =&gt; {
-        html += &#x27;&lt;div class=&quot;cards-event&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;&#x27;;
-        html += &#x27;&lt;div class=&quot;cards-event-head&quot;&gt;&#x27;;
-        html += &#x27;&lt;div class=&quot;cards-event-title&quot;&gt;&#x27; + esc(evt.title) + &#x27;&lt;/div&gt;&#x27;;
-        html += &#x27;&lt;div class=&quot;cards-event-time&quot;&gt;&#x27; + esc(evt.startTime + &#x27;\u2013&#x27; + evt.endTime) + &#x27;&lt;/div&gt;&#x27;;
-        html += &#x27;&lt;/div&gt;&#x27;;
-        const meta = [];
-        if (evt.location) meta.push(&#x27;&lt;span&gt;&#x27; + esc(evt.location) + &#x27;&lt;/span&gt;&#x27;);
-        if (evt.poc) meta.push(&#x27;&lt;span&gt;POC: &#x27; + esc(evt.poc) + &#x27;&lt;/span&gt;&#x27;);
-        if (meta.length &gt; 0) {
-          html += &#x27;&lt;div class=&quot;cards-event-meta&quot;&gt;&#x27; + meta.join(&#x27;&lt;span class=&quot;cards-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
-        }
-        if (evt.description) html += &#x27;&lt;div class=&quot;cards-event-detail&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
-        html += renderFlightDetails(evt);
-        if (evt.attendees) html += &#x27;&lt;div class=&quot;cards-event-detail&quot;&gt;WHO: &#x27; + esc(evt.attendees) + &#x27;&lt;/div&gt;&#x27;;
-        html += &#x27;&lt;/div&gt;&#x27;;
-      });
-
-      if (gEvents.length === 0) {
-        html += &#x27;&lt;div class=&quot;cards-event-empty&quot;&gt;No events assigned&lt;/div&gt;&#x27;;
-      }
-
-      html += &#x27;&lt;/div&gt;&#x27;;
-    });
-    html += &#x27;&lt;/div&gt;&#x27;;
+  timeline.style.setProperty(&#x27;--av-shared-columns&#x27;, sharedColumns);
+  let position = 0;
+  mains.forEach((event, index) =&gt; {
+    const wide = !!event.querySelector(&#x27;.av-flights&#x27;) || (index === mains.length - 1 &amp;&amp; position === 0);
+    event.classList.toggle(&#x27;av-shared-wide&#x27;, wide); event.style.gridColumn = wide ? &#x27;1 / -1&#x27; : &#x27;&#x27;;
+    position = wide ? 0 : (position + 1) % sharedColumns;
+  });
+  const panels = sheet.querySelector(&#x27;.av-group-panels&#x27;);
+  if (!panels) return;
+  const groups = Array.from(panels.querySelectorAll(&#x27;.av-group-panel&#x27;));
+  const heavy = groups.filter(group =&gt; group.querySelectorAll(&#x27;.av-event&#x27;).length &gt; 4);
+  panels.dataset.columns = groups.length === 1 ? &#x27;1&#x27; : &#x27;2&#x27;;
+  groups.forEach(group =&gt; group.classList.toggle(&#x27;av-group-wide&#x27;, groups.length === 1 || heavy.includes(group)));
+  groups.forEach(group =&gt; AlternateViews.arrange(group.querySelector(&#x27;.av-flow&#x27;), group.classList.contains(&#x27;av-group-wide&#x27;) &amp;&amp; group.querySelectorAll(&#x27;.av-event&#x27;).length &gt; 3 ? 2 : 1));
+  panels.style.removeProperty(&#x27;grid-template-columns&#x27;);
+  if (groups.length === 2 &amp;&amp; !heavy.length) {
+    let best = Infinity, width = 50;
+    for (const candidate of [50, 60, 40, 70, 30]) {
+      panels.style.gridTemplateColumns = candidate + &#x27;fr &#x27; + (100 - candidate) + &#x27;fr&#x27;;
+      const height = panels.getBoundingClientRect().height;
+      if (height &lt; best) { best = height; width = candidate; }
+    }
+    panels.style.gridTemplateColumns = width + &#x27;fr &#x27; + (100 - width) + &#x27;fr&#x27;;
   }
-
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  if (notes.length &gt; 0) html += renderNotes(notes);
-  return html;
 }
 
 &lt;/script&gt;
   &lt;script&gt;
-/* ── skin-phases.js ── Contract ───────────────────────────────────────────
- *
- * EXPORTS:
- *   renderDayBody_phases(dayId) → string (HTML)
- *
- * REQUIRES:
- *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getNotes()
- *   utils.js        — esc(), getContrastingTextColor()
- *   data-helpers.js — getSharedEventExceptions(), summarizeExceptionNote()
- *   render.js       — renderNotes(), clearDaggerFootnotes()
- *
- * CONSUMED BY:
- *   render.js — dispatches to this when skin === &#x27;phases&#x27;
- * ──────────────────────────────────────────────────────────────────────────── */
-
-function renderDayBody_phases(dayId, dayOverride) {
+/* A vertical sequence of named phases, with contained tasks nested beneath
+ * each phase. Spanning/gap assignments keep an explicit independent position. */
+function renderDayBody_phases(dayId, dayOverride, options) {
   const day = dayOverride || Store.getDay(dayId);
   if (!day) return &#x27;&#x27;;
-  const groups = Store.getGroups();
-  const events = day.events.slice().sort(compareBandOrder);
-  const notes = day.notes || Store.getNotes(dayId);
+  const data = AlternateViews.model(day), phases = [];
+  buildPhaseGroups(day.events || [], Store.getGroups())
+    .sort((a, b) =&gt; a.sortEvent.startTime.localeCompare(b.sortEvent.startTime) || Number(!!b.event) - Number(!!a.event))
+    .forEach(phase =&gt; {
+      const previous = phases[phases.length - 1];
+      if (!phase.event &amp;&amp; previous &amp;&amp; !previous.event &amp;&amp; previous.label === phase.label) previous.tasks.push(...phase.tasks);
+      else phases.push({ ...phase, tasks: phase.tasks.slice() });
+    });
+  return &#x27;&lt;div class=&quot;av-phases&quot;&gt;&lt;h2 class=&quot;av-section-heading av-primary-heading&quot;&gt;Phases&#x27; +
+    (data.primaryLabel ? &#x27;&lt;small&gt;Main schedule: &#x27; + esc(data.primaryLabel) + &#x27;&lt;/small&gt;&#x27; : &#x27;&#x27;) +
+    (phases.some(phase =&gt; !phase.event) ? &#x27;&lt;small class=&quot;av-phase-key&quot;&gt;Dotted rail: independent tasks&lt;/small&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/h2&gt;&lt;ol class=&quot;av-phase-sequence&quot; aria-label=&quot;Phase sequence&quot;&gt;&#x27; +
+    (phases.length ? phases.map(phase =&gt; &#x27;&lt;li class=&quot;av-phase&#x27; + (phase.event ? &#x27;&#x27; : &#x27; av-independent&#x27;) + &#x27;&quot;&#x27; + (!phase.event ? &#x27; aria-label=&quot;&#x27; + esc(phase.label) + &#x27;&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      (phase.event ? AlternateViews.record(phase.event, data, options) : &#x27;&lt;h3 class=&quot;av-independent-label&quot;&gt;&#x27; + esc(phase.label) + &#x27;&lt;/h3&gt;&#x27;) +
+      (phase.tasks.length ? AlternateViews.flow(phase.tasks.map(task =&gt; task.event), data, options) : &#x27;&#x27;) + &#x27;&lt;/li&gt;&#x27;).join(&#x27;&#x27;) : &#x27;&lt;li class=&quot;av-empty&quot;&gt;No events scheduled.&lt;/li&gt;&#x27;) + &#x27;&lt;/ol&gt;&lt;/div&gt;&#x27;;
+}
 
-  clearDaggerFootnotes();
-
-  if (events.length === 0) {
-    let html = &#x27;&lt;div class=&quot;empty-state&quot;&gt;&#x27;;
-    html += &#x27;&lt;p&gt;Click &lt;strong&gt;+ Event&lt;/strong&gt; to add your first event.&lt;/p&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-    if (notes.length &gt; 0) html += renderNotes(notes);
-    return html;
-  }
-
-  const phases = buildPhaseGroups(events, groups);
-
-  let html = &#x27;&lt;div class=&quot;phases-schedule&quot;&gt;&#x27;;
-
-  phases.forEach((phase, i) =&gt; {
-    const evt = phase.event;
-    const isBreak = evt &amp;&amp; evt.isBreak;
-    const sharedExceptions = evt ? getSharedEventExceptions(evt, events, groups) : null;
-    const exceptionNote = sharedExceptions ? summarizeExceptionNote(sharedExceptions, 3) : &#x27;&#x27;;
-
-    if (evt) {
-      html += &#x27;&lt;div class=&quot;phase-block&#x27; + (isBreak ? &#x27; phase-break&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&#x27;;
-      html += &#x27;&lt;div class=&quot;phase-header&quot; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;&#x27;;
-      html += &#x27;&lt;div class=&quot;phase-name&quot;&gt;&#x27; + esc(evt.title) + &#x27;&lt;/div&gt;&#x27;;
-      const meta = [&#x27;&lt;span class=&quot;phase-inline-time&quot;&gt;&#x27; + esc(evt.startTime + &#x27;\u2013&#x27; + evt.endTime) + &#x27;&lt;/span&gt;&#x27;];
-      if (evt.location) meta.push(&#x27;&lt;span&gt;&#x27; + esc(evt.location) + &#x27;&lt;/span&gt;&#x27;);
-      if (evt.poc) meta.push(&#x27;&lt;span&gt;POC: &#x27; + esc(evt.poc) + &#x27;&lt;/span&gt;&#x27;);
-      html += &#x27;&lt;div class=&quot;phase-meta-line&quot;&gt;&#x27; + meta.join(&#x27;&lt;span class=&quot;phase-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
-      // Phase headers are main-track events; keep their audience tag and
-      // named people as Bands does \u2014 a handout without WHO is missing data.
-      const phaseGroup = evt.groupId ? (groups.find(g =&gt; g.id === evt.groupId) || null) : null;
-      if (phaseGroup || evt.attendees) {
-        html += &#x27;&lt;div class=&quot;phase-meta-line phase-who&quot;&gt;&#x27;;
-        if (phaseGroup) html += &#x27;&lt;span class=&quot;skin-group-tag&quot; style=&quot;background:&#x27; + esc(phaseGroup.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(phaseGroup.color)) + &#x27;;&quot;&gt;&#x27; + esc(phaseGroup.name) + &#x27;&lt;/span&gt;&#x27;;
-        if (evt.attendees) html += &#x27;&lt;span&gt;WHO: &#x27; + esc(evt.attendees) + &#x27;&lt;/span&gt;&#x27;;
-        html += &#x27;&lt;/div&gt;&#x27;;
-      }
-      html += renderFlightDetails(evt);
-      if (evt.description) {
-        html += &#x27;&lt;div class=&quot;phase-desc&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
-      }
-      if (exceptionNote) {
-        html += &#x27;&lt;div class=&quot;phase-exception-note&quot;&gt;Exceptions: &#x27; + esc(exceptionNote) + &#x27;&lt;/div&gt;&#x27;;
-      }
-      html += &#x27;&lt;/div&gt;&#x27;;
-    } else {
-      html += &#x27;&lt;div class=&quot;phase-block&quot;&gt;&#x27;;
-      html += &#x27;&lt;div class=&quot;phase-independent-label&quot;&gt;&#x27; + esc(phase.label) + &#x27;&lt;/div&gt;&#x27;;
-    }
-
-    if (phase.tasks.length &gt; 0) {
-      html += &#x27;&lt;div class=&quot;phase-tasks&quot;&gt;&#x27;;
-      phase.tasks.forEach(task =&gt; {
-        const t = task.event;
-        const g = task.group;
-        html += &#x27;&lt;div class=&quot;phase-task&quot; data-event-id=&quot;&#x27; + esc(t.id) + &#x27;&quot;&gt;&#x27;;
-        html += &#x27;&lt;div class=&quot;phase-task-head&quot;&gt;&#x27;;
-        if (g) html += &#x27;&lt;span class=&quot;phase-task-group&quot; style=&quot;background:&#x27; + esc(g.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(g.color)) + &#x27;;&quot;&gt;&#x27; + esc(g.name) + &#x27;&lt;/span&gt;&#x27;;
-        html += &#x27;&lt;span class=&quot;phase-task-title&quot;&gt;&#x27; + esc(t.title) + &#x27;&lt;/span&gt;&#x27;;
-        html += &#x27;&lt;/div&gt;&#x27;;
-        const taskMeta = [&#x27;&lt;span class=&quot;phase-task-inline-time&quot;&gt;&#x27; + esc(t.startTime + &#x27;\u2013&#x27; + t.endTime) + &#x27;&lt;/span&gt;&#x27;];
-        if (t.location) taskMeta.push(&#x27;&lt;span&gt;&#x27; + esc(t.location) + &#x27;&lt;/span&gt;&#x27;);
-        if (t.poc) taskMeta.push(&#x27;&lt;span&gt;POC: &#x27; + esc(t.poc) + &#x27;&lt;/span&gt;&#x27;);
-        html += &#x27;&lt;div class=&quot;phase-task-meta&quot;&gt;&#x27; + taskMeta.join(&#x27;&lt;span class=&quot;phase-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
-        if (t.description) {
-          html += &#x27;&lt;div class=&quot;phase-task-detail&quot;&gt;&#x27; + esc(t.description) + &#x27;&lt;/div&gt;&#x27;;
-        }
-        html += renderFlightDetails(t);
-        if (t.attendees) html += &#x27;&lt;div class=&quot;phase-task-detail&quot;&gt;WHO: &#x27; + esc(t.attendees) + &#x27;&lt;/div&gt;&#x27;;
-        html += &#x27;&lt;/div&gt;&#x27;;
-      });
-      html += &#x27;&lt;/div&gt;&#x27;;
-    }
-
-    html += &#x27;&lt;/div&gt;&#x27;;
-
-    // Transition marker between phases
-    if (i &lt; phases.length - 1 &amp;&amp; !isBreak) {
-      html += &#x27;&lt;div class=&quot;phase-transition&quot;&gt;&amp;darr;&lt;/div&gt;&#x27;;
-    }
+function layoutDayBody_phases(sheet) {
+  sheet.querySelectorAll(&#x27;.av-phase .av-flow&#x27;).forEach(flow =&gt; {
+    AlternateViews.compactFlow(flow);
   });
-
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  if (notes.length &gt; 0) html += renderNotes(notes);
-  return html;
 }
 
 &lt;/script&gt;
@@ -10791,7 +11056,7 @@ function hideLibrary() {
   document.querySelector(&#x27;.app-body&#x27;).style.display = &#x27;&#x27;;
   // Imports can render while the library hides the editor. Physical paper
   // fitting needs visible dimensions, so measure again after revealing it.
-  if (document.querySelector(&#x27;.band-sheet&#x27;)) renderActiveDay();
+  if (document.querySelector(&#x27;.band-sheet, .alternate-sheet&#x27;)) renderActiveDay();
   syncHelpEntryPoints();
 }
 
@@ -10980,7 +11245,10 @@ async function openImportedLocalDraft(state, sourceFileName, importedName, sourc
   syncToolbarTitle();
   renderActiveDay();
   renderInspector();
-  sessionSave((typeof hasScheduleWorkbookHandle === &#x27;function&#x27; &amp;&amp; hasScheduleWorkbookHandle()) ? { skipDirty: true } : undefined);
+  _openedWorkbookFileName = sourceFileName;
+  if (hasScheduleWorkbookHandle()) markScheduleWorkbookSaved();
+  else markScheduleWorkbookOpened();
+  sessionSave({ skipDirty: true });
   toast(&#x27;Opened &#x27; + sourceFileName);
 }
 
@@ -11688,9 +11956,9 @@ function clearDaggerFootnotes() { _daggerFootnotes = []; }
 // Skin dispatcher registry
 const SKIN_RENDERERS = {
   bands: function(dayId, day, options) { return renderDayBody_band(dayId, day, options); },
-  grid:  function(dayId, day) { return typeof renderDayBody_grid   === &#x27;function&#x27; ? renderDayBody_grid(dayId, day)   : &#x27;&#x27;; },
-  cards: function(dayId, day) { return typeof renderDayBody_cards  === &#x27;function&#x27; ? renderDayBody_cards(dayId, day)  : &#x27;&#x27;; },
-  phases:function(dayId, day) { return typeof renderDayBody_phases === &#x27;function&#x27; ? renderDayBody_phases(dayId, day) : &#x27;&#x27;; },
+  grid: function(dayId, day, options) { return renderDayBody_grid(dayId, day, options); },
+  cards: function(dayId, day, options) { return renderDayBody_cards(dayId, day, options); },
+  phases: function(dayId, day, options) { return renderDayBody_phases(dayId, day, options); },
 };
 
 // Shared reference to current schedule file data for theme access.
@@ -11722,18 +11990,11 @@ function renderDay(dayId) {
 
   // Set skin class on page
   const page = container.closest(&#x27;.page&#x27;) || container;
-  page.className = &#x27;page skin-&#x27; + theme.skin + (theme.skin === &#x27;bands&#x27; ? &#x27; bands-screen band-page&#x27; : &#x27;&#x27;);
-
-  // Dispatch to skin renderer
-  const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
+  page.className = &#x27;page skin-&#x27; + theme.skin + (theme.skin === &#x27;bands&#x27; ? &#x27; bands-screen band-page&#x27; : &#x27; alternate-page&#x27;);
 
   let html = &#x27;&#x27;;
   if (theme.skin === &#x27;bands&#x27;) html = BandLayout.page(day, { interactive: true });
-  else {
-    html += renderHeader(day);
-    html += renderer(dayId, day, { interactive: true });
-    html += renderFooter();
-  }
+  else html = AlternateViews.page(day, theme.skin, { interactive: true });
   container.innerHTML = html;
 
   if (theme.skin === &#x27;bands&#x27;) {
@@ -11744,7 +12005,14 @@ function renderDay(dayId) {
     if (!result.fits) notice.textContent = &#x27;This day exceeds the readable one-page limits. All content remains here for editing. Reduce or revise the content before printing.&#x27;;
     container.appendChild(notice);
   }
-  else applyPrintScaling();
+  else {
+    removePrintScaling(page);
+    const result = AlternateViews.fit(container.querySelector(&#x27;.alternate-sheet&#x27;));
+    const notice = document.createElement(&#x27;div&#x27;);
+    notice.className = &#x27;alternate-fit-notice&#x27;; notice.setAttribute(&#x27;role&#x27;, &#x27;status&#x27;);
+    if (!result.fits) notice.textContent = &#x27;This day exceeds the readable one-page limits in this view. All content remains available for editing. Review the content or choose Readable pages when printing.&#x27;;
+    container.appendChild(notice);
+  }
   if (typeof syncPreviewSelection === &#x27;function&#x27;) syncPreviewSelection();
 }
 
@@ -11809,16 +12077,6 @@ function renderFooter() {
   return &#x27;&lt;div class=&quot;footer&quot;&gt;&#x27; + esc(parts.join(&#x27; \u00b7 &#x27;)) + &#x27;&lt;/div&gt;&#x27;;
 }
 
-// Until the other layouts receive their own design review, retain newly added
-// flight details in their existing event content rather than dropping the data.
-function renderFlightDetails(event) {
-  if (!event.flightActivities?.length) return &#x27;&#x27;;
-  return &#x27;&lt;span class=&quot;flight-details-plain&quot;&gt;&#x27; + event.flightActivities.map(activity =&gt;
-    &#x27;&lt;span class=&quot;flight-detail-line&quot;&gt;&lt;strong&gt;&#x27; + esc(activity.flight || &#x27;Unnamed flight&#x27;) + &#x27;&lt;/strong&gt; · &#x27; +
-    [activity.startTime + &#x27;-&#x27; + activity.endTime, activity.title, activity.location,
-      activity.poc ? &#x27;POC: &#x27; + activity.poc : &#x27;&#x27;, activity.description].filter(Boolean).map(esc).join(&#x27; · &#x27;) + &#x27;&lt;/span&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27;;
-}
-
 function formatDateDisplay(dateStr) {
   const d = new Date(dateStr + &#x27;T00:00:00&#x27;);
   if (isNaN(d.getTime())) return dateStr;
@@ -11866,7 +12124,7 @@ function renderWorkbookSwitcher() {
   const entries = typeof getScheduleWorkbookEntries === &#x27;function&#x27; ? getScheduleWorkbookEntries() : [];
   btn.hidden = false;
   label.textContent = entries.length === 1 ? &#x27;1 schedule&#x27; : entries.length + &#x27; schedules&#x27;;
-  btn.title = &#x27;Schedules in this workbook&#x27;;
+  btn.title = &#x27;Manage schedules: open, copy onto new dates, or archive&#x27;;
 }
 
 function getFilteredWorkbookEntries() {
@@ -11894,7 +12152,7 @@ function renderWorkbookModal() {
   let html = &#x27;&lt;div class=&quot;workbook-head&quot;&gt;&#x27;
     + &#x27;&lt;div&gt;&#x27;
     + &#x27;&lt;h2 id=&quot;workbookModal-heading&quot;&gt;Workbook Schedules&lt;/h2&gt;&#x27;
-    + &#x27;&lt;p class=&quot;workbook-desc&quot;&gt;One .schedule file can hold years of drills. Search, open, or create the next one here.&lt;/p&gt;&#x27;
+    + &#x27;&lt;p class=&quot;workbook-desc&quot;&gt;One workbook file holds multiple schedules. Open a schedule, start a blank one, or copy the current schedule onto new dates.&lt;/p&gt;&#x27;
     + &#x27;&lt;/div&gt;&#x27;
     + &#x27;&lt;button class=&quot;modal-close-btn&quot; id=&quot;workbookCloseBtn&quot; aria-label=&quot;Close&quot;&gt;&amp;times;&lt;/button&gt;&#x27;
     + &#x27;&lt;/div&gt;&#x27;
@@ -12082,14 +12340,14 @@ function wireWorkbookUi() {
  *   getPrintDays(options)         — copies selected/filtered data without changing Store
  *   printActiveDay()              — prints the currently active day
  *   printAllDays()                — builds all days into hidden container, prints
- *   applyPrintScaling(forPrint)   — 3-stage adaptive CSS compression + zoom fallback
- *   applyPrintScalingToPage(page, forPrint) — scales a single .page element
+ *   applyPrintScaling(forPrint)   — bounded fitting for the selected paper renderer
+ *   applyPrintScalingToPage(page, forPrint) — fits a single .page without scaling the whole sheet
  *   removePrintScaling(page)      — removes all scaling CSS vars and zoom
  *
  * REQUIRES:
  *   app-state.js    — Store.getActiveDay(), Store.getDays(), Store.getGroups(), Store.getNotes()
  *   ui-core.js      — toast(), openModal(), closeModal()
- *   render.js       — renderDay(), renderHeader(), SKIN_RENDERERS, renderFooter()
+ *   render.js       — renderDay(); band-layout.js, alternate-views.js — paper renderers
  *   data-helpers.js — getAudienceHandoutEvents(), getScheduleReviewIssues()
  *   constants.js    — LAYOUT_TARGETS
  *
@@ -12098,7 +12356,7 @@ function wireWorkbookUi() {
  *   events.js    — openPrintReview() (Ctrl+P and toolbar button)
  *
  * SIDE EFFECTS:
- *   Registers beforeprint listener → prepares fresh full readable output unless
+ *   Registers beforeprint listener → prepares fresh full bounded output unless
  *     an explicit app print request has selected other options
  *   Registers afterprint listener → clears output and re-renders active day
  *   Creates/reuses #printContainer element on document.body
@@ -12114,8 +12372,9 @@ function normalizePrintOptions(options) {
   return {
     dayIds: knownDays.filter(id =&gt; requestedDays.includes(id)),
     audienceId: Store.getGroup(opts.audienceId) ? opts.audienceId : &#x27;&#x27;,
+    includeNamed: opts.includeNamed !== false,
     detail: opts.detail === &#x27;overview&#x27; ? &#x27;overview&#x27; : &#x27;full&#x27;,
-    mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin === &#x27;bands&#x27; || opts.mode === &#x27;fit&#x27; ? &#x27;fit&#x27; : &#x27;readable&#x27;,
+    mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin !== &#x27;bands&#x27; &amp;&amp; opts.mode === &#x27;readable&#x27; ? &#x27;readable&#x27; : &#x27;fit&#x27;,
   };
 }
 
@@ -12123,7 +12382,7 @@ function getPrintDays(options) {
   const opts = normalizePrintOptions(options);
   return Store.getDays().filter(day =&gt; opts.dayIds.includes(day.id)).map(day =&gt; ({
     ...day,
-    events: getAudienceHandoutEvents(day.events, Store.getGroups(), opts.audienceId)
+    events: getAudienceHandoutEvents(day.events, Store.getGroups(), opts.audienceId, opts)
       .map(evt =&gt; opts.detail === &#x27;overview&#x27; ? { ...evt, description: &#x27;&#x27; } : { ...evt }),
     notes: (day.notes || []).map(note =&gt; ({ ...note })),
   }));
@@ -12132,7 +12391,6 @@ function getPrintDays(options) {
 function buildPrintMarkup(options) {
   const opts = normalizePrintOptions(options);
   const theme = getScheduleTheme(getCurrentScheduleFileData() &amp;&amp; getCurrentScheduleFileData().theme);
-  const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
   const audience = Store.getGroup(opts.audienceId);
   return getPrintDays(opts).map(day =&gt; {
     if (theme.skin === &#x27;bands&#x27;) {
@@ -12140,16 +12398,10 @@ function buildPrintMarkup(options) {
         opts.detail === &#x27;overview&#x27; ? &#x27;Overview: event notes omitted.&#x27; : &#x27;&#x27;, audience || opts.detail === &#x27;overview&#x27; ? &#x27;Day notes included.&#x27; : &#x27;&#x27;].filter(Boolean).join(&#x27; &#x27;);
       return &#x27;&lt;div class=&quot;page print-page skin-bands band-page print-fit&quot; data-print-mode=&quot;fit&quot; data-print-day=&quot;&#x27; + esc(day.id) + &#x27;&quot;&gt;&#x27; + BandLayout.page(day, { handout }) + &#x27;&lt;/div&gt;&#x27;;
     }
-    let html = &#x27;&lt;div class=&quot;page print-page skin-&#x27; + esc(theme.skin) + &#x27; print-&#x27; + opts.mode + &#x27;&quot; data-print-mode=&quot;&#x27; + opts.mode + &#x27;&quot; data-print-day=&quot;&#x27; + esc(day.id) + &#x27;&quot;&gt;&#x27;;
-    html += renderHeader(day);
-    if (audience || opts.detail === &#x27;overview&#x27;) {
-      html += &#x27;&lt;div class=&quot;print-handout-label&quot;&gt;&#x27; + esc(audience ? &#x27;Audience: &#x27; + audience.name + &#x27; · Primary audience events and breaks included. &#x27; : &#x27;&#x27;);
-      if (opts.detail === &#x27;overview&#x27;) html += &#x27;Overview · Event notes omitted. &#x27;;
-      html += &#x27;Day notes included.&lt;/div&gt;&#x27;;
-    }
-    html += renderer(day.id, day, { printMode: opts.mode });
-    html += renderFooter() + &#x27;&lt;/div&gt;&#x27;;
-    return html;
+    const handout = [audience ? &#x27;Audience: &#x27; + audience.name + &#x27;. Primary audience events and breaks included.&#x27; : &#x27;&#x27;,
+      opts.detail === &#x27;overview&#x27; ? &#x27;Overview: event notes omitted.&#x27; : &#x27;&#x27;, audience || opts.detail === &#x27;overview&#x27; ? &#x27;Day notes included.&#x27; : &#x27;&#x27;].filter(Boolean).join(&#x27; &#x27;);
+    return &#x27;&lt;div class=&quot;page print-page alternate-page skin-&#x27; + esc(theme.skin) + &#x27; print-&#x27; + opts.mode + &#x27;&quot; data-print-mode=&quot;&#x27; + opts.mode + &#x27;&quot; data-print-day=&quot;&#x27; + esc(day.id) + &#x27;&quot;&gt;&#x27; +
+      AlternateViews.page(day, theme.skin, { printMode: opts.mode, handout }) + &#x27;&lt;/div&gt;&#x27;;
   }).join(&#x27;&#x27;);
 }
 
@@ -12159,7 +12411,10 @@ function layoutPrintPages(container) {
   container.querySelectorAll(&#x27;.print-page&#x27;).forEach(page =&gt; {
     const sheet = page.querySelector(&#x27;.band-sheet&#x27;);
     if (sheet) { BandLayout.fit(sheet); page.dataset.printPaginated = &#x27;true&#x27;; }
-    else applyPrintScalingToPage(page, true);
+    else {
+      applyPrintScalingToPage(page, true);
+      if (page.querySelector(&#x27;.alternate-sheet:not(.av-natural)&#x27;)) page.dataset.printPaginated = &#x27;true&#x27;;
+    }
   });
 }
 
@@ -12192,7 +12447,7 @@ function measurePrintPlan(options) {
         estimatedPages: opts.mode === &#x27;fit&#x27; || (page.dataset.printPaginated === &#x27;true&#x27; &amp;&amp; !page.classList.contains(&#x27;bands-print-natural&#x27;))
           ? 1 : Math.max(1, Math.ceil(height / ((10.32 * 96) - 48))),
         smallestTextPt: (textSizes.length ? Math.min(...textSizes) : 12) * scale * 0.75,
-        fits: !page.querySelector(&#x27;.band-sheet[data-fit=&quot;false&quot;]&#x27;),
+        fits: !page.querySelector(&#x27;.band-sheet[data-fit=&quot;false&quot;], .alternate-sheet[data-fit=&quot;false&quot;]&#x27;),
       };
       const day = days.get(metrics.dayId);
       if (day) {
@@ -12229,26 +12484,39 @@ function openPrintReview() {
     html += &#x27;&lt;label&gt;&lt;input type=&quot;checkbox&quot; name=&quot;printDay&quot; value=&quot;&#x27; + esc(day.id) + &#x27;&quot; checked&gt; &#x27; + esc(label) + &#x27;&lt;/label&gt;&#x27;;
   });
   html += &#x27;&lt;/fieldset&gt;&lt;div class=&quot;print-review-fields&quot;&gt;&#x27;;
-  html += &#x27;&lt;label for=&quot;printAudience&quot;&gt;Audience&lt;/label&gt;&lt;select id=&quot;printAudience&quot;&gt;&lt;option value=&quot;&quot;&gt;Everyone&lt;/option&gt;&#x27;;
-  Store.getGroups().forEach(group =&gt; { html += &#x27;&lt;option value=&quot;&#x27; + esc(group.id) + &#x27;&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/option&gt;&#x27;; });
-  html += &#x27;&lt;/select&gt;&lt;p class=&quot;print-review-hint&quot;&gt;An audience handout includes primary audience events and breaks. Review named exceptions and day notes before sharing.&lt;/p&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;printAudience&quot;&gt;What to print&lt;/label&gt;&lt;select id=&quot;printAudience&quot;&gt;&lt;option value=&quot;&quot;&gt;Full schedule — all events and assignments&lt;/option&gt;&#x27;;
+  Store.getGroups().forEach(group =&gt; { html += &#x27;&lt;option value=&quot;&#x27; + esc(group.id) + &#x27;&quot;&gt;Group handout: &#x27; + esc(group.name) + &#x27;&lt;/option&gt;&#x27;; });
+  html += &#x27;&lt;/select&gt;&lt;div id=&quot;printNamedOptions&quot; hidden&gt;&lt;label&gt;&lt;input type=&quot;checkbox&quot; id=&quot;printIncludeNamed&quot; checked&gt; Include named assignments without a group&lt;/label&gt;&lt;p class=&quot;print-review-hint&quot;&gt;We cannot infer which group a person belongs to. Keep these assignments unless you have reviewed them. Shared events and day reminders are included.&lt;/p&gt;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;printDetail&quot;&gt;Details&lt;/label&gt;&lt;select id=&quot;printDetail&quot;&gt;&lt;option value=&quot;full&quot;&gt;Full details&lt;/option&gt;&lt;option value=&quot;overview&quot;&gt;Overview — omit event notes&lt;/option&gt;&lt;/select&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;printMode&quot;&gt;Page layout&lt;/label&gt;&lt;select id=&quot;printMode&quot;&gt;&#x27; + (banded
     ? &#x27;&lt;option value=&quot;fit&quot;&gt;Letter portrait — one day per page&lt;/option&gt;&#x27;
-    : &#x27;&lt;option value=&quot;readable&quot;&gt;Readable pages — allow more than one page per day&lt;/option&gt;&lt;option value=&quot;fit&quot;&gt;Fit each day on one page — may make text small&lt;/option&gt;&#x27;) + &#x27;&lt;/select&gt;&lt;/div&gt;&#x27;;
+    : &#x27;&lt;option value=&quot;fit&quot;&gt;Letter portrait — one day per page&lt;/option&gt;&lt;option value=&quot;readable&quot;&gt;Readable pages — allow more than one page per day&lt;/option&gt;&#x27;) + &#x27;&lt;/select&gt;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;div id=&quot;printReviewSummary&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div id=&quot;printOmissions&quot; class=&quot;print-omissions&quot; role=&quot;status&quot; hidden&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;print-review-hint&quot;&gt;Schedule checks cover all events on the selected days, including any excluded from this handout.&lt;/p&gt;&#x27;;
   html += &#x27;&lt;details class=&quot;print-review-checks&quot;&gt;&lt;summary id=&quot;printReviewCheckCount&quot;&gt;Schedule checks&lt;/summary&gt;&lt;ul id=&quot;printReviewIssues&quot;&gt;&lt;/ul&gt;&lt;/details&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;modal-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;btn&quot; id=&quot;printReviewCancel&quot;&gt;Cancel&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; id=&quot;printReviewConfirm&quot;&gt;Print&lt;/button&gt;&lt;/div&gt;&#x27;;
   modal.innerHTML = html;
   const readOptions = () =&gt; normalizePrintOptions({
     dayIds: Array.from(modal.querySelectorAll(&#x27;[name=&quot;printDay&quot;]:checked&#x27;)).map(input =&gt; input.value),
     audienceId: modal.querySelector(&#x27;#printAudience&#x27;).value,
+    includeNamed: modal.querySelector(&#x27;#printIncludeNamed&#x27;).checked,
     detail: modal.querySelector(&#x27;#printDetail&#x27;).value,
     mode: modal.querySelector(&#x27;#printMode&#x27;).value,
   });
   const refresh = () =&gt; {
     const opts = readOptions();
     const fullDays = getPrintDays({ ...opts, detail: &#x27;full&#x27; });
+    const sourceDays = Store.getDays().filter(day =&gt; opts.dayIds.includes(day.id));
+    const excluded = sourceDays.flatMap(day =&gt; {
+      const included = new Set(fullDays.find(item =&gt; item.id === day.id).events.map(event =&gt; event.id));
+      return day.events.filter(event =&gt; !included.has(event.id)).map(event =&gt; ({ day, event }));
+    });
+    modal.querySelector(&#x27;#printNamedOptions&#x27;).hidden = !opts.audienceId;
+    const omissions = modal.querySelector(&#x27;#printOmissions&#x27;);
+    omissions.hidden = !excluded.length;
+    omissions.innerHTML = excluded.length ? &#x27;&lt;strong&gt;&#x27; + excluded.length + &#x27; event(s) excluded from this handout&lt;/strong&gt;&lt;ul&gt;&#x27; + excluded.map(({ day, event }) =&gt;
+      &#x27;&lt;li&gt;&#x27; + esc((day.label || day.date) + &#x27; · &#x27; + event.startTime + &#x27;–&#x27; + event.endTime + &#x27; · &#x27; + event.title) + &#x27;&lt;/li&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/ul&gt;&#x27; : &#x27;&#x27;;
     const events = fullDays.flatMap(day =&gt; day.events);
     const omitted = opts.detail === &#x27;overview&#x27; ? events.filter(evt =&gt; evt.description).length : 0;
     const metrics = measurePrintPlan(opts);
@@ -12259,6 +12527,9 @@ function openPrintReview() {
     if (banded) {
       summary += &#x27;&lt;p&gt;Half-inch margins, a reserved notes area and bounded text sizes. Print at actual size on US Letter; duplex can put the next day on the reverse.&lt;/p&gt;&#x27;;
       if (metrics.some(page =&gt; !page.fits)) summary += &#x27;&lt;p class=&quot;print-review-warning&quot;&gt;A selected day exceeds the readable one-page limits. Review its content before printing; no names or event details will be clipped to make it fit.&lt;/p&gt;&#x27;;
+    } else if (opts.mode === &#x27;fit&#x27;) {
+      summary += &#x27;&lt;p&gt;US Letter portrait, half-inch margins and bounded text sizes. Print at actual size.&lt;/p&gt;&#x27;;
+      if (metrics.some(page =&gt; !page.fits)) summary += &#x27;&lt;p class=&quot;print-review-warning&quot;&gt;A day exceeds the readable one-page limits. Review its content or choose Readable pages; no names or details will be clipped.&lt;/p&gt;&#x27;;
     } else if (small.length) {
       summary += &#x27;&lt;p class=&quot;print-review-warning&quot;&gt;Text may be as small as &#x27; + Math.min(...small.map(page =&gt; page.smallestTextPt)).toFixed(1) + &#x27; pt. &#x27;;
       summary += opts.mode === &#x27;fit&#x27;
@@ -12267,9 +12538,10 @@ function openPrintReview() {
     }
     summary += &#x27;&lt;p class=&quot;print-review-hint&quot;&gt;Check your browser’s print preview before sharing. Paper and printer settings can change pagination.&lt;/p&gt;&#x27;;
     modal.querySelector(&#x27;#printReviewSummary&#x27;).innerHTML = summary;
-    const issues = getScheduleReviewIssues(fullDays, Store.getGroups());
+    const issues = getScheduleReviewIssues(sourceDays, Store.getGroups());
     modal.querySelector(&#x27;#printReviewCheckCount&#x27;).textContent = issues.length ? issues.length + &#x27; schedule check(s) to review&#x27; : &#x27;No schedule checks flagged&#x27;;
     modal.querySelector(&#x27;#printReviewIssues&#x27;).innerHTML = issues.map(issue =&gt; &#x27;&lt;li&gt;&#x27; + esc(issue.message) + &#x27;&lt;/li&gt;&#x27;).join(&#x27;&#x27;);
+    modal.querySelector(&#x27;.print-review-checks&#x27;).open = issues.length &gt; 0;
     modal.querySelector(&#x27;#printReviewConfirm&#x27;).disabled = opts.dayIds.length === 0 || metrics.some(page =&gt; page.fits === false);
   };
   modal.querySelectorAll(&#x27;input, select&#x27;).forEach(input =&gt; input.addEventListener(&#x27;change&#x27;, refresh));
@@ -12364,7 +12636,7 @@ function printSchedule(options) {
       }
       try {
         layoutPrintPages(job.container);
-        if (job.container.querySelector(&#x27;.band-sheet[data-fit=&quot;false&quot;]&#x27;)) {
+        if (job.container.querySelector(&#x27;.band-sheet[data-fit=&quot;false&quot;], .alternate-sheet[data-fit=&quot;false&quot;]&#x27;)) {
           clearPrintJob();
           toast(&#x27;A day exceeds the readable one-page limits. Review the schedule before printing.&#x27;, 6000);
           return;
@@ -12400,142 +12672,9 @@ function applyPrintScaling(forPrint) {
 function applyPrintScalingToPage(page, forPrint) {
   const bandSheet = page.querySelector(&#x27;.band-sheet&#x27;);
   if (bandSheet) { removePrintScaling(page); BandLayout.fit(bandSheet); return; }
-  // For print: usable area = 11in - 0.3in @page margins - 0.38in padding,
-  // minus 48px safety margin for browser rendering differences.
-  // For screen: match the .page card&#x27;s min-height (11in = 1056px).
-  // scrollHeight includes padding (border-box), so no subtraction needed.
-  const maxH = forPrint
-    ? (10.32 * 96) - 48   // print: ~943px
-    : (11 * 96) - 10;      // screen: 1046px (page card minus small buffer)
-
-  // Reset any previous scaling
+  const alternateSheet = page.querySelector(&#x27;.alternate-sheet&#x27;);
+  if (alternateSheet) { removePrintScaling(page); AlternateViews.fit(alternateSheet); return; }
   removePrintScaling(page);
-  if (forPrint &amp;&amp; page.dataset.printMode === &#x27;readable&#x27;) return;
-
-  // For print: force print-width measurement (8.2in) since screen preview
-  // may be narrower. For screen preview: measure at actual rendered width
-  // so scaling matches what the user sees.
-  const origWidth = page.style.width;
-  const origMinH = page.style.minHeight;
-  const origMaxH = page.style.maxHeight;
-  const origOverflow = page.style.overflow;
-  if (forPrint) page.style.width = &#x27;8.2in&#x27;;
-  page.style.minHeight = &#x27;0&#x27;;
-  page.style.maxHeight = &#x27;none&#x27;;
-  page.style.overflow = &#x27;visible&#x27;;
-
-  // For print: force footer to 5px margin during measurement — screen mode
-  // uses margin-top:auto which absorbs flex space and masks true content height.
-  // For screen preview: leave auto margin alone so footer stays at page bottom.
-  const footer = page.querySelector(&#x27;.footer&#x27;);
-  const origFooterMargin = footer ? footer.style.marginTop : &#x27;&#x27;;
-  if (forPrint &amp;&amp; footer) footer.style.marginTop = &#x27;5px&#x27;;
-
-  let contentH = page.scrollHeight;
-
-  if (contentH &lt;= maxH) {
-    page.style.width = origWidth;
-    page.style.minHeight = origMinH;
-    page.style.maxHeight = origMaxH;
-    page.style.overflow = origOverflow;
-    if (footer) footer.style.marginTop = origFooterMargin;
-    return;
-  }
-
-  // Three-stage bottom-up compression: compress lowest-priority content first,
-  // only touching primary band content as a last resort.
-  const lerp = (range, f) =&gt; range[1] + (range[0] - range[1]) * f;
-  const T = LAYOUT_TARGETS;
-
-  // Stage 1: Notes, footer, concurrent detail fonts
-  const s1Need = contentH - maxH;
-  const s1Factor = Math.max(0, Math.min(1, 1 - (s1Need / (maxH * 0.15))));
-  page.style.setProperty(&#x27;--notes-fs&#x27;, lerp(T.notes.fs, s1Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--notes-lh&#x27;, lerp(T.notes.lineH, s1Factor));
-  page.style.setProperty(&#x27;--conc-detail-fs&#x27;, lerp(T.conc.detailFs, s1Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--conc-time-fs&#x27;, lerp(T.conc.timeFs, s1Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--conc-title-fs&#x27;, lerp(T.conc.titleFs, s1Factor) + &#x27;px&#x27;);
-
-  void page.offsetHeight; // force reflow so scrollHeight reads updated layout
-  contentH = page.scrollHeight;
-  if (contentH &lt;= maxH) {
-    page.style.width = origWidth;
-    page.style.minHeight = origMinH;
-    page.style.maxHeight = origMaxH;
-    page.style.overflow = origOverflow;
-    if (footer) footer.style.marginTop = origFooterMargin;
-    return;
-  }
-
-  // Stage 2: Supporting band padding, meta/description fonts, tags
-  const s2Need = contentH - maxH;
-  const s2Factor = Math.max(0, Math.min(1, 1 - (s2Need / (maxH * 0.25))));
-  page.style.setProperty(&#x27;--band-sup-pad-v&#x27;, lerp(T.band.supPadV, s2Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-desc-fs&#x27;, lerp(T.band.descFs, s2Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-meta-fs&#x27;, lerp(T.band.metaFs, s2Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-tag-fs&#x27;, lerp(T.band.tagFs, s2Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-time-end-fs&#x27;, lerp(T.band.timeEndFs, s2Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-time-dur-fs&#x27;, lerp(T.band.timeDurFs, s2Factor) + &#x27;px&#x27;);
-
-  void page.offsetHeight; // force reflow so scrollHeight reads updated layout
-  contentH = page.scrollHeight;
-  if (contentH &lt;= maxH) {
-    page.style.width = origWidth;
-    page.style.minHeight = origMinH;
-    page.style.maxHeight = origMaxH;
-    page.style.overflow = origOverflow;
-    if (footer) footer.style.marginTop = origFooterMargin;
-    return;
-  }
-
-  // Stage 3: Primary band content — only as a last resort
-  const s3Need = contentH - maxH;
-  const s3Factor = Math.max(0, Math.min(1, 1 - (s3Need / (maxH * 0.25))));
-  page.style.setProperty(&#x27;--band-main-pad-v&#x27;, lerp(T.band.mainPadV, s3Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-main-pad-h&#x27;, lerp(T.band.mainPadH, s3Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-title-fs&#x27;, lerp(T.band.titleFs, s3Factor) + &#x27;px&#x27;);
-  page.style.setProperty(&#x27;--band-time-start-fs&#x27;, lerp(T.band.timeStartFs, s3Factor) + &#x27;px&#x27;);
-
-  // Re-measure after all CSS var compression
-  contentH = page.scrollHeight;
-
-  // Restore measurement overrides
-  page.style.width = origWidth;
-  page.style.minHeight = origMinH;
-  page.style.maxHeight = origMaxH;
-  page.style.overflow = origOverflow;
-  if (footer) footer.style.marginTop = origFooterMargin;
-
-  if (contentH &lt;= maxH) return;
-
-  // Screen: never zoom — stretch the page to the content height instead.
-  // (Bands positions events absolutely, so the page cannot grow on its own.)
-  // Microscopic-but-fits is worse than a tall, readable page; the density
-  // warning already steers users to Grid/Cards/Phases. Print still zooms.
-  if (!forPrint) {
-    page.style.minHeight = contentH + &#x27;px&#x27;;
-    return;
-  }
-
-  // Final fallback (print only): zoom shrinks actual layout dimensions.
-  // zoom affects layout flow (unlike transform:scale which is visual-only),
-  // so the print engine sees the zoomed box size for pagination.
-  let scale = maxH / contentH;
-  page.style.zoom = scale;
-  page.dataset.printScaled = &#x27;1&#x27;;
-
-  // Force min-height:0 so the stylesheet&#x27;s 11in floor doesn&#x27;t reassert at
-  // the zoomed size (11in * 0.95 = 10.45in can still overflow).
-  page.style.minHeight = &#x27;0&#x27;;
-
-  // Browser zoom rounding can leave the final rendered box a few pixels taller
-  // than scrollHeight predicted. Re-measure the actual box and correct once.
-  void page.offsetHeight;
-  const renderedHeight = page.getBoundingClientRect().height;
-  if (renderedHeight &gt; maxH) {
-    scale = scale * (maxH / renderedHeight) * 0.995;
-    page.style.zoom = scale;
-  }
 }
 
 function removePrintScaling(page) {
@@ -12555,7 +12694,7 @@ function removePrintScaling(page) {
 }
 
 // Browser File → Print does not go through printSchedule. Build current full
-// readable pages synchronously; beforeprint cannot wait for image decoding.
+// bounded pages synchronously; beforeprint cannot wait for image decoding.
 // An app-requested print retains its deliberate day/audience/detail/Fit choices.
 window.addEventListener(&#x27;beforeprint&#x27;, () =&gt; {
   try {
@@ -12676,7 +12815,7 @@ document.addEventListener(&#x27;click&#x27;, e =&gt; {
   }
 
   // Click on note -&gt; select in inspector
-  const noteEl = e.target.closest(&#x27;.notes-list li[data-note-id], .band-sheet [data-note-id]&#x27;);
+  const noteEl = e.target.closest(&#x27;.notes-list li[data-note-id], .band-sheet [data-note-id], .alternate-sheet [data-note-id]&#x27;);
   if (noteEl &amp;&amp; !e.target.closest(&#x27;.inspector&#x27;)) {
     const dayId = Store.getActiveDay();
     if (dayId) selectEntity(&#x27;note&#x27;, dayId, noteEl.getAttribute(&#x27;data-note-id&#x27;));
@@ -12693,7 +12832,7 @@ document.addEventListener(&#x27;click&#x27;, e =&gt; {
 // Keyboard shortcuts
 document.addEventListener(&#x27;keydown&#x27;, e =&gt; {
   if (e.defaultPrevented) return;
-  if ((e.key === &#x27;Enter&#x27; || e.key === &#x27; &#x27;) &amp;&amp; e.target.matches(&#x27;.hdr[role=&quot;button&quot;], .bands-screen [role=&quot;button&quot;], .band-sheet article[data-event-id]&#x27;)) {
+  if ((e.key === &#x27;Enter&#x27; || e.key === &#x27; &#x27;) &amp;&amp; e.target.matches(&#x27;.hdr[role=&quot;button&quot;], .bands-screen [role=&quot;button&quot;], .band-sheet article[data-event-id], .alternate-sheet [role=&quot;button&quot;], .alternate-sheet article[data-event-id]&#x27;)) {
     e.preventDefault();
     e.target.click();
     return;
@@ -12775,7 +12914,7 @@ document.addEventListener(&#x27;keydown&#x27;, e =&gt; {
  *   #helpBtn           — help button (overflow)
  *   #overflowMenu      — overflow menu container
  *   #customizeBtn      — customize button
- *   #printBtn          — print button (overflow)
+ *   #printBtn          — print review button (toolbar)
  *   #daySheetBtn       — opens day event sheet modal
  *   #settingsModal     — settings modal overlay
  *   #dayEventSheetModal — day event sheet modal overlay
@@ -12828,7 +12967,7 @@ function renderInspector() {
   const panel = document.getElementById(&#x27;inspectorPanel&#x27;);
   if (!panel) return;
   clearDeleteTimer();
-  wireEditabilityGuard(panel, &#x27;#insp-close, .insp-day-header&#x27;, renderInspector);
+  wireEditabilityGuard(panel, &#x27;#insp-close, .insp-day-header, [data-review-event]&#x27;, renderInspector);
 
   if (_selection.type === &#x27;event&#x27; &amp;&amp; _selection.dayId &amp;&amp; _selection.entityId) {
     renderEventInspector(panel, _selection.dayId, _selection.entityId);
@@ -12961,11 +13100,12 @@ function wireScheduleSetup(panel) {
 
 // ── Settings Modal ────────────────────────────────────────────────────────
 
-function openSettingsModal() {
+function openSettingsModal(tab) {
   if (typeof isCurrentScheduleEditable === &#x27;function&#x27; &amp;&amp; !isCurrentScheduleEditable()) {
     toast(&#x27;Read-only. Click Edit.&#x27;);
     return;
   }
+  if ([&#x27;basics&#x27;, &#x27;look&#x27;, &#x27;audiences&#x27;, &#x27;advanced&#x27;].includes(tab)) _settingsActiveTab = tab;
   const modal = document.getElementById(&#x27;settingsModalContent&#x27;);
   renderSettingsModal(modal);
   openModal(&#x27;settingsModal&#x27;);
@@ -13019,12 +13159,12 @@ function renderSettingsModal(modal) {
   html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-title&quot;&gt;Schedule title&lt;/label&gt;&#x27;;
   html += &#x27;&lt;p class=&quot;insp-hint&quot;&gt;An organization name, event title, or anything that describes this schedule.&lt;/p&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-title&quot; value=&quot;&#x27; + esc(title) + &#x27;&quot;&gt;&#x27;;
-  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-contact&quot;&gt;&#x27; + (currentTheme.skin === &#x27;bands&#x27; ? &#x27;Subtitle (optional)&#x27; : &#x27;Header line (optional)&#x27;) + &#x27;&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-contact&quot;&gt;Subtitle (optional)&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-contact&quot; value=&quot;&#x27; + esc(footer.contact) + &#x27;&quot;&gt;&#x27;;
   html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-poc&quot;&gt;Schedule point of contact (optional)&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-poc&quot; value=&quot;&#x27; + esc(footer.poc) + &#x27;&quot; placeholder=&quot;MSgt Doe&quot;&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&lt;div class=&quot;settings-section&quot;&gt;&lt;div class=&quot;settings-section-title&quot;&gt;Logo&lt;/div&gt;&#x27;;
-  if (currentTheme.skin === &#x27;bands&#x27;) {
+  {
     const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
     html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;settings-band-logo&quot;&#x27; + (bandSettings.showLogo ? &#x27; checked&#x27; : &#x27;&#x27;) + &#x27;&gt; Show logo space (1 × 1 inch)&lt;/label&gt;&#x27;;
     html += &#x27;&lt;p class=&quot;insp-hint&quot;&gt;At the left of the heading. Turn off to give the title more room.&lt;/p&gt;&#x27;;
@@ -13036,7 +13176,7 @@ function renderSettingsModal(modal) {
     html += &#x27;&lt;button class=&quot;btn&quot; id=&quot;settings-logo-remove&quot;&gt;Remove logo&lt;/button&gt;&lt;/div&gt;&#x27;;
   }
   html += &#x27;&lt;/div&gt;&#x27;;
-  if (currentTheme.skin === &#x27;bands&#x27;) {
+  {
     const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
     html += &#x27;&lt;div class=&quot;settings-section&quot;&gt;&lt;div class=&quot;settings-section-title&quot;&gt;Notes &amp;amp; Reminders&lt;/div&gt;&lt;label class=&quot;settings-label&quot; for=&quot;settings-band-notes&quot;&gt;Space at the bottom of each day&lt;/label&gt;&lt;select class=&quot;settings-input&quot; id=&quot;settings-band-notes&quot;&gt;&#x27; +
       [[90, &#x27;1¼ inches — usual choice&#x27;], [108, &#x27;1½ inches&#x27;], [144, &#x27;2 inches&#x27;]].map(([value, label]) =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + (bandSettings.notesHeight === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + label + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/select&gt;&lt;p class=&quot;insp-hint&quot;&gt;Use + Reminder to add untimed notes. More space here leaves less room for events.&lt;/p&gt;&lt;/div&gt;&#x27;;
@@ -13112,18 +13252,18 @@ function renderSettingsModal(modal) {
   html += &#x27;&lt;div class=&quot;settings-section-title&quot;&gt;Export&lt;/div&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;settings-export-row&quot;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;settings-export-copy&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;settings-export-label&quot;&gt;Schedule File&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;settings-export-hint&quot;&gt;Portable full schedule file with theme, versions, and activity.&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;settings-export-label&quot;&gt;Complete workbook&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;settings-export-hint&quot;&gt;All schedules, appearance and saved versions in one .schedule file. Use this for backup or handoff. One person edits the shared file at a time.&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;button class=&quot;btn settings-export-btn&quot; id=&quot;settings-save-schedule-file&quot;&gt;Save .schedule&lt;/button&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;settings-export-row&quot;&gt;&#x27;;
+  html += &#x27;&lt;details class=&quot;legacy-export&quot;&gt;&lt;summary&gt;Legacy compatibility&lt;/summary&gt;&lt;div class=&quot;settings-export-row&quot;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;settings-export-copy&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;settings-export-label&quot;&gt;Manual File Export&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;settings-export-hint&quot;&gt;Backup only, or use it when auto-save is unavailable.&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;settings-export-label&quot;&gt;Current schedule only&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;div class=&quot;settings-export-hint&quot;&gt;Legacy .js format. Excludes other schedules and saved versions. This is not a workbook backup.&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;button class=&quot;btn settings-export-btn&quot; id=&quot;settings-save-file&quot;&gt;Manual Export&lt;/button&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;button class=&quot;btn settings-export-btn&quot; id=&quot;settings-save-file&quot;&gt;Export current schedule (.js)&lt;/button&gt;&#x27;;
+  html += &#x27;&lt;/div&gt;&lt;/details&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/section&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
@@ -13178,8 +13318,7 @@ function wireSettingsModal(modal) {
       const parsed = parseHexColor(color);
       return parsed &amp;&amp; parsed.alpha &lt; 1;
     });
-    const skin = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin;
-    const textRoles = skin === &#x27;bands&#x27; ? [&#x27;text&#x27;, &#x27;textSecondary&#x27;, &#x27;textMuted&#x27;, &#x27;accent&#x27;] : [&#x27;text&#x27;, &#x27;textSecondary&#x27;, &#x27;textMuted&#x27;];
+    const textRoles = [&#x27;text&#x27;, &#x27;textSecondary&#x27;, &#x27;textMuted&#x27;, &#x27;accent&#x27;];
     const low = textRoles.some(key =&gt;
       [&#x27;bg&#x27;, &#x27;surface&#x27;].some(surface =&gt; getColorContrast(colors[key], colors[surface]) &lt; 4.5));
     warning.textContent = transparent ? &#x27;Transparent colors depend on the surface behind them. Choose opaque colors for predictable contrast.&#x27;
@@ -13338,16 +13477,9 @@ function wireSettingsModal(modal) {
   modal.querySelectorAll(&#x27;.skin-option&#x27;).forEach(function(opt) {
     opt.addEventListener(&#x27;click&#x27;, function() {
       const skin = opt.getAttribute(&#x27;data-skin&#x27;);
-      saveUndoState();
-      const fileData = getCurrentScheduleFileData();
-      if (fileData) {
-        if (!fileData.theme) fileData.theme = {};
-        fileData.theme.skin = skin;
-      }
-      sessionSave();
+      setScheduleView(skin);
       renderSettingsModal(modal);
       renderActiveDay();
-      toast(&#x27;Layout: &#x27; + (SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin));
     });
   });
 
@@ -13831,14 +13963,6 @@ function wireDayEventSheetModal(modal, dayId) {
       // Normalize only parseable text; preserve exact minutes and reject blanks.
       if (isUsableTimeEntry(input.value)) input.value = normalizeTime(input.value);
       const relatedTarget = e.relatedTarget;
-      const field = input.getAttribute(&#x27;data-field&#x27;);
-      const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
-      const startCandidate = startInput ? normalizeTime(startInput.value) : &#x27;&#x27;;
-      const endCandidate = endInput ? normalizeTime(endInput.value) : &#x27;&#x27;;
-      const stagePairedEndEdit = field === &#x27;startTime&#x27;
-        &amp;&amp; startCandidate
-        &amp;&amp; endCandidate
-        &amp;&amp; timeToMinutes(startCandidate) &gt;= timeToMinutes(endCandidate);
       const isSameRowTimeInput = (target) =&gt; !!(
         target &amp;&amp;
         target !== input &amp;&amp;
@@ -13851,10 +13975,9 @@ function wireDayEventSheetModal(modal, dayId) {
         if (!modal.contains(input)) return;
         if (isSameRowTimeInput(document.activeElement)) return;
         commitDayEventSheetTimeRange(modal, dayId, eventId, {
-          focusInfo,
-          allowStartTimeStaging: stagePairedEndEdit
+          focusInfo
         });
-      }, stagePairedEndEdit ? 80 : 0);
+      }, 0); // Let the next control receive focus before rebuilding the worksheet.
     });
     input.addEventListener(&#x27;keydown&#x27;, (e) =&gt; {
       const fieldOrder = [&#x27;startTime&#x27;, &#x27;endTime&#x27;, &#x27;title&#x27;, &#x27;groupId&#x27;, &#x27;location&#x27;];
@@ -14025,15 +14148,20 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
   if (!evt) return;
 
   const { startInput, endInput } = getDayEventSheetTimeInputs(modal, eventId);
-  if ((startInput &amp;&amp; !isUsableTimeEntry(startInput.value)) || (endInput &amp;&amp; !isUsableTimeEntry(endInput.value))) {
-    if (startInput) startInput.value = evt.startTime;
-    if (endInput) endInput.value = evt.endTime;
-    toast(&#x27;Times use 24-hour HHMM, e.g. 0730.&#x27;);
-    return;
+  const result = readEventTimeRange(startInput, endInput);
+  let feedback = modal.querySelector(&#x27;#daySheetTimeFeedback&#x27;);
+  if (!feedback) {
+    feedback = document.createElement(&#x27;p&#x27;); feedback.id = &#x27;daySheetTimeFeedback&#x27;;
+    feedback.className = &#x27;time-edit-feedback&#x27;; feedback.setAttribute(&#x27;role&#x27;, &#x27;status&#x27;); feedback.hidden = true;
+    modal.querySelector(&#x27;.day-sheet-table&#x27;).before(feedback);
   }
-  const startTime = startInput ? normalizeTime(startInput.value) : evt.startTime;
-  const endTime = endInput ? normalizeTime(endInput.value) : evt.endTime;
-  const updates = { startTime, endTime };
+  if (result.error) {
+    startInput.value = evt.startTime; endInput.value = evt.endTime;
+    feedback.textContent = &#x27;Time change not applied to &#x27; + evt.title + &#x27;. &#x27; + result.error + &#x27; Kept &#x27; + evt.startTime + &#x27;–&#x27; + evt.endTime + &#x27;.&#x27;;
+    feedback.hidden = false; toast(feedback.textContent, 6500); return;
+  }
+  feedback.hidden = true;
+  const updates = result.updates, { startTime, endTime } = updates;
 
   if (startTime === evt.startTime &amp;&amp; endTime === evt.endTime) {
     // Unchanged: skip the undo entry, the dirty write, the conflict toast and
@@ -14045,28 +14173,6 @@ function commitDayEventSheetTimeRange(modal, dayId, eventId, options) {
       const target = modal.querySelector(&#x27;[data-event-id=&quot;&#x27; + focusInfo.eventId + &#x27;&quot;][data-focus=&quot;&#x27; + focusInfo.field + &#x27;&quot;]&#x27;);
       if (target &amp;&amp; target.focus) target.focus();
     }
-    return;
-  }
-
-  if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
-    if (options &amp;&amp; options.allowStartTimeStaging &amp;&amp; startTime !== evt.startTime &amp;&amp; endTime === evt.endTime) {
-      if (startInput) startInput.value = startTime;
-      if (endInput) endInput.value = endTime;
-      setTimeout(() =&gt; {
-        const current = getDayEventSheetTimeInputs(modal, eventId);
-        const currentStart = current.startInput ? normalizeTime(current.startInput.value) : &#x27;&#x27;;
-        const currentEnd = current.endInput ? normalizeTime(current.endInput.value) : &#x27;&#x27;;
-        if (currentStart === startTime &amp;&amp; currentEnd === endTime) {
-          commitDayEventSheetTimeRange(modal, dayId, eventId, {
-            focusInfo: options.focusInfo
-          });
-        }
-      }, 140);
-      return;
-    }
-    if (startInput) startInput.value = evt.startTime;
-    if (endInput) endInput.value = evt.endTime;
-    toast(&#x27;End time must be after start time.&#x27;);
     return;
   }
 
@@ -14090,32 +14196,31 @@ function renderEventInspector(panel, dayId, eventId) {
   const readOnly = typeof isCurrentScheduleEditable === &#x27;function&#x27; ? !isCurrentScheduleEditable() : false;
   const textReadOnly = readOnly ? &#x27; readonly&#x27; : &#x27;&#x27;;
   const disabledAttr = readOnly ? &#x27; disabled&#x27; : &#x27;&#x27;;
-  let html = &#x27;&lt;div class=&quot;insp-header&quot;&gt;&lt;h3 style=&quot;margin:0;&quot;&gt;Event&lt;/h3&gt;&lt;button class=&quot;insp-close&quot; id=&quot;insp-close&quot; title=&quot;Back to Setup&quot;&gt;✕&lt;/button&gt;&lt;/div&gt;&#x27;;
+  let html = &#x27;&lt;div class=&quot;insp-header&quot;&gt;&lt;h3 id=&quot;insp-event-identity&quot;&gt;&#x27; + esc(evt.title) + &#x27;&lt;/h3&gt;&lt;button class=&quot;insp-close&quot; id=&quot;insp-close&quot; title=&quot;Dates &amp; hours&quot; aria-label=&quot;Close event; return to dates and hours&quot;&gt;✕&lt;/button&gt;&lt;/div&gt;&#x27;;
   html += readOnly ? &#x27;&lt;div class=&quot;insp-readonly-note&quot;&gt;Read-only. Click &lt;strong&gt;Edit&lt;/strong&gt;.&lt;/div&gt;&#x27;
     : &#x27;&lt;p class=&quot;insp-hint insp-save-hint&quot;&gt;Changes update the preview as you type.&lt;/p&gt;&#x27;;
 
   html += &#x27;&lt;label for=&quot;insp-evt-title&quot;&gt;Event title&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-title&quot; value=&quot;&#x27; + esc(evt.title) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;field-row&quot;&gt;&lt;div&gt;&lt;label for=&quot;insp-evt-start&quot;&gt;Start time&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-start&quot; value=&quot;&#x27; + esc(evt.startTime) + &#x27;&quot; placeholder=&quot;0700&quot; maxlength=&quot;5&quot; class=&quot;time-input&quot;&#x27; + textReadOnly + &#x27;&gt;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;div&gt;&lt;label for=&quot;insp-evt-end&quot;&gt;End time&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-end&quot; value=&quot;&#x27; + esc(evt.endTime) + &#x27;&quot; placeholder=&quot;0800&quot; maxlength=&quot;5&quot; class=&quot;time-input&quot;&#x27; + textReadOnly + &#x27;&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;fieldset class=&quot;event-placement&quot;&gt;&lt;legend&gt;Schedule section&lt;/legend&gt;&#x27;;
-  [[&#x27;main&#x27;, &#x27;Main schedule&#x27;, &#x27;A band in the day’s main sequence.&#x27;], [&#x27;concurrent&#x27;, &#x27;Concurrent event&#x27;, &#x27;A separate assignment, listed below the main bands.&#x27;]].forEach(([value, label, hint]) =&gt; {
+  html += &#x27;&lt;fieldset class=&quot;event-placement&quot;&gt;&lt;legend&gt;Schedule section&lt;/legend&gt;&lt;div class=&quot;placement-choices&quot;&gt;&#x27;;
+  [[&#x27;main&#x27;, &#x27;Main schedule&#x27;, &#x27;The day’s main sequence.&#x27;], [&#x27;concurrent&#x27;, &#x27;Concurrent event&#x27;, &#x27;A separate assignment.&#x27;]].forEach(([value, label, hint]) =&gt; {
     html += &#x27;&lt;label class=&quot;placement-option&quot;&gt;&lt;input type=&quot;radio&quot; name=&quot;event-placement&quot; id=&quot;insp-placement-&#x27; + value + &#x27;&quot; value=&quot;&#x27; + value + &#x27;&quot;&#x27; + ((main ? &#x27;main&#x27; : &#x27;concurrent&#x27;) === value ? &#x27; checked&#x27; : &#x27;&#x27;) + disabledAttr + &#x27;&gt;&lt;span&gt;&lt;strong&gt;&#x27; + label + &#x27;&lt;/strong&gt;&lt;small&gt;&#x27; + hint + &#x27;&lt;/small&gt;&lt;/span&gt;&lt;/label&gt;&#x27;;
   });
-  html += &#x27;&lt;/fieldset&gt;&#x27;;
+  html += &#x27;&lt;/div&gt;&lt;/fieldset&gt;&#x27;;
 
-  html += &#x27;&lt;section class=&quot;event-field-section&quot;&gt;&lt;h4&gt;Who attends&lt;/h4&gt;&lt;label for=&quot;insp-evt-group&quot;&gt;Audience&lt;/label&gt;&lt;select id=&quot;insp-evt-group&quot;&#x27; + disabledAttr + &#x27;&gt;&lt;option value=&quot;&quot;&gt;Specific people / other (enter below)&lt;/option&gt;&#x27;;
+  html += &#x27;&lt;section class=&quot;event-field-section&quot;&gt;&lt;div class=&quot;attendee-heading&quot;&gt;&lt;label for=&quot;insp-evt-group&quot;&gt;Who attends&lt;/label&gt;&lt;button class=&quot;insp-link&quot; type=&quot;button&quot; id=&quot;insp-manage-audiences&quot;&#x27; + disabledAttr + &#x27;&gt;Manage audiences&lt;/button&gt;&lt;/div&gt;&lt;select id=&quot;insp-evt-group&quot;&#x27; + disabledAttr + &#x27;&gt;&lt;option value=&quot;&quot;&gt;Specific people / other (enter below)&lt;/option&gt;&#x27;;
   groups.forEach(g =&gt; { html += &#x27;&lt;option value=&quot;&#x27; + esc(g.id) + &#x27;&quot;&#x27; + (g.id === evt.groupId ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + esc(g.name) + &#x27;&lt;/option&gt;&#x27;; });
   html += &#x27;&lt;/select&gt;&lt;details class=&quot;event-people&quot;&#x27; + (showPeople ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;Specific people or attendance details&lt;/summary&gt;&lt;label for=&quot;insp-evt-attendees&quot;&gt;Names or attendance details&#x27; + (evt.groupId ? &#x27; (optional)&#x27; : &#x27;&#x27;) + &#x27;&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;p class=&quot;insp-hint&quot; id=&quot;insp-people-hint&quot;&gt;Leave blank if the whole audience attends. For a named assignment, enter everyone who must attend. Surnames or full names are both fine.&lt;/p&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-hint&quot; id=&quot;insp-people-hint&quot;&gt;&#x27; + (evt.groupId ? &#x27;Leave blank for the whole audience, or enter the people assigned. &#x27; : &#x27;Enter everyone assigned to this event. &#x27;) + &#x27;Surnames or full names are fine.&lt;/p&gt;&#x27;;
   html += &#x27;&lt;textarea id=&quot;insp-evt-attendees&quot; rows=&quot;2&quot; aria-describedby=&quot;insp-people-hint&quot; placeholder=&quot;Doe; Smith; Chan&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.attendees) + &#x27;&lt;/textarea&gt;&#x27;;
-  html += renderAttendeeFormatting(evt, disabledAttr) + &#x27;&lt;/details&gt;&lt;/section&gt;&#x27;;
+  html += renderAttendeeFormatting(evt, disabledAttr) + &#x27;&lt;/details&gt;&lt;/section&gt;&lt;div id=&quot;insp-assignment-review&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;&#x27;;
 
   html += &#x27;&lt;section class=&quot;event-field-section&quot;&gt;&lt;h4&gt;Where &amp;amp; what to know&lt;/h4&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;insp-evt-loc&quot;&gt;Location (optional)&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-loc&quot; value=&quot;&#x27; + esc(evt.location) + &#x27;&quot; placeholder=&quot;Building or room&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;insp-evt-poc&quot;&gt;Point of contact (optional)&lt;/label&gt;&lt;input type=&quot;text&quot; id=&quot;insp-evt-poc&quot; value=&quot;&#x27; + esc(evt.poc) + &#x27;&quot; placeholder=&quot;MSgt Doe&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;insp-evt-desc&quot;&gt;Event instructions (optional)&lt;/label&gt;&lt;textarea id=&quot;insp-evt-desc&quot; placeholder=&quot;What to bring, preparation, or reporting instructions&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/textarea&gt;&lt;/section&gt;&#x27;;
   html += renderBandEventFields(evt, readOnly);
-  html += &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-break&quot;&#x27; + (evt.isBreak ? &#x27; checked&#x27; : &#x27;&#x27;) + disabledAttr + &#x27;&gt; This is a meal or break&lt;/label&gt;&lt;p class=&quot;insp-hint&quot;&gt;Keeps the selected schedule section. Use emphasis above to make it an anchor.&lt;/p&gt;&lt;/div&gt;&#x27;;
 
   const { mainBands } = classifyEvents(Store.getEvents(dayId), groups);
   const overlaps = mainBands.find(band =&gt; band.event.id === eventId)?.overlappingMain || [];
@@ -14127,6 +14232,7 @@ function renderEventInspector(panel, dayId, eventId) {
   html += &#x27;&lt;div class=&quot;insp-delete-zone&quot;&gt;&lt;button class=&quot;delete-btn&quot; id=&quot;insp-evt-delete&quot;&#x27; + disabledAttr + &#x27;&gt;Delete Event&lt;/button&gt;&lt;/div&gt;&#x27;;
   panel.innerHTML = html;
   wireEventInspector(panel, dayId, eventId);
+  updateAssignmentReview(panel, dayId, eventId);
 }
 
 function wireEventInspector(panel, dayId, eventId) {
@@ -14145,6 +14251,8 @@ function wireEventInspector(panel, dayId, eventId) {
       Store.updateEvent(dayId, eventId, { [field]: val, ...(field === &#x27;isBreak&#x27; ? { placement } : {}) });
       renderActiveDay();
       sessionSave();
+      if (field === &#x27;title&#x27;) panel.querySelector(&#x27;#insp-event-identity&#x27;).textContent = val || &#x27;Untitled event&#x27;;
+      if ([&#x27;attendees&#x27;, &#x27;location&#x27;, &#x27;title&#x27;].includes(field)) updateAssignmentReview(panel, dayId, eventId);
       if (field === &#x27;isBreak&#x27;) {
         renderInspector();
         const next = panel.querySelector(selector);
@@ -14162,15 +14270,17 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit(&#x27;#insp-evt-title&#x27;, &#x27;title&#x27;);
   wireRequiredTextField(panel.querySelector(&#x27;#insp-evt-title&#x27;), &#x27;Untitled event&#x27;, (value) =&gt; {
     Store.updateEvent(dayId, eventId, { title: value });
+    panel.querySelector(&#x27;#insp-event-identity&#x27;).textContent = value;
+    updateAssignmentReview(panel, dayId, eventId);
   }, &#x27;Events need a title — restored the previous one.&#x27;);
-  wireTimeInput(panel, &#x27;#insp-evt-start&#x27;, &#x27;startTime&#x27;, dayId, eventId);
-  wireTimeInput(panel, &#x27;#insp-evt-end&#x27;, &#x27;endTime&#x27;, dayId, eventId);
+  wireEventTimeRange(panel, dayId, eventId);
   autoCommit(&#x27;#insp-evt-attendees&#x27;, &#x27;attendees&#x27;);
   autoCommit(&#x27;#insp-evt-desc&#x27;, &#x27;description&#x27;);
   autoCommit(&#x27;#insp-evt-loc&#x27;, &#x27;location&#x27;);
   autoCommit(&#x27;#insp-evt-poc&#x27;, &#x27;poc&#x27;);
   autoCommit(&#x27;#insp-evt-break&#x27;, &#x27;isBreak&#x27;, true);
   wireBandEventFields(panel, dayId, eventId);
+  panel.querySelector(&#x27;#insp-manage-audiences&#x27;).onclick = () =&gt; openSettingsModal(&#x27;audiences&#x27;);
 
   panel.querySelectorAll(&#x27;[name=&quot;event-placement&quot;]&#x27;).forEach(input =&gt; input.addEventListener(&#x27;change&#x27;, () =&gt; {
     saveUndoState();
@@ -14318,11 +14428,36 @@ function renderActiveDay() {
     // screen looking live — and browser-menu print would print it.
     const container = document.getElementById(&#x27;scheduleContainer&#x27;);
     if (container) {
-      container.innerHTML = &#x27;&lt;div class=&quot;empty-state&quot;&gt;&lt;strong&gt;No days yet.&lt;/strong&gt; Click &lt;strong&gt;+ Day&lt;/strong&gt; to start this schedule.&lt;/div&gt;&#x27;;
+      container.innerHTML = &#x27;&lt;div class=&quot;empty-state&quot;&gt;&lt;strong&gt;Start with the first day.&lt;/strong&gt;&lt;p&gt;Add a day, then set its date and hours.&lt;/p&gt;&lt;button class=&quot;btn btn-primary&quot; id=&quot;addFirstDayBtn&quot;&gt;+ Add first day&lt;/button&gt;&lt;/div&gt;&#x27;;
+      container.querySelector(&#x27;#addFirstDayBtn&#x27;).onclick = () =&gt; document.getElementById(&#x27;addDayBtn&#x27;)?.click();
     }
   }
   renderDayTabs();
   syncPreviewSelection();
+  syncAuthoringControls();
+}
+
+function syncAuthoringControls() {
+  const theme = getScheduleTheme(getCurrentScheduleFileData()?.theme);
+  const view = document.getElementById(&#x27;viewSelect&#x27;);
+  if (view) view.value = theme.skin;
+  const editable = isCurrentScheduleEditable();
+  const day = Store.getDay(Store.getActiveDay());
+  document.getElementById(&#x27;addEventBtn&#x27;)?.classList.toggle(&#x27;btn-primary&#x27;, !!day &amp;&amp; !day.events.length);
+  [[&#x27;undoBtn&#x27;, !_undoStack.length || !editable], [&#x27;redoBtn&#x27;, !_redoStack.length || !editable], [&#x27;printBtn&#x27;, !Store.getDays().length]].forEach(([id, disabled]) =&gt; {
+    const button = document.getElementById(id); if (button) button.disabled = disabled;
+  });
+  if (view) view.disabled = !editable;
+}
+
+function setScheduleView(skin) {
+  if (!SKIN_NAMES.includes(skin) || !isCurrentScheduleEditable()) return;
+  const file = getCurrentScheduleFileData();
+  if (!file || getScheduleTheme(file.theme).skin === skin) return;
+  saveUndoState();
+  file.theme = { ...file.theme, skin };
+  sessionSave(); renderActiveDay();
+  toast(&#x27;View: &#x27; + SKIN_LABELS[skin].name);
 }
 
 function renderDayTabs() {
@@ -14381,6 +14516,17 @@ function wireToolbar() {
 
   const daySheetBtn = document.getElementById(&#x27;daySheetBtn&#x27;);
   if (daySheetBtn) daySheetBtn.onclick = () =&gt; openDayEventSheetModal();
+  const dates = document.getElementById(&#x27;daySettingsBtn&#x27;);
+  if (dates) dates.onclick = () =&gt; {
+    _expandedDayId = Store.getActiveDay(); selectEntity(null);
+    document.querySelector(&#x27;.insp-day-date&#x27;)?.focus();
+  };
+  const view = document.getElementById(&#x27;viewSelect&#x27;);
+  if (view) view.onchange = () =&gt; setScheduleView(view.value);
+  [[&#x27;undoBtn&#x27;, undo], [&#x27;redoBtn&#x27;, redo]].forEach(([id, action]) =&gt; {
+    const button = document.getElementById(id);
+    if (button) button.onclick = () =&gt; { document.getElementById(&#x27;overflowMenu&#x27;).classList.remove(&#x27;open&#x27;); action(); syncAuthoringControls(); };
+  });
 
   // Overflow menu toggle
   const overflowBtn = document.getElementById(&#x27;overflowBtn&#x27;);
@@ -14587,6 +14733,22 @@ function checkTimeConflict(dayId, eventId) {
   }
 }
 
+function updateAssignmentReview(panel, dayId, eventId) {
+  const target = panel.querySelector(&#x27;#insp-assignment-review&#x27;);
+  const day = Store.getDay(dayId);
+  if (!target || !day) return;
+  const issues = getScheduleReviewIssues([day], Store.getGroups()).filter(issue =&gt; issue.type === &#x27;overlap&#x27; &amp;&amp; issue.eventIds.includes(eventId));
+  target.hidden = !issues.length;
+  target.innerHTML = issues.length ? &#x27;&lt;strong&gt;Review overlapping assignments&lt;/strong&gt;&#x27; + issues.map(issue =&gt; {
+    const related = day.events.filter(event =&gt; event.id !== eventId &amp;&amp; issue.eventIds.includes(event.id));
+    return &#x27;&lt;p&gt;&#x27; + esc(issue.message) + &#x27;&lt;/p&gt;&#x27; + related.map(event =&gt; &#x27;&lt;button class=&quot;insp-link&quot; type=&quot;button&quot; data-review-event=&quot;&#x27; + esc(event.id) + &#x27;&quot;&gt;Open &#x27; + esc(event.title) + &#x27; · &#x27; + esc(event.startTime + &#x27;–&#x27; + event.endTime) + &#x27;&lt;/button&gt;&#x27;).join(&#x27;&#x27;);
+  }).join(&#x27;&#x27;) : &#x27;&#x27;;
+  target.querySelectorAll(&#x27;[data-review-event]&#x27;).forEach(button =&gt; button.onclick = () =&gt; {
+    selectEntity(&#x27;event&#x27;, dayId, button.dataset.reviewEvent);
+    panel.querySelector(&#x27;#insp-evt-title&#x27;)?.focus();
+  });
+}
+
 function eventTimeRangeIsValid(dayId, eventId, updates) {
   const evt = Store.getEvents(dayId).find(item =&gt; item.id === eventId);
   if (!evt) return true;
@@ -14621,40 +14783,59 @@ function isUsableTimeEntry(raw) {
   return !!value &amp;&amp; isValidScheduleTime(normalizeTime(value));
 }
 
-function wireTimeInput(panel, selector, field, dayId, eventId) {
-  const input = panel.querySelector(selector);
-  if (!input) return;
-  input.addEventListener(&#x27;blur&#x27;, () =&gt; {
-    if (!isUsableTimeEntry(input.value)) {
-      const evt = Store.getEvents(dayId).find(item =&gt; item.id === eventId);
-      if (evt) input.value = evt[field];
-      toast(&#x27;Times use 24-hour HHMM, e.g. 0730.&#x27;);
-      return;
-    }
-    const normalized = normalizeTime(input.value);
-    const updates = { [field]: normalized };
+function readEventTimeRange(startInput, endInput) {
+  if (!isUsableTimeEntry(startInput.value) || !isUsableTimeEntry(endInput.value)) {
+    return { error: &#x27;Use 24-hour times, such as 0730 or 07:30.&#x27; };
+  }
+  const updates = { startTime: normalizeTime(startInput.value), endTime: normalizeTime(endInput.value) };
+  return timeToMinutes(updates.endTime) &gt; timeToMinutes(updates.startTime)
+    ? { updates } : { error: &#x27;End time must be after start time.&#x27; };
+}
+
+// Start and End form one edit. Moving between them must not validate against
+// the old partner value. Commit synchronously on leaving the pair, before a
+// Save/Print click can capture the previous range. No timing guesses required.
+function wireEventTimeRange(panel, dayId, eventId) {
+  const start = panel.querySelector(&#x27;#insp-evt-start&#x27;), end = panel.querySelector(&#x27;#insp-evt-end&#x27;);
+  const feedback = document.createElement(&#x27;p&#x27;);
+  feedback.id = &#x27;insp-time-feedback&#x27;; feedback.className = &#x27;time-edit-feedback&#x27;;
+  feedback.setAttribute(&#x27;role&#x27;, &#x27;status&#x27;); feedback.hidden = true;
+  start.closest(&#x27;.field-row&#x27;).after(feedback);
+  const commit = () =&gt; {
     const current = Store.getEvents(dayId).find(item =&gt; item.id === eventId);
-    if (current &amp;&amp; current[field] === normalized) {
-      // Nothing changed: no undo entry, no dirty write, no conflict toast.
-      input.value = normalized;
+    if (!current) return;
+    const result = readEventTimeRange(start, end);
+    if (result.error) {
+      start.value = current.startTime; end.value = current.endTime;
+      feedback.textContent = &#x27;Time change not applied. &#x27; + result.error + &#x27; Kept &#x27; + current.startTime + &#x27;–&#x27; + current.endTime + &#x27;.&#x27;;
+      feedback.hidden = false;
+      toast(feedback.textContent, 6500);
       return;
     }
-    if (!eventTimeRangeIsValid(dayId, eventId, updates)) {
-      if (current) input.value = current[field];
-      toast(&#x27;End time must be after start time.&#x27;);
-      return;
-    }
-    input.value = normalized;
-    saveUndoState();
-    Store.updateEvent(dayId, eventId, updates);
-    renderActiveDay();
-    sessionSave();
+    feedback.hidden = true;
+    start.value = result.updates.startTime; end.value = result.updates.endTime;
+    if (current.startTime === start.value &amp;&amp; current.endTime === end.value) return;
+    saveUndoState(); Store.updateEvent(dayId, eventId, result.updates);
+    renderActiveDay(); sessionSave();
     updateFlightEditorTimeContext(panel, Store.getEvents(dayId).find(event =&gt; event.id === eventId));
     checkTimeConflict(dayId, eventId);
-  });
-  // Also commit on Enter key
-  input.addEventListener(&#x27;keydown&#x27;, (e) =&gt; {
-    if (e.key === &#x27;Enter&#x27;) { e.preventDefault(); input.blur(); }
+    updateAssignmentReview(panel, dayId, eventId);
+  };
+  [start, end].forEach(input =&gt; {
+    input.setAttribute(&#x27;aria-describedby&#x27;, feedback.id);
+    input.addEventListener(&#x27;input&#x27;, () =&gt; { feedback.hidden = true; });
+    input.addEventListener(&#x27;blur&#x27;, event =&gt; {
+      const withinPair = event.relatedTarget === start || event.relatedTarget === end;
+      if (!withinPair || !readEventTimeRange(start, end).error) commit();
+    });
+    input.addEventListener(&#x27;keydown&#x27;, event =&gt; {
+      if (event.key === &#x27;Enter&#x27;) { event.preventDefault(); commit(); }
+      if (event.key === &#x27;Escape&#x27;) {
+        event.preventDefault(); event.stopPropagation();
+        const current = Store.getEvents(dayId).find(item =&gt; item.id === eventId);
+        if (current) { start.value = current.startTime; end.value = current.endTime; feedback.hidden = true; }
+      }
+    });
   });
 }
 
@@ -14712,13 +14893,16 @@ function updateFlightEditorTimeContext(panel, event) {
 function renderBandEventFields(event, readOnly) {
   const disabled = readOnly ? &#x27; disabled&#x27; : &#x27;&#x27;;
   const activities = event.flightActivities || [];
-  let html = &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-emphasis&quot;&#x27; +
-    (event.emphasized ? &#x27; checked&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt; Emphasize this event&lt;/label&gt;&lt;p class=&quot;insp-hint&quot;&gt;Makes a main band an anchor, or highlights a concurrent event. Does not change who attends or where it is listed.&lt;/p&gt;&lt;/div&gt;&#x27;;
+  let html = &#x27;&lt;fieldset class=&quot;event-options&quot;&gt;&lt;legend&gt;Event options&lt;/legend&gt;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-emphasis&quot;&#x27; +
+    (event.emphasized ? &#x27; checked&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt; Emphasize this event&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-break&quot;&#x27; + (event.isBreak ? &#x27; checked&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt; This is a meal or break&lt;/label&gt;&lt;p class=&quot;insp-hint&quot;&gt;Emphasis highlights the event. Meals and breaks skip conflict checks; shared main breaks stay in group handouts.&lt;/p&gt;&lt;/fieldset&gt;&#x27;;
   html += &#x27;&lt;details class=&quot;flight-editor&quot;&#x27; + (activities.length ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;Flight activities&#x27; + (activities.length ? &#x27; (&#x27; + activities.length + &#x27;)&#x27; : &#x27;&#x27;) + &#x27;&lt;/summary&gt;&#x27;;
-  html += &#x27;&lt;p class=&quot;insp-context-note&quot;&gt;Add one activity per flight, or several timed activities for each flight. New activities start with this event’s full time window.&lt;/p&gt;&#x27;;
+  const names = [...new Set([...Store.getGroups().map(group =&gt; group.name), ...Store.getDays().flatMap(day =&gt; day.events.flatMap(item =&gt; (item.flightActivities || []).map(activity =&gt; activity.flight)))].filter(Boolean))];
+  html += &#x27;&lt;datalist id=&quot;flight-name-options&quot;&gt;&#x27; + names.map(name =&gt; &#x27;&lt;option value=&quot;&#x27; + esc(name) + &#x27;&quot;&gt;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/datalist&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-context-note&quot;&gt;Add one activity per flight, or several timed activities. Use a group name or type a flight; this does not create an audience. New activities use the event’s times.&lt;/p&gt;&#x27;;
   activities.forEach((activity, index) =&gt; {
     html += &#x27;&lt;details class=&quot;flight-editor-item&quot; data-flight-index=&quot;&#x27; + index + &#x27;&quot;&#x27; + (index === activities.length - 1 ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;&#x27; + esc(flightEditorSummary(activity, event)) + &#x27;&lt;/summary&gt;&#x27;;
-    const field = (key, label, time) =&gt; &#x27;&lt;label for=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot;&gt;&#x27; + label + &#x27;&lt;/label&gt;&lt;input id=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot; data-flight-field=&quot;&#x27; + key + &#x27;&quot; type=&quot;text&quot; value=&quot;&#x27; + esc(activity[key]) + &#x27;&quot;&#x27; + (time ? &#x27; maxlength=&quot;5&quot;&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt;&#x27;;
+    const field = (key, label, time) =&gt; &#x27;&lt;label for=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot;&gt;&#x27; + label + &#x27;&lt;/label&gt;&lt;input id=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot; data-flight-field=&quot;&#x27; + key + &#x27;&quot; type=&quot;text&quot; value=&quot;&#x27; + esc(activity[key]) + &#x27;&quot;&#x27; + (time ? &#x27; maxlength=&quot;5&quot;&#x27; : &#x27;&#x27;) + (key === &#x27;flight&#x27; ? &#x27; list=&quot;flight-name-options&quot;&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt;&#x27;;
     html += field(&#x27;flight&#x27;, &#x27;Flight&#x27;) + field(&#x27;title&#x27;, &#x27;Activity&#x27;);
     html += &#x27;&lt;div class=&quot;field-row&quot;&gt;&lt;div&gt;&#x27; + field(&#x27;startTime&#x27;, &#x27;Start&#x27;, true) + &#x27;&lt;/div&gt;&lt;div&gt;&#x27; + field(&#x27;endTime&#x27;, &#x27;End&#x27;, true) + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
     html += &#x27;&lt;button class=&quot;btn flight-use-event-time&quot; type=&quot;button&quot; data-flight-full-time=&quot;&#x27; + index + &#x27;&quot;&#x27; + disabled + &#x27;&gt;Use event time (&#x27; + esc(event.startTime + &#x27;–&#x27; + event.endTime) + &#x27;)&lt;/button&gt;&#x27;;
@@ -14741,7 +14925,7 @@ function wireBandEventFields(panel, dayId, eventId) {
   };
   panel.querySelector(&#x27;#insp-evt-attendees&#x27;)?.addEventListener(&#x27;input&#x27;, preview);
   panel.querySelector(&#x27;#insp-attendee-format&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; {
-    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview();
+    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview(); updateAssignmentReview(panel, dayId, eventId);
   });
   panel.querySelector(&#x27;#insp-evt-emphasis&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; update({ emphasized: event.target.checked }));
   panel.querySelector(&#x27;#insp-add-flight&#x27;)?.addEventListener(&#x27;click&#x27;, () =&gt; {

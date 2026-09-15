@@ -89,7 +89,7 @@ document.addEventListener('click', e => {
   }
 
   // Click on note -> select in inspector
-  const noteEl = e.target.closest('.notes-list li[data-note-id], .band-sheet [data-note-id]');
+  const noteEl = e.target.closest('.notes-list li[data-note-id], .band-sheet [data-note-id], .alternate-sheet [data-note-id]');
   if (noteEl && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
     if (dayId) selectEntity('note', dayId, noteEl.getAttribute('data-note-id'));
@@ -106,7 +106,7 @@ document.addEventListener('click', e => {
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
   if (e.defaultPrevented) return;
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"], .bands-screen [role="button"], .band-sheet article[data-event-id]')) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"], .bands-screen [role="button"], .band-sheet article[data-event-id], .alternate-sheet [role="button"], .alternate-sheet article[data-event-id]')) {
     e.preventDefault();
     e.target.click();
     return;

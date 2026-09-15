@@ -602,6 +602,7 @@ function syncEditorChrome() {
     'addDayBtn',
     'daySheetBtn',
     'customizeBtn',
+    'viewSelect',
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = !editable;
@@ -609,6 +610,7 @@ function syncEditorChrome() {
 
   const titleInput = document.getElementById('tbTitle');
   if (titleInput) titleInput.disabled = !editable;
+  if (typeof syncAuthoringControls === 'function') syncAuthoringControls();
 }
 
 function hasLocalDraftSession() {
@@ -623,6 +625,7 @@ function updateEditorAccessBar(status) {
 
   let text = '';
   let actions = '';
+  let manualButtonLabel;
   if (!_currentFileName) {
     if (!hasLocalDraftSession()) {
       bar.hidden = true;
@@ -634,12 +637,17 @@ function updateEditorAccessBar(status) {
       + '<span class="editor-access-message">'
       + (hasWorkbookTarget
           ? 'Autosaves to <strong>' + esc(workbookFileName || '.schedule file') + '</strong>.'
+          : _dirty && (workbookFileName || _manualDraftExported)
+          ? 'Changes need a new download. Keep the newest <strong>.schedule</strong> file.'
           : _manualDraftExported
-          ? 'Saved as a <strong>.schedule</strong> file. Save again after more edits.'
+          ? 'Workbook downloaded. Keep the newest <strong>.schedule</strong> file for handoff.'
+          : workbookFileName
+          ? 'Opened <strong>' + esc(workbookFileName) + '</strong>. After editing, download a new .schedule copy.'
           : 'Save this workbook as a <strong>.schedule</strong> file before closing.')
       + '</span>';
+    manualButtonLabel = hasWorkbookTarget ? 'Save Now' : (_manualDraftExported || workbookFileName ? 'Download .schedule' : 'Save .schedule');
     actions = '<button class="btn btn-primary" id="editorManualExportBtn">'
-      + (hasWorkbookTarget ? 'Save Now' : (_manualDraftExported ? 'Save Again' : 'Save .schedule'))
+      + manualButtonLabel
       + '</button>';
     bar.className = 'editor-access-bar editor-access-local';
   } else if (status.state === 'mine' && status.lock) {
@@ -667,16 +675,17 @@ function updateEditorAccessBar(status) {
 
   textEl.textContent = '';
   textEl.innerHTML = text;
-  actionsEl.innerHTML = actions;
+  const existingManual = actionsEl.querySelector('#editorManualExportBtn');
+  if (existingManual && manualButtonLabel) existingManual.textContent = manualButtonLabel;
+  else actionsEl.innerHTML = actions;
   bar.hidden = false;
 
   const manualExportBtn = document.getElementById('editorManualExportBtn');
   if (manualExportBtn) {
     manualExportBtn.onclick = async () => {
-      const saved = typeof saveScheduleWorkbookFile === 'function'
-        ? await saveScheduleWorkbookFile()
-        : await saveDataFile();
-      if (saved) notifyManualDraftExport();
+      if (typeof saveScheduleWorkbookFile === 'function') await saveScheduleWorkbookFile();
+      else await saveDataFile();
+      // The save operation owns its status, including edits made during a write.
     };
     return;
   }
@@ -1037,6 +1046,7 @@ function markDirty() {
   if (!isCurrentScheduleEditable()) return;
   _dirty = true;
   updateSaveIndicator('dirty');
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
   clearTimeout(_autosaveTimer);
   _autosaveTimer = setTimeout(() => autoSave(), AUTOSAVE_DELAY);
 }
@@ -1213,6 +1223,13 @@ function markScheduleWorkbookSaved() {
   if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
 }
 
+function markScheduleWorkbookOpened() {
+  _dirty = false;
+  _manualDraftExported = false;
+  updateSaveIndicator('opened');
+  if (hasLocalDraftSession()) updateEditorAccessBar({ state: 'available', lock: null });
+}
+
 // Download fallback (Safari/Firefox, or a declined picker): a copy went to
 // Downloads, the file the user opened is untouched. The work is on disk, so
 // the close warning stands down — but the label must not say "Saved".
@@ -1249,6 +1266,10 @@ function updateSaveIndicator(state) {
     el.textContent = 'Downloaded';
     el.title = 'This browser can’t save back to the opened file. A copy went to your Downloads folder — keep the newest one.';
     el.classList.add('save-downloaded');
+  } else if (state === 'opened') {
+    el.textContent = 'Opened';
+    el.title = 'No changes yet. After editing, download a new workbook copy; the opened file is unchanged.';
+    el.classList.add('save-opened');
   } else {
     el.textContent = 'Saved';
     el.classList.add('save-saved');

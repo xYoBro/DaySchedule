@@ -96,10 +96,10 @@ for (const key of ['forest', 'teal', 'slate', 'plum', 'burgundy', 'copper']) {
 const SKIN_NAMES = ['bands', 'grid', 'cards', 'phases'];
 
 const SKIN_LABELS = {
-  bands: { name: 'Bands', desc: 'Main track + concurrent' },
-  grid: { name: 'Grid', desc: 'Time \u00d7 groups' },
-  cards: { name: 'Cards', desc: 'Group detail' },
-  phases: { name: 'Phases', desc: 'Field exercises' },
+  bands: { name: 'Bands', desc: 'Main schedule + assignments' },
+  grid: { name: 'Grid', desc: 'Time × groups' },
+  cards: { name: 'Cards', desc: 'Group agendas' },
+  phases: { name: 'Phases', desc: 'Phase sequence' },
 };
 
 // File-supplied theme values are untrusted (they bypass event/group

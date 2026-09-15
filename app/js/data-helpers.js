@@ -167,10 +167,13 @@ function buildPhaseGroups(events, groups) {
   return phases.concat(independent).sort((a, b) => compareBandOrder(a.sortEvent, b.sortEvent));
 }
 
-function getAudienceHandoutEvents(events, groups, audienceId) {
+function getAudienceHandoutEvents(events, groups, audienceId, options) {
   if (!audienceId) return (events || []).slice();
+  const includeNamed = options && options.includeNamed;
+  const groupMap = getGroupMap(groups);
   return (events || []).filter(evt => evt.groupId === audienceId || isSharedTrackEvent(evt, groups)
-    || (!evt.groupId && isEventEffectiveMain(evt, groups)));
+    || (!evt.groupId && isEventEffectiveMain(evt, groups))
+    || (includeNamed && !groupMap[evt.groupId] && evt.attendees?.trim()));
 }
 
 // Advisory only: a shared room or overlapping audience can be intentional.

@@ -1,0 +1,502 @@
+{
+  "fileType": "dayschedule",
+  "schemaVersion": 2,
+  "workbookId": "approved-band-examples",
+  "activeScheduleId": "groups",
+  "schedules": [
+    {
+      "id": "groups",
+      "name": "Multi-group training exercise",
+      "current": {
+        "title": "Multi-group Training Exercise",
+        "groups": [
+          {
+            "id": "all",
+            "name": "All personnel",
+            "scope": "main",
+            "color": "#173f73"
+          },
+          {
+            "id": "alpha",
+            "name": "Alpha Flight",
+            "scope": "limited",
+            "color": "#476d89"
+          },
+          {
+            "id": "bravo",
+            "name": "Bravo Flight",
+            "scope": "limited",
+            "color": "#61754b"
+          },
+          {
+            "id": "charlie",
+            "name": "Charlie Flight",
+            "scope": "limited",
+            "color": "#85603f"
+          },
+          {
+            "id": "support",
+            "name": "Support team",
+            "scope": "limited",
+            "color": "#765c80"
+          }
+        ],
+        "days": [
+          {
+            "id": "sat",
+            "date": "2026-09-12",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "arrival",
+                "title": "Orientation",
+                "startTime": "0800",
+                "endTime": "0830",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Attendance, objectives and safety brief.",
+                "location": "Briefing room",
+                "poc": "",
+                "emphasized": true
+              },
+              {
+                "id": "labs",
+                "title": "Skills labs",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Complete the assigned station before lunch.",
+                "location": "",
+                "poc": ""
+              },
+              {
+                "id": "lunch",
+                "title": "Lunch",
+                "startTime": "1030",
+                "endTime": "1100",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "emphasized": true,
+                "isBreak": true
+              },
+              {
+                "id": "exercise",
+                "title": "Practical exercise",
+                "startTime": "1100",
+                "endTime": "1400",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Apply the morning skills; bring questions to the debrief.",
+                "location": "",
+                "poc": ""
+              },
+              {
+                "id": "debrief",
+                "title": "Debrief & release",
+                "startTime": "1400",
+                "endTime": "1430",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "",
+                "location": "Briefing room",
+                "poc": "MSgt Doe",
+                "emphasized": true
+              },
+              {
+                "id": "alpha-lab",
+                "title": "Radio practice",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "alpha",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Pair up; test each radio.",
+                "location": "Room A",
+                "poc": "SSgt Smith"
+              },
+              {
+                "id": "alpha-exercise",
+                "title": "Communications drill",
+                "startTime": "1100",
+                "endTime": "1330",
+                "groupId": "alpha",
+                "placement": "concurrent",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "description": "Bring assigned radios.",
+                "location": "Training area A",
+                "poc": ""
+              },
+              {
+                "id": "bravo-lab",
+                "title": "Route planning",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "bravo",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Prepare the route card.",
+                "location": "Room B",
+                "poc": "TSgt Chan"
+              },
+              {
+                "id": "bravo-exercise",
+                "title": "Navigation exercise",
+                "startTime": "1100",
+                "endTime": "1330",
+                "groupId": "bravo",
+                "placement": "concurrent",
+                "attendees": "Chen; Patel",
+                "attendeeFormat": "suggested",
+                "description": "Bring the route card.",
+                "location": "Training area B",
+                "poc": ""
+              },
+              {
+                "id": "charlie-lab",
+                "title": "Equipment checks",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "charlie",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Record equipment faults.",
+                "location": "Workshop",
+                "poc": "MSgt Lee"
+              },
+              {
+                "id": "charlie-exercise",
+                "title": "Readiness review",
+                "startTime": "1100",
+                "endTime": "1330",
+                "groupId": "charlie",
+                "placement": "concurrent",
+                "attendees": "Reed; Ellis",
+                "attendeeFormat": "suggested",
+                "description": "Report readiness to the lead.",
+                "location": "Workshop",
+                "poc": ""
+              },
+              {
+                "id": "support-lab",
+                "title": "Set up stations",
+                "startTime": "0845",
+                "endTime": "1030",
+                "groupId": "support",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Check water and supplies.",
+                "location": "Training area",
+                "poc": "SSgt Bell"
+              },
+              {
+                "id": "support-exercise",
+                "title": "Exercise support",
+                "startTime": "1130",
+                "endTime": "1400",
+                "groupId": "support",
+                "placement": "concurrent",
+                "attendees": "Winter",
+                "attendeeFormat": "suggested",
+                "description": "Collect feedback sheets.",
+                "location": "Control point",
+                "poc": ""
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          },
+          {
+            "id": "sun",
+            "date": "2026-09-13",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "arrival",
+                "title": "Orientation",
+                "startTime": "0800",
+                "endTime": "0830",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Attendance, objectives and safety brief.",
+                "location": "Briefing room",
+                "poc": "",
+                "emphasized": true
+              },
+              {
+                "id": "labs",
+                "title": "Skills labs",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Complete the assigned station before lunch.",
+                "location": "",
+                "poc": ""
+              },
+              {
+                "id": "lunch",
+                "title": "Lunch",
+                "startTime": "1030",
+                "endTime": "1100",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "emphasized": true,
+                "isBreak": true
+              },
+              {
+                "id": "exercise",
+                "title": "Practical exercise",
+                "startTime": "1100",
+                "endTime": "1400",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Apply the morning skills; bring questions to the debrief.",
+                "location": "",
+                "poc": ""
+              },
+              {
+                "id": "debrief",
+                "title": "Debrief & release",
+                "startTime": "1400",
+                "endTime": "1430",
+                "groupId": "all",
+                "placement": "main",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "",
+                "location": "Briefing room",
+                "poc": "MSgt Doe",
+                "emphasized": true
+              },
+              {
+                "id": "alpha-lab",
+                "title": "Radio practice",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "alpha",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Pair up; test each radio.",
+                "location": "Room A",
+                "poc": "SSgt Smith"
+              },
+              {
+                "id": "alpha-exercise",
+                "title": "Communications drill",
+                "startTime": "1100",
+                "endTime": "1330",
+                "groupId": "alpha",
+                "placement": "concurrent",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "description": "Bring assigned radios.",
+                "location": "Training area A",
+                "poc": ""
+              },
+              {
+                "id": "bravo-lab",
+                "title": "Route planning",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "bravo",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Prepare the route card.",
+                "location": "Room B",
+                "poc": "TSgt Chan"
+              },
+              {
+                "id": "bravo-exercise",
+                "title": "Navigation exercise",
+                "startTime": "1100",
+                "endTime": "1330",
+                "groupId": "bravo",
+                "placement": "concurrent",
+                "attendees": "Chen; Patel",
+                "attendeeFormat": "suggested",
+                "description": "Bring the route card.",
+                "location": "Training area B",
+                "poc": ""
+              },
+              {
+                "id": "charlie-lab",
+                "title": "Equipment checks",
+                "startTime": "0830",
+                "endTime": "1030",
+                "groupId": "charlie",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Record equipment faults.",
+                "location": "Workshop",
+                "poc": "MSgt Lee"
+              },
+              {
+                "id": "charlie-exercise",
+                "title": "Readiness review",
+                "startTime": "1100",
+                "endTime": "1330",
+                "groupId": "charlie",
+                "placement": "concurrent",
+                "attendees": "Reed; Ellis",
+                "attendeeFormat": "suggested",
+                "description": "Report readiness to the lead.",
+                "location": "Workshop",
+                "poc": ""
+              },
+              {
+                "id": "support-lab",
+                "title": "Set up stations",
+                "startTime": "0845",
+                "endTime": "1030",
+                "groupId": "support",
+                "placement": "concurrent",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "description": "Check water and supplies.",
+                "location": "Training area",
+                "poc": "SSgt Bell"
+              },
+              {
+                "id": "support-exercise",
+                "title": "Exercise support",
+                "startTime": "1130",
+                "endTime": "1400",
+                "groupId": "support",
+                "placement": "concurrent",
+                "attendees": "Winter",
+                "attendeeFormat": "suggested",
+                "description": "Collect feedback sheets.",
+                "location": "Control point",
+                "poc": ""
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          }
+        ],
+        "activeDay": "sat",
+        "logo": null,
+        "footer": {
+          "contact": "Shared activities and independent group assignments",
+          "poc": "MSgt Robin Bennett",
+          "updated": ""
+        },
+        "theme": {
+          "skin": "bands",
+          "palette": "airforce",
+          "bands": {
+            "showLogo": true,
+            "notesHeight": 90
+          }
+        }
+      },
+      "theme": {
+        "skin": "bands",
+        "palette": "airforce",
+        "bands": {
+          "showLogo": true,
+          "notesHeight": 90
+        }
+      },
+      "versions": [],
+      "activity": []
+    }
+  ]
+}
