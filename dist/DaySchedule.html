@@ -4686,6 +4686,9 @@ textarea:focus-visible,
 }
 @page band-paper{size:Letter portrait;margin:0}
 @media print{
+ /* Give the document the same page context as its Bands sheets. An empty
+    editor wrapper before the first named page otherwise creates a blank page. */
+ body.printing-schedule:has(#printContainer .band-page){page:band-paper}
  .page.band-page{page:band-paper;width:612pt!important;min-width:612pt!important;height:792pt!important;min-height:792pt!important;max-height:792pt!important;margin:0!important;padding:0!important;zoom:1!important;break-after:page;overflow:visible!important}
  .band-page:last-child{break-after:auto}
  .band-sheet{width:612pt!important;height:792pt!important;margin:0!important;box-shadow:none;break-after:auto;print-color-adjust:exact;-webkit-print-color-adjust:exact}
@@ -4727,7 +4730,7 @@ textarea:focus-visible,
 // Stamped with the build date and content hash by tools/build-single-html.py; 'dev' when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = '2026-09-14+424ea8544b5c';
+const APP_VERSION = '2026-09-14+fcf78defd098';
 
 const DEFAULT_GROUPS = [
   { id: 'grp_all',     name: 'All Personnel', scope: 'main',    color: '#2558a8' },
@@ -9951,7 +9954,11 @@ const BandLayout = (() => {
       return geometry(sheet).fits;
     };
     const attempt = count => {
-      const widths = count === 2 ? [[1, 1], [.44, .56], [.4, .6]] : [[1, 1, 1]];
+      // Long intact rosters may need either column to be wider. Exhaust these
+      // two-column allocations before introducing a third reading column.
+      const widths = count === 2
+        ? [[1, 1], [.44, .56], [.4, .6], [.36, .64], [.56, .44], [.6, .4], [.64, .36]]
+        : [[1, 1, 1]];
       const fits = () => widths.some(ratio => place(count, ratio));
       for (const roster of [12, 11.5, 11, 10.5, 10, policy.roster]) {
         sheet.style.setProperty('--roster-name-size', roster + 'pt');

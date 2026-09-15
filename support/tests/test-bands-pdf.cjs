@@ -40,7 +40,9 @@ async function main(){
       state.sheets.forEach(sheet=>{assert.equal(sheet.fit,'true');assert.equal(new Set(sheet.ids).size,sheet.ids.length);assert(sheet.columns<=(sample==='stress'?3:2));assert(sheet.details.every(size=>size>=8.99));});
       const file=path.join(output,sample+'.pdf');
       await page.pdf({path:file,preferCSSPageSize:true,printBackground:true,displayHeaderFooter:false});
-      const text=compact(execFileSync('pdftotext',[file,'-'],{encoding:'utf8'}));
+      // Preserve content-stream order; geometric column reconstruction can
+      // interleave a wrapped title with the adjacent column's text.
+      const text=compact(execFileSync('pdftotext',['-raw',file,'-'],{encoding:'utf8'}));
       const info=execFileSync('pdfinfo',[file],{encoding:'utf8'});
       assert.equal(Number(info.match(/^Pages:\s+(\d+)/m)[1]),2);assert(/612 x 792/.test(info));
       fixture.schedules.find(item=>item.id===sample).current.days.forEach(day=>day.events.forEach(event=>{

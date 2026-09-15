@@ -211,7 +211,11 @@ const BandLayout = (() => {
       return geometry(sheet).fits;
     };
     const attempt = count => {
-      const widths = count === 2 ? [[1, 1], [.44, .56], [.4, .6]] : [[1, 1, 1]];
+      // Long intact rosters may need either column to be wider. Exhaust these
+      // two-column allocations before introducing a third reading column.
+      const widths = count === 2
+        ? [[1, 1], [.44, .56], [.4, .6], [.36, .64], [.56, .44], [.6, .4], [.64, .36]]
+        : [[1, 1, 1]];
       const fits = () => widths.some(ratio => place(count, ratio));
       for (const roster of [12, 11.5, 11, 10.5, 10, policy.roster]) {
         sheet.style.setProperty('--roster-name-size', roster + 'pt');

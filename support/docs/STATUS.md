@@ -20,6 +20,8 @@ DaySchedule builds and prints day schedules without an account or application se
 
 ## Verification
 
+The latest Bands stress pass used build `2026-09-14+fcf78defd098`: 400 random day renders, 192 real-control UI sequences, 644 harness checks across Chromium/WebKit, twelve PDF pages and nine packaging checks passed. It corrected a premature third column and a blank first print page. Firefox automation could not start. See [Bands and editor stress test](BANDS-STRESS-TEST.md) for reproducible seeds, evidence and limits.
+
 The repository provides three browser harnesses: synchronous unit tests, asynchronous storage integration tests, and real app-shell/render/print tests. `tools/test-builds.py` verifies packaging guards and output identity in temporary copies. `tools/test-embed.cjs` checks Chromium, Firefox, and WebKit host isolation, dark mode, remounting, CSP, fallback downloads, actual Chromium cross-origin picker denial, and `file://` startup, also in temporary copies. `support/tests/test-browser.cjs` runs the harnesses and release user flows through its own local server and isolated browser contexts; evidence goes to the ignored `output/playwright/release/` directory. See [README](../../README.md) for commands, the [reliability release notes](RELIABILITY-RELEASE.md) for final counts, and [tasks/todo.md](../../tasks/todo.md) for the current verification record.
 
 Native OS file-picker and print dialogs, actual Safari and Edge releases, tenant CSP/authentication rules, and a live SharePoint rollout require deployment checks. Browser-engine automation and file-handle mocks do not establish those results.

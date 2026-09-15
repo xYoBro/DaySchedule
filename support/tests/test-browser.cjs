@@ -85,7 +85,7 @@ async function realApp(browser, origin, name) {
   await page.locator('#settings-done').click();
   await page.locator('#overflowBtn').click();
   await page.locator('#printBtn').click();
-  assert.equal(await page.locator('#printMode').inputValue(), 'readable');
+  assert.equal(await page.locator('#printMode').inputValue(), 'fit');
   assert(await page.locator('#printReviewSummary').textContent());
   await page.screenshot({ path: path.join(output, name + '-print-review.png'), fullPage: true });
   await page.locator('#printReviewCancel').click();

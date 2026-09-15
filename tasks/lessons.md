@@ -133,3 +133,6 @@
 - Run browser harnesses with isolated origins/contexts: shared durable recovery can contaminate another test. A clean-origin persistence run passed after one same-origin recovery isolation failure.
 - New persisted fields require an older-writer safeguard. Workbook format 2 prevents the old normalizer from silently deleting nested flight activities; keep format-1 import support and test the old parser's rejection.
 - Trace new nested data through every existing operation, including version snapshots and duplicate/contact clearing. Preserve custom color controls when replacing a renderer.
+- Test complete app-generated PDFs as well as frozen paper specimens: an empty editor wrapper before a named page can add a blank first sheet even when the schedule itself fits.
+- Before shrinking dense rosters or adding a third column, measure alternative widths in both directions. A narrow allocation search can reject a valid two-column page.
+- PDF geometric text reconstruction can interleave adjacent columns. Use content-stream text for fidelity assertions, and retain independent visual and physical page checks.

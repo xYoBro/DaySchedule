@@ -1,5 +1,34 @@
 # Reliability release
 
+## Seeded Bands and editor stress testing — 2026-09-14
+
+- [x] Establish the current build/browser baseline on merged main.
+- [x] Add reproducible randomized schedules and independent assertions for
+  overlap references, content/roster preservation, fit boundaries and print.
+- [x] Exercise real editor controls with seeded add/edit/delete/undo sequences,
+  day switches, settings, narrow screens and workbook reopen cycles.
+- [x] Replay and fix any failures; rerun affected seeds and existing suites.
+- [x] Inspect representative actual PDFs and screenshots; record sample sizes,
+  findings, limits and reproducible commands in a stress-test report.
+
+Scope: synthetic data in isolated browser contexts. Tests live under
+support/tests; evidence under ignored output/playwright. No operational
+workbooks are used. Randomized testing samples behavior; it cannot prove every
+possible input fits one page. Explicit overflow is a valid outcome.
+
+Baseline finding: Chromium 147 and WebKit both place the forty-name Sunday in
+three columns. At 40:60 and minimum type it misses the reserved notes clearance
+by about 3 pt. A padding change did not address the cause and was reverted.
+Replan: measure alternative column allocations before changing typography.
+Firefox's installed build cannot launch (framebuffer/sandbox startup failure).
+
+Completed: expanded the measured two-column width search and removed a blank
+first PDF sheet caused by the named-page context. Chromium and WebKit passed
+400 random day renders, 200 workbook round trips, 192 UI action sequences,
+644 existing harness checks and the normal app journeys. Twelve actual PDF
+pages and nine packaging checks passed. Both distributions rebuilt as
+2026-09-14+fcf78defd098. Report: support/docs/BANDS-STRESS-TEST.md.
+
 ## Integrate the approved banded prototype — 2026-09-14
 
 - [x] Preserve the current app shell; port the approved paper renderer/fitter

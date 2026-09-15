@@ -134,7 +134,16 @@ node support/tests/test-print-pdf.cjs
 node support/tests/test-bands-pdf.cjs
 ```
 
-The general PDF suite checks 48 synthetic event descriptions in Grid, Cards and Phases, both print modes, and Letter/A4 output. The dedicated Bands suite covers eight Letter pages: main-only, 15 surnames, 40 surnames with timed flights, and fifteen concurrent events, plus explicit overflow blocking. These optional browser scripts need a separate release run; see the [current Bands verification record](support/docs/BANDS-PRINT-RELEASE.md).
+The general PDF suite checks 48 synthetic event descriptions in Grid, Cards and Phases, both print modes, and Letter/A4 output. The dedicated Bands suite covers eight Letter pages: main-only, 15 surnames, 40 surnames with timed flights, and fifteen concurrent events, plus explicit overflow blocking. See the [Bands stress-test record](support/docs/BANDS-STRESS-TEST.md) for tested engines and remaining release checks.
+
+Run reproducible randomized Bands layouts and real editor actions with:
+
+```bash
+node support/tests/test-bands-random.cjs
+python3 support/tests/verify-bands-random.py
+```
+
+The default is 100 two-day synthetic workbooks in Chromium and WebKit, plus UI add/edit/delete/Undo/Redo and download/reopen sequences. `DAYSCHEDULE_SEEDS` and `DAYSCHEDULE_START_SEED` control replay; `--layout-only` and `--ui-only` select a portion. The PDF verifier requires `pdfplumber`. Failing seeds, screenshots and PDF evidence stay under ignored `output/playwright/`.
 
 For an interactive review, open `support/tests/bands-integration.html`. Its synthetic workbook loads through the real app parser. **Capture print proof** records the actual print fitter's choices. `freeze-band-proof.cjs` turns a saved capture into script-free HTML using the production renderer and checks that its text matches the browser. `verify-band-proof.py` checks emitted PDFs with pdfplumber and pypdf. These developer tools are not bundled into the app.
 
