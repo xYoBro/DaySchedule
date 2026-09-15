@@ -40,11 +40,15 @@ describe('UI Harness — print', () => {
     resetUiHarnessState();
     const seeded = seedUiSchedule({ skin: 'bands' });
     renderDay(seeded.day1.id);
+    const event = Store.getEvents(seeded.day1.id)[0];
+    selectEntity('event', seeded.day1.id, event.id);
     document.getElementById('scheduleContainer').innerHTML = '';
 
     window.dispatchEvent(new Event('afterprint'));
 
     assert(document.getElementById('scheduleContainer').textContent.includes('Formation'));
+    assert(document.querySelector('#scheduleContainer .band-sheet'), 'return from print must restore the connected screen layout');
+    assert(document.querySelector('#scheduleContainer [data-event-id="' + event.id + '"].selected'), 'return from print must preserve the current selection');
   });
 
   it('applyPrintScalingToPage falls back to zoom when content overflows badly', () => {
@@ -66,9 +70,9 @@ describe('UI Harness — print', () => {
     }
   });
 
-  it('screen rerender compresses the preview page but never zooms it', async () => {
+  it('legacy screen layouts compress the preview page but never zoom it', async () => {
     resetUiHarnessState();
-    const seeded = seedUiSchedule({ skin: 'bands', dayCount: 2 });
+    const seeded = seedUiSchedule({ skin: 'phases', dayCount: 2 });
     let printCalls = 0;
     const originalPrint = window.print;
     window.print = () => { printCalls += 1; };
@@ -85,14 +89,39 @@ describe('UI Harness — print', () => {
       assert(previewPage.style.getPropertyValue('--notes-fs') !== '', 'compression vars should target the preview page');
       // …but the screen path must never hit the zoom fallback: the page
       // stretches to the content height instead of shrinking content below
-      // readability (bands positions events absolutely, so the page cannot
-      // grow on its own).
+      // readability.
       assert.equal(previewPage.dataset.printScaled, undefined);
       assert.equal(previewPage.style.zoom, '');
       assert.equal(previewPage.style.minHeight, '2000px', 'screen page should stretch to the measured content height');
     } finally {
       window.print = originalPrint;
     }
+  });
+
+  it('dense Bands screen flow preserves original main structure and clears previous layout compression', () => {
+    resetUiHarnessState();
+    loadSampleData();
+    const dayId = Store.getDays()[0].id;
+    setCurrentScheduleFileData({
+      name: Store.getTitle(), current: Store.getPersistedState(), versions: [],
+      theme: { skin: 'bands', palette: 'classic' },
+    });
+    const previewPage = document.getElementById('previewPage');
+    previewPage.style.setProperty('--notes-fs', '7px');
+    previewPage.style.zoom = '0.5';
+    previewPage.style.minHeight = '2000px';
+    previewPage.dataset.printScaled = '1';
+    renderDay(dayId);
+
+    assert.equal(previewPage.style.zoom, '');
+    assert.equal(previewPage.style.minHeight, '');
+    assert.equal(previewPage.style.getPropertyValue('--notes-fs'), '');
+    assert.equal(previewPage.dataset.printScaled, undefined);
+    assert.equal(previewPage.querySelectorAll('[data-event-id]').length, Store.getEvents(dayId).length);
+    assert(previewPage.querySelector('.main-event > .time'), 'retain the original main-band time gutter');
+    assert(previewPage.querySelector('.main-event h3'), 'retain the original title hierarchy');
+    assert(previewPage.querySelector('.main-event .audience'), 'retain the original audience badges');
+    assert(!previewPage.querySelector('[data-print-paginated]'), 'physical sheets must remain print-only');
   });
 
   it('removePrintScaling clears CSS vars and zoom state', () => {
@@ -175,6 +204,26 @@ describe('UI Harness — print review and handouts', () => {
     assert(document.getElementById('printReviewSummary').textContent.includes('0 day(s), 0 event(s)'));
     closeModal('printReviewModal');
   });
+
+  it('warns about small Fit text while leaving the one-page option available', () => {
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'cards' });
+    const originalMeasure = window.measurePrintPlan;
+    window.measurePrintPlan = () => [{ estimatedPages: 1, smallestTextPt: 10.5 }];
+    try {
+      openPrintReview();
+      const mode = document.getElementById('printMode');
+      mode.value = 'fit';
+      mode.dispatchEvent(new Event('change'));
+      assert.equal(mode.value, 'fit');
+      assert(document.getElementById('printReviewSummary').textContent.includes('10.5 pt'));
+      assert(document.getElementById('printReviewSummary').textContent.includes('below 12 pt'));
+      assert.equal(document.getElementById('printReviewConfirm').disabled, false);
+    } finally {
+      window.measurePrintPlan = originalMeasure;
+      closeModal('printReviewModal');
+    }
+  });
 });
 
 describe('UI Harness — print geometry', () => {
@@ -190,7 +239,7 @@ describe('UI Harness — print geometry', () => {
         stylesheet.onerror = () => reject(new Error('Could not load print stylesheet'));
         document.head.appendChild(stylesheet);
       });
-      SKIN_NAMES.forEach(skin => {
+      ['grid', 'cards', 'phases'].forEach(skin => {
         resetUiHarnessState();
         seedUiSchedule({ skin, longConcurrentAttendees: true });
         const metrics = measurePrintPlan({ mode: 'readable' });
@@ -203,6 +252,36 @@ describe('UI Harness — print geometry', () => {
       stylesheet.remove();
     }
   });
+
+  it('measures the same bounded Bands pages and fit decisions as native preparation', async () => {
+    window.dispatchEvent(new Event('afterprint'));
+    resetUiHarnessState();
+    const sample = structuredClone(APPROVED_BAND_EXAMPLES);
+    sample.activeScheduleId = 'forty';
+    loadParsedScheduleData(parseScheduleWorkbookContent(JSON.stringify(sample)));
+    hideLibrary();
+    const metrics = measurePrintPlan({});
+    try {
+      window.dispatchEvent(new Event('beforeprint'));
+      const container = document.getElementById('printContainer');
+      const pages = Array.from(container.querySelectorAll('.print-page'));
+      assert.equal(pages.length, 2);
+      assert.deepEqual(metrics.map(page => page.estimatedPages), [1, 1]);
+      assert(metrics.every(page => page.fits && page.scale === 1));
+      pages.forEach(page => {
+        const sheet = page.querySelector('.band-sheet');
+        assert.equal(sheet.dataset.fit, 'true');
+        assert(Number(sheet.dataset.columns) <= 2);
+        assert(!page.style.zoom);
+        const fields = sheet.querySelectorAll('.description,.event-meta,.detail-field,.flight-activity,.flight-poc,.reminder');
+        fields.forEach(field => assert(parseFloat(getComputedStyle(field).fontSize) * .75 >= 8.99, 'event detail minimum'));
+        sheet.querySelectorAll('.large-event .person-label strong').forEach(field => assert(parseFloat(getComputedStyle(field).fontSize) * .75 >= 9.49, 'roster minimum'));
+        sheet.querySelectorAll('.small-event .person-label strong').forEach(field => assert(parseFloat(getComputedStyle(field).fontSize) * .75 >= 10.49, 'small-event name minimum'));
+      });
+      assert.equal(document.querySelector('.print-measurement'), null);
+    } finally { window.dispatchEvent(new Event('afterprint')); }
+  });
+
 });
 
 describe('UI Harness — print cleanup', () => {
@@ -223,6 +302,185 @@ describe('UI Harness — print cleanup', () => {
       assert.equal(document.title, originalTitle);
       assert(document.getElementById('toast').textContent.includes('Couldn’t open the print dialog'));
     } finally {
+      window.print = originalPrint;
+      window.dispatchEvent(new Event('afterprint'));
+    }
+  });
+});
+
+describe('UI Harness — native print lifecycle', () => {
+  SKIN_NAMES.forEach(skin => {
+    it('prepares current full readable ' + skin + ' output for browser File → Print', () => {
+      window.dispatchEvent(new Event('afterprint'));
+      resetUiHarnessState();
+      const seeded = seedUiSchedule({ skin, dayCount: 2 });
+      renderDay(seeded.day1.id);
+      const preview = document.getElementById('scheduleContainer').innerHTML;
+      Store.updateEvent(seeded.day1.id, seeded.day1.events[0].id, {
+        title: 'Updated formation', description: 'Newest instructions for the printed handout.',
+      });
+      const before = JSON.stringify(Store.getPersistedState());
+      const originalTitle = document.title;
+      try {
+        window.dispatchEvent(new Event('beforeprint'));
+        const container = document.getElementById('printContainer');
+        assert(container.textContent.includes('Updated formation'));
+        assert(container.textContent.includes('Newest instructions for the printed handout.'));
+        assert(container.textContent.includes('Day 2 Formation'));
+        assert(container.textContent.includes('Weapons Qualification'));
+        assert(container.textContent.includes('Aircraft Launch Sim'));
+        assert(container.querySelector((skin === 'bands' ? '.print-fit' : '.print-readable') + '.skin-' + skin));
+        if (skin !== 'bands') assert.equal(container.querySelector('.print-fit'), null);
+        assert.equal(new Set(Array.from(container.querySelectorAll('.print-page')).map(page => page.dataset.printDay)).size, 2);
+        assert.equal(document.getElementById('scheduleContainer').innerHTML, preview, 'native prep must not rewrite the editor');
+        assert.equal(JSON.stringify(Store.getPersistedState()), before);
+        assert.equal(Store.getActiveDay(), seeded.day1.id);
+        assert(document.title.includes('Everyone') && document.title.includes('Full details'));
+      } finally {
+        window.dispatchEvent(new Event('afterprint'));
+      }
+      assert.equal(document.getElementById('printContainer').innerHTML, '');
+      assert.equal(document.body.classList.contains('printing-schedule'), false);
+      assert.equal(document.title, originalTitle);
+      assert(document.getElementById('scheduleContainer').textContent.includes('Updated formation'));
+    });
+  });
+
+  it('retains explicit review selections and Fit for every layout, then clears them for native printing', async () => {
+    const originalPrint = window.print;
+    window.print = () => window.dispatchEvent(new Event('beforeprint'));
+    try {
+      for (const skin of SKIN_NAMES) {
+        window.dispatchEvent(new Event('afterprint'));
+        resetUiHarnessState();
+        const seeded = seedUiSchedule({ skin, dayCount: 2 });
+        await printSchedule({ dayIds: [seeded.day1.id], audienceId: 'grp_chiefs', detail: 'overview', mode: 'fit' });
+        const container = document.getElementById('printContainer');
+        assert.equal(container.querySelectorAll('.print-page').length, 1);
+        assert(container.querySelector('.skin-' + skin + '.print-fit'));
+        assert(container.textContent.includes('Audience: Flight Chiefs'));
+        assert(container.textContent.includes('Weapons Qualification'));
+        assert(container.textContent.includes('Overview'));
+        assert(!container.textContent.includes('Accountability formation.'));
+        assert(!container.textContent.includes('Aircraft Launch Sim'));
+        assert(!container.textContent.includes('Day 2 Formation'));
+        window.dispatchEvent(new Event('afterprint'));
+        window.dispatchEvent(new Event('beforeprint'));
+        assert(container.querySelector(skin === 'bands' ? '.print-fit.band-page' : '.print-readable'));
+        if (skin !== 'bands') assert.equal(container.querySelector('.print-fit'), null);
+        assert(container.textContent.includes('Accountability formation.'));
+        assert(container.textContent.includes('Aircraft Launch Sim'));
+        assert(container.textContent.includes('Day 2 Formation'));
+        assert(!container.textContent.includes('Audience: Flight Chiefs'));
+      }
+    } finally {
+      window.print = originalPrint;
+      window.dispatchEvent(new Event('afterprint'));
+    }
+  });
+
+  it('refreshes repeated native preparation and removes stale output when no days remain', () => {
+    window.dispatchEvent(new Event('afterprint'));
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'cards' });
+    const originalTitle = document.title;
+    try {
+      window.dispatchEvent(new Event('beforeprint'));
+      const added = Store.addDay({ date: '2026-04-15' });
+      Store.addEvent(added.id, { title: 'New day added after preparation' });
+      window.dispatchEvent(new Event('beforeprint'));
+      assert(document.getElementById('printContainer').textContent.includes('New day added after preparation'));
+      assert(document.title.includes('2 day(s)'));
+      Store.getDays().slice().forEach(day => Store.removeDay(day.id));
+      window.dispatchEvent(new Event('beforeprint'));
+      assert.equal(document.getElementById('printContainer').innerHTML, '');
+      assert.equal(document.body.classList.contains('printing-schedule'), false);
+      assert.equal(document.title, originalTitle);
+    } finally {
+      window.dispatchEvent(new Event('afterprint'));
+    }
+  });
+
+  it('does not reopen printing when a logo decode finishes after afterprint', async () => {
+    window.dispatchEvent(new Event('afterprint'));
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'cards' });
+    Store.setLogo('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=');
+    const originalDecode = HTMLImageElement.prototype.decode;
+    const originalPrint = window.print;
+    const originalTitle = document.title;
+    let finishDecode;
+    let printCalls = 0;
+    HTMLImageElement.prototype.decode = () => new Promise(resolve => { finishDecode = resolve; });
+    window.print = () => { printCalls += 1; };
+    try {
+      const prepared = printSchedule({ detail: 'overview' });
+      window.dispatchEvent(new Event('afterprint'));
+      finishDecode();
+      await prepared;
+      await wait(0); // Flush pending decode callbacks even if a print API returns no promise.
+      assert.equal(printCalls, 0);
+      assert.equal(document.getElementById('printContainer').innerHTML, '');
+      assert.equal(document.title, originalTitle);
+    } finally {
+      HTMLImageElement.prototype.decode = originalDecode;
+      window.print = originalPrint;
+      window.dispatchEvent(new Event('afterprint'));
+    }
+  });
+
+  it('prints only the newest request when an earlier logo decode finishes later', async () => {
+    window.dispatchEvent(new Event('afterprint'));
+    resetUiHarnessState();
+    seedUiSchedule({ skin: 'cards' });
+    Store.setLogo('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=');
+    const originalDecode = HTMLImageElement.prototype.decode;
+    const originalPrint = window.print;
+    const decodes = [];
+    const printedTitles = [];
+    HTMLImageElement.prototype.decode = () => new Promise(resolve => { decodes.push(resolve); });
+    window.print = () => { window.dispatchEvent(new Event('beforeprint')); printedTitles.push(document.title); };
+    try {
+      const older = printSchedule({ detail: 'overview', mode: 'fit' });
+      const newer = printSchedule({ detail: 'full', mode: 'readable' });
+      decodes[1]();
+      await newer;
+      await wait(0);
+      decodes[0]();
+      await older;
+      await wait(0);
+      assert.equal(printedTitles.length, 1);
+      assert(printedTitles[0].includes('Full details'));
+      assert(document.getElementById('printContainer').querySelector('.print-readable'));
+    } finally {
+      HTMLImageElement.prototype.decode = originalDecode;
+      window.print = originalPrint;
+      window.dispatchEvent(new Event('afterprint'));
+    }
+  });
+
+  it('cancels a prepared snapshot if the schedule changes while decoding its logo', async () => {
+    window.dispatchEvent(new Event('afterprint'));
+    resetUiHarnessState();
+    const seeded = seedUiSchedule({ skin: 'cards' });
+    Store.setLogo('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=');
+    const originalDecode = HTMLImageElement.prototype.decode;
+    const originalPrint = window.print;
+    let finishDecode;
+    let printCalls = 0;
+    HTMLImageElement.prototype.decode = () => new Promise(resolve => { finishDecode = resolve; });
+    window.print = () => { printCalls += 1; };
+    try {
+      const prepared = printSchedule();
+      Store.updateEvent(seeded.day1.id, seeded.day1.events[0].id, { title: 'Latest unsaved edit' });
+      finishDecode();
+      await prepared;
+      assert.equal(printCalls, 0);
+      assert.equal(document.getElementById('printContainer').innerHTML, '');
+      assert(document.getElementById('toast').textContent.includes('schedule changed'));
+      assert.equal(Store.getEvents(seeded.day1.id)[0].title, 'Latest unsaved edit');
+    } finally {
+      HTMLImageElement.prototype.decode = originalDecode;
       window.print = originalPrint;
       window.dispatchEvent(new Event('afterprint'));
     }

@@ -72,6 +72,7 @@ function renderDayBody_cards(dayId, dayOverride) {
       if (exceptionNote) {
         html += '<span class="cards-shared-exception">Exceptions: ' + esc(exceptionNote) + '</span>';
       }
+      html += renderFlightDetails(e);
       if (e.description) html += '<span class="cards-event-detail">' + esc(e.description) + '</span>';
       html += '</span>';
     });
@@ -104,6 +105,7 @@ function renderDayBody_cards(dayId, dayOverride) {
           html += '<div class="cards-event-meta">' + meta.join('<span class="cards-meta-sep">\u00b7</span>') + '</div>';
         }
         if (evt.description) html += '<div class="cards-event-detail">' + esc(evt.description) + '</div>';
+        html += renderFlightDetails(evt);
         if (evt.attendees) html += '<div class="cards-event-detail">WHO: ' + esc(evt.attendees) + '</div>';
         html += '</div>';
       });

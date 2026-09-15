@@ -27,7 +27,8 @@ The primary product is a local `.schedule` workbook containing multiple schedule
 | Path | Responsibility |
 | --- | --- |
 | `app/index.html` | App shell, source CSP, ordered script tags |
-| `app/css/style.css` | Editor, layout, responsive, and print styles |
+| `app/css/style.css` | Editor, legacy layouts, responsive and print styles |
+| `app/css/bands.css` | Scoped approved Bands paper layout and print constraints |
 | `app/js/constants.js` | Defaults and the source `APP_VERSION = 'dev'` marker |
 | `app/js/app-state.js` | Store and compatibility aliases for state |
 | `app/js/utils.js` | Time, escaping, IDs, and local error logging |
@@ -37,7 +38,10 @@ The primary product is a local `.schedule` workbook containing multiple schedule
 | `app/js/persistence.js` | Workbook envelopes, recovery, undo, save orchestration |
 | `app/js/storage.js` | Legacy directory access, file operations, handle storage |
 | `app/js/themes.js` | Schedule palettes and editor chrome theme |
-| `app/js/skin-*.js` | Bands, Grid, Cards, and Phases renderers |
+| `app/js/skin-*.js` | Layout adapters/renderers |
+| `app/js/band-layout.js` | Shared Bands model, renderer and physical fitter |
+| `app/js/band-editor.js`, `personnel-input.js` | Additive event controls and explicit attendee parsing |
+| `app/js/band-palettes.js` | Approved paper palette roles |
 | `app/js/library.js` | Start screen, create/open, legacy library, Help |
 | `app/js/versions.js` | Version management UI |
 | `app/js/render.js` | Shared rendering and layout dispatch |
@@ -53,9 +57,9 @@ The primary product is a local `.schedule` workbook containing multiple schedule
 Scripts are classic scripts with shared runtime bindings. Their order is part of the contract:
 
 1. `constants` → `app-state` → `utils` → `ui-core`.
-2. `schema` → `data-helpers` → `persistence` → `storage` → `themes`.
-3. The four `skin-*` files → `library` → `versions`.
-4. `render` → `workbook-ui` → `print` → `events` → `inspector`.
+2. `schema` → `personnel-input` → `data-helpers` → `persistence` → `storage` → `band-palettes` → `themes`.
+3. `band-layout` → the four `skin-*` files → `library` → `versions`.
+4. `render` → `workbook-ui` → `print` → `events` → `inspector` → `band-editor`.
 5. `data/scheduledata.js` → `init.js`.
 
 Skin functions can call shared render functions because all scripts load before rendering starts. Preserve that ordering and use the module contract comments when changing a cross-file API.

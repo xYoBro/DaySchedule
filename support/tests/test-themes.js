@@ -58,8 +58,9 @@ describe('Themes — SKIN_NAMES and PALETTE_NAMES', () => {
     assert(SKIN_NAMES.includes('phases'));
   });
 
-  it('PALETTE_NAMES has all 5 presets', () => {
-    assert.equal(PALETTE_NAMES.length, 5);
+  it('PALETTE_NAMES preserves existing presets and adds paper varieties', () => {
+    assert.equal(PALETTE_NAMES.length, 11);
+    ['forest', 'teal', 'slate', 'plum', 'burgundy', 'copper'].forEach(name => assert(PALETTE_NAMES.includes(name)));
   });
 });
 

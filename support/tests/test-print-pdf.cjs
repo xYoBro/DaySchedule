@@ -28,10 +28,11 @@ async function main() {
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
     for (const paper of ['Letter', 'A4']) {
-      for (const skin of ['grid', 'cards', 'bands', 'phases']) {
+      // Bands has a bounded Letter-only contract in test-bands-pdf.cjs.
+      for (const skin of ['grid', 'cards', 'phases']) {
         for (const mode of ['fit', 'readable']) {
           await page.goto(origin + '/app/index.html');
-          await page.waitForFunction(() => typeof renderActiveDay === 'function');
+          await page.evaluate(() => appReady);
           const metrics = await page.evaluate(({ skin, mode }) => {
             Store.reset();
             Store.setTitle('Print review ' + skin + ' ' + mode);
@@ -72,11 +73,6 @@ async function main() {
           }
           assert.equal((text.match(/participating\./g) || []).length, 48);
           if (mode === 'fit') assert.equal(pages, 1, 'Fit mode must stay on one page.');
-          if (mode === 'readable' && skin === 'bands') {
-            for (const printedPage of text.split('\f')) {
-              assert(!/\d{4}\s+\d+\s+EVENTS\s*$/i.test(printedPage), 'A time-group heading must not be stranded at the page end.');
-            }
-          }
           // This is the pre-print measurement at the app's Letter geometry.
           // Paper settings may scale the final PDF; this is not a physical font guarantee.
           if (mode === 'readable') assert(metrics[0].smallestTextPt >= 9);

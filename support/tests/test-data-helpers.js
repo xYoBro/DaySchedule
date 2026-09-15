@@ -124,6 +124,145 @@ describe('data-helpers — shared event exceptions', () => {
   });
 });
 
+describe('data-helpers — chronological Bands sections', () => {
+  const groups = [
+    { id: 'all', scope: 'main', name: 'Everyone' },
+    { id: 'a', scope: 'limited', name: 'Team A' },
+    { id: 'b', scope: 'limited', name: 'Team B' },
+  ];
+  const event = (id, startTime, endTime, extra) => ({ id, title: id, startTime, endTime, groupId: 'a', ...extra });
+  const ids = entries => entries.map(entry => entry.event.id);
+
+  it('keeps strict-overlap main components together and adjacent main blocks separate', () => {
+    const sections = buildBandSections([
+      event('first', '0800', '0930', { groupId: 'all' }),
+      event('second', '0900', '1030', { groupId: 'all' }),
+      event('third', '1000', '1100', { groupId: 'all' }),
+      event('adjacent', '1100', '1200', { groupId: 'all' }),
+      event('early-task', '0815', '0845'), event('shared-task', '0915', '0945'),
+    ], groups);
+    assert.equal(sections.length, 2);
+    assert.deepEqual(ids(sections[0].mains), ['first', 'second', 'third']);
+    assert.equal(sections[0].startTime, '0800');
+    assert.equal(sections[0].endTime, '1100');
+    assert.deepEqual(sections[0].supporting[0].overlappingMain.map(evt => evt.id), ['first']);
+    assert.deepEqual(sections[0].supporting[1].overlappingMain.map(evt => evt.id), ['first', 'second']);
+    assert.deepEqual(ids(sections[1].mains), ['adjacent']);
+  });
+
+  it('anchors an early supporting event before the main block and keeps its full original range', () => {
+    const early = event('early', '0745', '0915', { description: 'Unabridged detail', attendees: 'Alex' });
+    const sections = buildBandSections([event('main', '0800', '1000', { groupId: 'all' }), early], groups);
+    assert.deepEqual(sections.map(section => section.kind), ['supporting', 'main']);
+    assert.deepEqual(ids(sections[0].supporting), ['early']);
+    assert.equal(sections[0].supporting[0].event, early);
+    assert.equal(sections[0].supporting[0].continuesAfter, true);
+    assert.equal(sections[0].endTime, '0800');
+    assert.deepEqual(ids(sections[1].supporting), []);
+    assert.deepEqual(ids(sections[1].continuations), ['early']);
+    assert.equal(sections[1].continuations[0].sourceSectionIndex, 0);
+    assert.equal(sections[1].continuations[0].event.startTime, '0745');
+    assert.equal(sections[1].continuations[0].event.endTime, '0915');
+    assert.equal(sections[1].continuations[0].continuesAfter, false);
+  });
+
+  it('retains cross-boundary continuations through gaps and breaks without duplicating full entries', () => {
+    const sections = buildBandSections([
+      event('morning', '0800', '0900', { groupId: 'all' }),
+      event('break', '0930', '1000', { groupId: '', isBreak: true }),
+      event('later', '1000', '1100', { groupId: 'all' }),
+      event('spans', '0845', '1015'), event('gap-start', '0915', '0945'),
+    ], groups);
+    assert.deepEqual(sections.map(section => section.kind), ['main', 'supporting', 'main', 'main']);
+    assert.deepEqual(ids(sections[0].supporting), ['spans']);
+    assert.deepEqual(ids(sections[1].supporting), ['gap-start']);
+    assert.deepEqual(ids(sections[1].continuations), ['spans']);
+    assert.deepEqual(ids(sections[2].continuations), ['spans', 'gap-start']);
+    assert.equal(sections[2].mains[0].tier, 'break');
+    assert.deepEqual(sections[2].continuations[0].overlappingMain, []);
+    assert.deepEqual(sections[2].continuations[0].overlappingBreaks.map(evt => evt.id), ['break']);
+    assert.deepEqual(ids(sections[3].continuations), ['spans']);
+    assert.deepEqual(sections[2].continuations.map(entry => entry.sourceSectionIndex), [0, 1]);
+  });
+
+  it('preserves continuation-only intervals and drops genuinely empty gaps', () => {
+    const sections = buildBandSections([
+      event('first', '0800', '0900', { groupId: 'all' }),
+      event('second', '1000', '1100', { groupId: 'all' }),
+      event('third', '1300', '1400', { groupId: 'all' }),
+      event('spans-gap', '0845', '1015'), event('after', '1430', '1500'),
+    ], groups);
+    assert.deepEqual(sections.map(section => section.startTime), ['0800', '0900', '1000', '1300', '1400']);
+    assert.equal(sections[1].supporting.length, 0);
+    assert.deepEqual(ids(sections[1].continuations), ['spans-gap']);
+    assert.deepEqual(ids(sections[4].supporting), ['after']);
+  });
+
+  it('assigns boundary starts to the later section and does not continue events that have ended', () => {
+    const sections = buildBandSections([
+      event('one', '0800', '0900', { groupId: 'all' }),
+      event('two', '0900', '1000', { groupId: 'all' }),
+      event('ends', '0830', '0900'), event('starts', '0900', '0930'),
+    ], groups);
+    assert.deepEqual(ids(sections[0].supporting), ['ends']);
+    assert.deepEqual(ids(sections[1].supporting), ['starts']);
+    assert.equal(sections[0].supporting[0].continuesAfter, false);
+    assert.equal(sections[1].continuations.length, 0);
+    assert.equal(sections[1].supporting[0].sourceSectionIndex, 1);
+  });
+
+  it('keeps primary, highlighted, unassigned and break semantics without changing audience ownership', () => {
+    const sections = buildBandSections([
+      event('primary', '0800', '1000', { groupId: 'all', isMainEvent: false }),
+      event('highlight', '0830', '0900', { groupId: 'b', isMainEvent: true }),
+      event('unassigned-main', '0900', '0930', { groupId: '', isMainEvent: true }),
+      event('break', '0915', '0945', { groupId: '', isBreak: true }),
+      event('unassigned-support', '0920', '0930', { groupId: '' }),
+    ], groups);
+    assert.equal(sections.length, 1);
+    assert.deepEqual(ids(sections[0].mains), ['primary', 'highlight', 'unassigned-main', 'break']);
+    assert.equal(sections[0].mains[1].group, groups[2]);
+    assert.equal(sections[0].mains[2].group, null);
+    assert.deepEqual(ids(sections[0].supporting), ['unassigned-support']);
+    assert.equal(sections[0].supporting[0].group, null);
+    assert.deepEqual(sections[0].supporting[0].overlappingMain.map(evt => evt.id), ['primary', 'unassigned-main']);
+    assert.deepEqual(sections[0].supporting[0].overlappingBreaks.map(evt => evt.id), ['break']);
+  });
+
+  it('handles empty and supporting-only days without inventing a main event', () => {
+    assert.deepEqual(buildBandSections([], groups), []);
+    assert.deepEqual(buildBandSections(null, groups), []);
+    const sections = buildBandSections([
+      event('late', '1000', '1100', { groupId: '' }), event('early', '0800', '0900'),
+    ], groups);
+    assert.equal(sections.length, 1);
+    assert.equal(sections[0].kind, 'supporting');
+    assert.equal(sections[0].startTime, '0800');
+    assert.equal(sections[0].endTime, '1100');
+    assert.deepEqual(sections[0].mains, []);
+    assert.deepEqual(ids(sections[0].supporting), ['early', 'late']);
+    assert.deepEqual(sections[0].continuations, []);
+  });
+
+  it('preserves every canonical event once and does not mutate inputs', () => {
+    const events = [event('late', '1200', '1230'),
+      event('second', '0900', '1100', { groupId: 'all' }),
+      event('cross', '0730', '1130'),
+      event('first', '0800', '0900', { groupId: 'all' }),
+      event('short', '0830', '0845'), event('long', '0830', '0945')];
+    const snapshot = JSON.stringify({ events, groups });
+    const sections = buildBandSections(events, groups);
+    const canonical = sections.flatMap(section => section.mains.concat(section.supporting));
+    assert.deepEqual(ids(canonical).sort(), events.map(evt => evt.id).sort());
+    canonical.forEach(entry => assert.equal(entry.event, events.find(evt => evt.id === entry.event.id)));
+    assert.deepEqual(ids(sections[1].supporting), ['long', 'short']);
+    sections.forEach(section => section.continuations.forEach(entry => {
+      assert(sections[entry.sourceSectionIndex].supporting.some(source => source.event === entry.event));
+    }));
+    assert.equal(JSON.stringify({ events, groups }), snapshot);
+  });
+});
+
 describe('data-helpers — getOverlappingConcurrent', () => {
   it('finds concurrent events overlapping a main event', () => {
     const mainEvt = { startTime: '0900', endTime: '1100' };
@@ -242,8 +381,8 @@ describe('data-helpers — main track, phases and handouts', () => {
   it('flags dates, hours, missing audiences and shared resources while allowing adjacent events', () => {
     const days = [{ id: 'd1', date: '2026-09-10', startTime: '0800', endTime: '1700', events: [
       event('early', '0730', '0830', { groupId: '' }),
-      event('one', '0900', '1000', { location: 'Room 1', attendees: 'Alex; Sam' }),
-      event('two', '0930', '1030', { location: ' room 1 ', attendees: 'alex' }),
+      event('one', '0900', '1000', { location: 'Room 1', attendees: 'Alex; Sam', attendeeFormat: 'suggested' }),
+      event('two', '0930', '1030', { location: ' room 1 ', attendees: 'alex', attendeeFormat: 'suggested' }),
       event('adjacent', '1030', '1100', { location: 'Room 1', attendees: 'Alex' }),
     ] }, { id: 'd2', date: '2026-09-10', startTime: '1700', endTime: '0800', events: [] },
     { id: 'd3', date: '2026-02-31', startTime: '0800', endTime: '1700', events: [] }];
@@ -251,7 +390,7 @@ describe('data-helpers — main track, phases and handouts', () => {
     ['audience', 'outside-day', 'duplicate-date', 'day-range', 'date'].forEach(type => assert(issues.some(issue => issue.type === type), type));
     const overlaps = issues.filter(issue => issue.type === 'overlap');
     assert.equal(overlaps.length, 1);
-    assert(overlaps[0].message.includes('audience, location, named people'));
+    assert(overlaps[0].message.includes('audience, location, matching attendee entries (confirm identity)'));
     assert.deepEqual(overlaps[0].eventIds, ['one', 'two']);
   });
 });

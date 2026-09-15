@@ -124,6 +124,7 @@ function renderGridBanner(shared, events, groups) {
     if (shared.attendees) html += '<span>WHO: ' + esc(shared.attendees) + '</span>';
     html += '</div>';
   }
+  html += renderFlightDetails(shared);
   if (shared.description) html += '<div class="grid-banner-desc">' + esc(shared.description) + '</div>';
   if (exceptionNote) {
     html += '<div class="grid-banner-exception">Exceptions: ' + esc(exceptionNote) + '</div>';
@@ -196,6 +197,7 @@ function renderGridCell(evt, group, isContinuation) {
     html += '<div class="grid-cell-meta-line">' + meta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
   }
   if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
+  html += renderFlightDetails(evt);
   if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
   html += '</div>';
   html += '</div>';

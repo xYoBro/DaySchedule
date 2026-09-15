@@ -27,7 +27,7 @@
  * ──────────────────────────────────────────────────────────────────────────── */
 
 // Selector for any clickable event element across all skins
-const EVENT_SELECTOR = '[data-event-id]';
+const EVENT_SELECTOR = '[data-event-id], [data-event-ref], [data-main-context]';
 
 document.addEventListener('click', e => {
   if (e.target.closest('.modal-overlay')) return;
@@ -72,12 +72,13 @@ document.addEventListener('click', e => {
   const eventEl = e.target.closest(EVENT_SELECTOR);
   if (eventEl && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
-    if (dayId) selectEntity('event', dayId, eventEl.getAttribute('data-event-id'));
+    const eventId = eventEl.dataset.eventId || eventEl.dataset.eventRef || eventEl.dataset.mainContext;
+    if (dayId) selectEntity('event', dayId, eventId);
     return;
   }
 
   // Click on header -> open settings modal (logo, title, contact, groups)
-  const hdr = e.target.closest('.hdr');
+  const hdr = e.target.closest('.hdr, [data-band-customize]');
   if (hdr && !e.target.closest('.inspector')) {
     if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
       toast('Read-only. Click Edit.');
@@ -88,7 +89,7 @@ document.addEventListener('click', e => {
   }
 
   // Click on note -> select in inspector
-  const noteEl = e.target.closest('.notes-list li[data-note-id]');
+  const noteEl = e.target.closest('.notes-list li[data-note-id], .band-sheet [data-note-id]');
   if (noteEl && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
     if (dayId) selectEntity('note', dayId, noteEl.getAttribute('data-note-id'));
@@ -105,7 +106,7 @@ document.addEventListener('click', e => {
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
   if (e.defaultPrevented) return;
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"]')) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"], .bands-screen [role="button"], .band-sheet article[data-event-id]')) {
     e.preventDefault();
     e.target.click();
     return;

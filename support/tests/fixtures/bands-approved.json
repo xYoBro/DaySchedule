@@ -1,0 +1,2504 @@
+{
+  "fileType": "dayschedule",
+  "schemaVersion": 2,
+  "workbookId": "approved-band-examples",
+  "activeScheduleId": "normal",
+  "schedules": [
+    {
+      "id": "main",
+      "name": "Main events only",
+      "current": {
+        "title": "September Training Weekend",
+        "groups": [
+          {
+            "id": "all",
+            "name": "All personnel",
+            "scope": "main",
+            "color": "#173f73"
+          },
+          {
+            "id": "by-flight",
+            "name": "By flight",
+            "scope": "limited",
+            "color": "#8a733f"
+          }
+        ],
+        "days": [
+          {
+            "id": "sat",
+            "date": "2026-09-12",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "m1",
+                "title": "Roll Call",
+                "startTime": "0730",
+                "endTime": "0745",
+                "description": "Show time is anytime before 0730. Roll call at 0730; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "m2",
+                "title": "PT",
+                "startTime": "0745",
+                "endTime": "0845",
+                "description": "Shower options after PT: Firehouse, Avionics & Ops.",
+                "location": "Base Gym",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m3",
+                "title": "CC Call",
+                "startTime": "0930",
+                "endTime": "1000",
+                "description": "",
+                "location": "",
+                "poc": "Lt Col Alex Rivera",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m4",
+                "title": "DCDC Brief",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "Given by TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m5",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "m6",
+                "title": "CIF",
+                "startTime": "1230",
+                "endTime": "1330",
+                "description": "Flights disseminate and focus on CIF priorities.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m7",
+                "title": "Ancillary Training",
+                "startTime": "1330",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m8",
+                "title": "Flight Time",
+                "startTime": "1430",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "by-flight",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m9",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          },
+          {
+            "id": "sun",
+            "date": "2026-09-13",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "n1",
+                "title": "Roll Call",
+                "startTime": "0800",
+                "endTime": "0830",
+                "description": "Show time is anytime before 0800. Roll call at 0800; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "n2",
+                "title": "Network Training",
+                "startTime": "0900",
+                "endTime": "1000",
+                "description": "Network: Network Baseline / Malicious PCAP.",
+                "location": "",
+                "poc": "TSgt Riley Chen",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n3",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "n4",
+                "title": "Flight Training",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "JQR sign-offs and PCTE modules.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n5",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          }
+        ],
+        "activeDay": "sat",
+        "logo": null,
+        "footer": {
+          "contact": "",
+          "poc": "MSgt Robin Bennett",
+          "updated": ""
+        },
+        "theme": {
+          "skin": "bands",
+          "palette": "airforce",
+          "bands": {
+            "showLogo": true,
+            "notesHeight": 90
+          }
+        }
+      },
+      "theme": {
+        "skin": "bands",
+        "palette": "airforce",
+        "bands": {
+          "showLogo": true,
+          "notesHeight": 90
+        }
+      },
+      "versions": [],
+      "activity": []
+    },
+    {
+      "id": "normal",
+      "name": "15 surnames",
+      "current": {
+        "title": "September Training Weekend",
+        "groups": [
+          {
+            "id": "all",
+            "name": "All personnel",
+            "scope": "main",
+            "color": "#173f73"
+          },
+          {
+            "id": "group1",
+            "name": "Specific personnel",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "group2",
+            "name": "All enlisted",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "group3",
+            "name": "Flight chiefs",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "by-flight",
+            "name": "By flight",
+            "scope": "limited",
+            "color": "#8a733f"
+          }
+        ],
+        "days": [
+          {
+            "id": "sat",
+            "date": "2026-09-12",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "m1",
+                "title": "Roll Call",
+                "startTime": "0730",
+                "endTime": "0745",
+                "description": "Show time is anytime before 0730. Roll call at 0730; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "m2",
+                "title": "PT",
+                "startTime": "0745",
+                "endTime": "0845",
+                "description": "Shower options after PT: Firehouse, Avionics & Ops.",
+                "location": "Base Gym",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m3",
+                "title": "CC Call",
+                "startTime": "0930",
+                "endTime": "1000",
+                "description": "",
+                "location": "",
+                "poc": "Lt Col Alex Rivera",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m4",
+                "title": "DCDC Brief",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "Given by TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m5",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "m6",
+                "title": "CIF",
+                "startTime": "1230",
+                "endTime": "1330",
+                "description": "Flights disseminate and focus on CIF priorities.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m7",
+                "title": "Ancillary Training",
+                "startTime": "1330",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m8",
+                "title": "Flight Time",
+                "startTime": "1430",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "by-flight",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m9",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "s1",
+                "title": "Old Line",
+                "startTime": "0900",
+                "endTime": "1100",
+                "description": "",
+                "location": "CE Classroom",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s2",
+                "title": "SEL Time",
+                "startTime": "1000",
+                "endTime": "1030",
+                "description": "HOPE overview from TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group2",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s3",
+                "title": "Old Line",
+                "startTime": "1300",
+                "endTime": "1500",
+                "description": "",
+                "location": "CE Classroom",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Chen; Patel",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s4",
+                "title": "UCA Meeting",
+                "startTime": "1330",
+                "endTime": "1400",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Brooks",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s5",
+                "title": "NOV Morale Event Sync",
+                "startTime": "1400",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group1",
+                "attendees": "Reed",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s6",
+                "title": "Performance Feedback ACAs",
+                "startTime": "1400",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Ellis; Hayes",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s7",
+                "title": "Project Sync",
+                "startTime": "1400",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "RED Flag project officers",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s8",
+                "title": "UCA Meeting",
+                "startTime": "1400",
+                "endTime": "1430",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Rivera",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s9",
+                "title": "CTF Event",
+                "startTime": "1445",
+                "endTime": "1600",
+                "description": "Bring your assigned equipment. Check in with the event POC.",
+                "location": "Operations Lab",
+                "poc": "TSgt Blair Emerson",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell; Brooks; Rivera; Foster; Parker; Bennett; Bailey; Fletcher; Emerson; Lawson; Adams; Allen; Baker; Campbell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": true
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          },
+          {
+            "id": "sun",
+            "date": "2026-09-13",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "n1",
+                "title": "Roll Call",
+                "startTime": "0800",
+                "endTime": "0830",
+                "description": "Show time is anytime before 0800. Roll call at 0800; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "n2",
+                "title": "Network Training",
+                "startTime": "0900",
+                "endTime": "1000",
+                "description": "Network: Network Baseline / Malicious PCAP.",
+                "location": "",
+                "poc": "TSgt Riley Chen",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n3",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "n4",
+                "title": "Flight Training",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "JQR sign-offs and PCTE modules.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n5",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "u1",
+                "title": "SAPR",
+                "startTime": "0800",
+                "endTime": "0900",
+                "description": "Show time 0800.",
+                "location": "",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u2",
+                "title": "Net Tech PCTE Modules",
+                "startTime": "1000",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Chen; Patel; Brooks",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u3",
+                "title": "OT CTF",
+                "startTime": "1000",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Reed; Ellis",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u4",
+                "title": "Intel All Call",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "TSgt Alex Rivera",
+                "groupId": "group1",
+                "attendees": "Hayes; Rivera",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u5",
+                "title": "Mission Lesson Learned / JQR Sign-Offs",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Young; Watson; Sanders",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u6",
+                "title": "PCTE Modules",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Stone; West; Wright",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u7",
+                "title": "CTF Event",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "Bring your assigned equipment. Check in with the event POC.",
+                "location": "Operations Lab",
+                "poc": "TSgt Blair Emerson",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell; Chen; Patel; Brooks; Reed; Ellis; Hayes; Rivera; Foster; Parker; Bennett; Bailey; Fletcher; Emerson",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "u8",
+                "title": "Drill Activity Report",
+                "startTime": "1200",
+                "endTime": "1300",
+                "description": "Report to DO; no release until completion.",
+                "location": "",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group3",
+                "attendees": "Flight commanders",
+                "attendeeFormat": "text",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u9",
+                "title": "UCA Meeting",
+                "startTime": "1200",
+                "endTime": "1230",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Winter",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u10",
+                "title": "UCA Meeting",
+                "startTime": "1230",
+                "endTime": "1300",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Wolfe",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          }
+        ],
+        "activeDay": "sat",
+        "logo": null,
+        "footer": {
+          "contact": "",
+          "poc": "MSgt Robin Bennett",
+          "updated": ""
+        },
+        "theme": {
+          "skin": "bands",
+          "palette": "airforce",
+          "bands": {
+            "showLogo": true,
+            "notesHeight": 90
+          }
+        }
+      },
+      "theme": {
+        "skin": "bands",
+        "palette": "airforce",
+        "bands": {
+          "showLogo": true,
+          "notesHeight": 90
+        }
+      },
+      "versions": [],
+      "activity": []
+    },
+    {
+      "id": "stress",
+      "name": "15 concurrent events",
+      "current": {
+        "title": "September Training Weekend",
+        "groups": [
+          {
+            "id": "all",
+            "name": "All personnel",
+            "scope": "main",
+            "color": "#173f73"
+          },
+          {
+            "id": "group1",
+            "name": "Specific personnel",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "group2",
+            "name": "All enlisted",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "group3",
+            "name": "Flight chiefs",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "by-flight",
+            "name": "By flight",
+            "scope": "limited",
+            "color": "#8a733f"
+          }
+        ],
+        "days": [
+          {
+            "id": "sat",
+            "date": "2026-09-12",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "m1",
+                "title": "Roll Call",
+                "startTime": "0730",
+                "endTime": "0745",
+                "description": "Show time is anytime before 0730. Roll call at 0730; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "m2",
+                "title": "PT",
+                "startTime": "0745",
+                "endTime": "0845",
+                "description": "Shower options after PT: Firehouse, Avionics & Ops.",
+                "location": "Base Gym",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m3",
+                "title": "CC Call",
+                "startTime": "0930",
+                "endTime": "1000",
+                "description": "",
+                "location": "",
+                "poc": "Lt Col Alex Rivera",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m4",
+                "title": "DCDC Brief",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "Given by TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m5",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "m6",
+                "title": "CIF",
+                "startTime": "1230",
+                "endTime": "1330",
+                "description": "Flights disseminate and focus on CIF priorities.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m7",
+                "title": "Ancillary Training",
+                "startTime": "1330",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m8",
+                "title": "Flight Time",
+                "startTime": "1430",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "by-flight",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m9",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "s1",
+                "title": "Old Line",
+                "startTime": "0900",
+                "endTime": "1100",
+                "description": "",
+                "location": "CE Classroom",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s2",
+                "title": "SEL Time",
+                "startTime": "1000",
+                "endTime": "1030",
+                "description": "HOPE overview from TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group2",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s3",
+                "title": "Old Line",
+                "startTime": "1300",
+                "endTime": "1500",
+                "description": "",
+                "location": "CE Classroom",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Chen; Patel",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s4",
+                "title": "UCA Meeting",
+                "startTime": "1330",
+                "endTime": "1400",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Brooks",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s5",
+                "title": "NOV Morale Event Sync",
+                "startTime": "1400",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group1",
+                "attendees": "Reed",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s6",
+                "title": "Performance Feedback ACAs",
+                "startTime": "1400",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Ellis; Hayes",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s7",
+                "title": "Project Sync",
+                "startTime": "1400",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "RED Flag project officers",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s8",
+                "title": "UCA Meeting",
+                "startTime": "1400",
+                "endTime": "1430",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Rivera",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s9",
+                "title": "CTF Event",
+                "startTime": "1445",
+                "endTime": "1600",
+                "description": "Bring your assigned equipment. Check in with the event POC.",
+                "location": "Operations Lab",
+                "poc": "TSgt Blair Emerson",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell; Brooks; Rivera; Foster; Parker; Bennett; Bailey; Fletcher; Emerson; Lawson; Adams; Allen; Baker; Campbell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "sat-qa-1",
+                "title": "Travel readiness documentation and records verification",
+                "startTime": "0845",
+                "endTime": "0915",
+                "description": "Bring your identification and completed checklist.",
+                "location": "Administration Annex, Building 240, second-floor briefing room",
+                "poc": "MSgt Reese Coleman",
+                "groupId": "group1",
+                "attendees": "Park",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sat-qa-2",
+                "title": "Records check",
+                "startTime": "1000",
+                "endTime": "1030",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Sutton",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sat-qa-3",
+                "title": "Equipment checkout",
+                "startTime": "1230",
+                "endTime": "1330",
+                "description": "",
+                "location": "Supply counter",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Miles",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sat-qa-4",
+                "title": "Communications equipment readiness review",
+                "startTime": "1300",
+                "endTime": "1430",
+                "description": "Bring assigned radio.",
+                "location": "Maintenance Annex, Room 204",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Reese",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sat-qa-5",
+                "title": "Personnel records",
+                "startTime": "1430",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "TSgt Riley Chen",
+                "groupId": "group1",
+                "attendees": "Quinn",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sat-qa-6",
+                "title": "Training record updates",
+                "startTime": "1500",
+                "endTime": "1600",
+                "description": "",
+                "location": "Training office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Blake",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          },
+          {
+            "id": "sun",
+            "date": "2026-09-13",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "n1",
+                "title": "Roll Call",
+                "startTime": "0800",
+                "endTime": "0830",
+                "description": "Show time is anytime before 0800. Roll call at 0800; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "n2",
+                "title": "Network Training",
+                "startTime": "0900",
+                "endTime": "1000",
+                "description": "Network: Network Baseline / Malicious PCAP.",
+                "location": "",
+                "poc": "TSgt Riley Chen",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n3",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "n4",
+                "title": "Flight Training",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "JQR sign-offs and PCTE modules.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n5",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "u1",
+                "title": "SAPR",
+                "startTime": "0800",
+                "endTime": "0900",
+                "description": "Show time 0800.",
+                "location": "",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u2",
+                "title": "Net Tech PCTE Modules",
+                "startTime": "1000",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Chen; Patel; Brooks",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u3",
+                "title": "OT CTF",
+                "startTime": "1000",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Reed; Ellis",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u4",
+                "title": "Intel All Call",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "TSgt Alex Rivera",
+                "groupId": "group1",
+                "attendees": "Hayes; Rivera",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u5",
+                "title": "Mission Lesson Learned / JQR Sign-Offs",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Young; Watson; Sanders",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u6",
+                "title": "PCTE Modules",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Stone; West; Wright",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u7",
+                "title": "CTF Event",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "Bring your assigned equipment. Check in with the event POC.",
+                "location": "Operations Lab",
+                "poc": "TSgt Blair Emerson",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell; Chen; Patel; Brooks; Reed; Ellis; Hayes; Rivera; Foster; Parker; Bennett; Bailey; Fletcher; Emerson",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "u8",
+                "title": "Drill Activity Report",
+                "startTime": "1200",
+                "endTime": "1300",
+                "description": "Report to DO; no release until completion.",
+                "location": "",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group3",
+                "attendees": "Flight commanders",
+                "attendeeFormat": "text",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u9",
+                "title": "UCA Meeting",
+                "startTime": "1200",
+                "endTime": "1230",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Winter",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u10",
+                "title": "UCA Meeting",
+                "startTime": "1230",
+                "endTime": "1300",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Wolfe",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sun-qa-1",
+                "title": "Travel readiness documentation and records verification",
+                "startTime": "0845",
+                "endTime": "0915",
+                "description": "Bring your identification and completed checklist.",
+                "location": "Administration Annex, Building 240, second-floor briefing room",
+                "poc": "MSgt Reese Coleman",
+                "groupId": "group1",
+                "attendees": "Park",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sun-qa-2",
+                "title": "Records check",
+                "startTime": "1000",
+                "endTime": "1030",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Sutton",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sun-qa-3",
+                "title": "Equipment checkout",
+                "startTime": "1230",
+                "endTime": "1330",
+                "description": "",
+                "location": "Supply counter",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Miles",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sun-qa-4",
+                "title": "Communications equipment readiness review",
+                "startTime": "1300",
+                "endTime": "1430",
+                "description": "Bring assigned radio.",
+                "location": "Maintenance Annex, Room 204",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Reese",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "sun-qa-5",
+                "title": "Personnel records",
+                "startTime": "1430",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "TSgt Riley Chen",
+                "groupId": "group1",
+                "attendees": "Quinn",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          }
+        ],
+        "activeDay": "sat",
+        "logo": null,
+        "footer": {
+          "contact": "",
+          "poc": "MSgt Robin Bennett",
+          "updated": ""
+        },
+        "theme": {
+          "skin": "bands",
+          "palette": "airforce",
+          "bands": {
+            "showLogo": true,
+            "notesHeight": 90
+          }
+        }
+      },
+      "theme": {
+        "skin": "bands",
+        "palette": "airforce",
+        "bands": {
+          "showLogo": true,
+          "notesHeight": 90
+        }
+      },
+      "versions": [],
+      "activity": []
+    },
+    {
+      "id": "forty",
+      "name": "40 surnames and flights",
+      "current": {
+        "title": "September Training Weekend",
+        "groups": [
+          {
+            "id": "all",
+            "name": "All personnel",
+            "scope": "main",
+            "color": "#173f73"
+          },
+          {
+            "id": "group1",
+            "name": "Specific personnel",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "group2",
+            "name": "All enlisted",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "group3",
+            "name": "Flight chiefs",
+            "scope": "limited",
+            "color": "#495d72"
+          },
+          {
+            "id": "by-flight",
+            "name": "By flight",
+            "scope": "limited",
+            "color": "#8a733f"
+          }
+        ],
+        "days": [
+          {
+            "id": "sat",
+            "date": "2026-09-12",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "m1",
+                "title": "Roll Call",
+                "startTime": "0730",
+                "endTime": "0745",
+                "description": "Show time is anytime before 0730. Roll call at 0730; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "m2",
+                "title": "PT",
+                "startTime": "0745",
+                "endTime": "0845",
+                "description": "Shower options after PT: Firehouse, Avionics & Ops.",
+                "location": "Base Gym",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m3",
+                "title": "CC Call",
+                "startTime": "0930",
+                "endTime": "1000",
+                "description": "",
+                "location": "",
+                "poc": "Lt Col Alex Rivera",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m4",
+                "title": "DCDC Brief",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "Given by TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m5",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "m6",
+                "title": "CIF",
+                "startTime": "1230",
+                "endTime": "1330",
+                "description": "Flights disseminate and focus on CIF priorities.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m7",
+                "title": "Ancillary Training",
+                "startTime": "1330",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m8",
+                "title": "Flight Time",
+                "startTime": "1430",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "by-flight",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "m9",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "s1",
+                "title": "Old Line",
+                "startTime": "0900",
+                "endTime": "1100",
+                "description": "",
+                "location": "CE Classroom",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s2",
+                "title": "SEL Time",
+                "startTime": "1000",
+                "endTime": "1030",
+                "description": "HOPE overview from TSgt Riley Chen.",
+                "location": "Data Wall",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group2",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s3",
+                "title": "Old Line",
+                "startTime": "1300",
+                "endTime": "1500",
+                "description": "",
+                "location": "CE Classroom",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Chen; Patel",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s4",
+                "title": "UCA Meeting",
+                "startTime": "1330",
+                "endTime": "1400",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Brooks",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s5",
+                "title": "NOV Morale Event Sync",
+                "startTime": "1400",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group1",
+                "attendees": "Reed",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s6",
+                "title": "Performance Feedback ACAs",
+                "startTime": "1400",
+                "endTime": "1500",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Ellis; Hayes",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s7",
+                "title": "Project Sync",
+                "startTime": "1400",
+                "endTime": "1430",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "RED Flag project officers",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s8",
+                "title": "UCA Meeting",
+                "startTime": "1400",
+                "endTime": "1430",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Rivera",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "s9",
+                "title": "CTF Event",
+                "startTime": "1445",
+                "endTime": "1600",
+                "description": "Bring your assigned equipment. Check in with the event POC.",
+                "location": "Operations Lab",
+                "poc": "TSgt Blair Emerson",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell; Brooks; Rivera; Foster; Parker; Bennett; Bailey; Fletcher; Emerson; Lawson; Adams; Allen; Baker; Campbell; Collins; Cooper; Davis; Edwards; Evans; Garcia; Gray; Green; Hall; Harris; Hill; Howard; Hughes; Jackson; James; Johnson; Kelly; King; Lee; Lewis; Martin; Miller; Mitchell; Morris; Nelson",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": true
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          },
+          {
+            "id": "sun",
+            "date": "2026-09-13",
+            "label": null,
+            "startTime": "0700",
+            "endTime": "1700",
+            "events": [
+              {
+                "id": "n1",
+                "title": "Roll Call",
+                "startTime": "0800",
+                "endTime": "0830",
+                "description": "Show time is anytime before 0800. Roll call at 0800; attendance passed to SEL.",
+                "location": "Squadron",
+                "poc": "MSgt Robin Bennett",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "n2",
+                "title": "Network Training",
+                "startTime": "0900",
+                "endTime": "1000",
+                "description": "Network: Network Baseline / Malicious PCAP.",
+                "location": "",
+                "poc": "TSgt Riley Chen",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "n3",
+                "title": "Lunch",
+                "startTime": "1100",
+                "endTime": "1200",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": true,
+                "emphasized": true
+              },
+              {
+                "id": "n4",
+                "title": "Flight Training",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "JQR sign-offs and PCTE modules.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": false,
+                "flightActivities": [
+                  {
+                    "id": "flight-0-1",
+                    "flight": "Alpha",
+                    "title": "JQR practicals",
+                    "startTime": "1200",
+                    "endTime": "1330",
+                    "location": "Training Room A",
+                    "poc": "SSgt Quinn Ellis",
+                    "description": ""
+                  },
+                  {
+                    "id": "flight-0-2",
+                    "flight": "Alpha",
+                    "title": "PCTE modules",
+                    "startTime": "1330",
+                    "endTime": "1600",
+                    "location": "Training Room A",
+                    "poc": "SSgt Quinn Ellis",
+                    "description": ""
+                  },
+                  {
+                    "id": "flight-1-1",
+                    "flight": "Bravo",
+                    "title": "PCTE modules",
+                    "startTime": "1200",
+                    "endTime": "1400",
+                    "location": "Training Room B",
+                    "poc": "TSgt Riley Chen",
+                    "description": ""
+                  },
+                  {
+                    "id": "flight-1-2",
+                    "flight": "Bravo",
+                    "title": "JQR sign-offs",
+                    "startTime": "1400",
+                    "endTime": "1600",
+                    "location": "Training Room B",
+                    "poc": "TSgt Riley Chen",
+                    "description": ""
+                  },
+                  {
+                    "id": "flight-2-1",
+                    "flight": "Charlie",
+                    "title": "Mission rehearsal",
+                    "startTime": "1200",
+                    "endTime": "1300",
+                    "location": "Training Room C",
+                    "poc": "MSgt Cameron Reed",
+                    "description": ""
+                  },
+                  {
+                    "id": "flight-2-2",
+                    "flight": "Charlie",
+                    "title": "After-action review",
+                    "startTime": "1300",
+                    "endTime": "1600",
+                    "location": "Training Room C",
+                    "poc": "MSgt Cameron Reed",
+                    "description": ""
+                  }
+                ]
+              },
+              {
+                "id": "n5",
+                "title": "Clean Up / Transition",
+                "startTime": "1600",
+                "endTime": "1630",
+                "description": "Clean up Squadron; check the monthly building cleaner schedule.",
+                "location": "Squadron",
+                "poc": "",
+                "groupId": "all",
+                "attendees": "",
+                "attendeeFormat": "text",
+                "isMainEvent": true,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "u1",
+                "title": "SAPR",
+                "startTime": "0800",
+                "endTime": "0900",
+                "description": "Show time 0800.",
+                "location": "",
+                "poc": "SSgt Quinn Ellis",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u2",
+                "title": "Net Tech PCTE Modules",
+                "startTime": "1000",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Chen; Patel; Brooks",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u3",
+                "title": "OT CTF",
+                "startTime": "1000",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Reed; Ellis",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u4",
+                "title": "Intel All Call",
+                "startTime": "1030",
+                "endTime": "1100",
+                "description": "",
+                "location": "",
+                "poc": "TSgt Alex Rivera",
+                "groupId": "group1",
+                "attendees": "Hayes; Rivera",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u5",
+                "title": "Mission Lesson Learned / JQR Sign-Offs",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Young; Watson; Sanders",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u6",
+                "title": "PCTE Modules",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "",
+                "location": "",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Stone; West; Wright",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u7",
+                "title": "CTF Event",
+                "startTime": "1200",
+                "endTime": "1600",
+                "description": "Bring your assigned equipment. Check in with the event POC.",
+                "location": "Operations Lab",
+                "poc": "TSgt Blair Emerson",
+                "groupId": "group1",
+                "attendees": "Morgan; Bell; Chen; Patel; Brooks; Reed; Ellis; Hayes; Rivera; Foster; Parker; Bennett; Bailey; Fletcher; Emerson; Lawson; Adams; Allen; Baker; Campbell; Collins; Cooper; Davis; Edwards; Evans; Garcia; Gray; Green; Hall; Harris; Hill; Howard; Hughes; Jackson; James; Johnson; Kelly; King; Lee; Lewis",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": true
+              },
+              {
+                "id": "u8",
+                "title": "Drill Activity Report",
+                "startTime": "1200",
+                "endTime": "1300",
+                "description": "Report to DO; no release until completion.",
+                "location": "",
+                "poc": "MSgt Cameron Reed",
+                "groupId": "group3",
+                "attendees": "Flight commanders",
+                "attendeeFormat": "text",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u9",
+                "title": "UCA Meeting",
+                "startTime": "1200",
+                "endTime": "1230",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Winter",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              },
+              {
+                "id": "u10",
+                "title": "UCA Meeting",
+                "startTime": "1230",
+                "endTime": "1300",
+                "description": "",
+                "location": "Commander\u2019s Office",
+                "poc": "",
+                "groupId": "group1",
+                "attendees": "Wolfe",
+                "attendeeFormat": "suggested",
+                "isMainEvent": false,
+                "isBreak": false,
+                "emphasized": false
+              }
+            ],
+            "notes": [
+              {
+                "id": "note0",
+                "category": "Ancillary Training",
+                "text": "Check the board for training you need to complete."
+              },
+              {
+                "id": "note1",
+                "category": "UCA",
+                "text": "Coordinate with the day lead before your appointment."
+              },
+              {
+                "id": "note2",
+                "category": "Admin",
+                "text": "Review your contact information and submit any corrections."
+              },
+              {
+                "id": "note3",
+                "category": "Training records",
+                "text": "Bring questions about outstanding requirements to your supervisor."
+              },
+              {
+                "id": "note4",
+                "category": "Equipment",
+                "text": "Account for assigned equipment before departure."
+              },
+              {
+                "id": "note5",
+                "category": "Next drill",
+                "text": "Confirm preparation requirements with your flight."
+              }
+            ]
+          }
+        ],
+        "activeDay": "sat",
+        "logo": null,
+        "footer": {
+          "contact": "",
+          "poc": "MSgt Robin Bennett",
+          "updated": ""
+        },
+        "theme": {
+          "skin": "bands",
+          "palette": "airforce",
+          "bands": {
+            "showLogo": true,
+            "notesHeight": 90
+          }
+        }
+      },
+      "theme": {
+        "skin": "bands",
+        "palette": "airforce",
+        "bands": {
+          "showLogo": true,
+          "notesHeight": 90
+        }
+      },
+      "versions": [],
+      "activity": []
+    }
+  ]
+}

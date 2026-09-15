@@ -293,6 +293,7 @@ describe('UI Harness — app shell', () => {
 
     const dayId = Store.getActiveDay();
     const evt = Store.getEvents(dayId)[0];
+    const originalStartTime = evt.startTime;
 
     openDayEventSheetModal({ eventId: evt.id, field: 'startTime' });
     await wait(0);
@@ -308,12 +309,14 @@ describe('UI Harness — app shell', () => {
     await wait(20);
 
     assert.equal(startInput.value, '0900', 'start input should keep the staged time while the end time is being edited');
-    assert.equal(Store.getEvents(dayId).find(item => item.id === evt.id).startTime, evt.startTime, 'store should not commit the first time change yet');
+    assert.equal(Store.getEvents(dayId).find(item => item.id === evt.id).startTime, originalStartTime, 'store should not commit the first time change yet');
 
     endInput.value = '1000';
-    endInput.blur();
-    endInput.dispatchEvent(new Event('blur'));
-    await wait(160);
+    // Leave the time pair as a user tabbing to the next field would. Blurring
+    // to BODY twice raced the modal's initial focus callback in Firefox,
+    // which could refocus Start and intentionally defer row validation.
+    document.querySelector('.day-sheet-title-input[data-event-id="' + evt.id + '"]').focus();
+    await wait(0); // The blur handler commits on the next timer turn.
 
     const updated = Store.getEvents(dayId).find(item => item.id === evt.id);
     assert.equal(updated.startTime, '0900');
@@ -1136,7 +1139,7 @@ describe('+ Note inserts an empty note, not a placeholder string', () => {
     assert.equal(notes.length, 1);
     assert.equal(notes[0].text, '', 'no placeholder text may reach the data');
     assert.equal(document.activeElement && document.activeElement.id, 'insp-note-text');
-    const stub = document.querySelector('#scheduleContainer .notes-list li.note-empty');
+    const stub = document.querySelector('#scheduleContainer [data-note-id].note-empty');
     assert(stub, 'the empty note is still clickable on screen');
     assert.equal(stub.getAttribute('data-note-id'), notes[0].id);
     assert(!document.getElementById('scheduleContainer').textContent.includes('(enter note text)'));

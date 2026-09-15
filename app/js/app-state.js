@@ -90,6 +90,9 @@ const Store = {
       attendees: e.attendees || '',
       isBreak: e.isBreak || false,
       isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === 'main' : false),
+      ...(e.emphasized != null ? { emphasized: !!e.emphasized } : {}),
+      ...(e.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(e.attendeeFormat) } : {}),
+      ...(Array.isArray(e.flightActivities) ? { flightActivities: normalizeFlightActivities(e.flightActivities) } : {}),
     };
     day.events.push(event);
     day.events.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));

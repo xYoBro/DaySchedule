@@ -43,7 +43,19 @@ Four layouts show the same schedule: **Bands** for a main track with concurrent 
 
 An **Audience** is a group or section. Primary audiences normally appear on the main track. Supporting or unassigned events need **Main Track** enabled to join it. **Specific People** describes people who need something different from the audience's main activity. Concurrent events are allowed; check overlap warnings in the context of the people involved.
 
-Use the app's **Print** action or `Ctrl/Cmd+P` to review days, audience, detail, and page layout. **Readable pages** lets a day continue onto more pages. **Fit each day on one page** can make dense text small; the review warns about that tradeoff. Schedule checks flag missing dates, overlaps, and other items to review without forbidding deliberate concurrent events.
+Use the app's **Print** action or `Ctrl/Cmd+P` to review days, audience and detail. Schedule checks flag dates, ranges and possible assignment conflicts for review.
+
+**Bands** uses the approved day-first paper layout: a prominent main schedule, a separate chronological concurrent-event list, and **Notes & Reminders**. Each event appears in full once. Matching circled numbers link every main block that overlaps a concurrent event; events entirely in gaps remain in the timed concurrent list. Read down the left column, then the right. A third column is a last-resort overflow column after the two-column spacing and type options are exhausted.
+
+Bands uses one US Letter portrait page per day, with half-inch margins. Its optional logo is one inch square, and the notes area reserves 1¼ inches by default. **Customize → Basics** retains the schedule title and optional subtitle and adds logo visibility and notes-space choices. **Emphasize in Bands** in the event inspector marks chosen day anchors or concurrent events independently of **Main Track** placement. **Flight activities** supports shared or differing activity times inside a parent event.
+
+Existing version-1 workbooks still open. New saves use workbook format 2 so older app builds reject them instead of dropping flight activities or Bands settings. Distribute the updated app alongside new workbooks.
+
+**Specific People** stays free text. Existing records print as entered. The event inspector's **Format names for Bands** offers an explicit separator choice and complete preview; it never guesses which words to remove. Use semicolons or one person per line for reliable separation, including names that contain commas. Large rosters stay with their event, and roster length does not choose highlighting.
+
+Screen and print use the same Bands renderer. Fitting reduces spacing before type, with floors of 9 pt for details, 10.5 pt for small-event names, 9.5 pt for large-roster names and 11.5 pt for main titles. Navigation labels have an 8 pt floor; the footer uses 7 pt. Lighter days gain larger main text and more space, up to a cap. If a complete day cannot fit, the editor retains all its content and shows a warning. App printing is blocked, and native printing shows a not-ready notice for that day instead of issuing a partial schedule. Print at actual size on Letter, with browser headers/footers off; duplex can put the next day on the reverse.
+
+Grid, Cards and Phases retain **Readable pages** and **Fit each day on one page**. Readable pages may span sheets; Fit may produce small text. Browser **File → Print** prepares fresh full-detail output for all days using each layout's policy. Use app Print review for particular days, audiences or overview. These other layouts retain flight-activity text; their design review follows the Bands integration.
 
 An audience handout includes primary-audience events and breaks. It is a filtered presentation, not a redaction tool: review named exceptions and day notes before sharing. Check the browser's print preview as paper settings affect the result. When embedded, open the standalone app in its own tab for printing so the host page is not included.
 
@@ -119,9 +131,12 @@ With Chromium and Poppler's `pdftotext` and `pdfinfo` on PATH, verify emitted PD
 
 ```bash
 node support/tests/test-print-pdf.cjs
+node support/tests/test-bands-pdf.cjs
 ```
 
-This checks 48 synthetic event descriptions in all four layouts, both print modes, and Letter/A4 output. It checks one-page fitting and the readable mode's pre-print text measurement. PDF files and results go to the same ignored evidence directory; physical printer output still needs inspection.
+The general PDF suite checks 48 synthetic event descriptions in Grid, Cards and Phases, both print modes, and Letter/A4 output. The dedicated Bands suite covers eight Letter pages: main-only, 15 surnames, 40 surnames with timed flights, and fifteen concurrent events, plus explicit overflow blocking. These optional browser scripts need a separate release run; see the [current Bands verification record](support/docs/BANDS-PRINT-RELEASE.md).
+
+For an interactive review, open `support/tests/bands-integration.html`. Its synthetic workbook loads through the real app parser. **Capture print proof** records the actual print fitter's choices. `freeze-band-proof.cjs` turns a saved capture into script-free HTML using the production renderer and checks that its text matches the browser. `verify-band-proof.py` checks emitted PDFs with pdfplumber and pypdf. These developer tools are not bundled into the app.
 
 Serve the repo root and open the app harnesses in each target browser:
 

@@ -67,13 +67,15 @@ function syncPreviewSelection() {
   const container = document.getElementById('scheduleContainer');
   if (!container) return;
 
-  container.querySelectorAll('[data-event-id].selected').forEach(el => el.classList.remove('selected'));
-  container.querySelectorAll('.notes-list li.selected').forEach(el => el.classList.remove('selected'));
+  container.querySelectorAll('[data-event-id].selected, [data-event-ref].selected, [data-main-context].selected').forEach(el => el.classList.remove('selected'));
+  container.querySelectorAll('[data-note-id].selected').forEach(el => el.classList.remove('selected'));
 
   if (_selection.type === 'event' && _selection.entityId) {
-    container.querySelectorAll('[data-event-id="' + _selection.entityId + '"]').forEach(el => el.classList.add('selected'));
+    container.querySelectorAll('[data-event-id], [data-event-ref], [data-main-context]').forEach(el => {
+      if ((el.dataset.eventId || el.dataset.eventRef || el.dataset.mainContext) === _selection.entityId) el.classList.add('selected');
+    });
   } else if (_selection.type === 'note' && _selection.entityId) {
-    const noteEl = container.querySelector('.notes-list li[data-note-id="' + _selection.entityId + '"]');
+    const noteEl = container.querySelector('[data-note-id="' + _selection.entityId + '"]');
     if (noteEl) noteEl.classList.add('selected');
   }
 }
@@ -282,14 +284,23 @@ function renderSettingsModal(modal) {
   html += '<input type="text" class="settings-input" id="settings-title" value="' + esc(title) + '">';
   html += '<label class="settings-label" for="settings-logo">Unit Logo</label>';
   html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
+  if (currentTheme.skin === 'bands') {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += '<label class="insp-toggle-label"><input type="checkbox" id="settings-band-logo"' + (bandSettings.showLogo ? ' checked' : '') + '> Show logo on Bands</label>';
+  }
   if (Store.getLogo()) {
     html += '<div class="settings-logo-preview"><img alt="Current unit logo" src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
     html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove logo</button></div>';
   }
-  html += '<label class="settings-label" for="settings-contact">Header Line</label>';
+  html += '<label class="settings-label" for="settings-contact">' + (currentTheme.skin === 'bands' ? 'Subtitle (optional)' : 'Header Line') + '</label>';
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
   html += '<label class="settings-label" for="settings-poc">Point of Contact</label>';
   html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
+  if (currentTheme.skin === 'bands') {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += '<label class="settings-label" for="settings-band-notes">Notes &amp; Reminders space</label><select class="settings-input" id="settings-band-notes">' +
+      [[90, '1¼ inches'], [108, '1½ inches'], [144, '2 inches']].map(([value, label]) => '<option value="' + value + '"' + (bandSettings.notesHeight === value ? ' selected' : '') + '>' + label + '</option>').join('') + '</select>';
+  }
   html += '</div>';
   html += '</section>';
 
@@ -428,7 +439,9 @@ function wireSettingsModal(modal) {
       const parsed = parseHexColor(color);
       return parsed && parsed.alpha < 1;
     });
-    const low = ['text', 'textSecondary', 'textMuted'].some(key =>
+    const skin = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin;
+    const textRoles = skin === 'bands' ? ['text', 'textSecondary', 'textMuted', 'accent'] : ['text', 'textSecondary', 'textMuted'];
+    const low = textRoles.some(key =>
       ['bg', 'surface'].some(surface => getColorContrast(colors[key], colors[surface]) < 4.5));
     warning.textContent = transparent ? 'Transparent colors depend on the surface behind them. Choose opaque colors for predictable contrast.'
       : low ? 'Some text has low contrast. Choose darker text on light paper, or lighter text on dark paper.' : 'Text contrast meets the 4.5:1 reading target.';
@@ -461,6 +474,8 @@ function wireSettingsModal(modal) {
   }
 
   // Logo upload
+  modal.querySelector('#settings-band-logo')?.addEventListener('change', event => updateBandSettings({ showLogo: event.target.checked }));
+  modal.querySelector('#settings-band-notes')?.addEventListener('change', event => updateBandSettings({ notesHeight: Number(event.target.value) }));
   const logoInput = modal.querySelector('#settings-logo');
   if (logoInput) {
     logoInput.addEventListener('change', (e) => {
@@ -1418,7 +1433,8 @@ function renderEventInspector(panel, dayId, eventId) {
 
   // Specific People
   html += '<label for="insp-evt-attendees">Specific People</label>';
-  html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="Optional names"' + textReadOnly + '>';
+  html += '<textarea id="insp-evt-attendees" rows="2" placeholder="Optional names"' + textReadOnly + '>' + esc(evt.attendees) + '</textarea>';
+  html += renderAttendeeFormatting(evt, disabledAttr);
 
   // Description
   html += '<label for="insp-evt-desc">Notes</label>';
@@ -1429,6 +1445,7 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '<input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '"' + textReadOnly + '>';
   html += '<label for="insp-evt-poc">POC</label>';
   html += '<input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '"' + textReadOnly + '>';
+  html += renderBandEventFields(evt, readOnly);
 
   // Break toggle
   html += '<div class="insp-toggle-section">';
@@ -1462,9 +1479,6 @@ function wireEventInspector(panel, dayId, eventId) {
       else val = typeof el.value === 'string' ? el.value.trim() : el.value;
       Store.updateEvent(dayId, eventId, { [field]: val });
       renderActiveDay();
-      // Re-highlight selected
-      const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
-      if (band) band.classList.add('selected');
       sessionSave();
       if (field === 'isBreak' || field === 'isMainEvent') {
         renderInspector();
@@ -1491,6 +1505,7 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit('#insp-evt-loc', 'location');
   autoCommit('#insp-evt-poc', 'poc');
   autoCommit('#insp-evt-break', 'isBreak', true);
+  wireBandEventFields(panel, dayId, eventId);
 
   // Highlight override (only present for limited-scope groups)
   const mainCheckbox = panel.querySelector('#insp-evt-main');
@@ -1506,8 +1521,6 @@ function wireEventInspector(panel, dayId, eventId) {
       const updates = { groupId: groupSelect.value };
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
-      const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
-      if (band) band.classList.add('selected');
       sessionSave();
       renderInspector();
       // renderInspector rebuilt the select; keep keyboard focus on it.

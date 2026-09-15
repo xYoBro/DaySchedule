@@ -138,7 +138,7 @@ function closeModal(id) {
   let previous = entry && entry.previousFocus;
   if (previous && !previous.isConnected) {
     previous = previous.id ? document.getElementById(previous.id)
-      : previous.matches('.hdr') ? document.querySelector('#scheduleContainer .hdr') : null;
+      : previous.matches('.hdr, [data-band-customize]') ? document.querySelector('#scheduleContainer .hdr, #scheduleContainer [data-band-customize]') : null;
   }
   if (previous && previous.isConnected && !previous.closest('[inert]')
       && (!active || active.contains(previous))) previous.focus();

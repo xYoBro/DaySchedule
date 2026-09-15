@@ -1,7 +1,7 @@
 /* ── themes.js ── Contract ────────────────────────────────────────────────
  *
  * EXPORTS:
- *   PALETTES             — Object<string, PaletteColors>  5 preset palettes
+ *   PALETTES             — Object<string, PaletteColors>  11 preset palettes
  *   PALETTE_NAMES        — Array<string>                  ["classic", "airforce", ...]
  *   SKIN_NAMES           — Array<string>                  ["bands", "grid", "cards", "phases"]
  *   SKIN_LABELS          — Object<string, {name, desc}>   Display names for skins
@@ -75,7 +75,8 @@ const PALETTES = {
   },
 };
 
-const PALETTE_NAMES = ['classic', 'airforce', 'ocp', 'darkops', 'mono'];
+// Keep deployed palettes and add the approved paper color families.
+const PALETTE_NAMES = ['classic', 'airforce', 'ocp', 'darkops', 'mono', 'forest', 'teal', 'slate', 'plum', 'burgundy', 'copper'];
 
 const PALETTE_LABELS = {
   classic: 'Classic',
@@ -84,6 +85,13 @@ const PALETTE_LABELS = {
   darkops: 'Dark Ops',
   mono: 'Mono',
 };
+
+for (const key of ['forest', 'teal', 'slate', 'plum', 'burgundy', 'copper']) {
+  const paper = BAND_PAPER_THEMES[key];
+  PALETTES[key] = { bg: '#ffffff', text: '#20262c', textSecondary: '#39424b', textMuted: '#525962',
+    accent: paper.colors[0], accentSecondary: paper.colors[8], accentTertiary: paper.colors[1], border: paper.colors[5], surface: paper.colors[2] };
+  PALETTE_LABELS[key] = paper.label;
+}
 
 const SKIN_NAMES = ['bands', 'grid', 'cards', 'phases'];
 

@@ -57,6 +57,7 @@ function renderDayBody_phases(dayId, dayOverride) {
         if (evt.attendees) html += '<span>WHO: ' + esc(evt.attendees) + '</span>';
         html += '</div>';
       }
+      html += renderFlightDetails(evt);
       if (evt.description) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
       }
@@ -86,6 +87,7 @@ function renderDayBody_phases(dayId, dayOverride) {
         if (t.description) {
           html += '<div class="phase-task-detail">' + esc(t.description) + '</div>';
         }
+        html += renderFlightDetails(t);
         if (t.attendees) html += '<div class="phase-task-detail">WHO: ' + esc(t.attendees) + '</div>';
         html += '</div>';
       });

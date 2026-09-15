@@ -203,6 +203,9 @@ function hideLibrary() {
   document.getElementById('libraryView').classList.remove('active');
   document.querySelector('.toolbar').style.display = '';
   document.querySelector('.app-body').style.display = '';
+  // Imports can render while the library hides the editor. Physical paper
+  // fitting needs visible dimensions, so measure again after revealing it.
+  if (document.querySelector('.band-sheet')) renderActiveDay();
   syncHelpEntryPoints();
 }
 

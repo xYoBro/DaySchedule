@@ -48,7 +48,9 @@ function runBootStep(name, fn) {
   }
 }
 
-(async function init() {
+// Expose completion so embedded consumers and the test harness can wait for
+// recovery before loading another workbook; load events alone are too early.
+var appReady = (async function init() {
   runBootStep('wireToolbar', wireToolbar);
   runBootStep('wireLibrary', wireLibrary);
   if (typeof wireWorkbookUi === 'function') runBootStep('wireWorkbookUi', wireWorkbookUi);

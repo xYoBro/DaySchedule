@@ -155,6 +155,48 @@ async function realApp(browser, origin, name) {
   return { checks: 'mobile start/editor, keyboard modal, exact times, cell cancel, new day, custom colors, print review, download/reopen roundtrip, dated duplication, archive/restore, version rename/delete', pageErrors: errors };
 }
 
+async function denseBandsScreen(browser, origin, name) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  try {
+    const page = await context.newPage(), errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.goto(origin + '/app/index.html');
+    await page.evaluate(() => appReady);
+    const fixture = require('./fixtures/bands-approved.json');
+    await page.evaluate(workbook => {
+      workbook.activeScheduleId = 'forty';
+      loadParsedScheduleData(parseScheduleWorkbookContent(JSON.stringify(workbook)));
+      hideLibrary();
+      Store.setActiveDay('sun'); renderActiveDay();
+    }, fixture);
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      const geometry = await page.evaluate(() => {
+        const sheet = document.querySelector('#scheduleContainer .band-sheet'), box = sheet.getBoundingClientRect();
+        const entries = Array.from(sheet.querySelectorAll('article[data-event-id]'));
+        const boxes = entries.concat(Array.from(sheet.querySelectorAll('.page-footer,.reminder-panel'))).map(element => element.getBoundingClientRect());
+        return {count:entries.length, fit:sheet.dataset.fit, columns:Number(sheet.dataset.columns),
+          paper:[box.width*.75,box.height*.75], logo:sheet.querySelector('.logo-slot').getBoundingClientRect().width*.75,
+          contained:boxes.every(item => item.top>=box.top && item.bottom<=box.bottom && item.left>=box.left && item.right<=box.right),
+          documentFits:document.documentElement.scrollWidth<=innerWidth};
+      });
+      assert.equal(geometry.count, 15); assert.equal(geometry.fit, 'true');
+      assert(geometry.columns<=2); assert(geometry.contained);
+      assert.deepEqual(geometry.paper, [612,792]); assert.equal(geometry.logo,72);
+      assert(geometry.documentFits, 'The paper preview scrolls within the app at narrow widths.');
+    }
+    await page.setViewportSize({ width:1440,height:1000 });
+    const supporting=page.locator('#scheduleContainer .attendance-area article').first();
+    const eventId=await supporting.getAttribute('data-event-id');
+    await supporting.press('Enter');
+    await page.locator('#insp-evt-title').fill('Edited supporting activity');
+    assert((await page.locator('#scheduleContainer [data-event-id="'+eventId+'"].selected').textContent()).includes('Edited supporting activity'));
+    await page.screenshot({path:path.join(output,name+'-dense-bands-screen.png')});
+    assert.deepEqual(errors,[]);
+    return {events:15,widths:[1440,390],checks:'fixed Letter paper, complete events, two continuous columns, 72pt logo, keyboard selection and editing'};
+  } finally {await context.close();}
+}
+
 async function main() {
   fs.mkdirSync(output, { recursive: true });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -182,6 +224,7 @@ async function main() {
         }
       }
       result.realApp = await realApp(browser, origin, name);
+      result.denseBandsScreen = await denseBandsScreen(browser, origin, name);
       console.log(name, 'real application checks passed');
     } catch (error) {
       result.error = error.stack;

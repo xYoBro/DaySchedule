@@ -48,7 +48,9 @@ let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
 const SCHEDULE_WORKBOOK_FILE_TYPE = 'dayschedule';
-const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 1;
+// Version 2 protects nested flight activities and Bands settings from being
+// silently removed by a version-1-only app. Existing version-1 files still open.
+const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 2;
 const SCHEDULE_WORKBOOK_DEFAULT_FILENAME = 'DaySchedule.schedule';
 
 let _undoSaveTimer = null;
@@ -158,6 +160,7 @@ function buildVersionState() {
   state.theme = typeof getScheduleTheme === 'function'
     ? cloneScheduleData(getScheduleTheme(fileData && fileData.theme))
     : cloneScheduleData(fileData && fileData.theme || { skin: 'bands', palette: 'classic' });
+  if (fileData?.theme?.bands) state.theme.bands = getBandSettings(fileData.theme);
   return state;
 }
 
@@ -669,6 +672,7 @@ function getScheduleWorkbookSnapshot(options) {
     workbook.schedule = envelope;
   }
 
+  workbook.schemaVersion = SCHEDULE_WORKBOOK_SCHEMA_VERSION;
   return workbook;
 }
 
@@ -775,7 +779,10 @@ function applyDuplicateOptions(state, options) {
   days.forEach(day => {
     if (options.clearNotes) day.notes = [];
     (day.events || []).forEach(event => {
-      if (options.clearContacts) event.poc = '';
+      if (options.clearContacts) {
+        event.poc = '';
+        (event.flightActivities || []).forEach(activity => { activity.poc = ''; });
+      }
       if (options.clearPeople) event.attendees = '';
     });
   });
@@ -1106,7 +1113,7 @@ function parseScheduleWorkbookContent(content, fileName) {
   let workbookData = null;
   let activeSchedule = null;
   if (isWorkbook) {
-    if (parsed.schemaVersion !== undefined && parsed.schemaVersion !== SCHEDULE_WORKBOOK_SCHEMA_VERSION) {
+    if (parsed.schemaVersion !== undefined && ![1, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
       throw new Error('This workbook uses an unsupported format version. Open it in the app version that created it; the file has not been changed.');
     }
     const entries = Array.isArray(parsed.schedules) && parsed.schedules.length ? parsed.schedules : [parsed.schedule];

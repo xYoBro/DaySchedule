@@ -827,7 +827,9 @@ body {
 }
 
 /* ── Selected event highlight ── */
-#scheduleContainer [data-event-id].selected {
+#scheduleContainer [data-event-id].selected,
+#scheduleContainer [data-event-ref].selected,
+#scheduleContainer [data-main-context].selected {
   box-shadow: inset 0 0 0 2px #2558a8;
 }
 .band-conc.selected,
@@ -3983,7 +3985,7 @@ body {
   .footer { margin-top: 5px; }
   .print-page { page-break-after: always; }
   .print-page:last-child { page-break-after: auto; }
-  @page { size: letter portrait; margin: 0.15in; }
+  @page { size: auto; margin: 0.15in; }
 }
 
 @media screen and (max-width: 900px) {
@@ -4091,15 +4093,95 @@ body {
 .print-readable .phase-task-meta, .print-readable .phase-task-detail,
 .print-readable .phase-independent-label { font-size: 12px; }
 .print-readable .cc-attendees { white-space: normal; max-width: none; overflow: visible; }
-/* Supporting events have a complete entry in Also Happening. Removing the
-   duplicate side previews lets the readable handout use the full page width. */
-.print-readable .band-conc-slot { display: none; }
 .print-readable .grid-cell-head,
 .print-readable .grid-banner-head,
 .print-readable .cards-event-head,
 .print-readable .cards-shared-head { flex-wrap: wrap; }
 .print-readable .grid-cell-cont { opacity: 1; }
 .print-readable .phase-block.phase-break { opacity: 1; }
+
+/* Bands keeps its original rows, type hierarchy, badges and time gutter.
+   Crowded activities wrap beneath their own main band instead of being
+   duplicated in a separate appendix. The same markup serves every mode. */
+.bands-print-flow { flex: 1 1 auto; min-height: 0; overflow: visible; }
+.bands-print-section { break-inside: avoid; }
+.bands-print-main, .bands-print-lane { min-width: 0; }
+.bands-inline { display: flex; background: var(--sch-surface); border-bottom: 1px solid var(--sch-border); }
+.bands-inline .bands-print-main { flex: 1; }
+.bands-inline .bands-print-main > .band { min-height: 100%; border-bottom: 0; }
+.bands-inline > .band-conc-slot { display: flex; width: 180px; }
+.bands-stacked { background: var(--sch-surface); border-bottom: 1px solid var(--sch-border); }
+.bands-stacked > .bands-print-lane {
+  margin-left: 73px;
+  padding: 0 12px 8px 14px;
+  border-left: 3px solid var(--accent, var(--sch-accent));
+}
+.bands-stacked .bands-print-items,
+.bands-standalone .bands-print-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  align-items: start;
+}
+.bands-standalone { margin: 8px 0; padding-left: 76px; }
+.bands-print-kicker {
+  font-size: var(--band-meta-fs, 7.5px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--sch-text-muted);
+}
+.bands-stacked .band-conc, .bands-standalone .band-conc {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--sch-border);
+}
+.bands-print-event, .bands-print-reference, .bands-print-context {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
+}
+.bands-print-flow .cc-attendees { white-space: pre-wrap; max-width: none; overflow: visible; }
+.bands-print-description { white-space: pre-wrap; }
+.bands-print-reference { opacity: 1; }
+.bands-print-relationship { margin-top: 3px; }
+.bands-print-flow .band-conc-slot:empty { display: flex; }
+
+/* Print-only sheet geometry. Width fits Letter and A4 without scaling.
+   Header/logo/notes retain the original Bands design. */
+.print-page.print-readable.skin-bands { width: 7.9in; padding: 0.2in 0.15in 0.18in; }
+.print-readable.skin-bands[data-print-paginated] { height: 10.65in; min-height: 0; flex: none; }
+.print-readable.skin-bands .hdr { flex: none; }
+.print-readable.skin-bands .hdr-text { min-width: 0; }
+.print-readable.skin-bands .hdr-title { overflow-wrap: anywhere; }
+.print-readable.skin-bands .print-handout-label { flex: none; }
+.print-readable.skin-bands .footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  flex: none;
+  margin-top: 8px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.bands-print-page-number { white-space: nowrap; }
+.print-readable.skin-bands.bands-print-natural { height: auto; }
+.bands-print-natural .bands-print-section,
+.bands-print-natural .bands-print-event { break-inside: auto; }
+
+/* Editing affordances do not change the printed design. */
+.bands-screen { align-self: flex-start; }
+.bands-screen .bands-print-flow { flex: 1 0 auto; }
+.bands-screen .bands-print-event[role="button"],
+.bands-screen .bands-print-reference[role="button"] { min-height: 44px; cursor: pointer; }
+.bands-screen .bands-print-event[role="button"]:focus-visible,
+.bands-screen .bands-print-reference[role="button"]:focus-visible { outline: 2px solid rgb(var(--app-accent)); outline-offset: 2px; }
+.bands-screen .note-select { min-height: 44px; overflow-wrap: anywhere; }
+
+@media print {
+  #printContainer .print-readable.skin-bands { width: 7.9in; }
+}
 
 .print-review-modal { max-width: 680px; }
 .print-review-days { border: 1px solid var(--chrome-border); border-radius: 8px; padding: 10px; margin-bottom: 14px; }

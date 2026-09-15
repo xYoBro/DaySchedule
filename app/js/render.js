@@ -39,7 +39,7 @@ function clearDaggerFootnotes() { _daggerFootnotes = []; }
 
 // Skin dispatcher registry
 const SKIN_RENDERERS = {
-  bands: function(dayId, day) { return renderDayBody_band(dayId, day); },
+  bands: function(dayId, day, options) { return renderDayBody_band(dayId, day, options); },
   grid:  function(dayId, day) { return typeof renderDayBody_grid   === 'function' ? renderDayBody_grid(dayId, day)   : ''; },
   cards: function(dayId, day) { return typeof renderDayBody_cards  === 'function' ? renderDayBody_cards(dayId, day)  : ''; },
   phases:function(dayId, day) { return typeof renderDayBody_phases === 'function' ? renderDayBody_phases(dayId, day) : ''; },
@@ -74,18 +74,30 @@ function renderDay(dayId) {
 
   // Set skin class on page
   const page = container.closest('.page') || container;
-  page.className = 'page skin-' + theme.skin;
+  page.className = 'page skin-' + theme.skin + (theme.skin === 'bands' ? ' bands-screen band-page' : '');
 
   // Dispatch to skin renderer
   const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
 
   let html = '';
-  html += renderHeader(day);
-  html += renderer(dayId);
-  html += renderFooter();
+  if (theme.skin === 'bands') html = BandLayout.page(day, { interactive: true });
+  else {
+    html += renderHeader(day);
+    html += renderer(dayId, day, { interactive: true });
+    html += renderFooter();
+  }
   container.innerHTML = html;
 
-  applyPrintScaling();
+  if (theme.skin === 'bands') {
+    removePrintScaling(page);
+    const result = BandLayout.fit(container.querySelector('.band-sheet'));
+    const notice = document.createElement('div');
+    notice.className = 'band-fit-notice'; notice.setAttribute('role', 'status');
+    if (!result.fits) notice.textContent = 'This day exceeds the readable one-page limits. All content remains here for editing. Reduce or revise the content before printing.';
+    container.appendChild(notice);
+  }
+  else applyPrintScaling();
+  if (typeof syncPreviewSelection === 'function') syncPreviewSelection();
 }
 
 function renderHeader(day) {
@@ -111,10 +123,11 @@ function renderHeader(day) {
   return html;
 }
 
-function renderNotes(notes) {
-  let html = '<div class="notes">';
+function renderNotes(notes, options) {
+  const bands = options && options.bands;
+  let html = '<div class="notes' + (bands ? ' bands-print-section bands-print-wide bands-print-notes' : '') + '">';
   html += '<div class="notes-label">Notes</div>';
-  html += '<ul class="notes-list">';
+  html += '<ul class="notes-list' + (bands ? ' bands-print-items' : '') + '">';
   notes.forEach(n => {
     if (!n.text && !n.category) {
       // Freshly added, nothing typed yet. Visible on screen so it can be
@@ -123,7 +136,7 @@ function renderNotes(notes) {
       html += '<li data-note-id="' + esc(n.id) + '" class="note-empty"><button type="button" class="note-select"><em>Empty note</em></button></li>';
       return;
     }
-    html += '<li data-note-id="' + esc(n.id) + '"><button type="button" class="note-select">';
+    html += '<li data-note-id="' + esc(n.id) + '"' + (bands ? ' class="bands-print-event bands-print-note"' : '') + '><button type="button" class="note-select' + (bands ? ' bands-print-description' : '') + '">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</button></li>';
   });
@@ -146,6 +159,16 @@ function renderFooter() {
   const printDate = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
   const parts = [f.contact, f.poc ? 'Schedule POC: ' + f.poc : '', 'Printed: ' + printDate].filter(Boolean);
   return '<div class="footer">' + esc(parts.join(' \u00b7 ')) + '</div>';
+}
+
+// Until the other layouts receive their own design review, retain newly added
+// flight details in their existing event content rather than dropping the data.
+function renderFlightDetails(event) {
+  if (!event.flightActivities?.length) return '';
+  return '<span class="flight-details-plain">' + event.flightActivities.map(activity =>
+    '<span class="flight-detail-line"><strong>' + esc(activity.flight || 'Unnamed flight') + '</strong> · ' +
+    [activity.startTime + '-' + activity.endTime, activity.title, activity.location,
+      activity.poc ? 'POC: ' + activity.poc : '', activity.description].filter(Boolean).map(esc).join(' · ') + '</span>').join('') + '</span>';
 }
 
 function formatDateDisplay(dateStr) {

@@ -4,7 +4,7 @@ describe('Editor — reliability and keyboard regressions', () => {
     const seeded = await seedUiScheduleFile('Nested dialogs', { skin: 'bands' });
     await openSchedule(seeded.fileName);
     await claimCurrentScheduleLock({ silent: true });
-    document.querySelector('.hdr').focus();
+    document.querySelector('[data-band-customize]').focus();
     openSettingsModal();
     document.querySelector('#staleWarningModal .modal').innerHTML = '<h2>Review recovery</h2><button>Cancel</button>';
     openModal('staleWarningModal');
@@ -12,7 +12,7 @@ describe('Editor — reliability and keyboard regressions', () => {
     assert(document.getElementById('staleWarningModal').contains(document.activeElement));
     closeModal('staleWarningModal');
     closeSettingsModal();
-    assert.equal(document.activeElement, document.querySelector('.hdr'));
+    assert.equal(document.activeElement, document.querySelector('[data-band-customize]'));
   });
 
   it('rejects mutations when an already open editor loses edit access', async () => {

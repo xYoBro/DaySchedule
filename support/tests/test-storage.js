@@ -72,7 +72,7 @@ describe('Persistence — .schedule workbook format', () => {
     const parsedJson = JSON.parse(content);
 
     assert.equal(parsedJson.fileType, 'dayschedule');
-    assert.equal(parsedJson.schemaVersion, 1);
+    assert.equal(parsedJson.schemaVersion, 2);
     assert.equal(parsedJson.activeScheduleId, 'workbook-drill');
     assert.equal(parsedJson.schedule.name, 'Workbook Drill');
     assert.equal(parsedJson.schedules.length, 1);

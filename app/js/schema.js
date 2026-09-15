@@ -101,7 +101,32 @@ function normalizeEvent(raw) {
     attendees:   normalizeText(raw.attendees),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
+    ...(raw.emphasized != null ? { emphasized: !!raw.emphasized } : {}),
+    ...(raw.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(raw.attendeeFormat) } : {}),
+    ...(Array.isArray(raw.flightActivities) ? { flightActivities: normalizeFlightActivities(raw.flightActivities) } : {}),
   };
+}
+
+function normalizeAttendeeFormat(value) {
+  return ['suggested', 'lines', 'spaces', 'text'].includes(value) ? value : 'text';
+}
+
+function normalizeFlightActivities(activities) {
+  return normalizeEntityList(activities, raw => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    // Keep incomplete activities reviewable instead of silently discarding work.
+    return {
+      id: sanitizeEntityId(raw.id, 'flight'), flight: normalizeText(raw.flight),
+      title: normalizeText(raw.title), startTime: normalizeText(raw.startTime),
+      endTime: normalizeText(raw.endTime), location: normalizeText(raw.location),
+      poc: normalizeText(raw.poc), description: normalizeText(raw.description),
+    };
+  }, 'flight');
+}
+
+function getBandSettings(theme) {
+  const raw = theme && theme.bands || {};
+  return { showLogo: raw.showLogo !== false, notesHeight: [90, 108, 144].includes(raw.notesHeight) ? raw.notesHeight : 90 };
 }
 
 function normalizeGroup(raw) {
@@ -189,7 +214,7 @@ function normalizePersistedState(raw, options) {
   };
 }
 
-// Shape-level check only: keeps the three known keys as the right types.
+// Shape-level check: preserves theme choices and normalized Bands settings.
 // Value whitelisting (skin/palette names, hex colors) lives in
 // getScheduleTheme (themes.js), the one funnel every consumer reads through.
 function normalizeScheduleTheme(raw) {
@@ -200,5 +225,6 @@ function normalizeScheduleTheme(raw) {
   if (raw.customColors && typeof raw.customColors === 'object' && !Array.isArray(raw.customColors)) {
     theme.customColors = raw.customColors;
   }
-  return (theme.skin || theme.palette || theme.customColors) ? theme : null;
+  if (raw.bands && typeof raw.bands === 'object') theme.bands = getBandSettings(raw);
+  return (theme.skin || theme.palette || theme.customColors || theme.bands) ? theme : null;
 }

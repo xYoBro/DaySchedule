@@ -861,7 +861,9 @@ body {
 }
 
 /* ── Selected event highlight ── */
-#scheduleContainer [data-event-id].selected {
+#scheduleContainer [data-event-id].selected,
+#scheduleContainer [data-event-ref].selected,
+#scheduleContainer [data-main-context].selected {
   box-shadow: inset 0 0 0 2px #2558a8;
 }
 .band-conc.selected,
@@ -4017,7 +4019,7 @@ body {
   .footer { margin-top: 5px; }
   .print-page { page-break-after: always; }
   .print-page:last-child { page-break-after: auto; }
-  @page { size: letter portrait; margin: 0.15in; }
+  @page { size: auto; margin: 0.15in; }
 }
 
 @media screen and (max-width: 900px) {
@@ -4125,15 +4127,95 @@ body {
 .print-readable .phase-task-meta, .print-readable .phase-task-detail,
 .print-readable .phase-independent-label { font-size: 12px; }
 .print-readable .cc-attendees { white-space: normal; max-width: none; overflow: visible; }
-/* Supporting events have a complete entry in Also Happening. Removing the
-   duplicate side previews lets the readable handout use the full page width. */
-.print-readable .band-conc-slot { display: none; }
 .print-readable .grid-cell-head,
 .print-readable .grid-banner-head,
 .print-readable .cards-event-head,
 .print-readable .cards-shared-head { flex-wrap: wrap; }
 .print-readable .grid-cell-cont { opacity: 1; }
 .print-readable .phase-block.phase-break { opacity: 1; }
+
+/* Bands keeps its original rows, type hierarchy, badges and time gutter.
+   Crowded activities wrap beneath their own main band instead of being
+   duplicated in a separate appendix. The same markup serves every mode. */
+.bands-print-flow { flex: 1 1 auto; min-height: 0; overflow: visible; }
+.bands-print-section { break-inside: avoid; }
+.bands-print-main, .bands-print-lane { min-width: 0; }
+.bands-inline { display: flex; background: var(--sch-surface); border-bottom: 1px solid var(--sch-border); }
+.bands-inline .bands-print-main { flex: 1; }
+.bands-inline .bands-print-main > .band { min-height: 100%; border-bottom: 0; }
+.bands-inline > .band-conc-slot { display: flex; width: 180px; }
+.bands-stacked { background: var(--sch-surface); border-bottom: 1px solid var(--sch-border); }
+.bands-stacked > .bands-print-lane {
+  margin-left: 73px;
+  padding: 0 12px 8px 14px;
+  border-left: 3px solid var(--accent, var(--sch-accent));
+}
+.bands-stacked .bands-print-items,
+.bands-standalone .bands-print-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  align-items: start;
+}
+.bands-standalone { margin: 8px 0; padding-left: 76px; }
+.bands-print-kicker {
+  font-size: var(--band-meta-fs, 7.5px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--sch-text-muted);
+}
+.bands-stacked .band-conc, .bands-standalone .band-conc {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--sch-border);
+}
+.bands-print-event, .bands-print-reference, .bands-print-context {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
+}
+.bands-print-flow .cc-attendees { white-space: pre-wrap; max-width: none; overflow: visible; }
+.bands-print-description { white-space: pre-wrap; }
+.bands-print-reference { opacity: 1; }
+.bands-print-relationship { margin-top: 3px; }
+.bands-print-flow .band-conc-slot:empty { display: flex; }
+
+/* Print-only sheet geometry. Width fits Letter and A4 without scaling.
+   Header/logo/notes retain the original Bands design. */
+.print-page.print-readable.skin-bands { width: 7.9in; padding: 0.2in 0.15in 0.18in; }
+.print-readable.skin-bands[data-print-paginated] { height: 10.65in; min-height: 0; flex: none; }
+.print-readable.skin-bands .hdr { flex: none; }
+.print-readable.skin-bands .hdr-text { min-width: 0; }
+.print-readable.skin-bands .hdr-title { overflow-wrap: anywhere; }
+.print-readable.skin-bands .print-handout-label { flex: none; }
+.print-readable.skin-bands .footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  flex: none;
+  margin-top: 8px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.bands-print-page-number { white-space: nowrap; }
+.print-readable.skin-bands.bands-print-natural { height: auto; }
+.bands-print-natural .bands-print-section,
+.bands-print-natural .bands-print-event { break-inside: auto; }
+
+/* Editing affordances do not change the printed design. */
+.bands-screen { align-self: flex-start; }
+.bands-screen .bands-print-flow { flex: 1 0 auto; }
+.bands-screen .bands-print-event[role="button"],
+.bands-screen .bands-print-reference[role="button"] { min-height: 44px; cursor: pointer; }
+.bands-screen .bands-print-event[role="button"]:focus-visible,
+.bands-screen .bands-print-reference[role="button"]:focus-visible { outline: 2px solid rgb(var(--app-accent)); outline-offset: 2px; }
+.bands-screen .note-select { min-height: 44px; overflow-wrap: anywhere; }
+
+@media print {
+  #printContainer .print-readable.skin-bands { width: 7.9in; }
+}
 
 .print-review-modal { max-width: 680px; }
 .print-review-days { border: 1px solid var(--chrome-border); border-radius: 8px; padding: 10px; margin-bottom: 14px; }
@@ -4270,6 +4352,355 @@ textarea:focus-visible,
 }
 
 </style>
+  <style>
+/* Scoped paper styles from the approved day-first prototype. */
+.band-sheet{font-family:Arial,Helvetica,sans-serif;font-synthesis:none;text-align:left}
+.band-sheet,.band-sheet *{box-sizing:border-box}
+.band-sheet .notes-label{margin-top:12px}
+.band-sheet{width:var(--page-width);height:var(--page-height);padding:var(--page-margin);background:#fff;box-shadow:0 5px 20px #24483126;color:#18382b;display:flex;flex-direction:column;font-size:var(--body);line-height:1.2;--type-scale:1;--note-scale:1;--body:max(var(--min-detail),calc(10pt * var(--type-scale)));--main-title:max(var(--min-main-title),calc((13.5pt + var(--main-title-grow,0pt)) * var(--type-scale)));--small-title:calc(11.5pt * var(--type-scale));--name:max(var(--min-name),calc(12pt * var(--type-scale)));--given:max(var(--min-detail),calc(10pt * var(--type-scale)));--rank:max(var(--min-detail),calc(8.5pt * var(--type-scale)));--time:max(var(--min-detail),calc(10.5pt * var(--type-scale)));--row-pad:3pt;--row-gap:2pt;--session-pad:4pt;--roster-leading:max(12pt,calc(14pt * var(--type-scale)));--roster-gap:1pt;--notes-height:90pt}
+.band-sheet *{min-width:0}
+.band-sheet .page-header{display:grid;grid-template-columns:var(--logo-size) 1fr;gap:15pt;align-items:center;padding-bottom:7pt;border-bottom:1.5pt solid #284e35;margin-bottom:8pt;flex-shrink:0}
+.band-sheet .heading-content{display:block}
+.band-sheet .page-title{font-size:var(--title-size,16pt);line-height:1.12;font-weight:700;letter-spacing:-.2pt;margin:0 0 6pt;overflow-wrap:anywhere}
+.band-sheet .page-header h2{font-size:23pt;font-weight:700;letter-spacing:-.6pt;line-height:1;margin:0 7pt 0 0;display:inline}
+.band-sheet .date{font-size:9.5pt;white-space:nowrap;display:inline}
+.band-sheet .logo-slot{width:var(--logo-size);height:var(--logo-size);border:.65pt solid #a0b5a4;display:flex;justify-content:center;align-items:center;font-size:8pt;line-height:1.25;text-align:center;color:#5b7460;font-weight:700;letter-spacing:.7pt}
+.band-sheet .logo-slot img{width:100%;height:100%;object-fit:contain}
+.band-sheet .logo-slot.has-logo{border:0}
+.band-sheet .logo-slot img:not([src]){display:none}
+.band-sheet .sheet-body{flex-shrink:0}
+.band-sheet .section-title{position:relative;font-size:11pt;line-height:1.2;margin:0 0 5pt;font-weight:700}
+.band-sheet .section-title small{font-size:9pt;font-weight:400;margin-left:6pt}
+.band-sheet .main-list{display:grid;gap:var(--row-gap)}
+.band-sheet .main-event{display:grid;grid-template-columns:78pt 1fr;gap:6pt;background:#f0f5f0;border-left:2pt solid #356544;padding:var(--row-pad) 6pt;break-inside:avoid}
+.band-sheet .main-event.break{background:#f6f7f1;border-color:#b1bca9}
+.band-sheet .main-event.flight{background:#f6f2e9;border-color:#a17d3b}
+.band-sheet .time{font-size:var(--time);font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;line-height:1.2;flex-shrink:0}
+.band-sheet .duration{font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));font-weight:400;margin-left:3pt;color:#58705d}
+.band-sheet .event-title{display:inline}
+.band-sheet .main-event h3{display:inline;font-size:var(--main-title);line-height:1.1;margin:0}
+.band-sheet .audience{font-size:max(var(--min-detail),calc(9pt * var(--type-scale)));font-weight:700}
+.band-sheet .main-event .audience{margin-left:4pt}
+.band-sheet .event-meta,.band-sheet .description{font-size:var(--body);line-height:1.2}
+.band-sheet .main-event .event-meta{display:inline;margin:0 0 0 5pt;color:#375844}
+.band-sheet .description{margin:2pt 0 0}
+.band-sheet .attendance-area{margin-top:9pt}
+.band-sheet .attendance-columns{display:grid;grid-template-columns:1fr 1fr;gap:15pt;align-items:start}
+.band-sheet .event-column{display:flex;flex-direction:column}
+.band-sheet .small-event{border-bottom:.6pt solid #b3c4b4;padding:var(--session-pad) 0;break-inside:avoid}
+.band-sheet .small-event:first-child{padding-top:0}
+.band-sheet .small-event header{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:baseline;gap:7pt}
+.band-sheet .small-event h3{font-size:var(--small-title);line-height:1.13;margin:0}
+.band-sheet .small-event .time{font-size:max(var(--min-detail),calc(10pt * var(--type-scale)))}
+.band-sheet .small-event .audience{margin:2pt 0}
+.band-sheet .attendees{font-size:var(--body);line-height:1.22;margin:2pt 0}
+.band-sheet .person-label strong{font-size:var(--name);line-height:1}
+.band-sheet .given{font-size:var(--given);line-height:1}
+.band-sheet .rank{font-size:var(--rank);line-height:1;color:#506f56;font-weight:400;white-space:nowrap}
+.band-sheet .small-event .event-meta{margin:2pt 0 0}
+.band-sheet .small-event .description{margin:2pt 0 0}
+.band-sheet .large-event{border:.8pt solid #b3c4b4;margin-top:var(--large-gap,8pt);break-inside:avoid}
+.band-sheet .large-event:first-child{margin-top:0}
+.band-sheet .large-head{background:#fff;border-bottom:.6pt solid #b1c5b2;padding:6pt 7pt}
+.band-sheet .large-head header{display:flex;align-items:baseline;justify-content:space-between;gap:8pt}
+.band-sheet .large-head h3{font-size:var(--small-title);margin:0;line-height:1.1}
+.band-sheet .large-head .time{font-size:calc(11.5pt * var(--type-scale))}
+.band-sheet .large-head .event-meta{margin:3pt 0 0}
+.band-sheet .large-head .description{margin:2pt 0 0}
+.band-sheet .roster-body{padding:5pt 7pt 6pt}
+.band-sheet .roster-title{display:flex;justify-content:space-between;gap:6pt;margin:0 0 5pt;font-size:max(var(--min-label),calc(8pt * var(--type-scale)));font-weight:700;line-height:1.2}
+.band-sheet .roster-columns{display:grid;column-gap:9pt}
+.band-sheet .roster-column{display:grid;row-gap:var(--roster-gap)}
+.band-sheet .roster-person{font-size:var(--name);line-height:var(--roster-leading);min-height:var(--roster-leading);padding:0;background:linear-gradient(to top,#d4e1d4 .35pt,transparent .35pt)}
+.band-sheet .reminder-area{margin-top:auto;padding-top:6pt;flex-shrink:0}
+.band-sheet .reminder-panel{min-height:var(--notes-height);height:var(--notes-height);border-top:1pt solid #2c5638;padding-top:6pt}
+.band-sheet .reminder-heading{font-size:11pt;margin:0 0 5pt;line-height:1.2}
+.band-sheet .reminder-heading small{font-size:9pt;font-weight:400;margin-left:6pt}
+.band-sheet .reminders{display:grid;grid-template-columns:1fr 1fr;gap:0 17pt;align-items:start}
+.band-sheet .reminder-column{display:grid;row-gap:4pt}
+.band-sheet .reminder{margin:0;font-size:max(var(--min-detail),calc(9.5pt * var(--note-scale)));line-height:1.23;padding-left:8pt;position:relative}
+.band-sheet .reminder::before{content:'•';position:absolute;left:0;color:#4a6a50}
+.band-sheet .reminder strong{font-weight:700}
+.band-sheet .page-footer{display:flex;justify-content:space-between;gap:10pt;font-size:7.5pt;line-height:1.2;border-top:.5pt solid #b9cab9;padding-top:4pt;margin-top:3pt;flex-shrink:0;color:#537259}
+.band-sheet .print-error{display:none}
+.band-sheet.standard{--row-pad:2pt;--row-gap:1pt;--session-pad:3pt;--roster-leading:max(12pt,calc(13.5pt * var(--type-scale)));--roster-gap:.4pt;--large-gap:6pt}
+.band-sheet.compact{--row-pad:1.25pt;--row-gap:.5pt;--session-pad:2pt;--roster-leading:max(12pt,calc(13pt * var(--type-scale)));--roster-gap:.2pt;--large-gap:4pt}
+.band-sheet.compact .main-event .description{display:inline;margin:0}
+.band-sheet.compact .main-event .description::before{content:' · ';font-weight:700}
+.band-sheet.compact .main-event h3{font-size:var(--main-title)}
+.band-sheet.compact .attendance-area{margin-top:7pt}
+.band-sheet.compact .large-head{padding:4pt 6pt}
+.band-sheet.compact .roster-body{padding:4pt 6pt 5pt}
+.band-sheet.compact .roster-title{margin-bottom:4pt}
+.band-sheet.compact .small-event .description{display:inline;margin:0}
+.band-sheet.compact .small-event .description::before{content:' · ';font-weight:700}
+.band-sheet.compact .small-event .event-meta{display:inline;margin:0}
+.band-sheet.compact .small-event .attendees{margin-bottom:1pt}
+.band-sheet.compact .small-event .audience{margin-bottom:1pt}
+.band-sheet.compact .small-event .event-meta:empty{display:none}
+@media print{.band-sheet .screen-only{display:none!important}
+.band-sheet{margin:0;box-shadow:none;break-after:page;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.band-sheet[data-fit="false"] .page-header,.band-sheet[data-fit="false"] .sheet-body,.band-sheet[data-fit="false"] .reminder-area{display:none}
+.band-sheet[data-fit="false"] .print-error{display:block;font-size:14pt;line-height:1.5;margin:40pt;border:2pt solid #444;padding:20pt}}
+.band-sheet.standard{--row-gap:.75pt}
+.band-sheet .start-refs{display:flex;align-items:flex-start;justify-content:flex-end;gap:3pt;flex-wrap:wrap}
+.band-sheet .start-ref{display:inline-flex;align-items:center;justify-content:center;vertical-align:baseline;flex-shrink:0;width:12pt;height:12pt;border:.65pt solid #829b89;border-radius:50%;font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));font-weight:700;line-height:1;color:#3e5d49;text-decoration:none;background:#fff;font-variant-numeric:tabular-nums}
+.band-sheet .event-ref{margin-right:4pt;position:relative;top:-.5pt}
+.band-sheet .gap-time{font-variant-numeric:tabular-nums;font-weight:700}
+@media screen{.band-sheet a.start-ref:hover{background:#e4eddf;border-color:#284e35}
+.band-sheet .event:target{outline:2pt solid #ad8337;outline-offset:2pt}}
+.band-sheet .large-event.highlighted{border-color:#87a58b}
+.band-sheet .large-event.highlighted .large-head{background:#edf4ed}
+.band-sheet .large-event.highlighted .large-head h3{font-size:calc(14pt * var(--type-scale))}
+.band-sheet .small-event.highlighted{background:#edf4ed;border:.8pt solid #87a58b;padding:4pt 6pt;margin:3pt 0}
+.band-sheet .small-event.highlighted h3{font-size:var(--main-title)}
+.band-sheet .main-panel>.section-title{background:#254d38;color:#fff;font-size:13.5pt;line-height:1.15;padding:3pt 7pt;margin-bottom:3pt}
+.band-sheet .main-panel>.section-title small{color:#edf3ed;font-size:8.5pt}
+.band-sheet .main-panel .main-event{grid-template-columns:86pt 1fr;gap:7pt;border-left:2pt solid #3a6247;background:#f1f5f0;padding:calc(var(--row-pad) + var(--main-extra,0pt)) 6pt}
+.band-sheet .main-event .time{align-self:stretch;margin:calc(-1 * (var(--row-pad) + var(--main-extra,0pt))) 0 calc(-1 * (var(--row-pad) + var(--main-extra,0pt))) -6pt;padding:calc(var(--row-pad) + var(--main-extra,0pt)) 5pt;background:#dce7dd;font-size:max(var(--min-detail),calc(11pt * var(--type-scale)))}
+.band-sheet .main-event .duration{font-size:max(var(--min-label),calc(7pt * var(--type-scale)))}
+.band-sheet .main-event.break .time{background:#e7ebe0}
+.band-sheet .main-event.flight .time{background:#eae4d6}
+.band-sheet .main-event.highlighted{background:#e2ebe3;border-left-color:#234b36;outline:.6pt solid #8ca18f;outline-offset:-.6pt}
+.band-sheet .main-event.highlighted>.time{background:#355b43;color:#fff}
+.band-sheet .main-event.highlighted>.time .duration{color:#edf3ed}
+@media screen{.band-sheet .main-event.highlighted:target{outline:2pt solid #ad8337;outline-offset:2pt}}
+.band-sheet .attendance-area{color:#2c3c32}
+.band-sheet .attendance-area>.section-title{font-size:10pt;font-weight:700;letter-spacing:.25pt;color:#536558}
+.band-sheet .large-event{border-color:#c6cfc5}
+.band-sheet .large-event.highlighted{border-color:#a8baa7}
+.band-sheet .large-event.highlighted .large-head{background:#f2f5ef;border-top:1pt solid #789579}
+.band-sheet .large-event.highlighted .large-head h3{font-size:calc(12pt * var(--type-scale))}
+.band-sheet .small-event.highlighted h3{font-size:calc(12pt * var(--type-scale))}
+.band-sheet .roster-person{background:linear-gradient(to top,#e1e7df .35pt,transparent .35pt)}
+.band-sheet.compact{--session-pad:1.5pt;--roster-leading:calc(12.75pt * var(--type-scale))}
+.band-sheet .page-header{grid-template-columns:var(--logo-size) minmax(0,1fr) auto;gap:14pt;border-bottom:0;padding-bottom:0;margin-bottom:9pt}
+.band-sheet .page-title{font-size:var(--title-size,19pt);margin:0;line-height:1.12}
+.band-sheet .schedule-label{font-size:10pt;font-weight:400;line-height:1.2;margin:6pt 0 0;overflow-wrap:anywhere;color:#52665a}
+.band-sheet .day-heading{text-align:right}
+.band-sheet .page-header h2{font-size:17pt;letter-spacing:-.3pt;display:block;margin:0 0 6pt;line-height:1.1}
+.band-sheet .date{font-size:9pt;line-height:1.2;display:block;margin:0}
+.band-sheet .page-footer{align-items:center;font-size:7pt}
+.band-sheet .page-footer>span:last-child{text-align:right}
+.band-sheet .main-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2pt 8pt}
+.band-sheet .main-details{display:flex;flex-wrap:wrap;gap:2pt 8pt;font-size:max(var(--min-detail),calc(9.5pt * var(--type-scale)));line-height:1.2;color:#375844}
+.band-sheet .main-details:empty{display:none}
+.band-sheet .detail-field small{font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));font-weight:400;color:#53685a}
+.band-sheet .main-event .description,.band-sheet.compact .main-event .description{display:block;font-size:var(--body);line-height:1.2;margin:2pt 0 0;color:#374c3e}
+.band-sheet.compact .main-event .description::before{content:none}
+.band-sheet .start-refs{align-self:start;padding-top:1pt;min-width:22pt}
+.band-sheet .source-ref{font-size:max(var(--min-label),calc(8pt * var(--type-scale)));line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;text-decoration:none;color:#4d6956}
+.band-sheet .flight-table{border-collapse:collapse;width:100%;margin:5pt 0 1pt;table-layout:fixed;text-align:left;font-size:max(var(--min-detail),calc(9.5pt * var(--type-scale)));line-height:1.16}
+.band-sheet .flight-table thead{font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));color:#665f50}
+.band-sheet .flight-table th,.band-sheet .flight-table td{vertical-align:top;padding:3pt 5pt;border-bottom:.5pt solid #d3d2c5;overflow-wrap:anywhere}
+.band-sheet .flight-table thead th{padding-top:0;font-weight:400}
+.band-sheet .flight-table th:first-child{width:48pt;padding-left:0}
+.band-sheet .flight-table thead th:last-child{width:115pt}
+.band-sheet .flight-table tbody th{font-size:max(var(--min-detail),calc(11pt * var(--type-scale)));font-weight:700}
+.band-sheet .flight-table tbody tr:last-child>*{border-bottom:0}
+.band-sheet .flight-table td strong{font-weight:400}
+.band-sheet .flight-time{display:inline-block;min-width:58pt;font-size:max(var(--min-detail),calc(8.5pt * var(--type-scale)));font-weight:700;margin:0 5pt 0 0;font-variant-numeric:tabular-nums}
+.band-sheet .flight-poc,.band-sheet .flight-description{display:block;margin-top:1pt}
+.band-sheet .flight-poc{font-size:max(var(--min-detail),calc(8.5pt * var(--type-scale)));color:#526052}
+@media screen{.band-sheet .source-ref:hover{text-decoration:underline}}
+.band-sheet .concurrent-heading{display:flex;align-items:baseline;justify-content:space-between;gap:4pt 12pt;margin-bottom:5pt;flex-wrap:wrap}
+.band-sheet .concurrent-heading>.section-title{font-size:10pt;color:#536558;letter-spacing:.25pt;margin:0}
+.band-sheet.compact .main-event .description{margin-top:1pt}
+.band-sheet.compact{--row-pad:1pt}
+.band-sheet .flight-activity+.flight-activity{margin-top:3pt}
+.band-sheet .attendance-columns{row-gap:4pt}
+.band-sheet .main-event.has-starts{grid-template-columns:86pt 1fr}
+.band-sheet .main-details{margin-left:auto}
+.band-sheet .start-refs{display:flex;align-items:center;align-self:center;justify-content:flex-end;gap:4pt;flex-wrap:wrap;padding:0;min-width:0;margin-left:auto}
+.band-sheet .reference-label{font-size:max(var(--min-detail),calc(8.5pt * var(--type-scale)));line-height:1.2;font-weight:400;color:#435e4b;white-space:nowrap}
+.band-sheet .reference-badges{display:flex;align-items:center;gap:3pt;flex-wrap:wrap}
+.band-sheet .start-ref{width:12pt;height:12pt;font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));border-color:#728e7b;color:#365741;background:#fff}
+.band-sheet .source-ref{line-height:1;text-decoration:none}
+@media screen{.band-sheet .source-ref:hover{text-decoration:none}}
+.band-sheet .small-event h3,.band-sheet .large-head h3{font-weight:400;color:#3d4e42}
+.band-sheet .small-event h3{font-size:max(var(--min-detail),calc(10.5pt * var(--type-scale)))}
+.band-sheet .small-event .time,.band-sheet .large-head .time{font-weight:400;font-size:max(var(--min-detail),calc(9.5pt * var(--type-scale)));color:#405347}
+.band-sheet .small-event.highlighted h3,.band-sheet .large-event.highlighted .large-head h3{font-weight:400;font-size:calc(11.5pt * var(--type-scale))}
+.band-sheet .small-event .attendees{display:flex;flex-wrap:wrap;align-items:baseline;gap:1pt 9pt;margin:2pt 0 2.5pt}
+.band-sheet .small-event .person-label{max-width:100%}
+.band-sheet .attendance-area .person-label strong{color:#172f23;font-weight:700}
+.band-sheet .attendance-area .given{color:#34473b}
+.band-sheet .attendance-area .rank{color:#516457}
+.band-sheet .small-event .event-meta,.band-sheet .small-event .description,.band-sheet .large-head .event-meta,.band-sheet .large-head .description{color:#46564b}
+.band-sheet .small-event .audience{font-size:max(var(--min-detail),calc(10pt * var(--type-scale)));color:#253e2e}
+.band-sheet .roster-title{font-weight:400;color:#46564b}
+.band-sheet .small-event .attendees .person-label:not(:last-child)::after{content:';';font-size:var(--given);font-weight:400;color:#516457}
+.band-sheet .attendance-columns.single-list{grid-template-columns:minmax(0,1fr)}
+.band-sheet .single-list .small-event{padding:5pt 0}
+.band-sheet .single-list .small-event.highlighted{padding:5pt 7pt;margin:4pt 0}
+.band-sheet .single-list .small-event .description{max-width:78ch}
+.band-sheet .attendee-free-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--name);font-weight:700;line-height:1.23;margin:3pt 0}
+.band-sheet .custom-roster .roster-columns{align-items:start}
+.band-sheet .custom-roster .roster-person{overflow-wrap:normal;padding-left:6pt;text-indent:-6pt}
+.band-sheet .entry-review{padding:11px 0;border-top:1px solid #d0dbd1;border-bottom:1px solid #d0dbd1}
+.band-sheet .entry-review ol{max-height:190px;overflow:auto;margin:8px 0 0;padding-left:26px;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.band-sheet .entry-review li{padding-left:4px}
+.band-sheet .entry-review li::marker{color:#647c6b;font-size:11px}
+.band-sheet .entry-layout{background:#eaf2e9;border-left:3px solid #638769;padding:10px;white-space:pre-line}
+.band-sheet .entry-layout.bad{background:#fff3e7;color:#70451c;border-color:#b77c37}
+.band-sheet .attendance-columns.roster-sections{display:flex;flex-direction:column;gap:5pt;align-items:stretch}
+.band-sheet .chronological-section{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15pt;align-items:start}
+.band-sheet .roster-sections>.large-event{margin:0}
+.band-sheet .roster-sections .large-head>div{display:flex;flex-wrap:wrap;gap:1pt 8pt}
+.band-sheet .roster-sections .large-head .description{flex:1 1 230pt}
+.band-sheet .roster-sections .roster-person{align-self:start}
+.band-sheet .roster-sections .large-head header>.roster-title{margin:0 auto 0 8pt;gap:7pt;flex-wrap:wrap}
+.band-sheet.compact .flight-table{margin-top:3pt}
+.band-sheet.compact .flight-table th,.band-sheet.compact .flight-table td{padding-top:2pt;padding-bottom:2pt}
+.band-sheet.compact .flight-activity+.flight-activity{margin-top:1pt}
+.band-sheet .flow-roster .roster-columns{display:flex;flex-wrap:wrap;align-items:baseline;gap:2pt 10pt}
+.band-sheet .flow-roster .roster-column{display:contents}
+.band-sheet .flow-roster .roster-person{max-width:100%;background:none;line-height:1.2;min-height:0}
+.band-sheet .flow-roster .roster-person::after{content:';';font-weight:400;font-size:var(--given);color:#516457}
+.band-sheet .flow-roster .roster-column:last-child .roster-person:last-child::after{content:none}
+.band-sheet .small-event.highlighted{padding:var(--session-pad) 0;margin:0;border:0;border-bottom:.6pt solid #87a58b;outline:.6pt solid #87a58b;outline-offset:-.6pt}
+.band-sheet .small-event.highlighted:first-child{padding-top:0}
+.band-sheet .small-event.highlighted h3{font-size:max(var(--min-detail),calc(10.5pt * var(--type-scale)))}
+.band-sheet .single-list .small-event.highlighted{padding:5pt 0;margin:0}
+.band-sheet .large-head{border-top:1pt solid transparent}
+.band-sheet.tight{--session-pad:1pt}
+.band-sheet.tight .main-panel>.section-title{padding-top:2pt;padding-bottom:2pt}
+.band-sheet.tight .attendance-area{margin-top:5pt}
+.band-sheet.tight .concurrent-heading{margin-bottom:3pt}
+.band-sheet.tight .attendance-columns.roster-sections{gap:3pt}
+.band-sheet.tight .large-head{padding:3pt 6pt}
+.band-sheet.tight .roster-body{padding:3pt 6pt 4pt}
+.band-sheet.tight .flow-roster .roster-columns{gap:1pt 8pt}
+.band-sheet.tight .flight-table th,.band-sheet.tight .flight-table td{padding-top:1pt;padding-bottom:1pt}
+.band-sheet .flow-roster .roster-person{padding-left:0;text-indent:0}
+.band-sheet .page-footer{padding-bottom:1pt}
+.band-sheet .day-heading{padding-right:.5pt}
+.band-sheet .attendance-columns.reading-columns{column-gap:18pt;align-items:start}
+.band-sheet .reading-columns .event-column{gap:0}
+.band-sheet .reading-columns .large-event{margin-top:var(--session-pad)}
+.band-sheet .reading-columns .large-head header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3pt 6pt}
+.band-sheet .reading-columns .large-head header>.roster-title{grid-row:2;grid-column:1/-1;margin:0;font-weight:400}
+.band-sheet .reading-columns .large-head header>.time{grid-row:1;grid-column:2}
+.band-sheet .reading-columns .flow-roster .roster-columns{gap:2pt 7pt}
+.band-sheet .reading-columns .roster-person{padding:0;text-indent:0}
+.band-sheet .reading-columns .flow-roster .roster-person,.band-sheet .reading-columns .flow-roster .roster-person strong{font-size:var(--roster-name-size,12pt);line-height:1.2}
+.band-sheet.tight .reading-columns .flow-roster .roster-columns{gap:1pt 6pt}
+.band-sheet.tight .reading-columns .large-head .event-meta{margin-top:2pt}
+.band-sheet.tight .reading-columns .large-head .description{margin-top:1pt}
+.band-sheet.tight .reading-columns .roster-body{padding-top:2pt;padding-bottom:3pt}
+.band-sheet.tight .reading-columns .large-head header{row-gap:1pt}
+.band-sheet .main-event{position:relative}
+.band-sheet .main-event+.main-event::before{content:"";position:absolute;left:0;right:0;top:0;border-top:.5pt solid var(--paper-line,#a8baa7);z-index:1;pointer-events:none}
+.band-sheet .page-header.no-logo{grid-template-columns:minmax(0,1fr) auto}
+.band-sheet .main-top{display:grid;grid-template-columns:minmax(0,1fr) 192pt;align-items:baseline;gap:2pt 8pt}
+.band-sheet .main-details{display:grid;grid-template-columns:70pt minmax(0,1fr);gap:8pt;margin-left:0;align-items:baseline}
+.band-sheet .detail-location{grid-column:1}
+.band-sheet .detail-poc{grid-column:2}
+.band-sheet .detail-field{overflow-wrap:anywhere}
+.band-sheet .main-support{display:flex;align-items:baseline;justify-content:space-between;gap:3pt 8pt}
+.band-sheet .main-support:empty{display:none}
+.band-sheet .main-support>.description{flex:1;text-wrap:pretty}
+.band-sheet .main-support>.start-refs{flex-shrink:0;max-width:55%;margin-top:1pt;align-self:baseline}
+.band-sheet .main-content.reference-only{display:grid;grid-template-columns:minmax(0,1fr) 192pt;gap:8pt;align-items:baseline}
+.band-sheet .reference-only>.main-top,.band-sheet .reference-only>.main-support{display:contents}
+.band-sheet .reference-only .start-refs{grid-column:2;grid-row:1;max-width:none;margin-top:0;align-self:baseline}
+.band-sheet .small-event header{flex-direction:row}
+.band-sheet .roster-details{margin-top:3pt}
+.band-sheet .roster-details:empty{display:none}
+.band-sheet .roster-details .event-meta{margin:0;font-size:var(--body);line-height:1.2;font-weight:400}
+.band-sheet .roster-details .description{margin:2pt 0 0;font-weight:400}
+.band-sheet.tight .roster-details{margin-top:2pt}
+.band-sheet.tight .roster-details .description{margin-top:1pt}
+.band-sheet[data-theme] .attendance-area .large-event:not(.highlighted){border-color:transparent;border-bottom-color:var(--paper-line,#b3c4b4)}
+.band-sheet[data-theme] .attendance-area .large-event:not(.highlighted) .large-head{border-color:transparent;background:transparent}
+.band-sheet[data-theme=forest] .main-event:not(.highlighted) .duration{color:#4b6250}
+.band-sheet[data-theme]:not([data-theme=forest]){color:#20262c}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.page-title,.page-header h2,.main-event h3,.reminder-heading){color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.schedule-label,.date,.page-footer,.logo-slot,.duration,.detail-field small,.reference-label,.flight-table thead,.flight-poc,.rank){color:#525962}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.main-details,.main-event .description,.attendance-area,.small-event h3,.large-head h3,.small-event .time,.large-head .time,.small-event .event-meta,.small-event .description,.large-head .event-meta,.large-head .description,.small-event .audience,.roster-title,.attendance-area .given,.concurrent-heading>.section-title){color:#39424b}
+.band-sheet[data-theme]:not([data-theme=forest]) .attendance-area :is(.person-label strong,.attendee-free-text){color:#20262c}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.small-event .attendees .person-label,.flow-roster .roster-person)::after{color:#525962}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-panel>.section-title{background:var(--paper-accent);color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-panel>.section-title small{color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event{background:var(--paper-band);border-left-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event>.time{background:var(--paper-gutter)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.break{background:#f6f6f3;border-left-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.break>.time{background:#e9e9e4}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.flight{background:var(--paper-flight);border-left-color:var(--paper-flight-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.flight>.time{background:var(--paper-flight-gutter)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted{background:var(--paper-anchor-band);border-left-color:var(--paper-accent);outline-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted>.time{background:var(--paper-anchor);color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted>.time .duration{color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.logo-slot,.small-event,.large-event,.large-head,.flight-table th,.flight-table td,.page-footer){border-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .small-event.highlighted{background:var(--paper-band);border-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .large-event.highlighted .large-head{background:var(--paper-band);border-top-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .start-ref{color:var(--paper-accent);border-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .large-event:not(.flow-roster) .roster-person{background:linear-gradient(to top,var(--paper-gutter) .35pt,transparent .35pt)}
+.band-sheet[data-theme]:not([data-theme=forest]) .reminder-panel{border-top-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .reminder::before{color:var(--paper-accent)}
+.band-sheet[data-theme=mono] .main-event.break{background:#f6f6f6}
+.band-sheet[data-theme=mono] .main-event.break>.time{background:#e9e9e9}
+@media screen{.band-sheet[data-theme]:not([data-theme=forest]) a.start-ref:hover{background:var(--paper-gutter);border-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted:target{outline-color:#ad8337}}
+.band-sheet[data-theme]:not([data-theme=forest]) .small-event.highlighted{outline-color:var(--paper-line)}
+
+/* App integration: the existing toolbar, inspector and dialogs keep their styles. */
+.page.band-page{display:block;width:612pt;min-width:612pt;max-width:none;min-height:0;height:auto;padding:0;margin:0 auto;flex:0 0 auto;background:transparent;box-shadow:none;overflow:visible;border:0}
+.band-sheet{margin:0;flex-shrink:0}
+.band-sheet .start-ref{padding:0;min-height:0;min-width:0;font-family:inherit;cursor:pointer;background:#fff;vertical-align:baseline}
+.band-sheet .attendance-area h3>.start-ref{margin-right:2pt}
+.band-sheet .note-select{font:inherit;color:inherit;text-align:left;display:inline;min-height:0;min-width:0;padding:0;margin:0;background:none;border:0;cursor:pointer;white-space:normal}
+.band-sheet .main-event .attendee-free-text{font-size:var(--name);font-weight:700}
+.band-sheet .attendee-free-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.band-sheet .large-event .attendees{margin:0;font-size:var(--roster-name-size,12pt);line-height:1.2}
+.band-sheet .large-event .person-label{display:inline;white-space:normal;overflow-wrap:anywhere}
+.band-sheet .large-event .person-label strong{font-size:var(--roster-name-size,12pt);line-height:1.2}
+.band-sheet .large-event .person-label:not(:last-child)::after{content:';';font-weight:400;margin-right:.32em}
+.band-sheet .large-event .audience{margin:0 0 2pt;font-weight:400;font-size:var(--body)}
+.band-sheet .flight-logistics+.flight-logistics{margin-top:3pt}
+.band-sheet .band-empty{font-size:var(--body);margin:4pt 6pt 8pt}
+.band-sheet .band-handout{font-size:9pt;line-height:1.2;margin:0 0 5pt;flex-shrink:0}
+.sheet.band-sheet[data-theme] .main-panel>.section-title,.sheet.band-sheet[data-theme] .main-panel>.section-title small{color:var(--paper-heading-ink,#fff)}
+.sheet.band-sheet[data-theme] .main-event.highlighted>.time,.sheet.band-sheet[data-theme] .main-event.highlighted>.time .duration{color:var(--paper-anchor-ink,#fff)}
+.sheet.band-sheet[data-theme]{background:var(--paper-bg,#fff);color:var(--paper-text,#20262c)}
+.sheet.band-sheet[data-theme] .start-ref{background:var(--paper-bg,#fff)}
+.sheet.band-sheet[data-theme] :is(.schedule-label,.date,.page-footer,.logo-slot,.duration,.detail-field small,.reference-label,.flight-table thead,.flight-poc,.rank){color:var(--paper-muted,#525962)}
+.sheet.band-sheet[data-theme] :is(.main-details,.main-event .description,.attendance-area,.small-event h3,.large-head h3,.small-event .time,.large-head .time,.event-meta,.small-event .description,.roster-details .description,.small-event .audience,.roster-title,.concurrent-heading>.section-title){color:var(--paper-secondary,#39424b)}
+.sheet.band-sheet[data-theme] .attendance-area :is(.person-label strong,.attendee-free-text){color:var(--paper-text,#20262c)}
+.band-fit-notice{font-size:12px;line-height:1.5;margin:12px 0;padding:10px 14px;background:var(--ui-bg,#f5f5f7);color:var(--ui-text,#333);border-left:3px solid #a67126}
+.band-fit-notice:empty{display:none}
+.attendee-preview{font-size:11px;line-height:1.5;margin:6px 0 12px}
+.attendee-preview .attendee-preview-list{max-height:140px;overflow:auto;border:1px solid var(--ui-border,#ddd);padding:6px;white-space:pre-wrap}
+.flight-editor{margin:14px 0;border-top:1px solid var(--ui-border,#ddd);padding-top:10px}
+.flight-editor summary{font-weight:600;cursor:pointer;padding:8px 0}
+.flight-editor-item{padding:8px;border:1px solid var(--ui-border,#ddd);border-radius:6px;margin:8px 0}
+.flight-editor-item .field-row{gap:6px}
+.flight-editor-item input,.flight-editor-item textarea{width:100%;min-width:0}
+.flight-editor-item button{margin-top:8px}
+@media screen{
+ .band-sheet [data-event-id],.band-sheet [data-band-customize]{cursor:pointer}
+ .band-sheet [data-event-id]:focus-visible,.band-sheet [data-band-customize]:focus-visible,.band-sheet button:focus-visible{outline:2pt solid #ad8337;outline-offset:1pt}
+ .band-sheet .selected{outline:2pt solid #ad8337;outline-offset:0;position:relative;z-index:1}
+ .band-sheet[data-fit=false]{height:auto;min-height:792pt}
+ .band-sheet[data-fit=false] .reminder-area{margin-top:12pt}
+}
+@page band-paper{size:Letter portrait;margin:0}
+@media print{
+ .page.band-page{page:band-paper;width:612pt!important;min-width:612pt!important;height:792pt!important;min-height:792pt!important;max-height:792pt!important;margin:0!important;padding:0!important;zoom:1!important;break-after:page;overflow:visible!important}
+ .band-page:last-child{break-after:auto}
+ .band-sheet{width:612pt!important;height:792pt!important;margin:0!important;box-shadow:none;break-after:auto;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .band-sheet .start-ref,.band-sheet .note-select{appearance:none}
+ .band-fit-notice,.band-sheet .note-empty{display:none!important}
+ .band-sheet [data-event-id]{outline:none}
+ .band-sheet[data-fit=false]>.page-header,.band-sheet[data-fit=false]>.sheet-body,.band-sheet[data-fit=false]>.reminder-area,.band-sheet[data-fit=false]>.page-footer,.band-sheet[data-fit=false]>.band-handout{display:none!important}
+ .band-sheet[data-fit=false]>.print-error{display:block!important}
+ .band-sheet .print-error{margin:24pt;font:14pt/1.5 Arial;border:1pt solid #333;padding:18pt}
+}
+
+.flight-details-plain{display:block;margin-top:6px;font-size:inherit;line-height:1.4}
+.flight-detail-line{display:block;margin:4px 0}
+
+</style>
   <script>
 /* ── constants.js ── Contract ───────────────────────────────────────────────
  *
@@ -4296,7 +4727,7 @@ textarea:focus-visible,
 // Stamped with the build date and content hash by tools/build-single-html.py; 'dev' when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = '2026-09-09+7fd7f2e9a0fc';
+const APP_VERSION = '2026-09-14+424ea8544b5c';
 
 const DEFAULT_GROUPS = [
   { id: 'grp_all',     name: 'All Personnel', scope: 'main',    color: '#2558a8' },
@@ -4741,6 +5172,9 @@ const Store = {
       attendees: e.attendees || '',
       isBreak: e.isBreak || false,
       isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === 'main' : false),
+      ...(e.emphasized != null ? { emphasized: !!e.emphasized } : {}),
+      ...(e.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(e.attendeeFormat) } : {}),
+      ...(Array.isArray(e.flightActivities) ? { flightActivities: normalizeFlightActivities(e.flightActivities) } : {}),
     };
     day.events.push(event);
     day.events.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
@@ -5147,7 +5581,7 @@ function closeModal(id) {
   let previous = entry && entry.previousFocus;
   if (previous && !previous.isConnected) {
     previous = previous.id ? document.getElementById(previous.id)
-      : previous.matches('.hdr') ? document.querySelector('#scheduleContainer .hdr') : null;
+      : previous.matches('.hdr, [data-band-customize]') ? document.querySelector('#scheduleContainer .hdr, #scheduleContainer [data-band-customize]') : null;
   }
   if (previous && previous.isConnected && !previous.closest('[inert]')
       && (!active || active.contains(previous))) previous.focus();
@@ -5334,7 +5768,32 @@ function normalizeEvent(raw) {
     attendees:   normalizeText(raw.attendees),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
+    ...(raw.emphasized != null ? { emphasized: !!raw.emphasized } : {}),
+    ...(raw.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(raw.attendeeFormat) } : {}),
+    ...(Array.isArray(raw.flightActivities) ? { flightActivities: normalizeFlightActivities(raw.flightActivities) } : {}),
   };
+}
+
+function normalizeAttendeeFormat(value) {
+  return ['suggested', 'lines', 'spaces', 'text'].includes(value) ? value : 'text';
+}
+
+function normalizeFlightActivities(activities) {
+  return normalizeEntityList(activities, raw => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    // Keep incomplete activities reviewable instead of silently discarding work.
+    return {
+      id: sanitizeEntityId(raw.id, 'flight'), flight: normalizeText(raw.flight),
+      title: normalizeText(raw.title), startTime: normalizeText(raw.startTime),
+      endTime: normalizeText(raw.endTime), location: normalizeText(raw.location),
+      poc: normalizeText(raw.poc), description: normalizeText(raw.description),
+    };
+  }, 'flight');
+}
+
+function getBandSettings(theme) {
+  const raw = theme && theme.bands || {};
+  return { showLogo: raw.showLogo !== false, notesHeight: [90, 108, 144].includes(raw.notesHeight) ? raw.notesHeight : 90 };
 }
 
 function normalizeGroup(raw) {
@@ -5422,7 +5881,7 @@ function normalizePersistedState(raw, options) {
   };
 }
 
-// Shape-level check only: keeps the three known keys as the right types.
+// Shape-level check: preserves theme choices and normalized Bands settings.
 // Value whitelisting (skin/palette names, hex colors) lives in
 // getScheduleTheme (themes.js), the one funnel every consumer reads through.
 function normalizeScheduleTheme(raw) {
@@ -5433,8 +5892,40 @@ function normalizeScheduleTheme(raw) {
   if (raw.customColors && typeof raw.customColors === 'object' && !Array.isArray(raw.customColors)) {
     theme.customColors = raw.customColors;
   }
-  return (theme.skin || theme.palette || theme.customColors) ? theme : null;
+  if (raw.bands && typeof raw.bands === 'object') theme.bands = getBandSettings(raw);
+  return (theme.skin || theme.palette || theme.customColors || theme.bands) ? theme : null;
 }
+
+</script>
+  <script>
+// Attendee input boundary: segment entries without guessing anyone's name parts.
+function parsePersonnelInput(raw,mode='suggested'){
+  raw=String(raw??'');
+  const normalized=raw.replace(/\r\n?/g,'\n');
+  let entries=[],rule='',notice='';
+  if(mode==='text')return{raw,mode,entries:[],rule:'Text as written',notice:'No person count is inferred. Your text prints together, including line breaks.'};
+  if(mode==='spaces'){
+    entries=normalized.split(/\s+/);rule='Every word is an entry';
+    notice='Use this only when every word is a separate surname. Full names would be split into separate entries.';
+  }else if(mode==='lines'||normalized.trim().includes('\n')){
+    entries=normalized.split('\n');rule='One entry per line';
+    notice='Commas, spaces and & inside each line stay with that entry.';
+  }else if(normalized.includes(';')){
+    entries=normalized.split(';');rule='Semicolons separate entries';
+    notice='Commas and spaces stay within each entry. Check the list below.';
+  }else{
+    entries=normalized.split(/,|\s+&\s+/);rule='Commas and spaced & separate entries';
+    notice='Check the split. For “Doe, John”, use one entry per line so the comma stays inside the name.';
+  }
+  entries=entries.map(value=>value.trim()).filter(Boolean);
+  const ambiguous=mode==='suggested'&&entries.length===1&&/\s/.test(entries[0]);
+  if(ambiguous)notice='Spaces stay inside an entry. If these are several surnames, separate at spaces or add line breaks.';
+  if(!entries.length)notice='No attendee entries yet.';
+  const seen=new Set(),duplicates=[];
+  for(const entry of entries){const key=entry.toLocaleLowerCase();if(seen.has(key))duplicates.push(entry);seen.add(key);}
+  return{raw,mode,entries,rule,notice,ambiguous,duplicates};
+}
+if(typeof module!=='undefined')module.exports={parsePersonnelInput};
 
 </script>
   <script>
@@ -5449,6 +5940,7 @@ function normalizeScheduleTheme(raw) {
  *   summarizeDisplayList(items, limit?)          → string
  *   summarizeExceptionNote(info, itemLimit?)     → string
  *   classifyEvents(events, groups)                → {mainBands[], concurrent[]}
+ *   buildBandSections(events, groups)             → chronological main/supporting sections with continuation references
  *   buildPhaseGroups(events, groups)              → temporally contained phases and independent tasks
  *   getAudienceHandoutEvents(events, groups, id)   → selected audience plus shared events
  *   getScheduleReviewIssues(days, groups)          → advisory date, range, audience and conflict issues
@@ -5504,6 +5996,79 @@ function isEventEffectiveMain(evt, groupsOrMap) {
   return !!evt.isMainEvent;
 }
 
+// Readable Bands uses one full entry per event, anchored by its actual start.
+// Main sections contain strict-overlap connected components, including breaks;
+// membership in a component does not mean every main event overlaps every task.
+// Empty main-track intervals appear only when supporting activity occupies them.
+//
+// Section: {kind, startTime, endTime, mains, supporting, continuations}.
+// mains entries: {event, group, tier}; breaks have tier 'break'.
+// supporting/continuations entries: {event, group, sourceSectionIndex,
+// overlappingMain, overlappingBreaks, continuesAfter}. Overlap arrays contain
+// only actual overlaps in this section; overlappingMain excludes breaks.
+// sourceSectionIndex identifies the one canonical supporting entry. The event
+// and group references are unchanged, including all original times and fields.
+function buildBandSections(events, groups) {
+  const ordered = (events || []).slice().sort(compareBandOrder);
+  if (!ordered.length) return [];
+  const groupMap = getGroupMap(groups);
+  const mainEvents = ordered.filter(evt => isEventEffectiveMain(evt, groupMap));
+  const supportingEvents = ordered.filter(evt => !isEventEffectiveMain(evt, groupMap));
+  const makeSection = (kind, startTime, endTime) => ({
+    kind, startTime, endTime, mains: [], supporting: [], continuations: [],
+  });
+  const mainSections = [];
+
+  mainEvents.forEach(event => {
+    let section = mainSections[mainSections.length - 1];
+    if (!section || timeToMinutes(event.startTime) >= timeToMinutes(section.endTime)) {
+      section = makeSection('main', event.startTime, event.endTime);
+      mainSections.push(section);
+    } else if (timeToMinutes(event.endTime) > timeToMinutes(section.endTime)) {
+      section.endTime = event.endTime;
+    }
+    section.mains.push({ event, group: groupMap[event.groupId] || null, tier: event.isBreak ? 'break' : 'main' });
+  });
+
+  const lastEnd = ordered.reduce((endTime, event) =>
+    timeToMinutes(event.endTime) > timeToMinutes(endTime) ? event.endTime : endTime, ordered[0].endTime);
+  const candidates = [];
+  let previousEnd = ordered[0].startTime;
+  mainSections.forEach(section => {
+    if (timeToMinutes(previousEnd) < timeToMinutes(section.startTime)) {
+      candidates.push(makeSection('supporting', previousEnd, section.startTime));
+    }
+    candidates.push(section);
+    previousEnd = section.endTime;
+  });
+  if (timeToMinutes(previousEnd) < timeToMinutes(lastEnd)) {
+    candidates.push(makeSection('supporting', previousEnd, lastEnd));
+  }
+  const sections = candidates.filter(section => section.kind === 'main'
+    || supportingEvents.some(event => eventsOverlap(event, section)));
+
+  supportingEvents.forEach(event => {
+    const start = timeToMinutes(event.startTime);
+    const sourceSectionIndex = sections.findIndex(section => start >= timeToMinutes(section.startTime)
+      && start < timeToMinutes(section.endTime));
+    sections.forEach((section, index) => {
+      if (!eventsOverlap(event, section)) return;
+      const overlapping = section.mains.filter(main => eventsOverlap(event, main.event));
+      const entry = {
+        event,
+        group: groupMap[event.groupId] || null,
+        sourceSectionIndex,
+        overlappingMain: overlapping.filter(main => main.tier !== 'break').map(main => main.event),
+        overlappingBreaks: overlapping.filter(main => main.tier === 'break').map(main => main.event),
+        continuesAfter: timeToMinutes(event.endTime) > timeToMinutes(section.endTime),
+      };
+      if (index === sourceSectionIndex) section.supporting.push(entry);
+      else section.continuations.push(entry);
+    });
+  });
+  return sections;
+}
+
 // A phase may contain a task only when the complete task fits one phase.
 // Tasks outside phases or spanning their boundaries stay independent, rather
 // than inheriting a misleading parent from the order of the event array.
@@ -5557,17 +6122,27 @@ function getScheduleReviewIssues(days, groups) {
     if (!validRange) add(day, 'day-range', label + ': review the day’s start and end times.');
     const events = day.events || [];
     events.forEach(evt => {
+      (evt.flightActivities || []).forEach(activity => {
+        if (!activity.flight || !activity.title || !isValidScheduleTime(activity.startTime) || !isValidScheduleTime(activity.endTime) ||
+            activity.startTime >= activity.endTime || activity.startTime < evt.startTime || activity.endTime > evt.endTime) {
+          add(day, 'flight-activity', label + ': review the flight, activity and time range within ' + evt.title + '.', [evt.id]);
+        }
+      });
       if (!groupMap[evt.groupId] && !evt.isBreak) add(day, 'audience', label + ': ' + evt.title + ' has no audience recorded.', [evt.id]);
       if (validRange && (timeToMinutes(evt.startTime) < start || timeToMinutes(evt.endTime) > end))
         add(day, 'outside-day', label + ': ' + evt.title + ' is outside the day’s stated hours.', [evt.id]);
     });
     events.forEach((evt, i) => events.slice(i + 1).forEach(other => {
       if (evt.isBreak || other.isBreak || !eventsOverlap(evt, other)) return;
+      // A concurrent assignment can intentionally replace the shared main event.
+      if (isEventEffectiveMain(evt, groupMap) !== isEventEffectiveMain(other, groupMap)) return;
       const reasons = [];
       if (evt.groupId && evt.groupId === other.groupId) reasons.push('audience');
       if (evt.location && other.location && evt.location.trim().toLowerCase() === other.location.trim().toLowerCase()) reasons.push('location');
-      const people = new Set(collectAttendeeNames(evt.attendees).map(name => name.toLowerCase()));
-      if (collectAttendeeNames(other.attendees).some(name => people.has(name.toLowerCase()))) reasons.push('named people');
+      const entries = event => parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text').entries;
+      const key = value => value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+      const people = new Set(entries(evt).map(key));
+      if (entries(other).some(name => people.has(key(name)))) reasons.push('matching attendee entries (confirm identity)');
       if (reasons.length) add(day, 'overlap', label + ': ' + evt.title + ' and ' + other.title + ' overlap and share ' + reasons.join(', ') + '. Confirm this is intended.', [evt.id, other.id]);
     }));
   });
@@ -5892,7 +6467,9 @@ let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
 const SCHEDULE_WORKBOOK_FILE_TYPE = 'dayschedule';
-const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 1;
+// Version 2 protects nested flight activities and Bands settings from being
+// silently removed by a version-1-only app. Existing version-1 files still open.
+const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 2;
 const SCHEDULE_WORKBOOK_DEFAULT_FILENAME = 'DaySchedule.schedule';
 
 let _undoSaveTimer = null;
@@ -6002,6 +6579,7 @@ function buildVersionState() {
   state.theme = typeof getScheduleTheme === 'function'
     ? cloneScheduleData(getScheduleTheme(fileData && fileData.theme))
     : cloneScheduleData(fileData && fileData.theme || { skin: 'bands', palette: 'classic' });
+  if (fileData?.theme?.bands) state.theme.bands = getBandSettings(fileData.theme);
   return state;
 }
 
@@ -6513,6 +7091,7 @@ function getScheduleWorkbookSnapshot(options) {
     workbook.schedule = envelope;
   }
 
+  workbook.schemaVersion = SCHEDULE_WORKBOOK_SCHEMA_VERSION;
   return workbook;
 }
 
@@ -6619,7 +7198,10 @@ function applyDuplicateOptions(state, options) {
   days.forEach(day => {
     if (options.clearNotes) day.notes = [];
     (day.events || []).forEach(event => {
-      if (options.clearContacts) event.poc = '';
+      if (options.clearContacts) {
+        event.poc = '';
+        (event.flightActivities || []).forEach(activity => { activity.poc = ''; });
+      }
       if (options.clearPeople) event.attendees = '';
     });
   });
@@ -6950,7 +7532,7 @@ function parseScheduleWorkbookContent(content, fileName) {
   let workbookData = null;
   let activeSchedule = null;
   if (isWorkbook) {
-    if (parsed.schemaVersion !== undefined && parsed.schemaVersion !== SCHEDULE_WORKBOOK_SCHEMA_VERSION) {
+    if (parsed.schemaVersion !== undefined && ![1, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
       throw new Error('This workbook uses an unsupported format version. Open it in the app version that created it; the file has not been changed.');
     }
     const entries = Array.isArray(parsed.schedules) && parsed.schedules.length ? parsed.schedules : [parsed.schedule];
@@ -8976,10 +9558,26 @@ window.addEventListener('pagehide', () => {
 
 </script>
   <script>
+// Paper colors only: every theme uses the same layout and event emphasis.
+const BAND_PAPER_THEMES={
+  forest:{label:'Forest',colors:['#254d38','#355b43','#f1f5f0','#dce7dd','#e2ebe3','#a8baa7','#f6f2e9','#eae4d6','#a17d3b']},
+  airforce:{label:'Air Force',colors:['#173f73','#28598b','#f0f4fa','#dce6f3','#e5edf7','#a7b8cf','#f7f3e9','#ece1c9','#8d692a']},
+  ocp:{label:'OCP',colors:['#4d5039','#5c6043','#f4f3ec','#e3e0cf','#e9e6d8','#b4b098','#f3eee4','#e5dac6','#7b6440']},
+  teal:{label:'Teal',colors:['#14545b','#24646b','#eff7f7','#d8ebea','#e0efed','#9abdbb','#f4f3e9','#e9e4ce','#7f7039']},
+  slate:{label:'Slate',colors:['#34445a','#495d72','#f2f5f8','#dfe6ed','#e5eaf0','#aab6c3','#f2f3f6','#e1e4ec','#6a7489']},
+  plum:{label:'Plum',colors:['#513b65','#684d7b','#f6f2f8','#e8dfed','#ede4f0','#baa7c5','#f6f2ea','#eae0cf','#8c7046']},
+  burgundy:{label:'Burgundy',colors:['#6a3047','#7c4058','#faf2f4','#efdee3','#f3e5e8','#c7a6b1','#f7f2e9','#eae0cf','#8c7046']},
+  copper:{label:'Copper',colors:['#733f26','#8a5131','#faf4ef','#efdfd1','#f2e6da','#c8ad94','#f3f3e9','#e6e4ce','#777143']},
+  mono:{label:'Mono',colors:['#303030','#484848','#f5f5f5','#e3e3e3','#eaeaea','#b0b0b0','#f6f6f6','#e8e8e8','#777777']}
+};
+const BAND_COLOR_ROLES=['accent','anchor','band','gutter','anchor-band','line','flight','flight-gutter','flight-accent'];
+
+</script>
+  <script>
 /* ── themes.js ── Contract ────────────────────────────────────────────────
  *
  * EXPORTS:
- *   PALETTES             — Object<string, PaletteColors>  5 preset palettes
+ *   PALETTES             — Object<string, PaletteColors>  11 preset palettes
  *   PALETTE_NAMES        — Array<string>                  ["classic", "airforce", ...]
  *   SKIN_NAMES           — Array<string>                  ["bands", "grid", "cards", "phases"]
  *   SKIN_LABELS          — Object<string, {name, desc}>   Display names for skins
@@ -9053,7 +9651,8 @@ const PALETTES = {
   },
 };
 
-const PALETTE_NAMES = ['classic', 'airforce', 'ocp', 'darkops', 'mono'];
+// Keep deployed palettes and add the approved paper color families.
+const PALETTE_NAMES = ['classic', 'airforce', 'ocp', 'darkops', 'mono', 'forest', 'teal', 'slate', 'plum', 'burgundy', 'copper'];
 
 const PALETTE_LABELS = {
   classic: 'Classic',
@@ -9062,6 +9661,13 @@ const PALETTE_LABELS = {
   darkops: 'Dark Ops',
   mono: 'Mono',
 };
+
+for (const key of ['forest', 'teal', 'slate', 'plum', 'burgundy', 'copper']) {
+  const paper = BAND_PAPER_THEMES[key];
+  PALETTES[key] = { bg: '#ffffff', text: '#20262c', textSecondary: '#39424b', textMuted: '#525962',
+    accent: paper.colors[0], accentSecondary: paper.colors[8], accentTertiary: paper.colors[1], border: paper.colors[5], surface: paper.colors[2] };
+  PALETTE_LABELS[key] = paper.label;
+}
 
 const SKIN_NAMES = ['bands', 'grid', 'cards', 'phases'];
 
@@ -9132,363 +9738,271 @@ function applyEditorTheme(theme) {
 
 </script>
   <script>
-/* ── skin-band.js ── Contract ───────────────────────────────────────────────
- *
- * EXPORTS:
- *   renderDayBody_band(dayId)         → HTML string — full schedule body for band skin
- *   renderBand(band, densityInfo)     → HTML string — single event band
- *   renderConcurrentRow(conc, groups, densityInfo) → HTML string — "Also Happening" section
- *
- * REQUIRES:
- *   render.js       — clearDaggerFootnotes(), addDaggerFootnote(), getDaggerFootnotes(),
- *                     renderNotes()
- *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getGroup(), Store.getNotes()
- *   utils.js        — esc(), formatDuration(), getContrastingTextColor()
- *   data-helpers.js — classifyEvents(), computeDuration(), analyzeDayLayout(),
- *                     getSharedEventExceptions(), summarizeExceptionNote()
- *
- * CONSUMED BY:
- *   render.js — renderDay() dispatches to renderDayBody_band() for the bands skin
- *   print.js  — renderBand(), renderConcurrentRow() called directly for print layout
- * ──────────────────────────────────────────────────────────────────────────── */
-
-function renderDayBody_band(dayId, dayOverride) {
-  const day = dayOverride || Store.getDay(dayId);
-  if (!day) return '';
-  const groups = Store.getGroups();
-  const classified = classifyEvents(day.events, groups);
-  const { mainBands, concurrent } = classified;
-  const notes = day.notes || Store.getNotes(dayId);
-  const layoutAnalysis = analyzeDayLayout(day.events, groups, classified);
-  const densityInfo = getBandDensityInfo(mainBands, concurrent, layoutAnalysis);
-
-  clearDaggerFootnotes();
-
-  let html = '';
-  html += '<div class="schedule">';
-  if (mainBands.length === 0 && concurrent.length === 0) {
-    html += '<div class="empty-state">';
-    html += '<p>Click <strong>+ Event</strong> to add your first event.</p>';
-    html += '<p>Click <strong>+ Note</strong> to add scheduling notes.</p>';
-    html += '</div>';
-  }
-  mainBands.forEach((band) => {
-    html += renderBand(band, densityInfo, day.events);
-  });
-  html += '</div>';
-
-  if (densityInfo.warning) html += renderBandDensityNote(densityInfo);
-
-  if (concurrent.length > 0) {
-    html += renderConcurrentRow(concurrent, groups, densityInfo);
-  }
-
-  if (notes.length > 0 || getDaggerFootnotes().length > 0) {
-    html += renderNotes(notes);
-  }
-
-  return html;
-}
-
-function getBandDensityInfo(mainBands, concurrent, layoutAnalysis) {
-  const info = {
-    denseMode: false,
-    inlinePreviewLimit: Infinity,
-    maxConcurrentOnBand: 0,
-    warning: '',
-    recommendedSkin: layoutAnalysis ? layoutAnalysis.recommendedSkin : 'bands',
-    recommendationReason: layoutAnalysis ? layoutAnalysis.reason : '',
-    usePackedConcurrent: layoutAnalysis ? layoutAnalysis.usePackedConcurrent : false,
+/* Approved day-first paper layout. One renderer and fitter serve editor and print.
+ * Inputs come from normalized Store records; fitting moves existing DOM records,
+ * never rewrites source data or infers names. No application network access.
+ */
+const BandLayout = (() => {
+  const policy = Object.freeze({ margin: 36, logo: 72, notes: 90, clearance: 4,
+    detail: 9, name: 10.5, roster: 9.5, title: 11.5, label: 8, scale: .85 });
+  const ordered = events => events.slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const time = event => event.startTime + '-' + event.endTime;
+  const duration = event => {
+    const minutes = computeDuration(event);
+    return minutes >= 60 && minutes % 60 === 0 ? minutes / 60 + 'h' : minutes + 'm';
   };
+  const attendance = event => parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text');
 
-  if (!concurrent || concurrent.length === 0) return info;
-
-  info.maxConcurrentOnBand = mainBands.reduce((max, band) => {
-    const count = band.concurrent ? band.concurrent.length : 0;
-    return Math.max(max, count);
-  }, 0);
-
-  info.denseMode = concurrent.length >= 10 || info.maxConcurrentOnBand >= 4;
-  info.inlinePreviewLimit = info.denseMode ? 2 : Infinity;
-
-  if (!info.denseMode) return info;
-
-  const parts = [];
-  parts.push(concurrent.length + ' concurrent event' + (concurrent.length === 1 ? '' : 's'));
-  if (info.maxConcurrentOnBand > 0) {
-    parts.push('up to ' + info.maxConcurrentOnBand + ' attached to one time block');
+  function model(day) {
+    const groups = getGroupMap(Store.getGroups());
+    const mains = ordered(day.events.filter(event => isEventEffectiveMain(event, groups)));
+    const concurrent = ordered(day.events.filter(event => !isEventEffectiveMain(event, groups)));
+    const references = new Map(concurrent.map((event, i) => [event.id, i + 1]));
+    const byMain = new Map(mains.map(main => [main.id, concurrent.filter(event => eventsOverlap(main, event))]));
+    return { day, groups, mains, concurrent, references, byMain };
   }
-  info.warning = parts.join(', ') + '. Try Grid, Cards, or Phases for easier scanning.';
-  return info;
-}
 
-function renderBandDensityNote(densityInfo) {
-  const recommendedSkin = densityInfo.recommendedSkin;
-  const recommendedLabel = SKIN_LABELS[recommendedSkin] ? SKIN_LABELS[recommendedSkin].name : recommendedSkin;
-  const actionOrder = ['grid', 'cards', 'phases'].filter(skin => skin !== recommendedSkin);
-  if (['grid', 'cards', 'phases'].includes(recommendedSkin)) actionOrder.unshift(recommendedSkin);
-
-  let html = '<div class="band-view-note">';
-  html += '<div class="band-view-note-copy">';
-  html += '<strong>Bands view warning:</strong> ' + esc(densityInfo.warning);
-  if (recommendedSkin && recommendedSkin !== 'bands') {
-    html += ' <span class="band-view-recommendation">Recommended: <strong>' + esc(recommendedLabel) + '</strong> because ' + esc(densityInfo.recommendationReason) + '</span>';
-  }
-  html += '</div>';
-  html += '<div class="band-view-actions">';
-  actionOrder.forEach(skin => {
-    const label = SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin;
-    const recommendedClass = skin === recommendedSkin ? ' band-view-switch--recommended' : '';
-    const buttonLabel = skin === recommendedSkin ? 'Use ' + label : label;
-    html += '<button type="button" class="band-view-switch' + recommendedClass + '" data-skin-switch="' + esc(skin) + '">' + esc(buttonLabel) + '</button>';
-  });
-  html += '</div>';
-  html += '</div>';
-  return html;
-}
-
-function renderBand(band, densityInfo, dayEvents) {
-  const { event: evt, tier, group, concurrent: concList, overlappingMain } = band;
-  const dur = computeDuration(evt);
-  const durStr = formatDuration(dur);
-  const hasMainOverlap = overlappingMain && overlappingMain.length > 0;
-  const sharedExceptions = getSharedEventExceptions(evt, dayEvents || Store.getEvents(Store.getActiveDay()), Store.getGroups());
-  const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
-  const groupTextColor = group ? getContrastingTextColor(group.color) : '#ffffff';
-  const previewLimit = getBandPreviewLimit(concList || [], densityInfo);
-  const previewConcurrent = (concList || []).slice(0, previewLimit);
-  const hiddenConcurrentCount = Math.max(0, (concList ? concList.length : 0) - previewConcurrent.length);
-  const jumpStartTime = hiddenConcurrentCount > 0 && concList[previewConcurrent.length]
-    ? concList[previewConcurrent.length].startTime
-    : '';
-
-  const tierClass = tier === 'main' ? 'main' : tier === 'break' ? 'brk' : 'sup';
-  const overlapClass = hasMainOverlap ? ' band-overlap' : '';
-  const accentStyle = tier === 'main' && group ? ' style="--accent:' + esc(group.color) + ';"' : '';
-  const concSlotClass = densityInfo && densityInfo.denseMode ? 'band-conc-slot band-conc-slot--dense' : 'band-conc-slot';
-
-  let html = '<div class="band ' + tierClass + overlapClass + '"' + accentStyle + ' data-event-id="' + esc(evt.id) + '">';
-
-  // Time block
-  html += '<div class="band-time">';
-  html += '<div class="t-start">' + esc(evt.startTime) + '</div>';
-  html += '<div class="t-end">' + esc(evt.endTime) + '</div>';
-  if (tier === 'main' && !evt.isBreak) {
-    html += '<div class="t-dur">' + esc(durStr) + '</div>';
-  }
-  html += '</div>';
-
-  // Content
-  html += '<div class="band-content">';
-  html += '<div class="band-title">' + esc(evt.title) + '</div>';
-  {
-    const metaParts = ['<span class="band-inline-time">' + esc(evt.startTime + '\u2013' + evt.endTime) + '</span>'];
-    if (evt.location) metaParts.push('<span class="band-meta-item">' + esc(evt.location) + '</span>');
-    if (evt.poc) metaParts.push('<span class="band-meta-item">POC: ' + esc(evt.poc) + '</span>');
-    html += '<div class="band-meta-line">' + metaParts.join('<span class="band-meta-sep">\u00b7</span>') + '</div>';
-  }
-  if (evt.description) {
-    html += '<div class="band-desc">' + esc(evt.description) + '</div>';
-  }
-  if (group) {
-    html += '<div><span class="band-tag" style="background:' + esc(group.color) + ';color:' + esc(groupTextColor) + ';">' + esc(group.name) + '</span></div>';
-  }
-  if (evt.attendees) {
-    const attendeeLabel = group ? '+ ' : 'WHO: ';
-    html += '<div class="band-attendees">' + attendeeLabel + esc(evt.attendees) + '</div>';
-  }
-  if (exceptionNote) {
-    html += '<div class="band-exception-note">Exceptions: ' + esc(exceptionNote) + '</div>';
-  }
-  // Overlap notice for main-on-main conflicts
-  if (hasMainOverlap) {
-    const overlapNames = overlappingMain.map(m => esc(m.title)).join(', ');
-    html += '<div class="band-overlap-notice">Overlaps with ' + overlapNames + '</div>';
-  }
-  html += '</div>';
-
-  // Fixed-width concurrent slot — always rendered for alignment
-  html += '<div class="' + concSlotClass + '">';
-  if (previewConcurrent.length > 0) {
-    previewConcurrent.forEach(c => {
-      html += renderBandConcurrentCard(c);
-    });
-  }
-  if (hiddenConcurrentCount > 0) {
-    html += renderBandConcurrentOverflow(hiddenConcurrentCount, jumpStartTime);
-  }
-  html += '</div>';
-
-  html += '</div>';
-  return html;
-}
-
-function getBandPreviewLimit(concList, densityInfo) {
-  if (!densityInfo || !densityInfo.denseMode) return Infinity;
-  if (!concList || concList.length === 0) return densityInfo.inlinePreviewLimit;
-  if (concList.length >= 6) return 1;
-  return densityInfo.inlinePreviewLimit;
-}
-
-function renderBandConcurrentCard(c) {
-  const cGroup = Store.getGroup(c.groupId);
-  let html = '<div class="band-conc" data-event-id="' + esc(c.id) + '">';
-  html += '<div class="cc-label">Also at ' + esc(c.startTime) + '</div>';
-  html += '<div class="cc-title">' + esc(c.title) + '</div>';
-  html += '<div class="cc-detail">' + esc(c.startTime + '\u2013' + c.endTime);
-  if (c.location) html += ' \u00b7 ' + esc(c.location);
-  html += '</div>';
-  if (c.poc) html += '<div class="cc-detail">POC: ' + esc(c.poc) + '</div>';
-  if (cGroup) html += '<div><span class="band-tag" style="background:' + esc(cGroup.color) + ';color:' + esc(getContrastingTextColor(cGroup.color)) + ';">' + esc(cGroup.name) + '</span></div>';
-  if (c.attendees) {
-    const prefix = cGroup ? '+ ' : 'WHO: ';
-    if (c.attendees.length > 25) {
-      let daggerNum = getDaggerFootnotes().findIndex(fn => c.id && fn.eventId === c.id) + 1;
-      if (!daggerNum) {
-        addDaggerFootnote({ eventId: c.id, title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
-        daggerNum = getDaggerFootnotes().length;
-      }
-      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + daggerNum + '</sup></div>';
-    } else {
-      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
+  function paletteStyle() {
+    const theme = getScheduleTheme(getCurrentScheduleFileData()?.theme);
+    let colors = (BAND_PAPER_THEMES[theme.palette] || BAND_PAPER_THEMES.slate).colors;
+    let ink = { bg: '#ffffff', text: '#20262c', textSecondary: '#39424b', textMuted: '#525962' };
+    if (theme.palette === 'classic') colors = BAND_PAPER_THEMES.airforce.colors;
+    if (theme.palette === 'custom' || theme.palette === 'darkops') {
+      const custom = Object.assign({}, PALETTES[theme.palette] || PALETTES.classic, theme.customColors);
+      ink = custom;
+      colors = [custom.accent, custom.accentSecondary, custom.surface, custom.surface,
+        custom.surface, custom.border, custom.surface, custom.surface, custom.accentTertiary];
     }
+    const roles = BAND_COLOR_ROLES.map((role, i) => '--paper-' + role + ':' + colors[i]);
+    roles.push('--paper-bg:' + ink.bg, '--paper-text:' + ink.text,
+      '--paper-secondary:' + ink.textSecondary, '--paper-muted:' + ink.textMuted);
+    roles.push('--paper-anchor-ink:' + getContrastingTextColor(colors[1]));
+    roles.push('--paper-heading-ink:' + getContrastingTextColor(colors[0]));
+    return roles.join(';');
   }
-  html += '</div>';
-  return html;
-}
 
-function renderBandConcurrentOverflow(hiddenConcurrentCount, jumpStartTime) {
-  const jumpAttr = jumpStartTime ? ' data-conc-jump="' + esc(jumpStartTime) + '"' : '';
-  let html = '<div class="band-conc band-conc-more"' + jumpAttr + '>';
-  html += '<div class="cc-label">More below</div>';
-  html += '<div class="cc-title">+' + hiddenConcurrentCount + ' more also happening</div>';
-  if (jumpStartTime) {
-    html += '<div class="cc-detail">Jump to the ' + esc(jumpStartTime) + ' group below.</div>';
-  } else {
-    html += '<div class="cc-detail">See the grouped concurrent section.</div>';
+  function badge(event, number, interactive) {
+    const attributes = 'class="start-ref" data-ref-event="' + esc(event.id) + '"';
+    return interactive
+      ? '<button type="button" ' + attributes + ' data-event-ref="' + esc(event.id) + '" aria-label="Concurrent event ' + number + ': ' + esc(event.title) + '">' + number + '</button>'
+      : '<span ' + attributes + '>' + number + '</span>';
   }
-  html += '</div>';
-  return html;
-}
 
-function renderConcurrentRow(concurrent, groups, densityInfo) {
-  const groupMap = {};
-  groups.forEach(g => { groupMap[g.id] = g; });
+  function articleAttributes(event, interactive) {
+    return ' data-event-id="' + esc(event.id) + '"' + (interactive
+      ? ' tabindex="0" aria-label="' + esc(event.title + ', ' + time(event) + '. Select to edit.') + '"' : '');
+  }
 
-  let html = '<div class="conc-section">';
-  html += '<div class="conc-section-label">Also Happening</div>';
-  if (densityInfo && densityInfo.usePackedConcurrent) {
-    html += renderConcurrentPacked(concurrent, groupMap);
-  } else if (densityInfo && densityInfo.denseMode) {
-    html += renderConcurrentGroups(concurrent, groupMap);
-  } else {
-    html += '<div class="conc-row">';
-    concurrent.forEach(c => {
-      html += renderConcurrentItem(c, groupMap[c.groupId]);
+  function attendees(event) {
+    const parsed = attendance(event);
+    if (!parsed.raw.trim()) return '';
+    if (parsed.mode === 'text') return '<div class="attendee-free-text">' + esc(parsed.raw) + '</div>';
+    return '<div class="attendees">' + parsed.entries.map((entry, index) =>
+      '<span class="person-label" data-person="' + esc(entry) + '" data-entry-index="' + index + '"><strong>' + esc(entry) + '</strong></span>').join(' ') + '</div>';
+  }
+
+  function details(event) {
+    const meta = [event.location, event.poc ? 'POC: ' + event.poc : ''].filter(Boolean);
+    return (meta.length ? '<p class="event-meta">' + meta.map(esc).join(' · ') + '</p>' : '') +
+      (event.description ? '<p class="description">' + esc(event.description) + '</p>' : '');
+  }
+
+  function flightTable(event) {
+    const activities = event.flightActivities || [];
+    if (!activities.length) return '';
+    const flights = new Map();
+    activities.forEach(activity => {
+      const key = activity.flight || 'Unnamed flight';
+      if (!flights.has(key)) flights.set(key, []);
+      flights.get(key).push(activity);
     });
-    html += '</div>';
+    const timed = activities.some(activity => activity.startTime !== event.startTime || activity.endTime !== event.endTime);
+    return '<table class="flight-table"><thead><tr><th scope="col">Flight</th><th scope="col">' +
+      (timed ? 'Time / activity' : 'Activity') + '</th><th scope="col">Location / POC</th></tr></thead><tbody>' +
+      Array.from(flights, ([flight, entries]) => {
+        const sorted = ordered(entries);
+        const common = sorted.every(a => a.location === sorted[0].location && a.poc === sorted[0].poc);
+        const logistics = a => (a.location ? '<span>' + esc(a.location) + '</span>' : '') +
+          (a.poc ? '<span class="flight-poc">' + esc(a.poc) + '</span>' : '');
+        return '<tr><th scope="row">' + esc(flight) + '</th><td>' + sorted.map(a =>
+          '<div class="flight-activity">' + (timed ? '<span class="flight-time">' + esc(time(a)) + '</span> ' : '') +
+          '<strong>' + esc(a.title || 'Untitled activity') + '</strong>' + (a.description ? '<span class="flight-description">' + esc(a.description) + '</span>' : '') + '</div>').join('') +
+          '</td><td>' + (common ? logistics(sorted[0]) : sorted.map(a => '<div class="flight-logistics">' +
+            '<span class="flight-time">' + esc(time(a)) + '</span>' + logistics(a) + '</div>').join('')) + '</td></tr>';
+      }).join('') + '</tbody></table>';
   }
-  html += '</div>';
-  return html;
-}
 
-function renderConcurrentPacked(concurrent, groupMap) {
-  const buckets = {};
-  concurrent.forEach(c => {
-    if (!buckets[c.startTime]) buckets[c.startTime] = [];
-    buckets[c.startTime].push(c);
-  });
+  function mainEvent(event, data, interactive) {
+    const references = data.byMain.get(event.id) || [];
+    const group = data.groups[event.groupId];
+    const flight = (event.flightActivities || []).length > 0;
+    const audience = flight ? 'By flight' : group?.name || '';
+    const meta = (event.location ? '<span class="detail-field detail-location"><small>At</small> ' + esc(event.location) + '</span>' : '') +
+      (event.poc ? '<span class="detail-field detail-poc"><small>POC</small> ' + esc(event.poc) + '</span>' : '');
+    const refs = references.length ? '<div class="start-refs"><span class="reference-label">Concurrent events:</span><span class="reference-badges">' +
+      references.map(item => badge(item, data.references.get(item.id), interactive)).join('') + '</span></div>' : '';
+    return '<article class="event main-event' + (event.emphasized ? ' highlighted' : '') + (flight ? ' flight' : '') + (event.isBreak ? ' break' : '') + '"' + articleAttributes(event, interactive) + '>' +
+      '<div class="time">' + esc(time(event)) + '<span class="duration">' + esc(duration(event)) + '</span></div>' +
+      '<div class="main-content' + (refs && !meta && !event.description ? ' reference-only' : '') + '"><div class="main-top"><div class="event-title"><h3>' + esc(event.title) + '</h3>' +
+      (audience && audience !== data.primaryLabel ? '<span class="audience">' + esc(audience) + '</span>' : '') +
+      '</div><div class="main-details">' + meta + '</div></div><div class="main-support">' +
+      (event.description ? '<p class="description">' + esc(event.description) + '</p>' : '') + refs + '</div>' + attendees(event) + flightTable(event) + '</div></article>';
+  }
 
-  const starts = Object.keys(buckets).sort();
-  let html = '<div class="conc-packed">';
-  starts.forEach(startTime => {
-    const bucket = buckets[startTime].slice().sort((a, b) => {
-      const endDiff = a.endTime.localeCompare(b.endTime);
-      return endDiff || a.title.localeCompare(b.title);
-    });
-    bucket.forEach((c, index) => {
-      html += renderConcurrentItem(c, groupMap[c.groupId], {
-        packed: true,
-        groupAnchor: index === 0 ? startTime : '',
-        groupHeading: index === 0 ? { time: startTime, count: bucket.length } : null,
+  function concurrentEvent(event, data, interactive) {
+    const parsed = attendance(event), roster = parsed.mode !== 'text' && parsed.entries.length >= 8;
+    const group = data.groups[event.groupId];
+    const heading = '<header><h3>' + badge(event, data.references.get(event.id), false) + esc(event.title) + '</h3><span class="time">' + esc(time(event)) + '</span>' +
+      (roster ? '<p class="roster-title">All ' + parsed.entries.length + ' entries · entered order</p>' : '') + '</header>';
+    const audience = group && !/^specific (people|personnel)$/i.test(group.name.trim())
+      ? '<div class="audience">' + esc(group.name) + '</div>' : '';
+    const body = attendees(event);
+    return '<article class="event ' + (roster ? 'large-event flow-roster' : 'small-event') + (event.emphasized ? ' highlighted' : '') + '"' + articleAttributes(event, interactive) + '>' +
+      (roster ? '<div class="large-head">' + heading + '</div><div class="roster-body">' + audience + body + '<div class="roster-details">' + details(event) + flightTable(event) + '</div></div>' :
+        heading + audience + body + details(event) + flightTable(event)) + '</article>';
+  }
+
+  function body(day, options) {
+    const interactive = !!options?.interactive, data = model(day);
+    const primary = Store.getGroups().filter(group => group.scope === 'main');
+    data.primaryLabel = primary.length === 1 ? primary[0].name : '';
+    return '<div class="sheet-body"><section class="main-panel"><h3 class="section-title">Main schedule' +
+      (data.primaryLabel ? '<small>' + esc(data.primaryLabel) + '</small>' : '') + '</h3><div class="main-list">' +
+      (data.mains.length ? data.mains.map(event => mainEvent(event, data, interactive)).join('') : '<p class="band-empty">No main events scheduled.</p>') +
+      '</div></section>' + (data.concurrent.length ? '<section class="attendance-area"><div class="concurrent-heading"><h3 class="section-title">Concurrent events</h3></div><div class="attendance-columns">' +
+      data.concurrent.map(event => concurrentEvent(event, data, interactive)).join('') + '</div></section>' : '') + '</div>';
+  }
+
+  function page(day, options) {
+    const opts = options || {}, settings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    const index = Store.getDays().findIndex(item => item.id === day.id) + 1;
+    const date = day.date ? formatDateDisplay(day.date).split(', ') : [];
+    const label = day.label || date[0] || 'Day ' + index;
+    const footer = Store.getFooter(), logo = Store.getLogo();
+    const notes = (day.notes || []).filter(note => opts.interactive || note.category || note.text);
+    const half = Math.ceil(notes.length / 2);
+    const css = '--page-width:612pt;--page-height:792pt;--page-margin:36pt;--logo-size:72pt;' +
+      '--min-detail:9pt;--min-name:10.5pt;--min-label:8pt;--min-main-title:11.5pt;--notes-height:' + settings.notesHeight + 'pt;' + paletteStyle();
+    return '<section class="sheet band-sheet roomy" data-theme="app" data-fit="true" data-day="' + esc(day.id) + '" style="' + css + '" aria-label="' + esc(label) + '">' +
+      '<div class="print-error"><b>Schedule not ready to print.</b><p>' + esc(label) + ': the complete day exceeds the supported text sizes. No partial schedule is printed. Review the content before issuing it.</p></div>' +
+      '<header class="page-header' + (settings.showLogo ? '' : ' no-logo') + '"' + (opts.interactive ? ' data-band-customize tabindex="0" role="button" aria-label="Customize schedule"' : '') + '>' +
+      (settings.showLogo ? '<div class="logo-slot' + (logo ? ' has-logo' : '') + '">' + (logo ? '<img src="' + esc(logo) + '" alt="Unit logo">' : '<span>UNIT<br>LOGO</span>') + '</div>' : '') +
+      '<div class="heading-content">' + (Store.getTitle() ? '<p class="page-title">' + esc(Store.getTitle()) + '</p>' : '') +
+      (footer.contact ? '<p class="schedule-label">' + esc(footer.contact) + '</p>' : '') + '</div><div class="day-heading"><h2>' + esc(label) + '</h2>' +
+      (date.length > 1 ? '<p class="date">' + esc(date[1]) + '</p>' : '') + '</div></header>' +
+      (opts.handout ? '<p class="band-handout">' + esc(opts.handout) + '</p>' : '') + body(day, opts) +
+      '<section class="reminder-area"><div class="reminder-panel"><h3 class="reminder-heading">Notes &amp; Reminders</h3><div class="reminders">' +
+      [notes.slice(0, half), notes.slice(half)].map(column => '<div class="reminder-column">' + column.map(note =>
+        '<div class="reminder' + (!note.category && !note.text ? ' note-empty' : '') + '" data-note-id="' + esc(note.id) + '">' + (opts.interactive ? '<button type="button" class="note-select">' : '') +
+        (note.category ? '<strong>' + esc(note.category) + ':</strong> ' : '') + esc(note.text || (!note.category ? 'Empty note' : '')) +
+        (opts.interactive ? '</button>' : '') + '</div>').join('') + '</div>').join('') + '</div></div></section>' +
+      '<footer class="page-footer"><span>' + (footer.poc ? 'Schedule POC: ' + esc(footer.poc) : '') + '</span><span>Day ' + index + ' of ' + Store.getDays().length + '</span></footer></section>';
+  }
+
+  function geometry(sheet) {
+    const pageBox = sheet.getBoundingClientRect(), content = sheet.querySelector('.sheet-body').getBoundingClientRect();
+    const area = sheet.querySelector('.reminder-area').getBoundingClientRect(), footer = sheet.querySelector('.page-footer').getBoundingClientRect();
+    const panel = sheet.querySelector('.reminder-panel').getBoundingClientRect(), notes = sheet.querySelector('.reminders').getBoundingClientRect();
+    const notesOverflow = Math.max(0, notes.bottom - panel.bottom);
+    const overflow = Math.max(0, content.bottom + policy.clearance / .75 - area.top,
+      footer.bottom - (pageBox.bottom - policy.margin / .75), notesOverflow);
+    const tooWide = Array.from(sheet.querySelectorAll('.event,.reminder,.page-title,.schedule-label,.day-heading,.page-footer'))
+      .some(element => element.scrollWidth > element.clientWidth + 1);
+    return { fits: overflow < .05 && !tooWide, overflow, notesOverflow, tooWide };
+  }
+
+  function fit(sheet) {
+    sheet.dataset.fit = 'true';
+    sheet.style.setProperty('--main-extra', '0pt');
+    sheet.style.setProperty('--main-title-grow', '0pt');
+    let titleSize = 19;
+    sheet.style.setProperty('--title-size', titleSize + 'pt');
+    while (sheet.querySelector('.heading-content').getBoundingClientRect().height > 96 && titleSize > 10) {
+      titleSize -= .25; sheet.style.setProperty('--title-size', titleSize + 'pt');
+    }
+    let noteScale = 1;
+    sheet.style.setProperty('--note-scale', '1');
+    while (geometry(sheet).notesOverflow > 0 && noteScale > policy.detail / 9.5) {
+      noteScale = Math.max(policy.detail / 9.5, noteScale - .02);
+      sheet.style.setProperty('--note-scale', String(noteScale));
+    }
+    const columns = sheet.querySelector('.attendance-columns');
+    const entries = columns ? Array.from(columns.querySelectorAll('article[data-event-id]')) : [];
+    let columnCount = 0, density = 'roomy', scale = 1;
+    const place = (count, widths) => {
+      if (!columns) return geometry(sheet).fits;
+      const single = entries.length <= 3 && !entries.some(entry => entry.classList.contains('large-event'));
+      columnCount = single ? 1 : count;
+      columns.className = 'attendance-columns ' + (single ? 'single-list' : 'reading-columns');
+      columns.style.gridTemplateColumns = (single ? [1] : widths).map(width => 'minmax(0,' + width + 'fr)').join(' ');
+      columns.replaceChildren();
+      const hosts = Array.from({ length: columnCount }, () => {
+        const host = document.createElement('div'); host.className = 'event-column'; columns.appendChild(host); return host;
       });
-    });
-  });
-  html += '</div>';
-  return html;
-}
-
-function renderConcurrentGroups(concurrent, groupMap) {
-  const buckets = {};
-  concurrent.forEach(c => {
-    if (!buckets[c.startTime]) buckets[c.startTime] = [];
-    buckets[c.startTime].push(c);
-  });
-
-  const starts = Object.keys(buckets).sort();
-  let html = '<div class="conc-groups">';
-  starts.forEach(startTime => {
-    const bucket = buckets[startTime].slice().sort((a, b) => {
-      const endDiff = a.endTime.localeCompare(b.endTime);
-      return endDiff || a.title.localeCompare(b.title);
-    });
-    html += '<div class="conc-group" data-conc-group="' + esc(startTime) + '">';
-    html += '<div class="conc-group-head">';
-    html += '<span class="conc-group-time">' + esc(startTime) + '</span>';
-    html += '<span class="conc-group-count">' + esc(bucket.length + (bucket.length === 1 ? ' event' : ' events')) + '</span>';
-    html += '</div>';
-    html += '<div class="conc-row">';
-    bucket.forEach(c => {
-      html += renderConcurrentItem(c, groupMap[c.groupId]);
-    });
-    html += '</div>';
-    html += '</div>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function renderConcurrentItem(c, g, options) {
-  const opts = options || {};
-  const borderColor = g ? g.color : '#d2d2d7';
-  const packedClass = opts.packed ? ' conc-item--packed' : '';
-  const groupAnchorAttr = opts.groupAnchor ? ' data-conc-group="' + esc(opts.groupAnchor) + '"' : '';
-  let html = '<div class="conc-item' + packedClass + '" style="border-left-color:' + esc(borderColor) + ';" data-event-id="' + esc(c.id) + '"' + groupAnchorAttr + '>';
-  if (opts.groupHeading) {
-    html += '<div class="conc-pack-head">';
-    html += '<span class="conc-group-time">' + esc(opts.groupHeading.time) + '</span>';
-    html += '<span class="conc-group-count">' + esc(opts.groupHeading.count + (opts.groupHeading.count === 1 ? ' event' : ' events')) + '</span>';
-    html += '</div>';
-  }
-  html += renderConcurrentItemBody(c, g);
-  html += '</div>';
-  return html;
-}
-
-function renderConcurrentItemBody(c, g) {
-  let html = '';
-  html += '<div class="ci-time">' + esc(c.startTime + ' \u2013 ' + c.endTime) + '</div>';
-  html += '<div class="ci-title">' + esc(c.title) + '</div>';
-  const parts = [c.location, c.poc].filter(Boolean);
-  if (parts.length) html += '<div class="ci-detail">' + esc(parts.join(' \u00b7 ')) + '</div>';
-  if (c.description) html += '<div class="ci-detail">' + esc(c.description) + '</div>';
-  if (g) html += '<div><span class="band-tag" style="background:' + esc(g.color) + ';color:' + esc(getContrastingTextColor(g.color)) + ';">' + esc(g.name) + '</span></div>';
-  if (c.attendees) {
-    const prefix = g ? '+ ' : 'WHO: ';
-    // Two different events can share a title and attendees; the footnote
-    // carries a time, so the time is part of the identity.
-    const timeLabel = c.startTime + ' – ' + c.endTime;
-    const existingIdx = getDaggerFootnotes().findIndex(fn => (c.id && fn.eventId === c.id) || (!c.id && fn.title === c.title && fn.attendees === c.attendees && fn.time === timeLabel));
-    if (existingIdx !== -1) {
-      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + (existingIdx + 1) + '</sup></div>';
-    } else if (c.attendees.length > 25) {
-      addDaggerFootnote({ eventId: c.id, title: c.title, time: c.startTime + ' \u2013 ' + c.endTime, attendees: c.attendees });
-      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + ' <sup>' + getDaggerFootnotes().length + '</sup></div>';
-    } else {
-      html += '<div class="cc-attendees">' + esc(prefix + c.attendees) + '</div>';
+      const box = sheet.getBoundingClientRect();
+      const reserve = sheet.querySelector('.reminder-area').getBoundingClientRect().height + sheet.querySelector('.page-footer').getBoundingClientRect().height +
+        parseFloat(getComputedStyle(sheet.querySelector('.page-footer')).marginTop);
+      const limit = box.bottom - policy.margin / .75 - reserve - policy.clearance / .75 - columns.getBoundingClientRect().top;
+      let col = 0;
+      entries.forEach(entry => {
+        hosts[col].appendChild(entry);
+        if (hosts[col].getBoundingClientRect().height > limit + .05 && col + 1 < columnCount && hosts[col].children.length > 1) hosts[++col].appendChild(entry);
+      });
+      return geometry(sheet).fits;
+    };
+    const attempt = count => {
+      const widths = count === 2 ? [[1, 1], [.44, .56], [.4, .6]] : [[1, 1, 1]];
+      const fits = () => widths.some(ratio => place(count, ratio));
+      for (const roster of [12, 11.5, 11, 10.5, 10, policy.roster]) {
+        sheet.style.setProperty('--roster-name-size', roster + 'pt');
+        for (const candidate of ['roomy', 'standard', 'compact', 'tight']) {
+          sheet.classList.remove('roomy', 'standard', 'compact', 'tight');
+          sheet.classList.add(candidate); if (candidate === 'tight') sheet.classList.add('compact');
+          sheet.style.setProperty('--type-scale', '1');
+          density = candidate; scale = 1;
+          if (fits()) return true;
+        }
+      }
+      let low = policy.scale, high = 1;
+      sheet.style.setProperty('--type-scale', String(low)); scale = low;
+      if (!fits()) return false;
+      for (let i = 0; i < 9; i++) {
+        const mid = (low + high) / 2; sheet.style.setProperty('--type-scale', String(mid));
+        if (fits()) low = mid; else high = mid;
+      }
+      scale = Math.floor(low * 100) / 100; sheet.style.setProperty('--type-scale', String(scale));
+      return fits();
+    };
+    const fitted = attempt(2) || attempt(3);
+    if (fitted) {
+      const panel = sheet.querySelector('.main-panel'), area = sheet.querySelector('.reminder-area');
+      const free = area.getBoundingClientRect().top - sheet.querySelector('.sheet-body').getBoundingClientRect().bottom;
+      if (free >= 16) {
+        const mainOnly = !columns, cap = (area.getBoundingClientRect().top - panel.getBoundingClientRect().top) * (mainOnly ? .88 : .68);
+        let low = 0, high = 1;
+        const apply = value => { sheet.style.setProperty('--main-extra', (mainOnly ? 18 : 7) * value + 'pt'); sheet.style.setProperty('--main-title-grow', (mainOnly ? 2.5 : 1.5) * value + 'pt'); };
+        for (let i = 0; i < 9; i++) { const mid = (low + high) / 2; apply(mid); if (geometry(sheet).fits && panel.getBoundingClientRect().height <= cap) low = mid; else high = mid; }
+        apply(Math.floor(low * 100) / 100);
+      }
     }
+    const result = geometry(sheet);
+    sheet.dataset.fit = String(result.fits); sheet.dataset.columns = String(columnCount);
+    sheet.dataset.density = density; sheet.dataset.textScale = String(scale);
+    return { ...result, columns: columnCount, scale, density };
   }
-  return html;
+
+  return { policy, model, attendance, page, body, fit, flightTable };
+})();
+
+</script>
+  <script>
+/* Bands uses the approved page renderer. Shared dispatch still exposes a body
+ * renderer for callers that compose their own shell; the app and print pipeline
+ * use BandLayout.page() so header, notes and fitting stay identical.
+ */
+function renderDayBody_band(dayId, dayOverride, options) {
+  const day = dayOverride || Store.getDay(dayId);
+  return day ? BandLayout.body(day, options) : '';
 }
 
 </script>
@@ -9619,6 +10133,7 @@ function renderGridBanner(shared, events, groups) {
     if (shared.attendees) html += '<span>WHO: ' + esc(shared.attendees) + '</span>';
     html += '</div>';
   }
+  html += renderFlightDetails(shared);
   if (shared.description) html += '<div class="grid-banner-desc">' + esc(shared.description) + '</div>';
   if (exceptionNote) {
     html += '<div class="grid-banner-exception">Exceptions: ' + esc(exceptionNote) + '</div>';
@@ -9691,6 +10206,7 @@ function renderGridCell(evt, group, isContinuation) {
     html += '<div class="grid-cell-meta-line">' + meta.join('<span class="grid-meta-sep">\u00b7</span>') + '</div>';
   }
   if (evt.description) html += '<div class="grid-cell-meta">' + esc(evt.description) + '</div>';
+  html += renderFlightDetails(evt);
   if (evt.attendees) html += '<div class="grid-cell-meta grid-cell-attendees">WHO: ' + esc(evt.attendees) + '</div>';
   html += '</div>';
   html += '</div>';
@@ -9807,6 +10323,7 @@ function renderDayBody_cards(dayId, dayOverride) {
       if (exceptionNote) {
         html += '<span class="cards-shared-exception">Exceptions: ' + esc(exceptionNote) + '</span>';
       }
+      html += renderFlightDetails(e);
       if (e.description) html += '<span class="cards-event-detail">' + esc(e.description) + '</span>';
       html += '</span>';
     });
@@ -9839,6 +10356,7 @@ function renderDayBody_cards(dayId, dayOverride) {
           html += '<div class="cards-event-meta">' + meta.join('<span class="cards-meta-sep">\u00b7</span>') + '</div>';
         }
         if (evt.description) html += '<div class="cards-event-detail">' + esc(evt.description) + '</div>';
+        html += renderFlightDetails(evt);
         if (evt.attendees) html += '<div class="cards-event-detail">WHO: ' + esc(evt.attendees) + '</div>';
         html += '</div>';
       });
@@ -9919,6 +10437,7 @@ function renderDayBody_phases(dayId, dayOverride) {
         if (evt.attendees) html += '<span>WHO: ' + esc(evt.attendees) + '</span>';
         html += '</div>';
       }
+      html += renderFlightDetails(evt);
       if (evt.description) {
         html += '<div class="phase-desc">' + esc(evt.description) + '</div>';
       }
@@ -9948,6 +10467,7 @@ function renderDayBody_phases(dayId, dayOverride) {
         if (t.description) {
           html += '<div class="phase-task-detail">' + esc(t.description) + '</div>';
         }
+        html += renderFlightDetails(t);
         if (t.attendees) html += '<div class="phase-task-detail">WHO: ' + esc(t.attendees) + '</div>';
         html += '</div>';
       });
@@ -10175,6 +10695,9 @@ function hideLibrary() {
   document.getElementById('libraryView').classList.remove('active');
   document.querySelector('.toolbar').style.display = '';
   document.querySelector('.app-body').style.display = '';
+  // Imports can render while the library hides the editor. Physical paper
+  // fitting needs visible dimensions, so measure again after revealing it.
+  if (document.querySelector('.band-sheet')) renderActiveDay();
   syncHelpEntryPoints();
 }
 
@@ -11070,7 +11593,7 @@ function clearDaggerFootnotes() { _daggerFootnotes = []; }
 
 // Skin dispatcher registry
 const SKIN_RENDERERS = {
-  bands: function(dayId, day) { return renderDayBody_band(dayId, day); },
+  bands: function(dayId, day, options) { return renderDayBody_band(dayId, day, options); },
   grid:  function(dayId, day) { return typeof renderDayBody_grid   === 'function' ? renderDayBody_grid(dayId, day)   : ''; },
   cards: function(dayId, day) { return typeof renderDayBody_cards  === 'function' ? renderDayBody_cards(dayId, day)  : ''; },
   phases:function(dayId, day) { return typeof renderDayBody_phases === 'function' ? renderDayBody_phases(dayId, day) : ''; },
@@ -11105,18 +11628,30 @@ function renderDay(dayId) {
 
   // Set skin class on page
   const page = container.closest('.page') || container;
-  page.className = 'page skin-' + theme.skin;
+  page.className = 'page skin-' + theme.skin + (theme.skin === 'bands' ? ' bands-screen band-page' : '');
 
   // Dispatch to skin renderer
   const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
 
   let html = '';
-  html += renderHeader(day);
-  html += renderer(dayId);
-  html += renderFooter();
+  if (theme.skin === 'bands') html = BandLayout.page(day, { interactive: true });
+  else {
+    html += renderHeader(day);
+    html += renderer(dayId, day, { interactive: true });
+    html += renderFooter();
+  }
   container.innerHTML = html;
 
-  applyPrintScaling();
+  if (theme.skin === 'bands') {
+    removePrintScaling(page);
+    const result = BandLayout.fit(container.querySelector('.band-sheet'));
+    const notice = document.createElement('div');
+    notice.className = 'band-fit-notice'; notice.setAttribute('role', 'status');
+    if (!result.fits) notice.textContent = 'This day exceeds the readable one-page limits. All content remains here for editing. Reduce or revise the content before printing.';
+    container.appendChild(notice);
+  }
+  else applyPrintScaling();
+  if (typeof syncPreviewSelection === 'function') syncPreviewSelection();
 }
 
 function renderHeader(day) {
@@ -11142,10 +11677,11 @@ function renderHeader(day) {
   return html;
 }
 
-function renderNotes(notes) {
-  let html = '<div class="notes">';
+function renderNotes(notes, options) {
+  const bands = options && options.bands;
+  let html = '<div class="notes' + (bands ? ' bands-print-section bands-print-wide bands-print-notes' : '') + '">';
   html += '<div class="notes-label">Notes</div>';
-  html += '<ul class="notes-list">';
+  html += '<ul class="notes-list' + (bands ? ' bands-print-items' : '') + '">';
   notes.forEach(n => {
     if (!n.text && !n.category) {
       // Freshly added, nothing typed yet. Visible on screen so it can be
@@ -11154,7 +11690,7 @@ function renderNotes(notes) {
       html += '<li data-note-id="' + esc(n.id) + '" class="note-empty"><button type="button" class="note-select"><em>Empty note</em></button></li>';
       return;
     }
-    html += '<li data-note-id="' + esc(n.id) + '"><button type="button" class="note-select">';
+    html += '<li data-note-id="' + esc(n.id) + '"' + (bands ? ' class="bands-print-event bands-print-note"' : '') + '><button type="button" class="note-select' + (bands ? ' bands-print-description' : '') + '">';
     if (n.category) html += '<strong>' + esc(n.category) + ' \u2014</strong> ';
     html += esc(n.text) + '</button></li>';
   });
@@ -11177,6 +11713,16 @@ function renderFooter() {
   const printDate = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
   const parts = [f.contact, f.poc ? 'Schedule POC: ' + f.poc : '', 'Printed: ' + printDate].filter(Boolean);
   return '<div class="footer">' + esc(parts.join(' \u00b7 ')) + '</div>';
+}
+
+// Until the other layouts receive their own design review, retain newly added
+// flight details in their existing event content rather than dropping the data.
+function renderFlightDetails(event) {
+  if (!event.flightActivities?.length) return '';
+  return '<span class="flight-details-plain">' + event.flightActivities.map(activity =>
+    '<span class="flight-detail-line"><strong>' + esc(activity.flight || 'Unnamed flight') + '</strong> · ' +
+    [activity.startTime + '-' + activity.endTime, activity.title, activity.location,
+      activity.poc ? 'POC: ' + activity.poc : '', activity.description].filter(Boolean).map(esc).join(' · ') + '</span>').join('') + '</span>';
 }
 
 function formatDateDisplay(dateStr) {
@@ -11458,12 +12004,14 @@ function wireWorkbookUi() {
  *   events.js    — openPrintReview() (Ctrl+P and toolbar button)
  *
  * SIDE EFFECTS:
- *   Registers beforeprint listener → applyPrintScaling(true)
- *   Registers afterprint listener → re-renders active day
+ *   Registers beforeprint listener → prepares fresh full readable output unless
+ *     an explicit app print request has selected other options
+ *   Registers afterprint listener → clears output and re-renders active day
  *   Creates/reuses #printContainer element on document.body
  * ──────────────────────────────────────────────────────────────────────────── */
 
 let _printDocumentTitle = null;
+let _printJob = null;
 
 function normalizePrintOptions(options) {
   const opts = options || {};
@@ -11473,7 +12021,7 @@ function normalizePrintOptions(options) {
     dayIds: knownDays.filter(id => requestedDays.includes(id)),
     audienceId: Store.getGroup(opts.audienceId) ? opts.audienceId : '',
     detail: opts.detail === 'overview' ? 'overview' : 'full',
-    mode: opts.mode === 'fit' ? 'fit' : 'readable',
+    mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin === 'bands' || opts.mode === 'fit' ? 'fit' : 'readable',
   };
 }
 
@@ -11493,6 +12041,11 @@ function buildPrintMarkup(options) {
   const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
   const audience = Store.getGroup(opts.audienceId);
   return getPrintDays(opts).map(day => {
+    if (theme.skin === 'bands') {
+      const handout = [audience ? 'Audience: ' + audience.name + '. Primary audience events and breaks included.' : '',
+        opts.detail === 'overview' ? 'Overview: event notes omitted.' : '', audience || opts.detail === 'overview' ? 'Day notes included.' : ''].filter(Boolean).join(' ');
+      return '<div class="page print-page skin-bands band-page print-fit" data-print-mode="fit" data-print-day="' + esc(day.id) + '">' + BandLayout.page(day, { handout }) + '</div>';
+    }
     let html = '<div class="page print-page skin-' + esc(theme.skin) + ' print-' + opts.mode + '" data-print-mode="' + opts.mode + '" data-print-day="' + esc(day.id) + '">';
     html += renderHeader(day);
     if (audience || opts.detail === 'overview') {
@@ -11500,10 +12053,25 @@ function buildPrintMarkup(options) {
       if (opts.detail === 'overview') html += 'Overview · Event notes omitted. ';
       html += 'Day notes included.</div>';
     }
-    html += renderer(day.id, day);
+    html += renderer(day.id, day, { printMode: opts.mode });
     html += renderFooter() + '</div>';
     return html;
   }).join('');
+}
+
+function layoutPrintPages(container) {
+  // Bands owns its page boundaries. Measurement and both print entry points
+  // use that same renderer after insertion at the printable width.
+  container.querySelectorAll('.print-page').forEach(page => {
+    const sheet = page.querySelector('.band-sheet');
+    if (sheet) { BandLayout.fit(sheet); page.dataset.printPaginated = 'true'; }
+    else applyPrintScalingToPage(page, true);
+  });
+}
+
+function preparePrintPages(container, options) {
+  container.innerHTML = buildPrintMarkup(options);
+  layoutPrintPages(container);
 }
 
 function measurePrintPlan(options) {
@@ -11512,11 +12080,11 @@ function measurePrintPlan(options) {
   container.className = 'print-measurement';
   container.setAttribute('aria-hidden', 'true');
   container.inert = true;
-  container.innerHTML = buildPrintMarkup(opts);
   document.body.appendChild(container);
   try {
-    return Array.from(container.querySelectorAll('.print-page')).map(page => {
-      applyPrintScalingToPage(page, true);
+    preparePrintPages(container, opts);
+    const days = new Map();
+    container.querySelectorAll('.print-page').forEach(page => {
       const scale = parseFloat(page.style.zoom || '1');
       const textSizes = Array.from(page.querySelectorAll('*')).filter(el =>
         !el.closest('.band-view-note, .note-empty, .hdr-logo, sup') &&
@@ -11524,13 +12092,24 @@ function measurePrintPlan(options) {
         el.getClientRects().length && getComputedStyle(el).display !== 'none'
       ).map(el => parseFloat(getComputedStyle(el).fontSize)).filter(Number.isFinite);
       const height = page.getBoundingClientRect().height;
-      return {
+      const metrics = {
         dayId: page.dataset.printDay,
         scale,
-        estimatedPages: opts.mode === 'fit' ? 1 : Math.max(1, Math.ceil(height / ((10.32 * 96) - 48))),
+        estimatedPages: opts.mode === 'fit' || (page.dataset.printPaginated === 'true' && !page.classList.contains('bands-print-natural'))
+          ? 1 : Math.max(1, Math.ceil(height / ((10.32 * 96) - 48))),
         smallestTextPt: (textSizes.length ? Math.min(...textSizes) : 12) * scale * 0.75,
+        fits: !page.querySelector('.band-sheet[data-fit="false"]'),
       };
+      const day = days.get(metrics.dayId);
+      if (day) {
+        day.estimatedPages += metrics.estimatedPages;
+        day.scale = Math.min(day.scale, metrics.scale);
+        day.smallestTextPt = Math.min(day.smallestTextPt, metrics.smallestTextPt);
+      } else {
+        days.set(metrics.dayId, metrics);
+      }
     });
+    return Array.from(days.values());
   } finally {
     container.remove();
   }
@@ -11548,6 +12127,7 @@ function openPrintReview() {
     document.body.appendChild(overlay);
   }
   const modal = overlay.querySelector('.modal');
+  const banded = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin === 'bands';
   let html = '<h2 id="printReviewTitle">Review and print</h2>';
   html += '<fieldset class="print-review-days"><legend>Days to print</legend>';
   days.forEach((day, index) => {
@@ -11559,7 +12139,9 @@ function openPrintReview() {
   Store.getGroups().forEach(group => { html += '<option value="' + esc(group.id) + '">' + esc(group.name) + '</option>'; });
   html += '</select><p class="print-review-hint">An audience handout includes primary audience events and breaks. Review named exceptions and day notes before sharing.</p>';
   html += '<label for="printDetail">Details</label><select id="printDetail"><option value="full">Full details</option><option value="overview">Overview — omit event notes</option></select>';
-  html += '<label for="printMode">Page layout</label><select id="printMode"><option value="readable">Readable pages — allow more than one page per day</option><option value="fit">Fit each day on one page — may make text small</option></select></div>';
+  html += '<label for="printMode">Page layout</label><select id="printMode">' + (banded
+    ? '<option value="fit">Letter portrait — one day per page</option>'
+    : '<option value="readable">Readable pages — allow more than one page per day</option><option value="fit">Fit each day on one page — may make text small</option>') + '</select></div>';
   html += '<div id="printReviewSummary" role="status" aria-live="polite"></div>';
   html += '<details class="print-review-checks"><summary id="printReviewCheckCount">Schedule checks</summary><ul id="printReviewIssues"></ul></details>';
   html += '<div class="modal-actions"><button type="button" class="btn" id="printReviewCancel">Cancel</button><button type="button" class="btn btn-primary" id="printReviewConfirm">Print</button></div>';
@@ -11577,16 +12159,24 @@ function openPrintReview() {
     const omitted = opts.detail === 'overview' ? events.filter(evt => evt.description).length : 0;
     const metrics = measurePrintPlan(opts);
     const sheets = metrics.reduce((sum, page) => sum + page.estimatedPages, 0);
-    const small = metrics.filter(page => page.smallestTextPt < 8);
+    const small = metrics.filter(page => page.smallestTextPt < (opts.mode === 'fit' ? 12 : 8));
     let summary = '<p>' + opts.dayIds.length + ' day(s), ' + events.length + ' event(s). Estimated ' + sheets + ' printed page(s).</p>';
     if (omitted) summary += '<p>' + omitted + ' event note(s) will be omitted from this overview.</p>';
-    if (small.length) summary += '<p class="print-review-warning">Text may be as small as ' + Math.min(...small.map(page => page.smallestTextPt)).toFixed(1) + ' pt. Text below 8 pt can be hard to read; choose Readable pages or print fewer audiences.</p>';
+    if (banded) {
+      summary += '<p>Half-inch margins, a reserved notes area and bounded text sizes. Print at actual size on US Letter; duplex can put the next day on the reverse.</p>';
+      if (metrics.some(page => !page.fits)) summary += '<p class="print-review-warning">A selected day exceeds the readable one-page limits. Review its content before printing; no names or event details will be clipped to make it fit.</p>';
+    } else if (small.length) {
+      summary += '<p class="print-review-warning">Text may be as small as ' + Math.min(...small.map(page => page.smallestTextPt)).toFixed(1) + ' pt. ';
+      summary += opts.mode === 'fit'
+        ? 'Fit keeps each day on one page and may reduce text below 12 pt. Choose Readable pages for larger type.</p>'
+        : 'Text below 8 pt can be hard to read; choose Readable pages or print fewer audiences.</p>';
+    }
     summary += '<p class="print-review-hint">Check your browser’s print preview before sharing. Paper and printer settings can change pagination.</p>';
     modal.querySelector('#printReviewSummary').innerHTML = summary;
     const issues = getScheduleReviewIssues(fullDays, Store.getGroups());
     modal.querySelector('#printReviewCheckCount').textContent = issues.length ? issues.length + ' schedule check(s) to review' : 'No schedule checks flagged';
     modal.querySelector('#printReviewIssues').innerHTML = issues.map(issue => '<li>' + esc(issue.message) + '</li>').join('');
-    modal.querySelector('#printReviewConfirm').disabled = opts.dayIds.length === 0;
+    modal.querySelector('#printReviewConfirm').disabled = opts.dayIds.length === 0 || metrics.some(page => page.fits === false);
   };
   modal.querySelectorAll('input, select').forEach(input => input.addEventListener('change', refresh));
   modal.querySelector('#printReviewCancel').addEventListener('click', () => closeModal('printReviewModal'));
@@ -11609,9 +12199,7 @@ function printAllDays() {
   printSchedule({ mode: 'fit' });
 }
 
-function printSchedule(options) {
-  const opts = normalizePrintOptions(options);
-  if (!opts.dayIds.length) { toast('No days to print.'); return; }
+function createPrintJob(options, source) {
   let container = document.getElementById('printContainer');
   if (!container) {
     container = document.createElement('div');
@@ -11621,30 +12209,76 @@ function printSchedule(options) {
   container.className = 'print-staging';
   container.inert = true;
   container.setAttribute('aria-hidden', 'true');
-  container.innerHTML = buildPrintMarkup(opts);
   document.body.classList.add('printing-schedule');
   if (_printDocumentTitle === null) _printDocumentTitle = document.title;
-  const audience = Store.getGroup(opts.audienceId);
+  const job = { options, source, container, fileData: getCurrentScheduleFileData(), started: false };
+  _printJob = job;
+  updatePrintDocumentTitle(options);
+  return job;
+}
+
+function updatePrintDocumentTitle(options) {
+  const audience = Store.getGroup(options.audienceId);
   document.title = [Store.getTitle(), audience ? audience.name : 'Everyone',
-    opts.detail === 'overview' ? 'Overview' : 'Full details', opts.dayIds.length + ' day(s)'].join(' — ');
+    options.detail === 'overview' ? 'Overview' : 'Full details', options.dayIds.length + ' day(s)'].join(' — ');
+}
+
+function clearPrintJob() {
+  _printJob = null;
+  const container = document.getElementById('printContainer');
+  if (container) { container.innerHTML = ''; container.className = ''; }
+  document.body.classList.remove('printing-schedule');
+  if (_printDocumentTitle !== null) { document.title = _printDocumentTitle; _printDocumentTitle = null; }
+}
+
+function reportPrintFailure(err) {
+  clearPrintJob();
+  if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'print');
+  toast('Couldn’t open the print dialog. Try your browser’s File → Print.', 6000);
+}
+
+function printSchedule(options) {
+  const opts = normalizePrintOptions(options);
+  if (!opts.dayIds.length) { clearPrintJob(); toast('No days to print.'); return; }
+  const job = createPrintJob(opts, 'app');
+  let content;
+  try {
+    job.container.innerHTML = buildPrintMarkup(opts);
+    content = JSON.stringify({ state: Store.getPersistedState(), theme: job.fileData && job.fileData.theme });
+  } catch (err) {
+    reportPrintFailure(err);
+    return;
+  }
   // Logos are local data URLs, but decoding is asynchronous. Wait for them
   // before measuring rather than assuming a fixed timeout is long enough.
-  const images = Array.from(container.querySelectorAll('img'));
-  Promise.all(images.map(img => typeof img.decode === 'function' ? img.decode().catch(err => {
+  const images = Array.from(job.container.querySelectorAll('img'));
+  return Promise.all(images.map(img => typeof img.decode === 'function' ? img.decode().catch(err => {
+    if (_printJob !== job || job.started) return;
     if (typeof logAppError === 'function') logAppError('warn', String(err && err.message || err), 'print logo');
     toast('The logo could not be read and may be missing from the printout.', 6000);
   }) : Promise.resolve()))
     .then(() => {
+      // A completed decode must not reopen a closed print preview, print a
+      // superseded request, or print an old schedule after navigation/editing.
+      if (_printJob !== job || job.started) return;
+      const fileData = getCurrentScheduleFileData();
+      if (!job.container.isConnected || fileData !== job.fileData ||
+          content !== JSON.stringify({ state: Store.getPersistedState(), theme: fileData && fileData.theme })) {
+        clearPrintJob();
+        toast('The schedule changed while preparing print. Review and print again.', 6000);
+        return;
+      }
       try {
-        applyPrintScaling(true);
+        layoutPrintPages(job.container);
+        if (job.container.querySelector('.band-sheet[data-fit="false"]')) {
+          clearPrintJob();
+          toast('A day exceeds the readable one-page limits. Review the schedule before printing.', 6000);
+          return;
+        }
+        job.started = true;
         window.print();
       } catch (err) {
-        container.innerHTML = '';
-        container.className = '';
-        document.body.classList.remove('printing-schedule');
-        if (_printDocumentTitle !== null) { document.title = _printDocumentTitle; _printDocumentTitle = null; }
-        if (typeof logAppError === 'function') logAppError('error', String(err && err.message || err), 'print');
-        toast('Couldn’t open the print dialog. Try your browser’s File → Print.', 6000);
+        if (_printJob === job) reportPrintFailure(err);
       }
     });
 }
@@ -11670,6 +12304,8 @@ function applyPrintScaling(forPrint) {
 }
 
 function applyPrintScalingToPage(page, forPrint) {
+  const bandSheet = page.querySelector('.band-sheet');
+  if (bandSheet) { removePrintScaling(page); BandLayout.fit(bandSheet); return; }
   // For print: usable area = 11in - 0.3in @page margins - 0.38in padding,
   // minus 48px safety margin for browser rendering differences.
   // For screen: match the .page card's min-height (11in = 1056px).
@@ -11824,9 +12460,23 @@ function removePrintScaling(page) {
   delete page.dataset.printScaled;
 }
 
-// Auto-scale on any print trigger (Cmd+P, browser menu, etc.)
+// Browser File → Print does not go through printSchedule. Build current full
+// readable pages synchronously; beforeprint cannot wait for image decoding.
+// An app-requested print retains its deliberate day/audience/detail/Fit choices.
 window.addEventListener('beforeprint', () => {
-  applyPrintScaling(true);
+  try {
+    const pending = _printJob && _printJob.source === 'app' &&
+      _printJob.fileData === getCurrentScheduleFileData() && _printJob.container.isConnected;
+    const options = normalizePrintOptions(pending ? _printJob.options : {});
+    if (!options.dayIds.length) { clearPrintJob(); return; }
+    const job = pending ? _printJob : createPrintJob(options, 'browser');
+    job.options = options;
+    job.started = true;
+    updatePrintDocumentTitle(options);
+    preparePrintPages(job.container, options);
+  } catch (err) {
+    reportPrintFailure(err);
+  }
 });
 
 // Clean up scaling after print so screen view is unaffected
@@ -11834,10 +12484,7 @@ window.addEventListener('afterprint', () => {
   // Empty the print container: the print stylesheet forces it visible
   // (display:block !important), so stale pages left here would be printed —
   // with pre-edit data — by any later browser-menu File→Print.
-  const printContainer = document.getElementById('printContainer');
-  if (printContainer) { printContainer.innerHTML = ''; printContainer.className = ''; }
-  document.body.classList.remove('printing-schedule');
-  if (_printDocumentTitle !== null) { document.title = _printDocumentTitle; _printDocumentTitle = null; }
+  clearPrintJob();
   const activeDay = Store.getActiveDay();
   if (activeDay) renderDay(activeDay);
 });
@@ -11873,7 +12520,7 @@ window.addEventListener('afterprint', () => {
  * ──────────────────────────────────────────────────────────────────────────── */
 
 // Selector for any clickable event element across all skins
-const EVENT_SELECTOR = '[data-event-id]';
+const EVENT_SELECTOR = '[data-event-id], [data-event-ref], [data-main-context]';
 
 document.addEventListener('click', e => {
   if (e.target.closest('.modal-overlay')) return;
@@ -11918,12 +12565,13 @@ document.addEventListener('click', e => {
   const eventEl = e.target.closest(EVENT_SELECTOR);
   if (eventEl && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
-    if (dayId) selectEntity('event', dayId, eventEl.getAttribute('data-event-id'));
+    const eventId = eventEl.dataset.eventId || eventEl.dataset.eventRef || eventEl.dataset.mainContext;
+    if (dayId) selectEntity('event', dayId, eventId);
     return;
   }
 
   // Click on header -> open settings modal (logo, title, contact, groups)
-  const hdr = e.target.closest('.hdr');
+  const hdr = e.target.closest('.hdr, [data-band-customize]');
   if (hdr && !e.target.closest('.inspector')) {
     if (typeof isCurrentScheduleEditable === 'function' && !isCurrentScheduleEditable()) {
       toast('Read-only. Click Edit.');
@@ -11934,7 +12582,7 @@ document.addEventListener('click', e => {
   }
 
   // Click on note -> select in inspector
-  const noteEl = e.target.closest('.notes-list li[data-note-id]');
+  const noteEl = e.target.closest('.notes-list li[data-note-id], .band-sheet [data-note-id]');
   if (noteEl && !e.target.closest('.inspector')) {
     const dayId = Store.getActiveDay();
     if (dayId) selectEntity('note', dayId, noteEl.getAttribute('data-note-id'));
@@ -11951,7 +12599,7 @@ document.addEventListener('click', e => {
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
   if (e.defaultPrevented) return;
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"]')) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.hdr[role="button"], .bands-screen [role="button"], .band-sheet article[data-event-id]')) {
     e.preventDefault();
     e.target.click();
     return;
@@ -12061,13 +12709,15 @@ function syncPreviewSelection() {
   const container = document.getElementById('scheduleContainer');
   if (!container) return;
 
-  container.querySelectorAll('[data-event-id].selected').forEach(el => el.classList.remove('selected'));
-  container.querySelectorAll('.notes-list li.selected').forEach(el => el.classList.remove('selected'));
+  container.querySelectorAll('[data-event-id].selected, [data-event-ref].selected, [data-main-context].selected').forEach(el => el.classList.remove('selected'));
+  container.querySelectorAll('[data-note-id].selected').forEach(el => el.classList.remove('selected'));
 
   if (_selection.type === 'event' && _selection.entityId) {
-    container.querySelectorAll('[data-event-id="' + _selection.entityId + '"]').forEach(el => el.classList.add('selected'));
+    container.querySelectorAll('[data-event-id], [data-event-ref], [data-main-context]').forEach(el => {
+      if ((el.dataset.eventId || el.dataset.eventRef || el.dataset.mainContext) === _selection.entityId) el.classList.add('selected');
+    });
   } else if (_selection.type === 'note' && _selection.entityId) {
-    const noteEl = container.querySelector('.notes-list li[data-note-id="' + _selection.entityId + '"]');
+    const noteEl = container.querySelector('[data-note-id="' + _selection.entityId + '"]');
     if (noteEl) noteEl.classList.add('selected');
   }
 }
@@ -12276,14 +12926,23 @@ function renderSettingsModal(modal) {
   html += '<input type="text" class="settings-input" id="settings-title" value="' + esc(title) + '">';
   html += '<label class="settings-label" for="settings-logo">Unit Logo</label>';
   html += '<input type="file" class="settings-input" id="settings-logo" accept="image/*" style="font-size:12px;padding:5px 8px;">';
+  if (currentTheme.skin === 'bands') {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += '<label class="insp-toggle-label"><input type="checkbox" id="settings-band-logo"' + (bandSettings.showLogo ? ' checked' : '') + '> Show logo on Bands</label>';
+  }
   if (Store.getLogo()) {
     html += '<div class="settings-logo-preview"><img alt="Current unit logo" src="' + esc(Store.getLogo()) + '" style="max-height:48px;border-radius:4px;"> ';
     html += '<button class="btn" id="settings-logo-remove" style="font-size:10px;padding:2px 8px;">Remove logo</button></div>';
   }
-  html += '<label class="settings-label" for="settings-contact">Header Line</label>';
+  html += '<label class="settings-label" for="settings-contact">' + (currentTheme.skin === 'bands' ? 'Subtitle (optional)' : 'Header Line') + '</label>';
   html += '<input type="text" class="settings-input" id="settings-contact" value="' + esc(footer.contact) + '">';
   html += '<label class="settings-label" for="settings-poc">Point of Contact</label>';
   html += '<input type="text" class="settings-input" id="settings-poc" value="' + esc(footer.poc) + '">';
+  if (currentTheme.skin === 'bands') {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += '<label class="settings-label" for="settings-band-notes">Notes &amp; Reminders space</label><select class="settings-input" id="settings-band-notes">' +
+      [[90, '1¼ inches'], [108, '1½ inches'], [144, '2 inches']].map(([value, label]) => '<option value="' + value + '"' + (bandSettings.notesHeight === value ? ' selected' : '') + '>' + label + '</option>').join('') + '</select>';
+  }
   html += '</div>';
   html += '</section>';
 
@@ -12422,7 +13081,9 @@ function wireSettingsModal(modal) {
       const parsed = parseHexColor(color);
       return parsed && parsed.alpha < 1;
     });
-    const low = ['text', 'textSecondary', 'textMuted'].some(key =>
+    const skin = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin;
+    const textRoles = skin === 'bands' ? ['text', 'textSecondary', 'textMuted', 'accent'] : ['text', 'textSecondary', 'textMuted'];
+    const low = textRoles.some(key =>
       ['bg', 'surface'].some(surface => getColorContrast(colors[key], colors[surface]) < 4.5));
     warning.textContent = transparent ? 'Transparent colors depend on the surface behind them. Choose opaque colors for predictable contrast.'
       : low ? 'Some text has low contrast. Choose darker text on light paper, or lighter text on dark paper.' : 'Text contrast meets the 4.5:1 reading target.';
@@ -12455,6 +13116,8 @@ function wireSettingsModal(modal) {
   }
 
   // Logo upload
+  modal.querySelector('#settings-band-logo')?.addEventListener('change', event => updateBandSettings({ showLogo: event.target.checked }));
+  modal.querySelector('#settings-band-notes')?.addEventListener('change', event => updateBandSettings({ notesHeight: Number(event.target.value) }));
   const logoInput = modal.querySelector('#settings-logo');
   if (logoInput) {
     logoInput.addEventListener('change', (e) => {
@@ -13412,7 +14075,8 @@ function renderEventInspector(panel, dayId, eventId) {
 
   // Specific People
   html += '<label for="insp-evt-attendees">Specific People</label>';
-  html += '<input type="text" id="insp-evt-attendees" value="' + esc(evt.attendees) + '" placeholder="Optional names"' + textReadOnly + '>';
+  html += '<textarea id="insp-evt-attendees" rows="2" placeholder="Optional names"' + textReadOnly + '>' + esc(evt.attendees) + '</textarea>';
+  html += renderAttendeeFormatting(evt, disabledAttr);
 
   // Description
   html += '<label for="insp-evt-desc">Notes</label>';
@@ -13423,6 +14087,7 @@ function renderEventInspector(panel, dayId, eventId) {
   html += '<input type="text" id="insp-evt-loc" value="' + esc(evt.location) + '"' + textReadOnly + '>';
   html += '<label for="insp-evt-poc">POC</label>';
   html += '<input type="text" id="insp-evt-poc" value="' + esc(evt.poc) + '"' + textReadOnly + '>';
+  html += renderBandEventFields(evt, readOnly);
 
   // Break toggle
   html += '<div class="insp-toggle-section">';
@@ -13456,9 +14121,6 @@ function wireEventInspector(panel, dayId, eventId) {
       else val = typeof el.value === 'string' ? el.value.trim() : el.value;
       Store.updateEvent(dayId, eventId, { [field]: val });
       renderActiveDay();
-      // Re-highlight selected
-      const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
-      if (band) band.classList.add('selected');
       sessionSave();
       if (field === 'isBreak' || field === 'isMainEvent') {
         renderInspector();
@@ -13485,6 +14147,7 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit('#insp-evt-loc', 'location');
   autoCommit('#insp-evt-poc', 'poc');
   autoCommit('#insp-evt-break', 'isBreak', true);
+  wireBandEventFields(panel, dayId, eventId);
 
   // Highlight override (only present for limited-scope groups)
   const mainCheckbox = panel.querySelector('#insp-evt-main');
@@ -13500,8 +14163,6 @@ function wireEventInspector(panel, dayId, eventId) {
       const updates = { groupId: groupSelect.value };
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
-      const band = document.querySelector('.band[data-event-id="' + eventId + '"]');
-      if (band) band.classList.add('selected');
       sessionSave();
       renderInspector();
       // renderInspector rebuilt the select; keep keyboard focus on it.
@@ -13965,6 +14626,94 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
 
 </script>
   <script>
+/* Small additions to existing inspector/Customize surfaces, using normal Store
+ * edits so workbook saves, recovery, versions and Undo/Redo retain the choices.
+ */
+function renderAttendeeFormatting(event, disabled) {
+  const mode = event.attendeeFormat || 'text';
+  const options = [['text', 'Text as entered'], ['suggested', 'Suggest from separators'], ['lines', 'One person per line'], ['spaces', 'Each space separates a surname']];
+  return '<details class="attendee-preview"><summary>Format names for Bands</summary><label for="insp-attendee-format">Separate entries</label><select id="insp-attendee-format"' + disabled + '>' +
+    options.map(([value, label]) => '<option value="' + value + '"' + (mode === value ? ' selected' : '') + '>' + label + '</option>').join('') +
+    '</select><div id="insp-attendee-preview" role="status">' + attendeePreviewHTML(event) + '</div></details>';
+}
+
+function attendeePreviewHTML(event) {
+  const parsed = parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text');
+  return '<p>' + esc(parsed.notice) + '</p>' + (parsed.mode === 'text'
+    ? '<div class="attendee-preview-list">' + esc(parsed.raw || 'No specific people entered.') + '</div>'
+    : '<p><strong>' + parsed.entries.length + ' entries will print</strong></p><div class="attendee-preview-list">' + parsed.entries.map(esc).join('; ') + '</div>') +
+    '<p>POCs stay separate. Complete entries print as shown; no name parts are guessed or removed.</p>';
+}
+
+function renderBandEventFields(event, readOnly) {
+  const disabled = readOnly ? ' disabled' : '';
+  const activities = event.flightActivities || [];
+  let html = '<div class="insp-toggle-section"><label class="insp-toggle-label"><input type="checkbox" id="insp-evt-emphasis"' +
+    (event.emphasized ? ' checked' : '') + disabled + '> Emphasize in Bands</label></div>';
+  html += '<details class="flight-editor"' + (activities.length ? ' open' : '') + '><summary>Flight activities' + (activities.length ? ' (' + activities.length + ')' : '') + '</summary>';
+  html += '<p class="insp-context-note">Add each flight’s activity within this event. Use the same time window for shared training, or add separate timed activities.</p>';
+  activities.forEach((activity, index) => {
+    html += '<div class="flight-editor-item" data-flight-index="' + index + '">';
+    const field = (key, label, time) => '<label for="flight-' + index + '-' + key + '">' + label + '</label><input id="flight-' + index + '-' + key + '" data-flight-field="' + key + '" type="text" value="' + esc(activity[key]) + '"' + (time ? ' maxlength="5"' : '') + disabled + '>';
+    html += field('flight', 'Flight') + field('title', 'Activity');
+    html += '<div class="field-row"><div>' + field('startTime', 'Start', true) + '</div><div>' + field('endTime', 'End', true) + '</div></div>';
+    html += field('location', 'Location') + field('poc', 'POC');
+    html += '<label for="flight-' + index + '-description">Instructions</label><textarea id="flight-' + index + '-description" data-flight-field="description"' + disabled + '>' + esc(activity.description) + '</textarea>';
+    html += '<button class="btn" type="button" data-remove-flight="' + index + '"' + disabled + '>Remove activity</button></div>';
+  });
+  return html + '<button class="btn" type="button" id="insp-add-flight"' + disabled + '>+ Flight activity</button></details>';
+}
+
+function wireBandEventFields(panel, dayId, eventId) {
+  const current = () => Store.getEvents(dayId).find(event => event.id === eventId);
+  const update = updates => {
+    saveUndoState(); Store.updateEvent(dayId, eventId, updates); renderActiveDay(); sessionSave();
+  };
+  const preview = () => {
+    const target = panel.querySelector('#insp-attendee-preview');
+    if (target && current()) target.innerHTML = attendeePreviewHTML(current());
+  };
+  panel.querySelector('#insp-evt-attendees')?.addEventListener('input', preview);
+  panel.querySelector('#insp-attendee-format')?.addEventListener('change', event => {
+    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview();
+  });
+  panel.querySelector('#insp-evt-emphasis')?.addEventListener('change', event => update({ emphasized: event.target.checked }));
+  panel.querySelector('#insp-add-flight')?.addEventListener('click', () => {
+    const event = current();
+    update({ flightActivities: [...(event.flightActivities || []), { id: generateId('flight'), flight: '', title: '', startTime: event.startTime, endTime: event.endTime, location: '', poc: '', description: '' }] });
+    renderInspector();
+    document.querySelector('.flight-editor-item:last-of-type input')?.focus();
+  });
+  panel.querySelectorAll('[data-flight-field]').forEach(input => {
+    const field = input.dataset.flightField, isTime = field === 'startTime' || field === 'endTime';
+    input.addEventListener(isTime ? 'change' : 'input', () => {
+      const event = current(), activities = structuredClone(event.flightActivities || []);
+      const index = Number(input.closest('[data-flight-index]').dataset.flightIndex), activity = activities[index];
+      if (!activity) return;
+      const value = isTime ? normalizeTime(input.value) : input.value;
+      const next = { ...activity, [field]: value };
+      if (isTime && (!isValidScheduleTime(value) || next.startTime >= next.endTime || next.startTime < event.startTime || next.endTime > event.endTime)) {
+        input.value = activity[field]; toast('Keep the activity’s start and end within its parent event, with the end after the start.', 6000); return;
+      }
+      activities[index] = next; update({ flightActivities: activities });
+    });
+  });
+  panel.querySelectorAll('[data-remove-flight]').forEach(button => button.addEventListener('click', () => {
+    update({ flightActivities: current().flightActivities.filter((_, index) => index !== Number(button.dataset.removeFlight)) });
+    renderInspector(); document.querySelector('#insp-add-flight')?.focus();
+  }));
+}
+
+function updateBandSettings(updates) {
+  const file = getCurrentScheduleFileData();
+  if (!file) return;
+  saveUndoState();
+  file.theme = { ...file.theme, bands: { ...getBandSettings(file.theme), ...updates } };
+  renderActiveDay(); sessionSave();
+}
+
+</script>
+  <script>
 // Schedule data stays in .schedule files; no data is bundled.
 
 </script>
@@ -14019,7 +14768,9 @@ function runBootStep(name, fn) {
   }
 }
 
-(async function init() {
+// Expose completion so embedded consumers and the test harness can wait for
+// recovery before loading another workbook; load events alone are too early.
+var appReady = (async function init() {
   runBootStep('wireToolbar', wireToolbar);
   runBootStep('wireLibrary', wireLibrary);
   if (typeof wireWorkbookUi === 'function') runBootStep('wireWorkbookUi', wireWorkbookUi);

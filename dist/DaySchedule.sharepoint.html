@@ -880,7 +880,9 @@ body {
 }
 
 /* ── Selected event highlight ── */
-#scheduleContainer [data-event-id].selected {
+#scheduleContainer [data-event-id].selected,
+#scheduleContainer [data-event-ref].selected,
+#scheduleContainer [data-main-context].selected {
   box-shadow: inset 0 0 0 2px #2558a8;
 }
 .band-conc.selected,
@@ -4036,7 +4038,7 @@ body {
   .footer { margin-top: 5px; }
   .print-page { page-break-after: always; }
   .print-page:last-child { page-break-after: auto; }
-  @page { size: letter portrait; margin: 0.15in; }
+  @page { size: auto; margin: 0.15in; }
 }
 
 @media screen and (max-width: 900px) {
@@ -4144,15 +4146,95 @@ body {
 .print-readable .phase-task-meta, .print-readable .phase-task-detail,
 .print-readable .phase-independent-label { font-size: 12px; }
 .print-readable .cc-attendees { white-space: normal; max-width: none; overflow: visible; }
-/* Supporting events have a complete entry in Also Happening. Removing the
-   duplicate side previews lets the readable handout use the full page width. */
-.print-readable .band-conc-slot { display: none; }
 .print-readable .grid-cell-head,
 .print-readable .grid-banner-head,
 .print-readable .cards-event-head,
 .print-readable .cards-shared-head { flex-wrap: wrap; }
 .print-readable .grid-cell-cont { opacity: 1; }
 .print-readable .phase-block.phase-break { opacity: 1; }
+
+/* Bands keeps its original rows, type hierarchy, badges and time gutter.
+   Crowded activities wrap beneath their own main band instead of being
+   duplicated in a separate appendix. The same markup serves every mode. */
+.bands-print-flow { flex: 1 1 auto; min-height: 0; overflow: visible; }
+.bands-print-section { break-inside: avoid; }
+.bands-print-main, .bands-print-lane { min-width: 0; }
+.bands-inline { display: flex; background: var(--sch-surface); border-bottom: 1px solid var(--sch-border); }
+.bands-inline .bands-print-main { flex: 1; }
+.bands-inline .bands-print-main &gt; .band { min-height: 100%; border-bottom: 0; }
+.bands-inline &gt; .band-conc-slot { display: flex; width: 180px; }
+.bands-stacked { background: var(--sch-surface); border-bottom: 1px solid var(--sch-border); }
+.bands-stacked &gt; .bands-print-lane {
+  margin-left: 73px;
+  padding: 0 12px 8px 14px;
+  border-left: 3px solid var(--accent, var(--sch-accent));
+}
+.bands-stacked .bands-print-items,
+.bands-standalone .bands-print-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  align-items: start;
+}
+.bands-standalone { margin: 8px 0; padding-left: 76px; }
+.bands-print-kicker {
+  font-size: var(--band-meta-fs, 7.5px);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--sch-text-muted);
+}
+.bands-stacked .band-conc, .bands-standalone .band-conc {
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--sch-border);
+}
+.bands-print-event, .bands-print-reference, .bands-print-context {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
+}
+.bands-print-flow .cc-attendees { white-space: pre-wrap; max-width: none; overflow: visible; }
+.bands-print-description { white-space: pre-wrap; }
+.bands-print-reference { opacity: 1; }
+.bands-print-relationship { margin-top: 3px; }
+.bands-print-flow .band-conc-slot:empty { display: flex; }
+
+/* Print-only sheet geometry. Width fits Letter and A4 without scaling.
+   Header/logo/notes retain the original Bands design. */
+.print-page.print-readable.skin-bands { width: 7.9in; padding: 0.2in 0.15in 0.18in; }
+.print-readable.skin-bands[data-print-paginated] { height: 10.65in; min-height: 0; flex: none; }
+.print-readable.skin-bands .hdr { flex: none; }
+.print-readable.skin-bands .hdr-text { min-width: 0; }
+.print-readable.skin-bands .hdr-title { overflow-wrap: anywhere; }
+.print-readable.skin-bands .print-handout-label { flex: none; }
+.print-readable.skin-bands .footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  flex: none;
+  margin-top: 8px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.bands-print-page-number { white-space: nowrap; }
+.print-readable.skin-bands.bands-print-natural { height: auto; }
+.bands-print-natural .bands-print-section,
+.bands-print-natural .bands-print-event { break-inside: auto; }
+
+/* Editing affordances do not change the printed design. */
+.bands-screen { align-self: flex-start; }
+.bands-screen .bands-print-flow { flex: 1 0 auto; }
+.bands-screen .bands-print-event[role=&quot;button&quot;],
+.bands-screen .bands-print-reference[role=&quot;button&quot;] { min-height: 44px; cursor: pointer; }
+.bands-screen .bands-print-event[role=&quot;button&quot;]:focus-visible,
+.bands-screen .bands-print-reference[role=&quot;button&quot;]:focus-visible { outline: 2px solid rgb(var(--app-accent)); outline-offset: 2px; }
+.bands-screen .note-select { min-height: 44px; overflow-wrap: anywhere; }
+
+@media print {
+  #printContainer .print-readable.skin-bands { width: 7.9in; }
+}
 
 .print-review-modal { max-width: 680px; }
 .print-review-days { border: 1px solid var(--chrome-border); border-radius: 8px; padding: 10px; margin-bottom: 14px; }
@@ -4289,6 +4371,355 @@ textarea:focus-visible,
 }
 
 &lt;/style&gt;
+  &lt;style&gt;
+/* Scoped paper styles from the approved day-first prototype. */
+.band-sheet{font-family:Arial,Helvetica,sans-serif;font-synthesis:none;text-align:left}
+.band-sheet,.band-sheet *{box-sizing:border-box}
+.band-sheet .notes-label{margin-top:12px}
+.band-sheet{width:var(--page-width);height:var(--page-height);padding:var(--page-margin);background:#fff;box-shadow:0 5px 20px #24483126;color:#18382b;display:flex;flex-direction:column;font-size:var(--body);line-height:1.2;--type-scale:1;--note-scale:1;--body:max(var(--min-detail),calc(10pt * var(--type-scale)));--main-title:max(var(--min-main-title),calc((13.5pt + var(--main-title-grow,0pt)) * var(--type-scale)));--small-title:calc(11.5pt * var(--type-scale));--name:max(var(--min-name),calc(12pt * var(--type-scale)));--given:max(var(--min-detail),calc(10pt * var(--type-scale)));--rank:max(var(--min-detail),calc(8.5pt * var(--type-scale)));--time:max(var(--min-detail),calc(10.5pt * var(--type-scale)));--row-pad:3pt;--row-gap:2pt;--session-pad:4pt;--roster-leading:max(12pt,calc(14pt * var(--type-scale)));--roster-gap:1pt;--notes-height:90pt}
+.band-sheet *{min-width:0}
+.band-sheet .page-header{display:grid;grid-template-columns:var(--logo-size) 1fr;gap:15pt;align-items:center;padding-bottom:7pt;border-bottom:1.5pt solid #284e35;margin-bottom:8pt;flex-shrink:0}
+.band-sheet .heading-content{display:block}
+.band-sheet .page-title{font-size:var(--title-size,16pt);line-height:1.12;font-weight:700;letter-spacing:-.2pt;margin:0 0 6pt;overflow-wrap:anywhere}
+.band-sheet .page-header h2{font-size:23pt;font-weight:700;letter-spacing:-.6pt;line-height:1;margin:0 7pt 0 0;display:inline}
+.band-sheet .date{font-size:9.5pt;white-space:nowrap;display:inline}
+.band-sheet .logo-slot{width:var(--logo-size);height:var(--logo-size);border:.65pt solid #a0b5a4;display:flex;justify-content:center;align-items:center;font-size:8pt;line-height:1.25;text-align:center;color:#5b7460;font-weight:700;letter-spacing:.7pt}
+.band-sheet .logo-slot img{width:100%;height:100%;object-fit:contain}
+.band-sheet .logo-slot.has-logo{border:0}
+.band-sheet .logo-slot img:not([src]){display:none}
+.band-sheet .sheet-body{flex-shrink:0}
+.band-sheet .section-title{position:relative;font-size:11pt;line-height:1.2;margin:0 0 5pt;font-weight:700}
+.band-sheet .section-title small{font-size:9pt;font-weight:400;margin-left:6pt}
+.band-sheet .main-list{display:grid;gap:var(--row-gap)}
+.band-sheet .main-event{display:grid;grid-template-columns:78pt 1fr;gap:6pt;background:#f0f5f0;border-left:2pt solid #356544;padding:var(--row-pad) 6pt;break-inside:avoid}
+.band-sheet .main-event.break{background:#f6f7f1;border-color:#b1bca9}
+.band-sheet .main-event.flight{background:#f6f2e9;border-color:#a17d3b}
+.band-sheet .time{font-size:var(--time);font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;line-height:1.2;flex-shrink:0}
+.band-sheet .duration{font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));font-weight:400;margin-left:3pt;color:#58705d}
+.band-sheet .event-title{display:inline}
+.band-sheet .main-event h3{display:inline;font-size:var(--main-title);line-height:1.1;margin:0}
+.band-sheet .audience{font-size:max(var(--min-detail),calc(9pt * var(--type-scale)));font-weight:700}
+.band-sheet .main-event .audience{margin-left:4pt}
+.band-sheet .event-meta,.band-sheet .description{font-size:var(--body);line-height:1.2}
+.band-sheet .main-event .event-meta{display:inline;margin:0 0 0 5pt;color:#375844}
+.band-sheet .description{margin:2pt 0 0}
+.band-sheet .attendance-area{margin-top:9pt}
+.band-sheet .attendance-columns{display:grid;grid-template-columns:1fr 1fr;gap:15pt;align-items:start}
+.band-sheet .event-column{display:flex;flex-direction:column}
+.band-sheet .small-event{border-bottom:.6pt solid #b3c4b4;padding:var(--session-pad) 0;break-inside:avoid}
+.band-sheet .small-event:first-child{padding-top:0}
+.band-sheet .small-event header{display:flex;flex-direction:row-reverse;justify-content:space-between;align-items:baseline;gap:7pt}
+.band-sheet .small-event h3{font-size:var(--small-title);line-height:1.13;margin:0}
+.band-sheet .small-event .time{font-size:max(var(--min-detail),calc(10pt * var(--type-scale)))}
+.band-sheet .small-event .audience{margin:2pt 0}
+.band-sheet .attendees{font-size:var(--body);line-height:1.22;margin:2pt 0}
+.band-sheet .person-label strong{font-size:var(--name);line-height:1}
+.band-sheet .given{font-size:var(--given);line-height:1}
+.band-sheet .rank{font-size:var(--rank);line-height:1;color:#506f56;font-weight:400;white-space:nowrap}
+.band-sheet .small-event .event-meta{margin:2pt 0 0}
+.band-sheet .small-event .description{margin:2pt 0 0}
+.band-sheet .large-event{border:.8pt solid #b3c4b4;margin-top:var(--large-gap,8pt);break-inside:avoid}
+.band-sheet .large-event:first-child{margin-top:0}
+.band-sheet .large-head{background:#fff;border-bottom:.6pt solid #b1c5b2;padding:6pt 7pt}
+.band-sheet .large-head header{display:flex;align-items:baseline;justify-content:space-between;gap:8pt}
+.band-sheet .large-head h3{font-size:var(--small-title);margin:0;line-height:1.1}
+.band-sheet .large-head .time{font-size:calc(11.5pt * var(--type-scale))}
+.band-sheet .large-head .event-meta{margin:3pt 0 0}
+.band-sheet .large-head .description{margin:2pt 0 0}
+.band-sheet .roster-body{padding:5pt 7pt 6pt}
+.band-sheet .roster-title{display:flex;justify-content:space-between;gap:6pt;margin:0 0 5pt;font-size:max(var(--min-label),calc(8pt * var(--type-scale)));font-weight:700;line-height:1.2}
+.band-sheet .roster-columns{display:grid;column-gap:9pt}
+.band-sheet .roster-column{display:grid;row-gap:var(--roster-gap)}
+.band-sheet .roster-person{font-size:var(--name);line-height:var(--roster-leading);min-height:var(--roster-leading);padding:0;background:linear-gradient(to top,#d4e1d4 .35pt,transparent .35pt)}
+.band-sheet .reminder-area{margin-top:auto;padding-top:6pt;flex-shrink:0}
+.band-sheet .reminder-panel{min-height:var(--notes-height);height:var(--notes-height);border-top:1pt solid #2c5638;padding-top:6pt}
+.band-sheet .reminder-heading{font-size:11pt;margin:0 0 5pt;line-height:1.2}
+.band-sheet .reminder-heading small{font-size:9pt;font-weight:400;margin-left:6pt}
+.band-sheet .reminders{display:grid;grid-template-columns:1fr 1fr;gap:0 17pt;align-items:start}
+.band-sheet .reminder-column{display:grid;row-gap:4pt}
+.band-sheet .reminder{margin:0;font-size:max(var(--min-detail),calc(9.5pt * var(--note-scale)));line-height:1.23;padding-left:8pt;position:relative}
+.band-sheet .reminder::before{content:&#x27;•&#x27;;position:absolute;left:0;color:#4a6a50}
+.band-sheet .reminder strong{font-weight:700}
+.band-sheet .page-footer{display:flex;justify-content:space-between;gap:10pt;font-size:7.5pt;line-height:1.2;border-top:.5pt solid #b9cab9;padding-top:4pt;margin-top:3pt;flex-shrink:0;color:#537259}
+.band-sheet .print-error{display:none}
+.band-sheet.standard{--row-pad:2pt;--row-gap:1pt;--session-pad:3pt;--roster-leading:max(12pt,calc(13.5pt * var(--type-scale)));--roster-gap:.4pt;--large-gap:6pt}
+.band-sheet.compact{--row-pad:1.25pt;--row-gap:.5pt;--session-pad:2pt;--roster-leading:max(12pt,calc(13pt * var(--type-scale)));--roster-gap:.2pt;--large-gap:4pt}
+.band-sheet.compact .main-event .description{display:inline;margin:0}
+.band-sheet.compact .main-event .description::before{content:&#x27; · &#x27;;font-weight:700}
+.band-sheet.compact .main-event h3{font-size:var(--main-title)}
+.band-sheet.compact .attendance-area{margin-top:7pt}
+.band-sheet.compact .large-head{padding:4pt 6pt}
+.band-sheet.compact .roster-body{padding:4pt 6pt 5pt}
+.band-sheet.compact .roster-title{margin-bottom:4pt}
+.band-sheet.compact .small-event .description{display:inline;margin:0}
+.band-sheet.compact .small-event .description::before{content:&#x27; · &#x27;;font-weight:700}
+.band-sheet.compact .small-event .event-meta{display:inline;margin:0}
+.band-sheet.compact .small-event .attendees{margin-bottom:1pt}
+.band-sheet.compact .small-event .audience{margin-bottom:1pt}
+.band-sheet.compact .small-event .event-meta:empty{display:none}
+@media print{.band-sheet .screen-only{display:none!important}
+.band-sheet{margin:0;box-shadow:none;break-after:page;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.band-sheet[data-fit=&quot;false&quot;] .page-header,.band-sheet[data-fit=&quot;false&quot;] .sheet-body,.band-sheet[data-fit=&quot;false&quot;] .reminder-area{display:none}
+.band-sheet[data-fit=&quot;false&quot;] .print-error{display:block;font-size:14pt;line-height:1.5;margin:40pt;border:2pt solid #444;padding:20pt}}
+.band-sheet.standard{--row-gap:.75pt}
+.band-sheet .start-refs{display:flex;align-items:flex-start;justify-content:flex-end;gap:3pt;flex-wrap:wrap}
+.band-sheet .start-ref{display:inline-flex;align-items:center;justify-content:center;vertical-align:baseline;flex-shrink:0;width:12pt;height:12pt;border:.65pt solid #829b89;border-radius:50%;font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));font-weight:700;line-height:1;color:#3e5d49;text-decoration:none;background:#fff;font-variant-numeric:tabular-nums}
+.band-sheet .event-ref{margin-right:4pt;position:relative;top:-.5pt}
+.band-sheet .gap-time{font-variant-numeric:tabular-nums;font-weight:700}
+@media screen{.band-sheet a.start-ref:hover{background:#e4eddf;border-color:#284e35}
+.band-sheet .event:target{outline:2pt solid #ad8337;outline-offset:2pt}}
+.band-sheet .large-event.highlighted{border-color:#87a58b}
+.band-sheet .large-event.highlighted .large-head{background:#edf4ed}
+.band-sheet .large-event.highlighted .large-head h3{font-size:calc(14pt * var(--type-scale))}
+.band-sheet .small-event.highlighted{background:#edf4ed;border:.8pt solid #87a58b;padding:4pt 6pt;margin:3pt 0}
+.band-sheet .small-event.highlighted h3{font-size:var(--main-title)}
+.band-sheet .main-panel&gt;.section-title{background:#254d38;color:#fff;font-size:13.5pt;line-height:1.15;padding:3pt 7pt;margin-bottom:3pt}
+.band-sheet .main-panel&gt;.section-title small{color:#edf3ed;font-size:8.5pt}
+.band-sheet .main-panel .main-event{grid-template-columns:86pt 1fr;gap:7pt;border-left:2pt solid #3a6247;background:#f1f5f0;padding:calc(var(--row-pad) + var(--main-extra,0pt)) 6pt}
+.band-sheet .main-event .time{align-self:stretch;margin:calc(-1 * (var(--row-pad) + var(--main-extra,0pt))) 0 calc(-1 * (var(--row-pad) + var(--main-extra,0pt))) -6pt;padding:calc(var(--row-pad) + var(--main-extra,0pt)) 5pt;background:#dce7dd;font-size:max(var(--min-detail),calc(11pt * var(--type-scale)))}
+.band-sheet .main-event .duration{font-size:max(var(--min-label),calc(7pt * var(--type-scale)))}
+.band-sheet .main-event.break .time{background:#e7ebe0}
+.band-sheet .main-event.flight .time{background:#eae4d6}
+.band-sheet .main-event.highlighted{background:#e2ebe3;border-left-color:#234b36;outline:.6pt solid #8ca18f;outline-offset:-.6pt}
+.band-sheet .main-event.highlighted&gt;.time{background:#355b43;color:#fff}
+.band-sheet .main-event.highlighted&gt;.time .duration{color:#edf3ed}
+@media screen{.band-sheet .main-event.highlighted:target{outline:2pt solid #ad8337;outline-offset:2pt}}
+.band-sheet .attendance-area{color:#2c3c32}
+.band-sheet .attendance-area&gt;.section-title{font-size:10pt;font-weight:700;letter-spacing:.25pt;color:#536558}
+.band-sheet .large-event{border-color:#c6cfc5}
+.band-sheet .large-event.highlighted{border-color:#a8baa7}
+.band-sheet .large-event.highlighted .large-head{background:#f2f5ef;border-top:1pt solid #789579}
+.band-sheet .large-event.highlighted .large-head h3{font-size:calc(12pt * var(--type-scale))}
+.band-sheet .small-event.highlighted h3{font-size:calc(12pt * var(--type-scale))}
+.band-sheet .roster-person{background:linear-gradient(to top,#e1e7df .35pt,transparent .35pt)}
+.band-sheet.compact{--session-pad:1.5pt;--roster-leading:calc(12.75pt * var(--type-scale))}
+.band-sheet .page-header{grid-template-columns:var(--logo-size) minmax(0,1fr) auto;gap:14pt;border-bottom:0;padding-bottom:0;margin-bottom:9pt}
+.band-sheet .page-title{font-size:var(--title-size,19pt);margin:0;line-height:1.12}
+.band-sheet .schedule-label{font-size:10pt;font-weight:400;line-height:1.2;margin:6pt 0 0;overflow-wrap:anywhere;color:#52665a}
+.band-sheet .day-heading{text-align:right}
+.band-sheet .page-header h2{font-size:17pt;letter-spacing:-.3pt;display:block;margin:0 0 6pt;line-height:1.1}
+.band-sheet .date{font-size:9pt;line-height:1.2;display:block;margin:0}
+.band-sheet .page-footer{align-items:center;font-size:7pt}
+.band-sheet .page-footer&gt;span:last-child{text-align:right}
+.band-sheet .main-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2pt 8pt}
+.band-sheet .main-details{display:flex;flex-wrap:wrap;gap:2pt 8pt;font-size:max(var(--min-detail),calc(9.5pt * var(--type-scale)));line-height:1.2;color:#375844}
+.band-sheet .main-details:empty{display:none}
+.band-sheet .detail-field small{font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));font-weight:400;color:#53685a}
+.band-sheet .main-event .description,.band-sheet.compact .main-event .description{display:block;font-size:var(--body);line-height:1.2;margin:2pt 0 0;color:#374c3e}
+.band-sheet.compact .main-event .description::before{content:none}
+.band-sheet .start-refs{align-self:start;padding-top:1pt;min-width:22pt}
+.band-sheet .source-ref{font-size:max(var(--min-label),calc(8pt * var(--type-scale)));line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;text-decoration:none;color:#4d6956}
+.band-sheet .flight-table{border-collapse:collapse;width:100%;margin:5pt 0 1pt;table-layout:fixed;text-align:left;font-size:max(var(--min-detail),calc(9.5pt * var(--type-scale)));line-height:1.16}
+.band-sheet .flight-table thead{font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));color:#665f50}
+.band-sheet .flight-table th,.band-sheet .flight-table td{vertical-align:top;padding:3pt 5pt;border-bottom:.5pt solid #d3d2c5;overflow-wrap:anywhere}
+.band-sheet .flight-table thead th{padding-top:0;font-weight:400}
+.band-sheet .flight-table th:first-child{width:48pt;padding-left:0}
+.band-sheet .flight-table thead th:last-child{width:115pt}
+.band-sheet .flight-table tbody th{font-size:max(var(--min-detail),calc(11pt * var(--type-scale)));font-weight:700}
+.band-sheet .flight-table tbody tr:last-child&gt;*{border-bottom:0}
+.band-sheet .flight-table td strong{font-weight:400}
+.band-sheet .flight-time{display:inline-block;min-width:58pt;font-size:max(var(--min-detail),calc(8.5pt * var(--type-scale)));font-weight:700;margin:0 5pt 0 0;font-variant-numeric:tabular-nums}
+.band-sheet .flight-poc,.band-sheet .flight-description{display:block;margin-top:1pt}
+.band-sheet .flight-poc{font-size:max(var(--min-detail),calc(8.5pt * var(--type-scale)));color:#526052}
+@media screen{.band-sheet .source-ref:hover{text-decoration:underline}}
+.band-sheet .concurrent-heading{display:flex;align-items:baseline;justify-content:space-between;gap:4pt 12pt;margin-bottom:5pt;flex-wrap:wrap}
+.band-sheet .concurrent-heading&gt;.section-title{font-size:10pt;color:#536558;letter-spacing:.25pt;margin:0}
+.band-sheet.compact .main-event .description{margin-top:1pt}
+.band-sheet.compact{--row-pad:1pt}
+.band-sheet .flight-activity+.flight-activity{margin-top:3pt}
+.band-sheet .attendance-columns{row-gap:4pt}
+.band-sheet .main-event.has-starts{grid-template-columns:86pt 1fr}
+.band-sheet .main-details{margin-left:auto}
+.band-sheet .start-refs{display:flex;align-items:center;align-self:center;justify-content:flex-end;gap:4pt;flex-wrap:wrap;padding:0;min-width:0;margin-left:auto}
+.band-sheet .reference-label{font-size:max(var(--min-detail),calc(8.5pt * var(--type-scale)));line-height:1.2;font-weight:400;color:#435e4b;white-space:nowrap}
+.band-sheet .reference-badges{display:flex;align-items:center;gap:3pt;flex-wrap:wrap}
+.band-sheet .start-ref{width:12pt;height:12pt;font-size:max(var(--min-label),calc(7.5pt * var(--type-scale)));border-color:#728e7b;color:#365741;background:#fff}
+.band-sheet .source-ref{line-height:1;text-decoration:none}
+@media screen{.band-sheet .source-ref:hover{text-decoration:none}}
+.band-sheet .small-event h3,.band-sheet .large-head h3{font-weight:400;color:#3d4e42}
+.band-sheet .small-event h3{font-size:max(var(--min-detail),calc(10.5pt * var(--type-scale)))}
+.band-sheet .small-event .time,.band-sheet .large-head .time{font-weight:400;font-size:max(var(--min-detail),calc(9.5pt * var(--type-scale)));color:#405347}
+.band-sheet .small-event.highlighted h3,.band-sheet .large-event.highlighted .large-head h3{font-weight:400;font-size:calc(11.5pt * var(--type-scale))}
+.band-sheet .small-event .attendees{display:flex;flex-wrap:wrap;align-items:baseline;gap:1pt 9pt;margin:2pt 0 2.5pt}
+.band-sheet .small-event .person-label{max-width:100%}
+.band-sheet .attendance-area .person-label strong{color:#172f23;font-weight:700}
+.band-sheet .attendance-area .given{color:#34473b}
+.band-sheet .attendance-area .rank{color:#516457}
+.band-sheet .small-event .event-meta,.band-sheet .small-event .description,.band-sheet .large-head .event-meta,.band-sheet .large-head .description{color:#46564b}
+.band-sheet .small-event .audience{font-size:max(var(--min-detail),calc(10pt * var(--type-scale)));color:#253e2e}
+.band-sheet .roster-title{font-weight:400;color:#46564b}
+.band-sheet .small-event .attendees .person-label:not(:last-child)::after{content:&#x27;;&#x27;;font-size:var(--given);font-weight:400;color:#516457}
+.band-sheet .attendance-columns.single-list{grid-template-columns:minmax(0,1fr)}
+.band-sheet .single-list .small-event{padding:5pt 0}
+.band-sheet .single-list .small-event.highlighted{padding:5pt 7pt;margin:4pt 0}
+.band-sheet .single-list .small-event .description{max-width:78ch}
+.band-sheet .attendee-free-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--name);font-weight:700;line-height:1.23;margin:3pt 0}
+.band-sheet .custom-roster .roster-columns{align-items:start}
+.band-sheet .custom-roster .roster-person{overflow-wrap:normal;padding-left:6pt;text-indent:-6pt}
+.band-sheet .entry-review{padding:11px 0;border-top:1px solid #d0dbd1;border-bottom:1px solid #d0dbd1}
+.band-sheet .entry-review ol{max-height:190px;overflow:auto;margin:8px 0 0;padding-left:26px;font-size:13px;line-height:1.7;overflow-wrap:anywhere}
+.band-sheet .entry-review li{padding-left:4px}
+.band-sheet .entry-review li::marker{color:#647c6b;font-size:11px}
+.band-sheet .entry-layout{background:#eaf2e9;border-left:3px solid #638769;padding:10px;white-space:pre-line}
+.band-sheet .entry-layout.bad{background:#fff3e7;color:#70451c;border-color:#b77c37}
+.band-sheet .attendance-columns.roster-sections{display:flex;flex-direction:column;gap:5pt;align-items:stretch}
+.band-sheet .chronological-section{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:15pt;align-items:start}
+.band-sheet .roster-sections&gt;.large-event{margin:0}
+.band-sheet .roster-sections .large-head&gt;div{display:flex;flex-wrap:wrap;gap:1pt 8pt}
+.band-sheet .roster-sections .large-head .description{flex:1 1 230pt}
+.band-sheet .roster-sections .roster-person{align-self:start}
+.band-sheet .roster-sections .large-head header&gt;.roster-title{margin:0 auto 0 8pt;gap:7pt;flex-wrap:wrap}
+.band-sheet.compact .flight-table{margin-top:3pt}
+.band-sheet.compact .flight-table th,.band-sheet.compact .flight-table td{padding-top:2pt;padding-bottom:2pt}
+.band-sheet.compact .flight-activity+.flight-activity{margin-top:1pt}
+.band-sheet .flow-roster .roster-columns{display:flex;flex-wrap:wrap;align-items:baseline;gap:2pt 10pt}
+.band-sheet .flow-roster .roster-column{display:contents}
+.band-sheet .flow-roster .roster-person{max-width:100%;background:none;line-height:1.2;min-height:0}
+.band-sheet .flow-roster .roster-person::after{content:&#x27;;&#x27;;font-weight:400;font-size:var(--given);color:#516457}
+.band-sheet .flow-roster .roster-column:last-child .roster-person:last-child::after{content:none}
+.band-sheet .small-event.highlighted{padding:var(--session-pad) 0;margin:0;border:0;border-bottom:.6pt solid #87a58b;outline:.6pt solid #87a58b;outline-offset:-.6pt}
+.band-sheet .small-event.highlighted:first-child{padding-top:0}
+.band-sheet .small-event.highlighted h3{font-size:max(var(--min-detail),calc(10.5pt * var(--type-scale)))}
+.band-sheet .single-list .small-event.highlighted{padding:5pt 0;margin:0}
+.band-sheet .large-head{border-top:1pt solid transparent}
+.band-sheet.tight{--session-pad:1pt}
+.band-sheet.tight .main-panel&gt;.section-title{padding-top:2pt;padding-bottom:2pt}
+.band-sheet.tight .attendance-area{margin-top:5pt}
+.band-sheet.tight .concurrent-heading{margin-bottom:3pt}
+.band-sheet.tight .attendance-columns.roster-sections{gap:3pt}
+.band-sheet.tight .large-head{padding:3pt 6pt}
+.band-sheet.tight .roster-body{padding:3pt 6pt 4pt}
+.band-sheet.tight .flow-roster .roster-columns{gap:1pt 8pt}
+.band-sheet.tight .flight-table th,.band-sheet.tight .flight-table td{padding-top:1pt;padding-bottom:1pt}
+.band-sheet .flow-roster .roster-person{padding-left:0;text-indent:0}
+.band-sheet .page-footer{padding-bottom:1pt}
+.band-sheet .day-heading{padding-right:.5pt}
+.band-sheet .attendance-columns.reading-columns{column-gap:18pt;align-items:start}
+.band-sheet .reading-columns .event-column{gap:0}
+.band-sheet .reading-columns .large-event{margin-top:var(--session-pad)}
+.band-sheet .reading-columns .large-head header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3pt 6pt}
+.band-sheet .reading-columns .large-head header&gt;.roster-title{grid-row:2;grid-column:1/-1;margin:0;font-weight:400}
+.band-sheet .reading-columns .large-head header&gt;.time{grid-row:1;grid-column:2}
+.band-sheet .reading-columns .flow-roster .roster-columns{gap:2pt 7pt}
+.band-sheet .reading-columns .roster-person{padding:0;text-indent:0}
+.band-sheet .reading-columns .flow-roster .roster-person,.band-sheet .reading-columns .flow-roster .roster-person strong{font-size:var(--roster-name-size,12pt);line-height:1.2}
+.band-sheet.tight .reading-columns .flow-roster .roster-columns{gap:1pt 6pt}
+.band-sheet.tight .reading-columns .large-head .event-meta{margin-top:2pt}
+.band-sheet.tight .reading-columns .large-head .description{margin-top:1pt}
+.band-sheet.tight .reading-columns .roster-body{padding-top:2pt;padding-bottom:3pt}
+.band-sheet.tight .reading-columns .large-head header{row-gap:1pt}
+.band-sheet .main-event{position:relative}
+.band-sheet .main-event+.main-event::before{content:&quot;&quot;;position:absolute;left:0;right:0;top:0;border-top:.5pt solid var(--paper-line,#a8baa7);z-index:1;pointer-events:none}
+.band-sheet .page-header.no-logo{grid-template-columns:minmax(0,1fr) auto}
+.band-sheet .main-top{display:grid;grid-template-columns:minmax(0,1fr) 192pt;align-items:baseline;gap:2pt 8pt}
+.band-sheet .main-details{display:grid;grid-template-columns:70pt minmax(0,1fr);gap:8pt;margin-left:0;align-items:baseline}
+.band-sheet .detail-location{grid-column:1}
+.band-sheet .detail-poc{grid-column:2}
+.band-sheet .detail-field{overflow-wrap:anywhere}
+.band-sheet .main-support{display:flex;align-items:baseline;justify-content:space-between;gap:3pt 8pt}
+.band-sheet .main-support:empty{display:none}
+.band-sheet .main-support&gt;.description{flex:1;text-wrap:pretty}
+.band-sheet .main-support&gt;.start-refs{flex-shrink:0;max-width:55%;margin-top:1pt;align-self:baseline}
+.band-sheet .main-content.reference-only{display:grid;grid-template-columns:minmax(0,1fr) 192pt;gap:8pt;align-items:baseline}
+.band-sheet .reference-only&gt;.main-top,.band-sheet .reference-only&gt;.main-support{display:contents}
+.band-sheet .reference-only .start-refs{grid-column:2;grid-row:1;max-width:none;margin-top:0;align-self:baseline}
+.band-sheet .small-event header{flex-direction:row}
+.band-sheet .roster-details{margin-top:3pt}
+.band-sheet .roster-details:empty{display:none}
+.band-sheet .roster-details .event-meta{margin:0;font-size:var(--body);line-height:1.2;font-weight:400}
+.band-sheet .roster-details .description{margin:2pt 0 0;font-weight:400}
+.band-sheet.tight .roster-details{margin-top:2pt}
+.band-sheet.tight .roster-details .description{margin-top:1pt}
+.band-sheet[data-theme] .attendance-area .large-event:not(.highlighted){border-color:transparent;border-bottom-color:var(--paper-line,#b3c4b4)}
+.band-sheet[data-theme] .attendance-area .large-event:not(.highlighted) .large-head{border-color:transparent;background:transparent}
+.band-sheet[data-theme=forest] .main-event:not(.highlighted) .duration{color:#4b6250}
+.band-sheet[data-theme]:not([data-theme=forest]){color:#20262c}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.page-title,.page-header h2,.main-event h3,.reminder-heading){color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.schedule-label,.date,.page-footer,.logo-slot,.duration,.detail-field small,.reference-label,.flight-table thead,.flight-poc,.rank){color:#525962}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.main-details,.main-event .description,.attendance-area,.small-event h3,.large-head h3,.small-event .time,.large-head .time,.small-event .event-meta,.small-event .description,.large-head .event-meta,.large-head .description,.small-event .audience,.roster-title,.attendance-area .given,.concurrent-heading&gt;.section-title){color:#39424b}
+.band-sheet[data-theme]:not([data-theme=forest]) .attendance-area :is(.person-label strong,.attendee-free-text){color:#20262c}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.small-event .attendees .person-label,.flow-roster .roster-person)::after{color:#525962}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-panel&gt;.section-title{background:var(--paper-accent);color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-panel&gt;.section-title small{color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event{background:var(--paper-band);border-left-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event&gt;.time{background:var(--paper-gutter)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.break{background:#f6f6f3;border-left-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.break&gt;.time{background:#e9e9e4}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.flight{background:var(--paper-flight);border-left-color:var(--paper-flight-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.flight&gt;.time{background:var(--paper-flight-gutter)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted{background:var(--paper-anchor-band);border-left-color:var(--paper-accent);outline-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted&gt;.time{background:var(--paper-anchor);color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted&gt;.time .duration{color:#fff}
+.band-sheet[data-theme]:not([data-theme=forest]) :is(.logo-slot,.small-event,.large-event,.large-head,.flight-table th,.flight-table td,.page-footer){border-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .small-event.highlighted{background:var(--paper-band);border-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .large-event.highlighted .large-head{background:var(--paper-band);border-top-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .start-ref{color:var(--paper-accent);border-color:var(--paper-line)}
+.band-sheet[data-theme]:not([data-theme=forest]) .large-event:not(.flow-roster) .roster-person{background:linear-gradient(to top,var(--paper-gutter) .35pt,transparent .35pt)}
+.band-sheet[data-theme]:not([data-theme=forest]) .reminder-panel{border-top-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .reminder::before{color:var(--paper-accent)}
+.band-sheet[data-theme=mono] .main-event.break{background:#f6f6f6}
+.band-sheet[data-theme=mono] .main-event.break&gt;.time{background:#e9e9e9}
+@media screen{.band-sheet[data-theme]:not([data-theme=forest]) a.start-ref:hover{background:var(--paper-gutter);border-color:var(--paper-accent)}
+.band-sheet[data-theme]:not([data-theme=forest]) .main-event.highlighted:target{outline-color:#ad8337}}
+.band-sheet[data-theme]:not([data-theme=forest]) .small-event.highlighted{outline-color:var(--paper-line)}
+
+/* App integration: the existing toolbar, inspector and dialogs keep their styles. */
+.page.band-page{display:block;width:612pt;min-width:612pt;max-width:none;min-height:0;height:auto;padding:0;margin:0 auto;flex:0 0 auto;background:transparent;box-shadow:none;overflow:visible;border:0}
+.band-sheet{margin:0;flex-shrink:0}
+.band-sheet .start-ref{padding:0;min-height:0;min-width:0;font-family:inherit;cursor:pointer;background:#fff;vertical-align:baseline}
+.band-sheet .attendance-area h3&gt;.start-ref{margin-right:2pt}
+.band-sheet .note-select{font:inherit;color:inherit;text-align:left;display:inline;min-height:0;min-width:0;padding:0;margin:0;background:none;border:0;cursor:pointer;white-space:normal}
+.band-sheet .main-event .attendee-free-text{font-size:var(--name);font-weight:700}
+.band-sheet .attendee-free-text{white-space:pre-wrap;overflow-wrap:anywhere}
+.band-sheet .large-event .attendees{margin:0;font-size:var(--roster-name-size,12pt);line-height:1.2}
+.band-sheet .large-event .person-label{display:inline;white-space:normal;overflow-wrap:anywhere}
+.band-sheet .large-event .person-label strong{font-size:var(--roster-name-size,12pt);line-height:1.2}
+.band-sheet .large-event .person-label:not(:last-child)::after{content:&#x27;;&#x27;;font-weight:400;margin-right:.32em}
+.band-sheet .large-event .audience{margin:0 0 2pt;font-weight:400;font-size:var(--body)}
+.band-sheet .flight-logistics+.flight-logistics{margin-top:3pt}
+.band-sheet .band-empty{font-size:var(--body);margin:4pt 6pt 8pt}
+.band-sheet .band-handout{font-size:9pt;line-height:1.2;margin:0 0 5pt;flex-shrink:0}
+.sheet.band-sheet[data-theme] .main-panel&gt;.section-title,.sheet.band-sheet[data-theme] .main-panel&gt;.section-title small{color:var(--paper-heading-ink,#fff)}
+.sheet.band-sheet[data-theme] .main-event.highlighted&gt;.time,.sheet.band-sheet[data-theme] .main-event.highlighted&gt;.time .duration{color:var(--paper-anchor-ink,#fff)}
+.sheet.band-sheet[data-theme]{background:var(--paper-bg,#fff);color:var(--paper-text,#20262c)}
+.sheet.band-sheet[data-theme] .start-ref{background:var(--paper-bg,#fff)}
+.sheet.band-sheet[data-theme] :is(.schedule-label,.date,.page-footer,.logo-slot,.duration,.detail-field small,.reference-label,.flight-table thead,.flight-poc,.rank){color:var(--paper-muted,#525962)}
+.sheet.band-sheet[data-theme] :is(.main-details,.main-event .description,.attendance-area,.small-event h3,.large-head h3,.small-event .time,.large-head .time,.event-meta,.small-event .description,.roster-details .description,.small-event .audience,.roster-title,.concurrent-heading&gt;.section-title){color:var(--paper-secondary,#39424b)}
+.sheet.band-sheet[data-theme] .attendance-area :is(.person-label strong,.attendee-free-text){color:var(--paper-text,#20262c)}
+.band-fit-notice{font-size:12px;line-height:1.5;margin:12px 0;padding:10px 14px;background:var(--ui-bg,#f5f5f7);color:var(--ui-text,#333);border-left:3px solid #a67126}
+.band-fit-notice:empty{display:none}
+.attendee-preview{font-size:11px;line-height:1.5;margin:6px 0 12px}
+.attendee-preview .attendee-preview-list{max-height:140px;overflow:auto;border:1px solid var(--ui-border,#ddd);padding:6px;white-space:pre-wrap}
+.flight-editor{margin:14px 0;border-top:1px solid var(--ui-border,#ddd);padding-top:10px}
+.flight-editor summary{font-weight:600;cursor:pointer;padding:8px 0}
+.flight-editor-item{padding:8px;border:1px solid var(--ui-border,#ddd);border-radius:6px;margin:8px 0}
+.flight-editor-item .field-row{gap:6px}
+.flight-editor-item input,.flight-editor-item textarea{width:100%;min-width:0}
+.flight-editor-item button{margin-top:8px}
+@media screen{
+ .band-sheet [data-event-id],.band-sheet [data-band-customize]{cursor:pointer}
+ .band-sheet [data-event-id]:focus-visible,.band-sheet [data-band-customize]:focus-visible,.band-sheet button:focus-visible{outline:2pt solid #ad8337;outline-offset:1pt}
+ .band-sheet .selected{outline:2pt solid #ad8337;outline-offset:0;position:relative;z-index:1}
+ .band-sheet[data-fit=false]{height:auto;min-height:792pt}
+ .band-sheet[data-fit=false] .reminder-area{margin-top:12pt}
+}
+@page band-paper{size:Letter portrait;margin:0}
+@media print{
+ .page.band-page{page:band-paper;width:612pt!important;min-width:612pt!important;height:792pt!important;min-height:792pt!important;max-height:792pt!important;margin:0!important;padding:0!important;zoom:1!important;break-after:page;overflow:visible!important}
+ .band-page:last-child{break-after:auto}
+ .band-sheet{width:612pt!important;height:792pt!important;margin:0!important;box-shadow:none;break-after:auto;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .band-sheet .start-ref,.band-sheet .note-select{appearance:none}
+ .band-fit-notice,.band-sheet .note-empty{display:none!important}
+ .band-sheet [data-event-id]{outline:none}
+ .band-sheet[data-fit=false]&gt;.page-header,.band-sheet[data-fit=false]&gt;.sheet-body,.band-sheet[data-fit=false]&gt;.reminder-area,.band-sheet[data-fit=false]&gt;.page-footer,.band-sheet[data-fit=false]&gt;.band-handout{display:none!important}
+ .band-sheet[data-fit=false]&gt;.print-error{display:block!important}
+ .band-sheet .print-error{margin:24pt;font:14pt/1.5 Arial;border:1pt solid #333;padding:18pt}
+}
+
+.flight-details-plain{display:block;margin-top:6px;font-size:inherit;line-height:1.4}
+.flight-detail-line{display:block;margin:4px 0}
+
+&lt;/style&gt;
   &lt;script&gt;
 /* ── constants.js ── Contract ───────────────────────────────────────────────
  *
@@ -4315,7 +4746,7 @@ textarea:focus-visible,
 // Stamped with the build date and content hash by tools/build-single-html.py; &#x27;dev&#x27; when
 // running from source. Lets anyone tell a stale distributed copy from the
 // current build (Help modal shows it).
-const APP_VERSION = &#x27;2026-09-09+7fd7f2e9a0fc&#x27;;
+const APP_VERSION = &#x27;2026-09-14+424ea8544b5c&#x27;;
 
 const DEFAULT_GROUPS = [
   { id: &#x27;grp_all&#x27;,     name: &#x27;All Personnel&#x27;, scope: &#x27;main&#x27;,    color: &#x27;#2558a8&#x27; },
@@ -4760,6 +5191,9 @@ const Store = {
       attendees: e.attendees || &#x27;&#x27;,
       isBreak: e.isBreak || false,
       isMainEvent: e.isMainEvent != null ? e.isMainEvent : (group ? group.scope === &#x27;main&#x27; : false),
+      ...(e.emphasized != null ? { emphasized: !!e.emphasized } : {}),
+      ...(e.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(e.attendeeFormat) } : {}),
+      ...(Array.isArray(e.flightActivities) ? { flightActivities: normalizeFlightActivities(e.flightActivities) } : {}),
     };
     day.events.push(event);
     day.events.sort((a, b) =&gt; timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
@@ -5166,7 +5600,7 @@ function closeModal(id) {
   let previous = entry &amp;&amp; entry.previousFocus;
   if (previous &amp;&amp; !previous.isConnected) {
     previous = previous.id ? document.getElementById(previous.id)
-      : previous.matches(&#x27;.hdr&#x27;) ? document.querySelector(&#x27;#scheduleContainer .hdr&#x27;) : null;
+      : previous.matches(&#x27;.hdr, [data-band-customize]&#x27;) ? document.querySelector(&#x27;#scheduleContainer .hdr, #scheduleContainer [data-band-customize]&#x27;) : null;
   }
   if (previous &amp;&amp; previous.isConnected &amp;&amp; !previous.closest(&#x27;[inert]&#x27;)
       &amp;&amp; (!active || active.contains(previous))) previous.focus();
@@ -5353,7 +5787,32 @@ function normalizeEvent(raw) {
     attendees:   normalizeText(raw.attendees),
     isBreak:     !!raw.isBreak,
     isMainEvent: raw.isMainEvent != null ? !!raw.isMainEvent : false,
+    ...(raw.emphasized != null ? { emphasized: !!raw.emphasized } : {}),
+    ...(raw.attendeeFormat != null ? { attendeeFormat: normalizeAttendeeFormat(raw.attendeeFormat) } : {}),
+    ...(Array.isArray(raw.flightActivities) ? { flightActivities: normalizeFlightActivities(raw.flightActivities) } : {}),
   };
+}
+
+function normalizeAttendeeFormat(value) {
+  return [&#x27;suggested&#x27;, &#x27;lines&#x27;, &#x27;spaces&#x27;, &#x27;text&#x27;].includes(value) ? value : &#x27;text&#x27;;
+}
+
+function normalizeFlightActivities(activities) {
+  return normalizeEntityList(activities, raw =&gt; {
+    if (!raw || typeof raw !== &#x27;object&#x27; || Array.isArray(raw)) return null;
+    // Keep incomplete activities reviewable instead of silently discarding work.
+    return {
+      id: sanitizeEntityId(raw.id, &#x27;flight&#x27;), flight: normalizeText(raw.flight),
+      title: normalizeText(raw.title), startTime: normalizeText(raw.startTime),
+      endTime: normalizeText(raw.endTime), location: normalizeText(raw.location),
+      poc: normalizeText(raw.poc), description: normalizeText(raw.description),
+    };
+  }, &#x27;flight&#x27;);
+}
+
+function getBandSettings(theme) {
+  const raw = theme &amp;&amp; theme.bands || {};
+  return { showLogo: raw.showLogo !== false, notesHeight: [90, 108, 144].includes(raw.notesHeight) ? raw.notesHeight : 90 };
 }
 
 function normalizeGroup(raw) {
@@ -5441,7 +5900,7 @@ function normalizePersistedState(raw, options) {
   };
 }
 
-// Shape-level check only: keeps the three known keys as the right types.
+// Shape-level check: preserves theme choices and normalized Bands settings.
 // Value whitelisting (skin/palette names, hex colors) lives in
 // getScheduleTheme (themes.js), the one funnel every consumer reads through.
 function normalizeScheduleTheme(raw) {
@@ -5452,8 +5911,40 @@ function normalizeScheduleTheme(raw) {
   if (raw.customColors &amp;&amp; typeof raw.customColors === &#x27;object&#x27; &amp;&amp; !Array.isArray(raw.customColors)) {
     theme.customColors = raw.customColors;
   }
-  return (theme.skin || theme.palette || theme.customColors) ? theme : null;
+  if (raw.bands &amp;&amp; typeof raw.bands === &#x27;object&#x27;) theme.bands = getBandSettings(raw);
+  return (theme.skin || theme.palette || theme.customColors || theme.bands) ? theme : null;
 }
+
+&lt;/script&gt;
+  &lt;script&gt;
+// Attendee input boundary: segment entries without guessing anyone&#x27;s name parts.
+function parsePersonnelInput(raw,mode=&#x27;suggested&#x27;){
+  raw=String(raw??&#x27;&#x27;);
+  const normalized=raw.replace(/\r\n?/g,&#x27;\n&#x27;);
+  let entries=[],rule=&#x27;&#x27;,notice=&#x27;&#x27;;
+  if(mode===&#x27;text&#x27;)return{raw,mode,entries:[],rule:&#x27;Text as written&#x27;,notice:&#x27;No person count is inferred. Your text prints together, including line breaks.&#x27;};
+  if(mode===&#x27;spaces&#x27;){
+    entries=normalized.split(/\s+/);rule=&#x27;Every word is an entry&#x27;;
+    notice=&#x27;Use this only when every word is a separate surname. Full names would be split into separate entries.&#x27;;
+  }else if(mode===&#x27;lines&#x27;||normalized.trim().includes(&#x27;\n&#x27;)){
+    entries=normalized.split(&#x27;\n&#x27;);rule=&#x27;One entry per line&#x27;;
+    notice=&#x27;Commas, spaces and &amp; inside each line stay with that entry.&#x27;;
+  }else if(normalized.includes(&#x27;;&#x27;)){
+    entries=normalized.split(&#x27;;&#x27;);rule=&#x27;Semicolons separate entries&#x27;;
+    notice=&#x27;Commas and spaces stay within each entry. Check the list below.&#x27;;
+  }else{
+    entries=normalized.split(/,|\s+&amp;\s+/);rule=&#x27;Commas and spaced &amp; separate entries&#x27;;
+    notice=&#x27;Check the split. For “Doe, John”, use one entry per line so the comma stays inside the name.&#x27;;
+  }
+  entries=entries.map(value=&gt;value.trim()).filter(Boolean);
+  const ambiguous=mode===&#x27;suggested&#x27;&amp;&amp;entries.length===1&amp;&amp;/\s/.test(entries[0]);
+  if(ambiguous)notice=&#x27;Spaces stay inside an entry. If these are several surnames, separate at spaces or add line breaks.&#x27;;
+  if(!entries.length)notice=&#x27;No attendee entries yet.&#x27;;
+  const seen=new Set(),duplicates=[];
+  for(const entry of entries){const key=entry.toLocaleLowerCase();if(seen.has(key))duplicates.push(entry);seen.add(key);}
+  return{raw,mode,entries,rule,notice,ambiguous,duplicates};
+}
+if(typeof module!==&#x27;undefined&#x27;)module.exports={parsePersonnelInput};
 
 &lt;/script&gt;
   &lt;script&gt;
@@ -5468,6 +5959,7 @@ function normalizeScheduleTheme(raw) {
  *   summarizeDisplayList(items, limit?)          → string
  *   summarizeExceptionNote(info, itemLimit?)     → string
  *   classifyEvents(events, groups)                → {mainBands[], concurrent[]}
+ *   buildBandSections(events, groups)             → chronological main/supporting sections with continuation references
  *   buildPhaseGroups(events, groups)              → temporally contained phases and independent tasks
  *   getAudienceHandoutEvents(events, groups, id)   → selected audience plus shared events
  *   getScheduleReviewIssues(days, groups)          → advisory date, range, audience and conflict issues
@@ -5523,6 +6015,79 @@ function isEventEffectiveMain(evt, groupsOrMap) {
   return !!evt.isMainEvent;
 }
 
+// Readable Bands uses one full entry per event, anchored by its actual start.
+// Main sections contain strict-overlap connected components, including breaks;
+// membership in a component does not mean every main event overlaps every task.
+// Empty main-track intervals appear only when supporting activity occupies them.
+//
+// Section: {kind, startTime, endTime, mains, supporting, continuations}.
+// mains entries: {event, group, tier}; breaks have tier &#x27;break&#x27;.
+// supporting/continuations entries: {event, group, sourceSectionIndex,
+// overlappingMain, overlappingBreaks, continuesAfter}. Overlap arrays contain
+// only actual overlaps in this section; overlappingMain excludes breaks.
+// sourceSectionIndex identifies the one canonical supporting entry. The event
+// and group references are unchanged, including all original times and fields.
+function buildBandSections(events, groups) {
+  const ordered = (events || []).slice().sort(compareBandOrder);
+  if (!ordered.length) return [];
+  const groupMap = getGroupMap(groups);
+  const mainEvents = ordered.filter(evt =&gt; isEventEffectiveMain(evt, groupMap));
+  const supportingEvents = ordered.filter(evt =&gt; !isEventEffectiveMain(evt, groupMap));
+  const makeSection = (kind, startTime, endTime) =&gt; ({
+    kind, startTime, endTime, mains: [], supporting: [], continuations: [],
+  });
+  const mainSections = [];
+
+  mainEvents.forEach(event =&gt; {
+    let section = mainSections[mainSections.length - 1];
+    if (!section || timeToMinutes(event.startTime) &gt;= timeToMinutes(section.endTime)) {
+      section = makeSection(&#x27;main&#x27;, event.startTime, event.endTime);
+      mainSections.push(section);
+    } else if (timeToMinutes(event.endTime) &gt; timeToMinutes(section.endTime)) {
+      section.endTime = event.endTime;
+    }
+    section.mains.push({ event, group: groupMap[event.groupId] || null, tier: event.isBreak ? &#x27;break&#x27; : &#x27;main&#x27; });
+  });
+
+  const lastEnd = ordered.reduce((endTime, event) =&gt;
+    timeToMinutes(event.endTime) &gt; timeToMinutes(endTime) ? event.endTime : endTime, ordered[0].endTime);
+  const candidates = [];
+  let previousEnd = ordered[0].startTime;
+  mainSections.forEach(section =&gt; {
+    if (timeToMinutes(previousEnd) &lt; timeToMinutes(section.startTime)) {
+      candidates.push(makeSection(&#x27;supporting&#x27;, previousEnd, section.startTime));
+    }
+    candidates.push(section);
+    previousEnd = section.endTime;
+  });
+  if (timeToMinutes(previousEnd) &lt; timeToMinutes(lastEnd)) {
+    candidates.push(makeSection(&#x27;supporting&#x27;, previousEnd, lastEnd));
+  }
+  const sections = candidates.filter(section =&gt; section.kind === &#x27;main&#x27;
+    || supportingEvents.some(event =&gt; eventsOverlap(event, section)));
+
+  supportingEvents.forEach(event =&gt; {
+    const start = timeToMinutes(event.startTime);
+    const sourceSectionIndex = sections.findIndex(section =&gt; start &gt;= timeToMinutes(section.startTime)
+      &amp;&amp; start &lt; timeToMinutes(section.endTime));
+    sections.forEach((section, index) =&gt; {
+      if (!eventsOverlap(event, section)) return;
+      const overlapping = section.mains.filter(main =&gt; eventsOverlap(event, main.event));
+      const entry = {
+        event,
+        group: groupMap[event.groupId] || null,
+        sourceSectionIndex,
+        overlappingMain: overlapping.filter(main =&gt; main.tier !== &#x27;break&#x27;).map(main =&gt; main.event),
+        overlappingBreaks: overlapping.filter(main =&gt; main.tier === &#x27;break&#x27;).map(main =&gt; main.event),
+        continuesAfter: timeToMinutes(event.endTime) &gt; timeToMinutes(section.endTime),
+      };
+      if (index === sourceSectionIndex) section.supporting.push(entry);
+      else section.continuations.push(entry);
+    });
+  });
+  return sections;
+}
+
 // A phase may contain a task only when the complete task fits one phase.
 // Tasks outside phases or spanning their boundaries stay independent, rather
 // than inheriting a misleading parent from the order of the event array.
@@ -5576,17 +6141,27 @@ function getScheduleReviewIssues(days, groups) {
     if (!validRange) add(day, &#x27;day-range&#x27;, label + &#x27;: review the day’s start and end times.&#x27;);
     const events = day.events || [];
     events.forEach(evt =&gt; {
+      (evt.flightActivities || []).forEach(activity =&gt; {
+        if (!activity.flight || !activity.title || !isValidScheduleTime(activity.startTime) || !isValidScheduleTime(activity.endTime) ||
+            activity.startTime &gt;= activity.endTime || activity.startTime &lt; evt.startTime || activity.endTime &gt; evt.endTime) {
+          add(day, &#x27;flight-activity&#x27;, label + &#x27;: review the flight, activity and time range within &#x27; + evt.title + &#x27;.&#x27;, [evt.id]);
+        }
+      });
       if (!groupMap[evt.groupId] &amp;&amp; !evt.isBreak) add(day, &#x27;audience&#x27;, label + &#x27;: &#x27; + evt.title + &#x27; has no audience recorded.&#x27;, [evt.id]);
       if (validRange &amp;&amp; (timeToMinutes(evt.startTime) &lt; start || timeToMinutes(evt.endTime) &gt; end))
         add(day, &#x27;outside-day&#x27;, label + &#x27;: &#x27; + evt.title + &#x27; is outside the day’s stated hours.&#x27;, [evt.id]);
     });
     events.forEach((evt, i) =&gt; events.slice(i + 1).forEach(other =&gt; {
       if (evt.isBreak || other.isBreak || !eventsOverlap(evt, other)) return;
+      // A concurrent assignment can intentionally replace the shared main event.
+      if (isEventEffectiveMain(evt, groupMap) !== isEventEffectiveMain(other, groupMap)) return;
       const reasons = [];
       if (evt.groupId &amp;&amp; evt.groupId === other.groupId) reasons.push(&#x27;audience&#x27;);
       if (evt.location &amp;&amp; other.location &amp;&amp; evt.location.trim().toLowerCase() === other.location.trim().toLowerCase()) reasons.push(&#x27;location&#x27;);
-      const people = new Set(collectAttendeeNames(evt.attendees).map(name =&gt; name.toLowerCase()));
-      if (collectAttendeeNames(other.attendees).some(name =&gt; people.has(name.toLowerCase()))) reasons.push(&#x27;named people&#x27;);
+      const entries = event =&gt; parsePersonnelInput(event.attendees || &#x27;&#x27;, event.attendeeFormat || &#x27;text&#x27;).entries;
+      const key = value =&gt; value.normalize(&#x27;NFKC&#x27;).trim().replace(/\s+/g, &#x27; &#x27;).toLocaleLowerCase();
+      const people = new Set(entries(evt).map(key));
+      if (entries(other).some(name =&gt; people.has(key(name)))) reasons.push(&#x27;matching attendee entries (confirm identity)&#x27;);
       if (reasons.length) add(day, &#x27;overlap&#x27;, label + &#x27;: &#x27; + evt.title + &#x27; and &#x27; + other.title + &#x27; overlap and share &#x27; + reasons.join(&#x27;, &#x27;) + &#x27;. Confirm this is intended.&#x27;, [evt.id, other.id]);
     }));
   });
@@ -5911,7 +6486,9 @@ let _undoStack = [];
 let _redoStack = [];
 const UNDO_MAX = 30;
 const SCHEDULE_WORKBOOK_FILE_TYPE = &#x27;dayschedule&#x27;;
-const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 1;
+// Version 2 protects nested flight activities and Bands settings from being
+// silently removed by a version-1-only app. Existing version-1 files still open.
+const SCHEDULE_WORKBOOK_SCHEMA_VERSION = 2;
 const SCHEDULE_WORKBOOK_DEFAULT_FILENAME = &#x27;DaySchedule.schedule&#x27;;
 
 let _undoSaveTimer = null;
@@ -6021,6 +6598,7 @@ function buildVersionState() {
   state.theme = typeof getScheduleTheme === &#x27;function&#x27;
     ? cloneScheduleData(getScheduleTheme(fileData &amp;&amp; fileData.theme))
     : cloneScheduleData(fileData &amp;&amp; fileData.theme || { skin: &#x27;bands&#x27;, palette: &#x27;classic&#x27; });
+  if (fileData?.theme?.bands) state.theme.bands = getBandSettings(fileData.theme);
   return state;
 }
 
@@ -6532,6 +7110,7 @@ function getScheduleWorkbookSnapshot(options) {
     workbook.schedule = envelope;
   }
 
+  workbook.schemaVersion = SCHEDULE_WORKBOOK_SCHEMA_VERSION;
   return workbook;
 }
 
@@ -6638,7 +7217,10 @@ function applyDuplicateOptions(state, options) {
   days.forEach(day =&gt; {
     if (options.clearNotes) day.notes = [];
     (day.events || []).forEach(event =&gt; {
-      if (options.clearContacts) event.poc = &#x27;&#x27;;
+      if (options.clearContacts) {
+        event.poc = &#x27;&#x27;;
+        (event.flightActivities || []).forEach(activity =&gt; { activity.poc = &#x27;&#x27;; });
+      }
       if (options.clearPeople) event.attendees = &#x27;&#x27;;
     });
   });
@@ -6969,7 +7551,7 @@ function parseScheduleWorkbookContent(content, fileName) {
   let workbookData = null;
   let activeSchedule = null;
   if (isWorkbook) {
-    if (parsed.schemaVersion !== undefined &amp;&amp; parsed.schemaVersion !== SCHEDULE_WORKBOOK_SCHEMA_VERSION) {
+    if (parsed.schemaVersion !== undefined &amp;&amp; ![1, SCHEDULE_WORKBOOK_SCHEMA_VERSION].includes(parsed.schemaVersion)) {
       throw new Error(&#x27;This workbook uses an unsupported format version. Open it in the app version that created it; the file has not been changed.&#x27;);
     }
     const entries = Array.isArray(parsed.schedules) &amp;&amp; parsed.schedules.length ? parsed.schedules : [parsed.schedule];
@@ -8995,10 +9577,26 @@ window.addEventListener(&#x27;pagehide&#x27;, () =&gt; {
 
 &lt;/script&gt;
   &lt;script&gt;
+// Paper colors only: every theme uses the same layout and event emphasis.
+const BAND_PAPER_THEMES={
+  forest:{label:&#x27;Forest&#x27;,colors:[&#x27;#254d38&#x27;,&#x27;#355b43&#x27;,&#x27;#f1f5f0&#x27;,&#x27;#dce7dd&#x27;,&#x27;#e2ebe3&#x27;,&#x27;#a8baa7&#x27;,&#x27;#f6f2e9&#x27;,&#x27;#eae4d6&#x27;,&#x27;#a17d3b&#x27;]},
+  airforce:{label:&#x27;Air Force&#x27;,colors:[&#x27;#173f73&#x27;,&#x27;#28598b&#x27;,&#x27;#f0f4fa&#x27;,&#x27;#dce6f3&#x27;,&#x27;#e5edf7&#x27;,&#x27;#a7b8cf&#x27;,&#x27;#f7f3e9&#x27;,&#x27;#ece1c9&#x27;,&#x27;#8d692a&#x27;]},
+  ocp:{label:&#x27;OCP&#x27;,colors:[&#x27;#4d5039&#x27;,&#x27;#5c6043&#x27;,&#x27;#f4f3ec&#x27;,&#x27;#e3e0cf&#x27;,&#x27;#e9e6d8&#x27;,&#x27;#b4b098&#x27;,&#x27;#f3eee4&#x27;,&#x27;#e5dac6&#x27;,&#x27;#7b6440&#x27;]},
+  teal:{label:&#x27;Teal&#x27;,colors:[&#x27;#14545b&#x27;,&#x27;#24646b&#x27;,&#x27;#eff7f7&#x27;,&#x27;#d8ebea&#x27;,&#x27;#e0efed&#x27;,&#x27;#9abdbb&#x27;,&#x27;#f4f3e9&#x27;,&#x27;#e9e4ce&#x27;,&#x27;#7f7039&#x27;]},
+  slate:{label:&#x27;Slate&#x27;,colors:[&#x27;#34445a&#x27;,&#x27;#495d72&#x27;,&#x27;#f2f5f8&#x27;,&#x27;#dfe6ed&#x27;,&#x27;#e5eaf0&#x27;,&#x27;#aab6c3&#x27;,&#x27;#f2f3f6&#x27;,&#x27;#e1e4ec&#x27;,&#x27;#6a7489&#x27;]},
+  plum:{label:&#x27;Plum&#x27;,colors:[&#x27;#513b65&#x27;,&#x27;#684d7b&#x27;,&#x27;#f6f2f8&#x27;,&#x27;#e8dfed&#x27;,&#x27;#ede4f0&#x27;,&#x27;#baa7c5&#x27;,&#x27;#f6f2ea&#x27;,&#x27;#eae0cf&#x27;,&#x27;#8c7046&#x27;]},
+  burgundy:{label:&#x27;Burgundy&#x27;,colors:[&#x27;#6a3047&#x27;,&#x27;#7c4058&#x27;,&#x27;#faf2f4&#x27;,&#x27;#efdee3&#x27;,&#x27;#f3e5e8&#x27;,&#x27;#c7a6b1&#x27;,&#x27;#f7f2e9&#x27;,&#x27;#eae0cf&#x27;,&#x27;#8c7046&#x27;]},
+  copper:{label:&#x27;Copper&#x27;,colors:[&#x27;#733f26&#x27;,&#x27;#8a5131&#x27;,&#x27;#faf4ef&#x27;,&#x27;#efdfd1&#x27;,&#x27;#f2e6da&#x27;,&#x27;#c8ad94&#x27;,&#x27;#f3f3e9&#x27;,&#x27;#e6e4ce&#x27;,&#x27;#777143&#x27;]},
+  mono:{label:&#x27;Mono&#x27;,colors:[&#x27;#303030&#x27;,&#x27;#484848&#x27;,&#x27;#f5f5f5&#x27;,&#x27;#e3e3e3&#x27;,&#x27;#eaeaea&#x27;,&#x27;#b0b0b0&#x27;,&#x27;#f6f6f6&#x27;,&#x27;#e8e8e8&#x27;,&#x27;#777777&#x27;]}
+};
+const BAND_COLOR_ROLES=[&#x27;accent&#x27;,&#x27;anchor&#x27;,&#x27;band&#x27;,&#x27;gutter&#x27;,&#x27;anchor-band&#x27;,&#x27;line&#x27;,&#x27;flight&#x27;,&#x27;flight-gutter&#x27;,&#x27;flight-accent&#x27;];
+
+&lt;/script&gt;
+  &lt;script&gt;
 /* ── themes.js ── Contract ────────────────────────────────────────────────
  *
  * EXPORTS:
- *   PALETTES             — Object&lt;string, PaletteColors&gt;  5 preset palettes
+ *   PALETTES             — Object&lt;string, PaletteColors&gt;  11 preset palettes
  *   PALETTE_NAMES        — Array&lt;string&gt;                  [&quot;classic&quot;, &quot;airforce&quot;, ...]
  *   SKIN_NAMES           — Array&lt;string&gt;                  [&quot;bands&quot;, &quot;grid&quot;, &quot;cards&quot;, &quot;phases&quot;]
  *   SKIN_LABELS          — Object&lt;string, {name, desc}&gt;   Display names for skins
@@ -9072,7 +9670,8 @@ const PALETTES = {
   },
 };
 
-const PALETTE_NAMES = [&#x27;classic&#x27;, &#x27;airforce&#x27;, &#x27;ocp&#x27;, &#x27;darkops&#x27;, &#x27;mono&#x27;];
+// Keep deployed palettes and add the approved paper color families.
+const PALETTE_NAMES = [&#x27;classic&#x27;, &#x27;airforce&#x27;, &#x27;ocp&#x27;, &#x27;darkops&#x27;, &#x27;mono&#x27;, &#x27;forest&#x27;, &#x27;teal&#x27;, &#x27;slate&#x27;, &#x27;plum&#x27;, &#x27;burgundy&#x27;, &#x27;copper&#x27;];
 
 const PALETTE_LABELS = {
   classic: &#x27;Classic&#x27;,
@@ -9081,6 +9680,13 @@ const PALETTE_LABELS = {
   darkops: &#x27;Dark Ops&#x27;,
   mono: &#x27;Mono&#x27;,
 };
+
+for (const key of [&#x27;forest&#x27;, &#x27;teal&#x27;, &#x27;slate&#x27;, &#x27;plum&#x27;, &#x27;burgundy&#x27;, &#x27;copper&#x27;]) {
+  const paper = BAND_PAPER_THEMES[key];
+  PALETTES[key] = { bg: &#x27;#ffffff&#x27;, text: &#x27;#20262c&#x27;, textSecondary: &#x27;#39424b&#x27;, textMuted: &#x27;#525962&#x27;,
+    accent: paper.colors[0], accentSecondary: paper.colors[8], accentTertiary: paper.colors[1], border: paper.colors[5], surface: paper.colors[2] };
+  PALETTE_LABELS[key] = paper.label;
+}
 
 const SKIN_NAMES = [&#x27;bands&#x27;, &#x27;grid&#x27;, &#x27;cards&#x27;, &#x27;phases&#x27;];
 
@@ -9151,363 +9757,271 @@ function applyEditorTheme(theme) {
 
 &lt;/script&gt;
   &lt;script&gt;
-/* ── skin-band.js ── Contract ───────────────────────────────────────────────
- *
- * EXPORTS:
- *   renderDayBody_band(dayId)         → HTML string — full schedule body for band skin
- *   renderBand(band, densityInfo)     → HTML string — single event band
- *   renderConcurrentRow(conc, groups, densityInfo) → HTML string — &quot;Also Happening&quot; section
- *
- * REQUIRES:
- *   render.js       — clearDaggerFootnotes(), addDaggerFootnote(), getDaggerFootnotes(),
- *                     renderNotes()
- *   app-state.js    — Store.getDay(), Store.getGroups(), Store.getGroup(), Store.getNotes()
- *   utils.js        — esc(), formatDuration(), getContrastingTextColor()
- *   data-helpers.js — classifyEvents(), computeDuration(), analyzeDayLayout(),
- *                     getSharedEventExceptions(), summarizeExceptionNote()
- *
- * CONSUMED BY:
- *   render.js — renderDay() dispatches to renderDayBody_band() for the bands skin
- *   print.js  — renderBand(), renderConcurrentRow() called directly for print layout
- * ──────────────────────────────────────────────────────────────────────────── */
-
-function renderDayBody_band(dayId, dayOverride) {
-  const day = dayOverride || Store.getDay(dayId);
-  if (!day) return &#x27;&#x27;;
-  const groups = Store.getGroups();
-  const classified = classifyEvents(day.events, groups);
-  const { mainBands, concurrent } = classified;
-  const notes = day.notes || Store.getNotes(dayId);
-  const layoutAnalysis = analyzeDayLayout(day.events, groups, classified);
-  const densityInfo = getBandDensityInfo(mainBands, concurrent, layoutAnalysis);
-
-  clearDaggerFootnotes();
-
-  let html = &#x27;&#x27;;
-  html += &#x27;&lt;div class=&quot;schedule&quot;&gt;&#x27;;
-  if (mainBands.length === 0 &amp;&amp; concurrent.length === 0) {
-    html += &#x27;&lt;div class=&quot;empty-state&quot;&gt;&#x27;;
-    html += &#x27;&lt;p&gt;Click &lt;strong&gt;+ Event&lt;/strong&gt; to add your first event.&lt;/p&gt;&#x27;;
-    html += &#x27;&lt;p&gt;Click &lt;strong&gt;+ Note&lt;/strong&gt; to add scheduling notes.&lt;/p&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-  mainBands.forEach((band) =&gt; {
-    html += renderBand(band, densityInfo, day.events);
-  });
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  if (densityInfo.warning) html += renderBandDensityNote(densityInfo);
-
-  if (concurrent.length &gt; 0) {
-    html += renderConcurrentRow(concurrent, groups, densityInfo);
-  }
-
-  if (notes.length &gt; 0 || getDaggerFootnotes().length &gt; 0) {
-    html += renderNotes(notes);
-  }
-
-  return html;
-}
-
-function getBandDensityInfo(mainBands, concurrent, layoutAnalysis) {
-  const info = {
-    denseMode: false,
-    inlinePreviewLimit: Infinity,
-    maxConcurrentOnBand: 0,
-    warning: &#x27;&#x27;,
-    recommendedSkin: layoutAnalysis ? layoutAnalysis.recommendedSkin : &#x27;bands&#x27;,
-    recommendationReason: layoutAnalysis ? layoutAnalysis.reason : &#x27;&#x27;,
-    usePackedConcurrent: layoutAnalysis ? layoutAnalysis.usePackedConcurrent : false,
+/* Approved day-first paper layout. One renderer and fitter serve editor and print.
+ * Inputs come from normalized Store records; fitting moves existing DOM records,
+ * never rewrites source data or infers names. No application network access.
+ */
+const BandLayout = (() =&gt; {
+  const policy = Object.freeze({ margin: 36, logo: 72, notes: 90, clearance: 4,
+    detail: 9, name: 10.5, roster: 9.5, title: 11.5, label: 8, scale: .85 });
+  const ordered = events =&gt; events.slice().sort((a, b) =&gt; a.startTime.localeCompare(b.startTime));
+  const time = event =&gt; event.startTime + &#x27;-&#x27; + event.endTime;
+  const duration = event =&gt; {
+    const minutes = computeDuration(event);
+    return minutes &gt;= 60 &amp;&amp; minutes % 60 === 0 ? minutes / 60 + &#x27;h&#x27; : minutes + &#x27;m&#x27;;
   };
+  const attendance = event =&gt; parsePersonnelInput(event.attendees || &#x27;&#x27;, event.attendeeFormat || &#x27;text&#x27;);
 
-  if (!concurrent || concurrent.length === 0) return info;
-
-  info.maxConcurrentOnBand = mainBands.reduce((max, band) =&gt; {
-    const count = band.concurrent ? band.concurrent.length : 0;
-    return Math.max(max, count);
-  }, 0);
-
-  info.denseMode = concurrent.length &gt;= 10 || info.maxConcurrentOnBand &gt;= 4;
-  info.inlinePreviewLimit = info.denseMode ? 2 : Infinity;
-
-  if (!info.denseMode) return info;
-
-  const parts = [];
-  parts.push(concurrent.length + &#x27; concurrent event&#x27; + (concurrent.length === 1 ? &#x27;&#x27; : &#x27;s&#x27;));
-  if (info.maxConcurrentOnBand &gt; 0) {
-    parts.push(&#x27;up to &#x27; + info.maxConcurrentOnBand + &#x27; attached to one time block&#x27;);
+  function model(day) {
+    const groups = getGroupMap(Store.getGroups());
+    const mains = ordered(day.events.filter(event =&gt; isEventEffectiveMain(event, groups)));
+    const concurrent = ordered(day.events.filter(event =&gt; !isEventEffectiveMain(event, groups)));
+    const references = new Map(concurrent.map((event, i) =&gt; [event.id, i + 1]));
+    const byMain = new Map(mains.map(main =&gt; [main.id, concurrent.filter(event =&gt; eventsOverlap(main, event))]));
+    return { day, groups, mains, concurrent, references, byMain };
   }
-  info.warning = parts.join(&#x27;, &#x27;) + &#x27;. Try Grid, Cards, or Phases for easier scanning.&#x27;;
-  return info;
-}
 
-function renderBandDensityNote(densityInfo) {
-  const recommendedSkin = densityInfo.recommendedSkin;
-  const recommendedLabel = SKIN_LABELS[recommendedSkin] ? SKIN_LABELS[recommendedSkin].name : recommendedSkin;
-  const actionOrder = [&#x27;grid&#x27;, &#x27;cards&#x27;, &#x27;phases&#x27;].filter(skin =&gt; skin !== recommendedSkin);
-  if ([&#x27;grid&#x27;, &#x27;cards&#x27;, &#x27;phases&#x27;].includes(recommendedSkin)) actionOrder.unshift(recommendedSkin);
-
-  let html = &#x27;&lt;div class=&quot;band-view-note&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;band-view-note-copy&quot;&gt;&#x27;;
-  html += &#x27;&lt;strong&gt;Bands view warning:&lt;/strong&gt; &#x27; + esc(densityInfo.warning);
-  if (recommendedSkin &amp;&amp; recommendedSkin !== &#x27;bands&#x27;) {
-    html += &#x27; &lt;span class=&quot;band-view-recommendation&quot;&gt;Recommended: &lt;strong&gt;&#x27; + esc(recommendedLabel) + &#x27;&lt;/strong&gt; because &#x27; + esc(densityInfo.recommendationReason) + &#x27;&lt;/span&gt;&#x27;;
-  }
-  html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;band-view-actions&quot;&gt;&#x27;;
-  actionOrder.forEach(skin =&gt; {
-    const label = SKIN_LABELS[skin] ? SKIN_LABELS[skin].name : skin;
-    const recommendedClass = skin === recommendedSkin ? &#x27; band-view-switch--recommended&#x27; : &#x27;&#x27;;
-    const buttonLabel = skin === recommendedSkin ? &#x27;Use &#x27; + label : label;
-    html += &#x27;&lt;button type=&quot;button&quot; class=&quot;band-view-switch&#x27; + recommendedClass + &#x27;&quot; data-skin-switch=&quot;&#x27; + esc(skin) + &#x27;&quot;&gt;&#x27; + esc(buttonLabel) + &#x27;&lt;/button&gt;&#x27;;
-  });
-  html += &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function renderBand(band, densityInfo, dayEvents) {
-  const { event: evt, tier, group, concurrent: concList, overlappingMain } = band;
-  const dur = computeDuration(evt);
-  const durStr = formatDuration(dur);
-  const hasMainOverlap = overlappingMain &amp;&amp; overlappingMain.length &gt; 0;
-  const sharedExceptions = getSharedEventExceptions(evt, dayEvents || Store.getEvents(Store.getActiveDay()), Store.getGroups());
-  const exceptionNote = summarizeExceptionNote(sharedExceptions, 3);
-  const groupTextColor = group ? getContrastingTextColor(group.color) : &#x27;#ffffff&#x27;;
-  const previewLimit = getBandPreviewLimit(concList || [], densityInfo);
-  const previewConcurrent = (concList || []).slice(0, previewLimit);
-  const hiddenConcurrentCount = Math.max(0, (concList ? concList.length : 0) - previewConcurrent.length);
-  const jumpStartTime = hiddenConcurrentCount &gt; 0 &amp;&amp; concList[previewConcurrent.length]
-    ? concList[previewConcurrent.length].startTime
-    : &#x27;&#x27;;
-
-  const tierClass = tier === &#x27;main&#x27; ? &#x27;main&#x27; : tier === &#x27;break&#x27; ? &#x27;brk&#x27; : &#x27;sup&#x27;;
-  const overlapClass = hasMainOverlap ? &#x27; band-overlap&#x27; : &#x27;&#x27;;
-  const accentStyle = tier === &#x27;main&#x27; &amp;&amp; group ? &#x27; style=&quot;--accent:&#x27; + esc(group.color) + &#x27;;&quot;&#x27; : &#x27;&#x27;;
-  const concSlotClass = densityInfo &amp;&amp; densityInfo.denseMode ? &#x27;band-conc-slot band-conc-slot--dense&#x27; : &#x27;band-conc-slot&#x27;;
-
-  let html = &#x27;&lt;div class=&quot;band &#x27; + tierClass + overlapClass + &#x27;&quot;&#x27; + accentStyle + &#x27; data-event-id=&quot;&#x27; + esc(evt.id) + &#x27;&quot;&gt;&#x27;;
-
-  // Time block
-  html += &#x27;&lt;div class=&quot;band-time&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;t-start&quot;&gt;&#x27; + esc(evt.startTime) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;t-end&quot;&gt;&#x27; + esc(evt.endTime) + &#x27;&lt;/div&gt;&#x27;;
-  if (tier === &#x27;main&#x27; &amp;&amp; !evt.isBreak) {
-    html += &#x27;&lt;div class=&quot;t-dur&quot;&gt;&#x27; + esc(durStr) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  // Content
-  html += &#x27;&lt;div class=&quot;band-content&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;band-title&quot;&gt;&#x27; + esc(evt.title) + &#x27;&lt;/div&gt;&#x27;;
-  {
-    const metaParts = [&#x27;&lt;span class=&quot;band-inline-time&quot;&gt;&#x27; + esc(evt.startTime + &#x27;\u2013&#x27; + evt.endTime) + &#x27;&lt;/span&gt;&#x27;];
-    if (evt.location) metaParts.push(&#x27;&lt;span class=&quot;band-meta-item&quot;&gt;&#x27; + esc(evt.location) + &#x27;&lt;/span&gt;&#x27;);
-    if (evt.poc) metaParts.push(&#x27;&lt;span class=&quot;band-meta-item&quot;&gt;POC: &#x27; + esc(evt.poc) + &#x27;&lt;/span&gt;&#x27;);
-    html += &#x27;&lt;div class=&quot;band-meta-line&quot;&gt;&#x27; + metaParts.join(&#x27;&lt;span class=&quot;band-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  if (evt.description) {
-    html += &#x27;&lt;div class=&quot;band-desc&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  if (group) {
-    html += &#x27;&lt;div&gt;&lt;span class=&quot;band-tag&quot; style=&quot;background:&#x27; + esc(group.color) + &#x27;;color:&#x27; + esc(groupTextColor) + &#x27;;&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27;;
-  }
-  if (evt.attendees) {
-    const attendeeLabel = group ? &#x27;+ &#x27; : &#x27;WHO: &#x27;;
-    html += &#x27;&lt;div class=&quot;band-attendees&quot;&gt;&#x27; + attendeeLabel + esc(evt.attendees) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  if (exceptionNote) {
-    html += &#x27;&lt;div class=&quot;band-exception-note&quot;&gt;Exceptions: &#x27; + esc(exceptionNote) + &#x27;&lt;/div&gt;&#x27;;
-  }
-  // Overlap notice for main-on-main conflicts
-  if (hasMainOverlap) {
-    const overlapNames = overlappingMain.map(m =&gt; esc(m.title)).join(&#x27;, &#x27;);
-    html += &#x27;&lt;div class=&quot;band-overlap-notice&quot;&gt;Overlaps with &#x27; + overlapNames + &#x27;&lt;/div&gt;&#x27;;
-  }
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  // Fixed-width concurrent slot — always rendered for alignment
-  html += &#x27;&lt;div class=&quot;&#x27; + concSlotClass + &#x27;&quot;&gt;&#x27;;
-  if (previewConcurrent.length &gt; 0) {
-    previewConcurrent.forEach(c =&gt; {
-      html += renderBandConcurrentCard(c);
-    });
-  }
-  if (hiddenConcurrentCount &gt; 0) {
-    html += renderBandConcurrentOverflow(hiddenConcurrentCount, jumpStartTime);
-  }
-  html += &#x27;&lt;/div&gt;&#x27;;
-
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function getBandPreviewLimit(concList, densityInfo) {
-  if (!densityInfo || !densityInfo.denseMode) return Infinity;
-  if (!concList || concList.length === 0) return densityInfo.inlinePreviewLimit;
-  if (concList.length &gt;= 6) return 1;
-  return densityInfo.inlinePreviewLimit;
-}
-
-function renderBandConcurrentCard(c) {
-  const cGroup = Store.getGroup(c.groupId);
-  let html = &#x27;&lt;div class=&quot;band-conc&quot; data-event-id=&quot;&#x27; + esc(c.id) + &#x27;&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;cc-label&quot;&gt;Also at &#x27; + esc(c.startTime) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;cc-title&quot;&gt;&#x27; + esc(c.title) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;cc-detail&quot;&gt;&#x27; + esc(c.startTime + &#x27;\u2013&#x27; + c.endTime);
-  if (c.location) html += &#x27; \u00b7 &#x27; + esc(c.location);
-  html += &#x27;&lt;/div&gt;&#x27;;
-  if (c.poc) html += &#x27;&lt;div class=&quot;cc-detail&quot;&gt;POC: &#x27; + esc(c.poc) + &#x27;&lt;/div&gt;&#x27;;
-  if (cGroup) html += &#x27;&lt;div&gt;&lt;span class=&quot;band-tag&quot; style=&quot;background:&#x27; + esc(cGroup.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(cGroup.color)) + &#x27;;&quot;&gt;&#x27; + esc(cGroup.name) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27;;
-  if (c.attendees) {
-    const prefix = cGroup ? &#x27;+ &#x27; : &#x27;WHO: &#x27;;
-    if (c.attendees.length &gt; 25) {
-      let daggerNum = getDaggerFootnotes().findIndex(fn =&gt; c.id &amp;&amp; fn.eventId === c.id) + 1;
-      if (!daggerNum) {
-        addDaggerFootnote({ eventId: c.id, title: c.title, time: c.startTime + &#x27; \u2013 &#x27; + c.endTime, attendees: c.attendees });
-        daggerNum = getDaggerFootnotes().length;
-      }
-      html += &#x27;&lt;div class=&quot;cc-attendees&quot;&gt;&#x27; + esc(prefix + c.attendees) + &#x27; &lt;sup&gt;&#x27; + daggerNum + &#x27;&lt;/sup&gt;&lt;/div&gt;&#x27;;
-    } else {
-      html += &#x27;&lt;div class=&quot;cc-attendees&quot;&gt;&#x27; + esc(prefix + c.attendees) + &#x27;&lt;/div&gt;&#x27;;
+  function paletteStyle() {
+    const theme = getScheduleTheme(getCurrentScheduleFileData()?.theme);
+    let colors = (BAND_PAPER_THEMES[theme.palette] || BAND_PAPER_THEMES.slate).colors;
+    let ink = { bg: &#x27;#ffffff&#x27;, text: &#x27;#20262c&#x27;, textSecondary: &#x27;#39424b&#x27;, textMuted: &#x27;#525962&#x27; };
+    if (theme.palette === &#x27;classic&#x27;) colors = BAND_PAPER_THEMES.airforce.colors;
+    if (theme.palette === &#x27;custom&#x27; || theme.palette === &#x27;darkops&#x27;) {
+      const custom = Object.assign({}, PALETTES[theme.palette] || PALETTES.classic, theme.customColors);
+      ink = custom;
+      colors = [custom.accent, custom.accentSecondary, custom.surface, custom.surface,
+        custom.surface, custom.border, custom.surface, custom.surface, custom.accentTertiary];
     }
+    const roles = BAND_COLOR_ROLES.map((role, i) =&gt; &#x27;--paper-&#x27; + role + &#x27;:&#x27; + colors[i]);
+    roles.push(&#x27;--paper-bg:&#x27; + ink.bg, &#x27;--paper-text:&#x27; + ink.text,
+      &#x27;--paper-secondary:&#x27; + ink.textSecondary, &#x27;--paper-muted:&#x27; + ink.textMuted);
+    roles.push(&#x27;--paper-anchor-ink:&#x27; + getContrastingTextColor(colors[1]));
+    roles.push(&#x27;--paper-heading-ink:&#x27; + getContrastingTextColor(colors[0]));
+    return roles.join(&#x27;;&#x27;);
   }
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
 
-function renderBandConcurrentOverflow(hiddenConcurrentCount, jumpStartTime) {
-  const jumpAttr = jumpStartTime ? &#x27; data-conc-jump=&quot;&#x27; + esc(jumpStartTime) + &#x27;&quot;&#x27; : &#x27;&#x27;;
-  let html = &#x27;&lt;div class=&quot;band-conc band-conc-more&quot;&#x27; + jumpAttr + &#x27;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;cc-label&quot;&gt;More below&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;cc-title&quot;&gt;+&#x27; + hiddenConcurrentCount + &#x27; more also happening&lt;/div&gt;&#x27;;
-  if (jumpStartTime) {
-    html += &#x27;&lt;div class=&quot;cc-detail&quot;&gt;Jump to the &#x27; + esc(jumpStartTime) + &#x27; group below.&lt;/div&gt;&#x27;;
-  } else {
-    html += &#x27;&lt;div class=&quot;cc-detail&quot;&gt;See the grouped concurrent section.&lt;/div&gt;&#x27;;
+  function badge(event, number, interactive) {
+    const attributes = &#x27;class=&quot;start-ref&quot; data-ref-event=&quot;&#x27; + esc(event.id) + &#x27;&quot;&#x27;;
+    return interactive
+      ? &#x27;&lt;button type=&quot;button&quot; &#x27; + attributes + &#x27; data-event-ref=&quot;&#x27; + esc(event.id) + &#x27;&quot; aria-label=&quot;Concurrent event &#x27; + number + &#x27;: &#x27; + esc(event.title) + &#x27;&quot;&gt;&#x27; + number + &#x27;&lt;/button&gt;&#x27;
+      : &#x27;&lt;span &#x27; + attributes + &#x27;&gt;&#x27; + number + &#x27;&lt;/span&gt;&#x27;;
   }
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
 
-function renderConcurrentRow(concurrent, groups, densityInfo) {
-  const groupMap = {};
-  groups.forEach(g =&gt; { groupMap[g.id] = g; });
+  function articleAttributes(event, interactive) {
+    return &#x27; data-event-id=&quot;&#x27; + esc(event.id) + &#x27;&quot;&#x27; + (interactive
+      ? &#x27; tabindex=&quot;0&quot; aria-label=&quot;&#x27; + esc(event.title + &#x27;, &#x27; + time(event) + &#x27;. Select to edit.&#x27;) + &#x27;&quot;&#x27; : &#x27;&#x27;);
+  }
 
-  let html = &#x27;&lt;div class=&quot;conc-section&quot;&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;conc-section-label&quot;&gt;Also Happening&lt;/div&gt;&#x27;;
-  if (densityInfo &amp;&amp; densityInfo.usePackedConcurrent) {
-    html += renderConcurrentPacked(concurrent, groupMap);
-  } else if (densityInfo &amp;&amp; densityInfo.denseMode) {
-    html += renderConcurrentGroups(concurrent, groupMap);
-  } else {
-    html += &#x27;&lt;div class=&quot;conc-row&quot;&gt;&#x27;;
-    concurrent.forEach(c =&gt; {
-      html += renderConcurrentItem(c, groupMap[c.groupId]);
+  function attendees(event) {
+    const parsed = attendance(event);
+    if (!parsed.raw.trim()) return &#x27;&#x27;;
+    if (parsed.mode === &#x27;text&#x27;) return &#x27;&lt;div class=&quot;attendee-free-text&quot;&gt;&#x27; + esc(parsed.raw) + &#x27;&lt;/div&gt;&#x27;;
+    return &#x27;&lt;div class=&quot;attendees&quot;&gt;&#x27; + parsed.entries.map((entry, index) =&gt;
+      &#x27;&lt;span class=&quot;person-label&quot; data-person=&quot;&#x27; + esc(entry) + &#x27;&quot; data-entry-index=&quot;&#x27; + index + &#x27;&quot;&gt;&lt;strong&gt;&#x27; + esc(entry) + &#x27;&lt;/strong&gt;&lt;/span&gt;&#x27;).join(&#x27; &#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+
+  function details(event) {
+    const meta = [event.location, event.poc ? &#x27;POC: &#x27; + event.poc : &#x27;&#x27;].filter(Boolean);
+    return (meta.length ? &#x27;&lt;p class=&quot;event-meta&quot;&gt;&#x27; + meta.map(esc).join(&#x27; · &#x27;) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+      (event.description ? &#x27;&lt;p class=&quot;description&quot;&gt;&#x27; + esc(event.description) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;);
+  }
+
+  function flightTable(event) {
+    const activities = event.flightActivities || [];
+    if (!activities.length) return &#x27;&#x27;;
+    const flights = new Map();
+    activities.forEach(activity =&gt; {
+      const key = activity.flight || &#x27;Unnamed flight&#x27;;
+      if (!flights.has(key)) flights.set(key, []);
+      flights.get(key).push(activity);
     });
-    html += &#x27;&lt;/div&gt;&#x27;;
+    const timed = activities.some(activity =&gt; activity.startTime !== event.startTime || activity.endTime !== event.endTime);
+    return &#x27;&lt;table class=&quot;flight-table&quot;&gt;&lt;thead&gt;&lt;tr&gt;&lt;th scope=&quot;col&quot;&gt;Flight&lt;/th&gt;&lt;th scope=&quot;col&quot;&gt;&#x27; +
+      (timed ? &#x27;Time / activity&#x27; : &#x27;Activity&#x27;) + &#x27;&lt;/th&gt;&lt;th scope=&quot;col&quot;&gt;Location / POC&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&#x27; +
+      Array.from(flights, ([flight, entries]) =&gt; {
+        const sorted = ordered(entries);
+        const common = sorted.every(a =&gt; a.location === sorted[0].location &amp;&amp; a.poc === sorted[0].poc);
+        const logistics = a =&gt; (a.location ? &#x27;&lt;span&gt;&#x27; + esc(a.location) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+          (a.poc ? &#x27;&lt;span class=&quot;flight-poc&quot;&gt;&#x27; + esc(a.poc) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;);
+        return &#x27;&lt;tr&gt;&lt;th scope=&quot;row&quot;&gt;&#x27; + esc(flight) + &#x27;&lt;/th&gt;&lt;td&gt;&#x27; + sorted.map(a =&gt;
+          &#x27;&lt;div class=&quot;flight-activity&quot;&gt;&#x27; + (timed ? &#x27;&lt;span class=&quot;flight-time&quot;&gt;&#x27; + esc(time(a)) + &#x27;&lt;/span&gt; &#x27; : &#x27;&#x27;) +
+          &#x27;&lt;strong&gt;&#x27; + esc(a.title || &#x27;Untitled activity&#x27;) + &#x27;&lt;/strong&gt;&#x27; + (a.description ? &#x27;&lt;span class=&quot;flight-description&quot;&gt;&#x27; + esc(a.description) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;) +
+          &#x27;&lt;/td&gt;&lt;td&gt;&#x27; + (common ? logistics(sorted[0]) : sorted.map(a =&gt; &#x27;&lt;div class=&quot;flight-logistics&quot;&gt;&#x27; +
+            &#x27;&lt;span class=&quot;flight-time&quot;&gt;&#x27; + esc(time(a)) + &#x27;&lt;/span&gt;&#x27; + logistics(a) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;)) + &#x27;&lt;/td&gt;&lt;/tr&gt;&#x27;;
+      }).join(&#x27;&#x27;) + &#x27;&lt;/tbody&gt;&lt;/table&gt;&#x27;;
   }
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
 
-function renderConcurrentPacked(concurrent, groupMap) {
-  const buckets = {};
-  concurrent.forEach(c =&gt; {
-    if (!buckets[c.startTime]) buckets[c.startTime] = [];
-    buckets[c.startTime].push(c);
-  });
+  function mainEvent(event, data, interactive) {
+    const references = data.byMain.get(event.id) || [];
+    const group = data.groups[event.groupId];
+    const flight = (event.flightActivities || []).length &gt; 0;
+    const audience = flight ? &#x27;By flight&#x27; : group?.name || &#x27;&#x27;;
+    const meta = (event.location ? &#x27;&lt;span class=&quot;detail-field detail-location&quot;&gt;&lt;small&gt;At&lt;/small&gt; &#x27; + esc(event.location) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+      (event.poc ? &#x27;&lt;span class=&quot;detail-field detail-poc&quot;&gt;&lt;small&gt;POC&lt;/small&gt; &#x27; + esc(event.poc) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;);
+    const refs = references.length ? &#x27;&lt;div class=&quot;start-refs&quot;&gt;&lt;span class=&quot;reference-label&quot;&gt;Concurrent events:&lt;/span&gt;&lt;span class=&quot;reference-badges&quot;&gt;&#x27; +
+      references.map(item =&gt; badge(item, data.references.get(item.id), interactive)).join(&#x27;&#x27;) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27; : &#x27;&#x27;;
+    return &#x27;&lt;article class=&quot;event main-event&#x27; + (event.emphasized ? &#x27; highlighted&#x27; : &#x27;&#x27;) + (flight ? &#x27; flight&#x27; : &#x27;&#x27;) + (event.isBreak ? &#x27; break&#x27; : &#x27;&#x27;) + &#x27;&quot;&#x27; + articleAttributes(event, interactive) + &#x27;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;time&quot;&gt;&#x27; + esc(time(event)) + &#x27;&lt;span class=&quot;duration&quot;&gt;&#x27; + esc(duration(event)) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27; +
+      &#x27;&lt;div class=&quot;main-content&#x27; + (refs &amp;&amp; !meta &amp;&amp; !event.description ? &#x27; reference-only&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&lt;div class=&quot;main-top&quot;&gt;&lt;div class=&quot;event-title&quot;&gt;&lt;h3&gt;&#x27; + esc(event.title) + &#x27;&lt;/h3&gt;&#x27; +
+      (audience &amp;&amp; audience !== data.primaryLabel ? &#x27;&lt;span class=&quot;audience&quot;&gt;&#x27; + esc(audience) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) +
+      &#x27;&lt;/div&gt;&lt;div class=&quot;main-details&quot;&gt;&#x27; + meta + &#x27;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;main-support&quot;&gt;&#x27; +
+      (event.description ? &#x27;&lt;p class=&quot;description&quot;&gt;&#x27; + esc(event.description) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + refs + &#x27;&lt;/div&gt;&#x27; + attendees(event) + flightTable(event) + &#x27;&lt;/div&gt;&lt;/article&gt;&#x27;;
+  }
 
-  const starts = Object.keys(buckets).sort();
-  let html = &#x27;&lt;div class=&quot;conc-packed&quot;&gt;&#x27;;
-  starts.forEach(startTime =&gt; {
-    const bucket = buckets[startTime].slice().sort((a, b) =&gt; {
-      const endDiff = a.endTime.localeCompare(b.endTime);
-      return endDiff || a.title.localeCompare(b.title);
-    });
-    bucket.forEach((c, index) =&gt; {
-      html += renderConcurrentItem(c, groupMap[c.groupId], {
-        packed: true,
-        groupAnchor: index === 0 ? startTime : &#x27;&#x27;,
-        groupHeading: index === 0 ? { time: startTime, count: bucket.length } : null,
+  function concurrentEvent(event, data, interactive) {
+    const parsed = attendance(event), roster = parsed.mode !== &#x27;text&#x27; &amp;&amp; parsed.entries.length &gt;= 8;
+    const group = data.groups[event.groupId];
+    const heading = &#x27;&lt;header&gt;&lt;h3&gt;&#x27; + badge(event, data.references.get(event.id), false) + esc(event.title) + &#x27;&lt;/h3&gt;&lt;span class=&quot;time&quot;&gt;&#x27; + esc(time(event)) + &#x27;&lt;/span&gt;&#x27; +
+      (roster ? &#x27;&lt;p class=&quot;roster-title&quot;&gt;All &#x27; + parsed.entries.length + &#x27; entries · entered order&lt;/p&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/header&gt;&#x27;;
+    const audience = group &amp;&amp; !/^specific (people|personnel)$/i.test(group.name.trim())
+      ? &#x27;&lt;div class=&quot;audience&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;;
+    const body = attendees(event);
+    return &#x27;&lt;article class=&quot;event &#x27; + (roster ? &#x27;large-event flow-roster&#x27; : &#x27;small-event&#x27;) + (event.emphasized ? &#x27; highlighted&#x27; : &#x27;&#x27;) + &#x27;&quot;&#x27; + articleAttributes(event, interactive) + &#x27;&gt;&#x27; +
+      (roster ? &#x27;&lt;div class=&quot;large-head&quot;&gt;&#x27; + heading + &#x27;&lt;/div&gt;&lt;div class=&quot;roster-body&quot;&gt;&#x27; + audience + body + &#x27;&lt;div class=&quot;roster-details&quot;&gt;&#x27; + details(event) + flightTable(event) + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27; :
+        heading + audience + body + details(event) + flightTable(event)) + &#x27;&lt;/article&gt;&#x27;;
+  }
+
+  function body(day, options) {
+    const interactive = !!options?.interactive, data = model(day);
+    const primary = Store.getGroups().filter(group =&gt; group.scope === &#x27;main&#x27;);
+    data.primaryLabel = primary.length === 1 ? primary[0].name : &#x27;&#x27;;
+    return &#x27;&lt;div class=&quot;sheet-body&quot;&gt;&lt;section class=&quot;main-panel&quot;&gt;&lt;h3 class=&quot;section-title&quot;&gt;Main schedule&#x27; +
+      (data.primaryLabel ? &#x27;&lt;small&gt;&#x27; + esc(data.primaryLabel) + &#x27;&lt;/small&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/h3&gt;&lt;div class=&quot;main-list&quot;&gt;&#x27; +
+      (data.mains.length ? data.mains.map(event =&gt; mainEvent(event, data, interactive)).join(&#x27;&#x27;) : &#x27;&lt;p class=&quot;band-empty&quot;&gt;No main events scheduled.&lt;/p&gt;&#x27;) +
+      &#x27;&lt;/div&gt;&lt;/section&gt;&#x27; + (data.concurrent.length ? &#x27;&lt;section class=&quot;attendance-area&quot;&gt;&lt;div class=&quot;concurrent-heading&quot;&gt;&lt;h3 class=&quot;section-title&quot;&gt;Concurrent events&lt;/h3&gt;&lt;/div&gt;&lt;div class=&quot;attendance-columns&quot;&gt;&#x27; +
+      data.concurrent.map(event =&gt; concurrentEvent(event, data, interactive)).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;/section&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
+  }
+
+  function page(day, options) {
+    const opts = options || {}, settings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    const index = Store.getDays().findIndex(item =&gt; item.id === day.id) + 1;
+    const date = day.date ? formatDateDisplay(day.date).split(&#x27;, &#x27;) : [];
+    const label = day.label || date[0] || &#x27;Day &#x27; + index;
+    const footer = Store.getFooter(), logo = Store.getLogo();
+    const notes = (day.notes || []).filter(note =&gt; opts.interactive || note.category || note.text);
+    const half = Math.ceil(notes.length / 2);
+    const css = &#x27;--page-width:612pt;--page-height:792pt;--page-margin:36pt;--logo-size:72pt;&#x27; +
+      &#x27;--min-detail:9pt;--min-name:10.5pt;--min-label:8pt;--min-main-title:11.5pt;--notes-height:&#x27; + settings.notesHeight + &#x27;pt;&#x27; + paletteStyle();
+    return &#x27;&lt;section class=&quot;sheet band-sheet roomy&quot; data-theme=&quot;app&quot; data-fit=&quot;true&quot; data-day=&quot;&#x27; + esc(day.id) + &#x27;&quot; style=&quot;&#x27; + css + &#x27;&quot; aria-label=&quot;&#x27; + esc(label) + &#x27;&quot;&gt;&#x27; +
+      &#x27;&lt;div class=&quot;print-error&quot;&gt;&lt;b&gt;Schedule not ready to print.&lt;/b&gt;&lt;p&gt;&#x27; + esc(label) + &#x27;: the complete day exceeds the supported text sizes. No partial schedule is printed. Review the content before issuing it.&lt;/p&gt;&lt;/div&gt;&#x27; +
+      &#x27;&lt;header class=&quot;page-header&#x27; + (settings.showLogo ? &#x27;&#x27; : &#x27; no-logo&#x27;) + &#x27;&quot;&#x27; + (opts.interactive ? &#x27; data-band-customize tabindex=&quot;0&quot; role=&quot;button&quot; aria-label=&quot;Customize schedule&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      (settings.showLogo ? &#x27;&lt;div class=&quot;logo-slot&#x27; + (logo ? &#x27; has-logo&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&#x27; + (logo ? &#x27;&lt;img src=&quot;&#x27; + esc(logo) + &#x27;&quot; alt=&quot;Unit logo&quot;&gt;&#x27; : &#x27;&lt;span&gt;UNIT&lt;br&gt;LOGO&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27; : &#x27;&#x27;) +
+      &#x27;&lt;div class=&quot;heading-content&quot;&gt;&#x27; + (Store.getTitle() ? &#x27;&lt;p class=&quot;page-title&quot;&gt;&#x27; + esc(Store.getTitle()) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) +
+      (footer.contact ? &#x27;&lt;p class=&quot;schedule-label&quot;&gt;&#x27; + esc(footer.contact) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;div class=&quot;day-heading&quot;&gt;&lt;h2&gt;&#x27; + esc(label) + &#x27;&lt;/h2&gt;&#x27; +
+      (date.length &gt; 1 ? &#x27;&lt;p class=&quot;date&quot;&gt;&#x27; + esc(date[1]) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;/header&gt;&#x27; +
+      (opts.handout ? &#x27;&lt;p class=&quot;band-handout&quot;&gt;&#x27; + esc(opts.handout) + &#x27;&lt;/p&gt;&#x27; : &#x27;&#x27;) + body(day, opts) +
+      &#x27;&lt;section class=&quot;reminder-area&quot;&gt;&lt;div class=&quot;reminder-panel&quot;&gt;&lt;h3 class=&quot;reminder-heading&quot;&gt;Notes &amp;amp; Reminders&lt;/h3&gt;&lt;div class=&quot;reminders&quot;&gt;&#x27; +
+      [notes.slice(0, half), notes.slice(half)].map(column =&gt; &#x27;&lt;div class=&quot;reminder-column&quot;&gt;&#x27; + column.map(note =&gt;
+        &#x27;&lt;div class=&quot;reminder&#x27; + (!note.category &amp;&amp; !note.text ? &#x27; note-empty&#x27; : &#x27;&#x27;) + &#x27;&quot; data-note-id=&quot;&#x27; + esc(note.id) + &#x27;&quot;&gt;&#x27; + (opts.interactive ? &#x27;&lt;button type=&quot;button&quot; class=&quot;note-select&quot;&gt;&#x27; : &#x27;&#x27;) +
+        (note.category ? &#x27;&lt;strong&gt;&#x27; + esc(note.category) + &#x27;:&lt;/strong&gt; &#x27; : &#x27;&#x27;) + esc(note.text || (!note.category ? &#x27;Empty note&#x27; : &#x27;&#x27;)) +
+        (opts.interactive ? &#x27;&lt;/button&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;&#x27; +
+      &#x27;&lt;footer class=&quot;page-footer&quot;&gt;&lt;span&gt;&#x27; + (footer.poc ? &#x27;Schedule POC: &#x27; + esc(footer.poc) : &#x27;&#x27;) + &#x27;&lt;/span&gt;&lt;span&gt;Day &#x27; + index + &#x27; of &#x27; + Store.getDays().length + &#x27;&lt;/span&gt;&lt;/footer&gt;&lt;/section&gt;&#x27;;
+  }
+
+  function geometry(sheet) {
+    const pageBox = sheet.getBoundingClientRect(), content = sheet.querySelector(&#x27;.sheet-body&#x27;).getBoundingClientRect();
+    const area = sheet.querySelector(&#x27;.reminder-area&#x27;).getBoundingClientRect(), footer = sheet.querySelector(&#x27;.page-footer&#x27;).getBoundingClientRect();
+    const panel = sheet.querySelector(&#x27;.reminder-panel&#x27;).getBoundingClientRect(), notes = sheet.querySelector(&#x27;.reminders&#x27;).getBoundingClientRect();
+    const notesOverflow = Math.max(0, notes.bottom - panel.bottom);
+    const overflow = Math.max(0, content.bottom + policy.clearance / .75 - area.top,
+      footer.bottom - (pageBox.bottom - policy.margin / .75), notesOverflow);
+    const tooWide = Array.from(sheet.querySelectorAll(&#x27;.event,.reminder,.page-title,.schedule-label,.day-heading,.page-footer&#x27;))
+      .some(element =&gt; element.scrollWidth &gt; element.clientWidth + 1);
+    return { fits: overflow &lt; .05 &amp;&amp; !tooWide, overflow, notesOverflow, tooWide };
+  }
+
+  function fit(sheet) {
+    sheet.dataset.fit = &#x27;true&#x27;;
+    sheet.style.setProperty(&#x27;--main-extra&#x27;, &#x27;0pt&#x27;);
+    sheet.style.setProperty(&#x27;--main-title-grow&#x27;, &#x27;0pt&#x27;);
+    let titleSize = 19;
+    sheet.style.setProperty(&#x27;--title-size&#x27;, titleSize + &#x27;pt&#x27;);
+    while (sheet.querySelector(&#x27;.heading-content&#x27;).getBoundingClientRect().height &gt; 96 &amp;&amp; titleSize &gt; 10) {
+      titleSize -= .25; sheet.style.setProperty(&#x27;--title-size&#x27;, titleSize + &#x27;pt&#x27;);
+    }
+    let noteScale = 1;
+    sheet.style.setProperty(&#x27;--note-scale&#x27;, &#x27;1&#x27;);
+    while (geometry(sheet).notesOverflow &gt; 0 &amp;&amp; noteScale &gt; policy.detail / 9.5) {
+      noteScale = Math.max(policy.detail / 9.5, noteScale - .02);
+      sheet.style.setProperty(&#x27;--note-scale&#x27;, String(noteScale));
+    }
+    const columns = sheet.querySelector(&#x27;.attendance-columns&#x27;);
+    const entries = columns ? Array.from(columns.querySelectorAll(&#x27;article[data-event-id]&#x27;)) : [];
+    let columnCount = 0, density = &#x27;roomy&#x27;, scale = 1;
+    const place = (count, widths) =&gt; {
+      if (!columns) return geometry(sheet).fits;
+      const single = entries.length &lt;= 3 &amp;&amp; !entries.some(entry =&gt; entry.classList.contains(&#x27;large-event&#x27;));
+      columnCount = single ? 1 : count;
+      columns.className = &#x27;attendance-columns &#x27; + (single ? &#x27;single-list&#x27; : &#x27;reading-columns&#x27;);
+      columns.style.gridTemplateColumns = (single ? [1] : widths).map(width =&gt; &#x27;minmax(0,&#x27; + width + &#x27;fr)&#x27;).join(&#x27; &#x27;);
+      columns.replaceChildren();
+      const hosts = Array.from({ length: columnCount }, () =&gt; {
+        const host = document.createElement(&#x27;div&#x27;); host.className = &#x27;event-column&#x27;; columns.appendChild(host); return host;
       });
-    });
-  });
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function renderConcurrentGroups(concurrent, groupMap) {
-  const buckets = {};
-  concurrent.forEach(c =&gt; {
-    if (!buckets[c.startTime]) buckets[c.startTime] = [];
-    buckets[c.startTime].push(c);
-  });
-
-  const starts = Object.keys(buckets).sort();
-  let html = &#x27;&lt;div class=&quot;conc-groups&quot;&gt;&#x27;;
-  starts.forEach(startTime =&gt; {
-    const bucket = buckets[startTime].slice().sort((a, b) =&gt; {
-      const endDiff = a.endTime.localeCompare(b.endTime);
-      return endDiff || a.title.localeCompare(b.title);
-    });
-    html += &#x27;&lt;div class=&quot;conc-group&quot; data-conc-group=&quot;&#x27; + esc(startTime) + &#x27;&quot;&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;conc-group-head&quot;&gt;&#x27;;
-    html += &#x27;&lt;span class=&quot;conc-group-time&quot;&gt;&#x27; + esc(startTime) + &#x27;&lt;/span&gt;&#x27;;
-    html += &#x27;&lt;span class=&quot;conc-group-count&quot;&gt;&#x27; + esc(bucket.length + (bucket.length === 1 ? &#x27; event&#x27; : &#x27; events&#x27;)) + &#x27;&lt;/span&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;div class=&quot;conc-row&quot;&gt;&#x27;;
-    bucket.forEach(c =&gt; {
-      html += renderConcurrentItem(c, groupMap[c.groupId]);
-    });
-    html += &#x27;&lt;/div&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  });
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function renderConcurrentItem(c, g, options) {
-  const opts = options || {};
-  const borderColor = g ? g.color : &#x27;#d2d2d7&#x27;;
-  const packedClass = opts.packed ? &#x27; conc-item--packed&#x27; : &#x27;&#x27;;
-  const groupAnchorAttr = opts.groupAnchor ? &#x27; data-conc-group=&quot;&#x27; + esc(opts.groupAnchor) + &#x27;&quot;&#x27; : &#x27;&#x27;;
-  let html = &#x27;&lt;div class=&quot;conc-item&#x27; + packedClass + &#x27;&quot; style=&quot;border-left-color:&#x27; + esc(borderColor) + &#x27;;&quot; data-event-id=&quot;&#x27; + esc(c.id) + &#x27;&quot;&#x27; + groupAnchorAttr + &#x27;&gt;&#x27;;
-  if (opts.groupHeading) {
-    html += &#x27;&lt;div class=&quot;conc-pack-head&quot;&gt;&#x27;;
-    html += &#x27;&lt;span class=&quot;conc-group-time&quot;&gt;&#x27; + esc(opts.groupHeading.time) + &#x27;&lt;/span&gt;&#x27;;
-    html += &#x27;&lt;span class=&quot;conc-group-count&quot;&gt;&#x27; + esc(opts.groupHeading.count + (opts.groupHeading.count === 1 ? &#x27; event&#x27; : &#x27; events&#x27;)) + &#x27;&lt;/span&gt;&#x27;;
-    html += &#x27;&lt;/div&gt;&#x27;;
-  }
-  html += renderConcurrentItemBody(c, g);
-  html += &#x27;&lt;/div&gt;&#x27;;
-  return html;
-}
-
-function renderConcurrentItemBody(c, g) {
-  let html = &#x27;&#x27;;
-  html += &#x27;&lt;div class=&quot;ci-time&quot;&gt;&#x27; + esc(c.startTime + &#x27; \u2013 &#x27; + c.endTime) + &#x27;&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;div class=&quot;ci-title&quot;&gt;&#x27; + esc(c.title) + &#x27;&lt;/div&gt;&#x27;;
-  const parts = [c.location, c.poc].filter(Boolean);
-  if (parts.length) html += &#x27;&lt;div class=&quot;ci-detail&quot;&gt;&#x27; + esc(parts.join(&#x27; \u00b7 &#x27;)) + &#x27;&lt;/div&gt;&#x27;;
-  if (c.description) html += &#x27;&lt;div class=&quot;ci-detail&quot;&gt;&#x27; + esc(c.description) + &#x27;&lt;/div&gt;&#x27;;
-  if (g) html += &#x27;&lt;div&gt;&lt;span class=&quot;band-tag&quot; style=&quot;background:&#x27; + esc(g.color) + &#x27;;color:&#x27; + esc(getContrastingTextColor(g.color)) + &#x27;;&quot;&gt;&#x27; + esc(g.name) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27;;
-  if (c.attendees) {
-    const prefix = g ? &#x27;+ &#x27; : &#x27;WHO: &#x27;;
-    // Two different events can share a title and attendees; the footnote
-    // carries a time, so the time is part of the identity.
-    const timeLabel = c.startTime + &#x27; – &#x27; + c.endTime;
-    const existingIdx = getDaggerFootnotes().findIndex(fn =&gt; (c.id &amp;&amp; fn.eventId === c.id) || (!c.id &amp;&amp; fn.title === c.title &amp;&amp; fn.attendees === c.attendees &amp;&amp; fn.time === timeLabel));
-    if (existingIdx !== -1) {
-      html += &#x27;&lt;div class=&quot;cc-attendees&quot;&gt;&#x27; + esc(prefix + c.attendees) + &#x27; &lt;sup&gt;&#x27; + (existingIdx + 1) + &#x27;&lt;/sup&gt;&lt;/div&gt;&#x27;;
-    } else if (c.attendees.length &gt; 25) {
-      addDaggerFootnote({ eventId: c.id, title: c.title, time: c.startTime + &#x27; \u2013 &#x27; + c.endTime, attendees: c.attendees });
-      html += &#x27;&lt;div class=&quot;cc-attendees&quot;&gt;&#x27; + esc(prefix + c.attendees) + &#x27; &lt;sup&gt;&#x27; + getDaggerFootnotes().length + &#x27;&lt;/sup&gt;&lt;/div&gt;&#x27;;
-    } else {
-      html += &#x27;&lt;div class=&quot;cc-attendees&quot;&gt;&#x27; + esc(prefix + c.attendees) + &#x27;&lt;/div&gt;&#x27;;
+      const box = sheet.getBoundingClientRect();
+      const reserve = sheet.querySelector(&#x27;.reminder-area&#x27;).getBoundingClientRect().height + sheet.querySelector(&#x27;.page-footer&#x27;).getBoundingClientRect().height +
+        parseFloat(getComputedStyle(sheet.querySelector(&#x27;.page-footer&#x27;)).marginTop);
+      const limit = box.bottom - policy.margin / .75 - reserve - policy.clearance / .75 - columns.getBoundingClientRect().top;
+      let col = 0;
+      entries.forEach(entry =&gt; {
+        hosts[col].appendChild(entry);
+        if (hosts[col].getBoundingClientRect().height &gt; limit + .05 &amp;&amp; col + 1 &lt; columnCount &amp;&amp; hosts[col].children.length &gt; 1) hosts[++col].appendChild(entry);
+      });
+      return geometry(sheet).fits;
+    };
+    const attempt = count =&gt; {
+      const widths = count === 2 ? [[1, 1], [.44, .56], [.4, .6]] : [[1, 1, 1]];
+      const fits = () =&gt; widths.some(ratio =&gt; place(count, ratio));
+      for (const roster of [12, 11.5, 11, 10.5, 10, policy.roster]) {
+        sheet.style.setProperty(&#x27;--roster-name-size&#x27;, roster + &#x27;pt&#x27;);
+        for (const candidate of [&#x27;roomy&#x27;, &#x27;standard&#x27;, &#x27;compact&#x27;, &#x27;tight&#x27;]) {
+          sheet.classList.remove(&#x27;roomy&#x27;, &#x27;standard&#x27;, &#x27;compact&#x27;, &#x27;tight&#x27;);
+          sheet.classList.add(candidate); if (candidate === &#x27;tight&#x27;) sheet.classList.add(&#x27;compact&#x27;);
+          sheet.style.setProperty(&#x27;--type-scale&#x27;, &#x27;1&#x27;);
+          density = candidate; scale = 1;
+          if (fits()) return true;
+        }
+      }
+      let low = policy.scale, high = 1;
+      sheet.style.setProperty(&#x27;--type-scale&#x27;, String(low)); scale = low;
+      if (!fits()) return false;
+      for (let i = 0; i &lt; 9; i++) {
+        const mid = (low + high) / 2; sheet.style.setProperty(&#x27;--type-scale&#x27;, String(mid));
+        if (fits()) low = mid; else high = mid;
+      }
+      scale = Math.floor(low * 100) / 100; sheet.style.setProperty(&#x27;--type-scale&#x27;, String(scale));
+      return fits();
+    };
+    const fitted = attempt(2) || attempt(3);
+    if (fitted) {
+      const panel = sheet.querySelector(&#x27;.main-panel&#x27;), area = sheet.querySelector(&#x27;.reminder-area&#x27;);
+      const free = area.getBoundingClientRect().top - sheet.querySelector(&#x27;.sheet-body&#x27;).getBoundingClientRect().bottom;
+      if (free &gt;= 16) {
+        const mainOnly = !columns, cap = (area.getBoundingClientRect().top - panel.getBoundingClientRect().top) * (mainOnly ? .88 : .68);
+        let low = 0, high = 1;
+        const apply = value =&gt; { sheet.style.setProperty(&#x27;--main-extra&#x27;, (mainOnly ? 18 : 7) * value + &#x27;pt&#x27;); sheet.style.setProperty(&#x27;--main-title-grow&#x27;, (mainOnly ? 2.5 : 1.5) * value + &#x27;pt&#x27;); };
+        for (let i = 0; i &lt; 9; i++) { const mid = (low + high) / 2; apply(mid); if (geometry(sheet).fits &amp;&amp; panel.getBoundingClientRect().height &lt;= cap) low = mid; else high = mid; }
+        apply(Math.floor(low * 100) / 100);
+      }
     }
+    const result = geometry(sheet);
+    sheet.dataset.fit = String(result.fits); sheet.dataset.columns = String(columnCount);
+    sheet.dataset.density = density; sheet.dataset.textScale = String(scale);
+    return { ...result, columns: columnCount, scale, density };
   }
-  return html;
+
+  return { policy, model, attendance, page, body, fit, flightTable };
+})();
+
+&lt;/script&gt;
+  &lt;script&gt;
+/* Bands uses the approved page renderer. Shared dispatch still exposes a body
+ * renderer for callers that compose their own shell; the app and print pipeline
+ * use BandLayout.page() so header, notes and fitting stay identical.
+ */
+function renderDayBody_band(dayId, dayOverride, options) {
+  const day = dayOverride || Store.getDay(dayId);
+  return day ? BandLayout.body(day, options) : &#x27;&#x27;;
 }
 
 &lt;/script&gt;
@@ -9638,6 +10152,7 @@ function renderGridBanner(shared, events, groups) {
     if (shared.attendees) html += &#x27;&lt;span&gt;WHO: &#x27; + esc(shared.attendees) + &#x27;&lt;/span&gt;&#x27;;
     html += &#x27;&lt;/div&gt;&#x27;;
   }
+  html += renderFlightDetails(shared);
   if (shared.description) html += &#x27;&lt;div class=&quot;grid-banner-desc&quot;&gt;&#x27; + esc(shared.description) + &#x27;&lt;/div&gt;&#x27;;
   if (exceptionNote) {
     html += &#x27;&lt;div class=&quot;grid-banner-exception&quot;&gt;Exceptions: &#x27; + esc(exceptionNote) + &#x27;&lt;/div&gt;&#x27;;
@@ -9710,6 +10225,7 @@ function renderGridCell(evt, group, isContinuation) {
     html += &#x27;&lt;div class=&quot;grid-cell-meta-line&quot;&gt;&#x27; + meta.join(&#x27;&lt;span class=&quot;grid-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
   }
   if (evt.description) html += &#x27;&lt;div class=&quot;grid-cell-meta&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
+  html += renderFlightDetails(evt);
   if (evt.attendees) html += &#x27;&lt;div class=&quot;grid-cell-meta grid-cell-attendees&quot;&gt;WHO: &#x27; + esc(evt.attendees) + &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/div&gt;&#x27;;
@@ -9826,6 +10342,7 @@ function renderDayBody_cards(dayId, dayOverride) {
       if (exceptionNote) {
         html += &#x27;&lt;span class=&quot;cards-shared-exception&quot;&gt;Exceptions: &#x27; + esc(exceptionNote) + &#x27;&lt;/span&gt;&#x27;;
       }
+      html += renderFlightDetails(e);
       if (e.description) html += &#x27;&lt;span class=&quot;cards-event-detail&quot;&gt;&#x27; + esc(e.description) + &#x27;&lt;/span&gt;&#x27;;
       html += &#x27;&lt;/span&gt;&#x27;;
     });
@@ -9858,6 +10375,7 @@ function renderDayBody_cards(dayId, dayOverride) {
           html += &#x27;&lt;div class=&quot;cards-event-meta&quot;&gt;&#x27; + meta.join(&#x27;&lt;span class=&quot;cards-meta-sep&quot;&gt;\u00b7&lt;/span&gt;&#x27;) + &#x27;&lt;/div&gt;&#x27;;
         }
         if (evt.description) html += &#x27;&lt;div class=&quot;cards-event-detail&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
+        html += renderFlightDetails(evt);
         if (evt.attendees) html += &#x27;&lt;div class=&quot;cards-event-detail&quot;&gt;WHO: &#x27; + esc(evt.attendees) + &#x27;&lt;/div&gt;&#x27;;
         html += &#x27;&lt;/div&gt;&#x27;;
       });
@@ -9938,6 +10456,7 @@ function renderDayBody_phases(dayId, dayOverride) {
         if (evt.attendees) html += &#x27;&lt;span&gt;WHO: &#x27; + esc(evt.attendees) + &#x27;&lt;/span&gt;&#x27;;
         html += &#x27;&lt;/div&gt;&#x27;;
       }
+      html += renderFlightDetails(evt);
       if (evt.description) {
         html += &#x27;&lt;div class=&quot;phase-desc&quot;&gt;&#x27; + esc(evt.description) + &#x27;&lt;/div&gt;&#x27;;
       }
@@ -9967,6 +10486,7 @@ function renderDayBody_phases(dayId, dayOverride) {
         if (t.description) {
           html += &#x27;&lt;div class=&quot;phase-task-detail&quot;&gt;&#x27; + esc(t.description) + &#x27;&lt;/div&gt;&#x27;;
         }
+        html += renderFlightDetails(t);
         if (t.attendees) html += &#x27;&lt;div class=&quot;phase-task-detail&quot;&gt;WHO: &#x27; + esc(t.attendees) + &#x27;&lt;/div&gt;&#x27;;
         html += &#x27;&lt;/div&gt;&#x27;;
       });
@@ -10194,6 +10714,9 @@ function hideLibrary() {
   document.getElementById(&#x27;libraryView&#x27;).classList.remove(&#x27;active&#x27;);
   document.querySelector(&#x27;.toolbar&#x27;).style.display = &#x27;&#x27;;
   document.querySelector(&#x27;.app-body&#x27;).style.display = &#x27;&#x27;;
+  // Imports can render while the library hides the editor. Physical paper
+  // fitting needs visible dimensions, so measure again after revealing it.
+  if (document.querySelector(&#x27;.band-sheet&#x27;)) renderActiveDay();
   syncHelpEntryPoints();
 }
 
@@ -11089,7 +11612,7 @@ function clearDaggerFootnotes() { _daggerFootnotes = []; }
 
 // Skin dispatcher registry
 const SKIN_RENDERERS = {
-  bands: function(dayId, day) { return renderDayBody_band(dayId, day); },
+  bands: function(dayId, day, options) { return renderDayBody_band(dayId, day, options); },
   grid:  function(dayId, day) { return typeof renderDayBody_grid   === &#x27;function&#x27; ? renderDayBody_grid(dayId, day)   : &#x27;&#x27;; },
   cards: function(dayId, day) { return typeof renderDayBody_cards  === &#x27;function&#x27; ? renderDayBody_cards(dayId, day)  : &#x27;&#x27;; },
   phases:function(dayId, day) { return typeof renderDayBody_phases === &#x27;function&#x27; ? renderDayBody_phases(dayId, day) : &#x27;&#x27;; },
@@ -11124,18 +11647,30 @@ function renderDay(dayId) {
 
   // Set skin class on page
   const page = container.closest(&#x27;.page&#x27;) || container;
-  page.className = &#x27;page skin-&#x27; + theme.skin;
+  page.className = &#x27;page skin-&#x27; + theme.skin + (theme.skin === &#x27;bands&#x27; ? &#x27; bands-screen band-page&#x27; : &#x27;&#x27;);
 
   // Dispatch to skin renderer
   const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
 
   let html = &#x27;&#x27;;
-  html += renderHeader(day);
-  html += renderer(dayId);
-  html += renderFooter();
+  if (theme.skin === &#x27;bands&#x27;) html = BandLayout.page(day, { interactive: true });
+  else {
+    html += renderHeader(day);
+    html += renderer(dayId, day, { interactive: true });
+    html += renderFooter();
+  }
   container.innerHTML = html;
 
-  applyPrintScaling();
+  if (theme.skin === &#x27;bands&#x27;) {
+    removePrintScaling(page);
+    const result = BandLayout.fit(container.querySelector(&#x27;.band-sheet&#x27;));
+    const notice = document.createElement(&#x27;div&#x27;);
+    notice.className = &#x27;band-fit-notice&#x27;; notice.setAttribute(&#x27;role&#x27;, &#x27;status&#x27;);
+    if (!result.fits) notice.textContent = &#x27;This day exceeds the readable one-page limits. All content remains here for editing. Reduce or revise the content before printing.&#x27;;
+    container.appendChild(notice);
+  }
+  else applyPrintScaling();
+  if (typeof syncPreviewSelection === &#x27;function&#x27;) syncPreviewSelection();
 }
 
 function renderHeader(day) {
@@ -11161,10 +11696,11 @@ function renderHeader(day) {
   return html;
 }
 
-function renderNotes(notes) {
-  let html = &#x27;&lt;div class=&quot;notes&quot;&gt;&#x27;;
+function renderNotes(notes, options) {
+  const bands = options &amp;&amp; options.bands;
+  let html = &#x27;&lt;div class=&quot;notes&#x27; + (bands ? &#x27; bands-print-section bands-print-wide bands-print-notes&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;notes-label&quot;&gt;Notes&lt;/div&gt;&#x27;;
-  html += &#x27;&lt;ul class=&quot;notes-list&quot;&gt;&#x27;;
+  html += &#x27;&lt;ul class=&quot;notes-list&#x27; + (bands ? &#x27; bands-print-items&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&#x27;;
   notes.forEach(n =&gt; {
     if (!n.text &amp;&amp; !n.category) {
       // Freshly added, nothing typed yet. Visible on screen so it can be
@@ -11173,7 +11709,7 @@ function renderNotes(notes) {
       html += &#x27;&lt;li data-note-id=&quot;&#x27; + esc(n.id) + &#x27;&quot; class=&quot;note-empty&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;note-select&quot;&gt;&lt;em&gt;Empty note&lt;/em&gt;&lt;/button&gt;&lt;/li&gt;&#x27;;
       return;
     }
-    html += &#x27;&lt;li data-note-id=&quot;&#x27; + esc(n.id) + &#x27;&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;note-select&quot;&gt;&#x27;;
+    html += &#x27;&lt;li data-note-id=&quot;&#x27; + esc(n.id) + &#x27;&quot;&#x27; + (bands ? &#x27; class=&quot;bands-print-event bands-print-note&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;button type=&quot;button&quot; class=&quot;note-select&#x27; + (bands ? &#x27; bands-print-description&#x27; : &#x27;&#x27;) + &#x27;&quot;&gt;&#x27;;
     if (n.category) html += &#x27;&lt;strong&gt;&#x27; + esc(n.category) + &#x27; \u2014&lt;/strong&gt; &#x27;;
     html += esc(n.text) + &#x27;&lt;/button&gt;&lt;/li&gt;&#x27;;
   });
@@ -11196,6 +11732,16 @@ function renderFooter() {
   const printDate = now.getDate() + &#x27; &#x27; + months[now.getMonth()] + &#x27; &#x27; + now.getFullYear();
   const parts = [f.contact, f.poc ? &#x27;Schedule POC: &#x27; + f.poc : &#x27;&#x27;, &#x27;Printed: &#x27; + printDate].filter(Boolean);
   return &#x27;&lt;div class=&quot;footer&quot;&gt;&#x27; + esc(parts.join(&#x27; \u00b7 &#x27;)) + &#x27;&lt;/div&gt;&#x27;;
+}
+
+// Until the other layouts receive their own design review, retain newly added
+// flight details in their existing event content rather than dropping the data.
+function renderFlightDetails(event) {
+  if (!event.flightActivities?.length) return &#x27;&#x27;;
+  return &#x27;&lt;span class=&quot;flight-details-plain&quot;&gt;&#x27; + event.flightActivities.map(activity =&gt;
+    &#x27;&lt;span class=&quot;flight-detail-line&quot;&gt;&lt;strong&gt;&#x27; + esc(activity.flight || &#x27;Unnamed flight&#x27;) + &#x27;&lt;/strong&gt; · &#x27; +
+    [activity.startTime + &#x27;-&#x27; + activity.endTime, activity.title, activity.location,
+      activity.poc ? &#x27;POC: &#x27; + activity.poc : &#x27;&#x27;, activity.description].filter(Boolean).map(esc).join(&#x27; · &#x27;) + &#x27;&lt;/span&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27;;
 }
 
 function formatDateDisplay(dateStr) {
@@ -11477,12 +12023,14 @@ function wireWorkbookUi() {
  *   events.js    — openPrintReview() (Ctrl+P and toolbar button)
  *
  * SIDE EFFECTS:
- *   Registers beforeprint listener → applyPrintScaling(true)
- *   Registers afterprint listener → re-renders active day
+ *   Registers beforeprint listener → prepares fresh full readable output unless
+ *     an explicit app print request has selected other options
+ *   Registers afterprint listener → clears output and re-renders active day
  *   Creates/reuses #printContainer element on document.body
  * ──────────────────────────────────────────────────────────────────────────── */
 
 let _printDocumentTitle = null;
+let _printJob = null;
 
 function normalizePrintOptions(options) {
   const opts = options || {};
@@ -11492,7 +12040,7 @@ function normalizePrintOptions(options) {
     dayIds: knownDays.filter(id =&gt; requestedDays.includes(id)),
     audienceId: Store.getGroup(opts.audienceId) ? opts.audienceId : &#x27;&#x27;,
     detail: opts.detail === &#x27;overview&#x27; ? &#x27;overview&#x27; : &#x27;full&#x27;,
-    mode: opts.mode === &#x27;fit&#x27; ? &#x27;fit&#x27; : &#x27;readable&#x27;,
+    mode: getScheduleTheme(getCurrentScheduleFileData()?.theme).skin === &#x27;bands&#x27; || opts.mode === &#x27;fit&#x27; ? &#x27;fit&#x27; : &#x27;readable&#x27;,
   };
 }
 
@@ -11512,6 +12060,11 @@ function buildPrintMarkup(options) {
   const renderer = SKIN_RENDERERS[theme.skin] || SKIN_RENDERERS.bands;
   const audience = Store.getGroup(opts.audienceId);
   return getPrintDays(opts).map(day =&gt; {
+    if (theme.skin === &#x27;bands&#x27;) {
+      const handout = [audience ? &#x27;Audience: &#x27; + audience.name + &#x27;. Primary audience events and breaks included.&#x27; : &#x27;&#x27;,
+        opts.detail === &#x27;overview&#x27; ? &#x27;Overview: event notes omitted.&#x27; : &#x27;&#x27;, audience || opts.detail === &#x27;overview&#x27; ? &#x27;Day notes included.&#x27; : &#x27;&#x27;].filter(Boolean).join(&#x27; &#x27;);
+      return &#x27;&lt;div class=&quot;page print-page skin-bands band-page print-fit&quot; data-print-mode=&quot;fit&quot; data-print-day=&quot;&#x27; + esc(day.id) + &#x27;&quot;&gt;&#x27; + BandLayout.page(day, { handout }) + &#x27;&lt;/div&gt;&#x27;;
+    }
     let html = &#x27;&lt;div class=&quot;page print-page skin-&#x27; + esc(theme.skin) + &#x27; print-&#x27; + opts.mode + &#x27;&quot; data-print-mode=&quot;&#x27; + opts.mode + &#x27;&quot; data-print-day=&quot;&#x27; + esc(day.id) + &#x27;&quot;&gt;&#x27;;
     html += renderHeader(day);
     if (audience || opts.detail === &#x27;overview&#x27;) {
@@ -11519,10 +12072,25 @@ function buildPrintMarkup(options) {
       if (opts.detail === &#x27;overview&#x27;) html += &#x27;Overview · Event notes omitted. &#x27;;
       html += &#x27;Day notes included.&lt;/div&gt;&#x27;;
     }
-    html += renderer(day.id, day);
+    html += renderer(day.id, day, { printMode: opts.mode });
     html += renderFooter() + &#x27;&lt;/div&gt;&#x27;;
     return html;
   }).join(&#x27;&#x27;);
+}
+
+function layoutPrintPages(container) {
+  // Bands owns its page boundaries. Measurement and both print entry points
+  // use that same renderer after insertion at the printable width.
+  container.querySelectorAll(&#x27;.print-page&#x27;).forEach(page =&gt; {
+    const sheet = page.querySelector(&#x27;.band-sheet&#x27;);
+    if (sheet) { BandLayout.fit(sheet); page.dataset.printPaginated = &#x27;true&#x27;; }
+    else applyPrintScalingToPage(page, true);
+  });
+}
+
+function preparePrintPages(container, options) {
+  container.innerHTML = buildPrintMarkup(options);
+  layoutPrintPages(container);
 }
 
 function measurePrintPlan(options) {
@@ -11531,11 +12099,11 @@ function measurePrintPlan(options) {
   container.className = &#x27;print-measurement&#x27;;
   container.setAttribute(&#x27;aria-hidden&#x27;, &#x27;true&#x27;);
   container.inert = true;
-  container.innerHTML = buildPrintMarkup(opts);
   document.body.appendChild(container);
   try {
-    return Array.from(container.querySelectorAll(&#x27;.print-page&#x27;)).map(page =&gt; {
-      applyPrintScalingToPage(page, true);
+    preparePrintPages(container, opts);
+    const days = new Map();
+    container.querySelectorAll(&#x27;.print-page&#x27;).forEach(page =&gt; {
       const scale = parseFloat(page.style.zoom || &#x27;1&#x27;);
       const textSizes = Array.from(page.querySelectorAll(&#x27;*&#x27;)).filter(el =&gt;
         !el.closest(&#x27;.band-view-note, .note-empty, .hdr-logo, sup&#x27;) &amp;&amp;
@@ -11543,13 +12111,24 @@ function measurePrintPlan(options) {
         el.getClientRects().length &amp;&amp; getComputedStyle(el).display !== &#x27;none&#x27;
       ).map(el =&gt; parseFloat(getComputedStyle(el).fontSize)).filter(Number.isFinite);
       const height = page.getBoundingClientRect().height;
-      return {
+      const metrics = {
         dayId: page.dataset.printDay,
         scale,
-        estimatedPages: opts.mode === &#x27;fit&#x27; ? 1 : Math.max(1, Math.ceil(height / ((10.32 * 96) - 48))),
+        estimatedPages: opts.mode === &#x27;fit&#x27; || (page.dataset.printPaginated === &#x27;true&#x27; &amp;&amp; !page.classList.contains(&#x27;bands-print-natural&#x27;))
+          ? 1 : Math.max(1, Math.ceil(height / ((10.32 * 96) - 48))),
         smallestTextPt: (textSizes.length ? Math.min(...textSizes) : 12) * scale * 0.75,
+        fits: !page.querySelector(&#x27;.band-sheet[data-fit=&quot;false&quot;]&#x27;),
       };
+      const day = days.get(metrics.dayId);
+      if (day) {
+        day.estimatedPages += metrics.estimatedPages;
+        day.scale = Math.min(day.scale, metrics.scale);
+        day.smallestTextPt = Math.min(day.smallestTextPt, metrics.smallestTextPt);
+      } else {
+        days.set(metrics.dayId, metrics);
+      }
     });
+    return Array.from(days.values());
   } finally {
     container.remove();
   }
@@ -11567,6 +12146,7 @@ function openPrintReview() {
     document.body.appendChild(overlay);
   }
   const modal = overlay.querySelector(&#x27;.modal&#x27;);
+  const banded = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin === &#x27;bands&#x27;;
   let html = &#x27;&lt;h2 id=&quot;printReviewTitle&quot;&gt;Review and print&lt;/h2&gt;&#x27;;
   html += &#x27;&lt;fieldset class=&quot;print-review-days&quot;&gt;&lt;legend&gt;Days to print&lt;/legend&gt;&#x27;;
   days.forEach((day, index) =&gt; {
@@ -11578,7 +12158,9 @@ function openPrintReview() {
   Store.getGroups().forEach(group =&gt; { html += &#x27;&lt;option value=&quot;&#x27; + esc(group.id) + &#x27;&quot;&gt;&#x27; + esc(group.name) + &#x27;&lt;/option&gt;&#x27;; });
   html += &#x27;&lt;/select&gt;&lt;p class=&quot;print-review-hint&quot;&gt;An audience handout includes primary audience events and breaks. Review named exceptions and day notes before sharing.&lt;/p&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;printDetail&quot;&gt;Details&lt;/label&gt;&lt;select id=&quot;printDetail&quot;&gt;&lt;option value=&quot;full&quot;&gt;Full details&lt;/option&gt;&lt;option value=&quot;overview&quot;&gt;Overview — omit event notes&lt;/option&gt;&lt;/select&gt;&#x27;;
-  html += &#x27;&lt;label for=&quot;printMode&quot;&gt;Page layout&lt;/label&gt;&lt;select id=&quot;printMode&quot;&gt;&lt;option value=&quot;readable&quot;&gt;Readable pages — allow more than one page per day&lt;/option&gt;&lt;option value=&quot;fit&quot;&gt;Fit each day on one page — may make text small&lt;/option&gt;&lt;/select&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;label for=&quot;printMode&quot;&gt;Page layout&lt;/label&gt;&lt;select id=&quot;printMode&quot;&gt;&#x27; + (banded
+    ? &#x27;&lt;option value=&quot;fit&quot;&gt;Letter portrait — one day per page&lt;/option&gt;&#x27;
+    : &#x27;&lt;option value=&quot;readable&quot;&gt;Readable pages — allow more than one page per day&lt;/option&gt;&lt;option value=&quot;fit&quot;&gt;Fit each day on one page — may make text small&lt;/option&gt;&#x27;) + &#x27;&lt;/select&gt;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;div id=&quot;printReviewSummary&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;details class=&quot;print-review-checks&quot;&gt;&lt;summary id=&quot;printReviewCheckCount&quot;&gt;Schedule checks&lt;/summary&gt;&lt;ul id=&quot;printReviewIssues&quot;&gt;&lt;/ul&gt;&lt;/details&gt;&#x27;;
   html += &#x27;&lt;div class=&quot;modal-actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;btn&quot; id=&quot;printReviewCancel&quot;&gt;Cancel&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; id=&quot;printReviewConfirm&quot;&gt;Print&lt;/button&gt;&lt;/div&gt;&#x27;;
@@ -11596,16 +12178,24 @@ function openPrintReview() {
     const omitted = opts.detail === &#x27;overview&#x27; ? events.filter(evt =&gt; evt.description).length : 0;
     const metrics = measurePrintPlan(opts);
     const sheets = metrics.reduce((sum, page) =&gt; sum + page.estimatedPages, 0);
-    const small = metrics.filter(page =&gt; page.smallestTextPt &lt; 8);
+    const small = metrics.filter(page =&gt; page.smallestTextPt &lt; (opts.mode === &#x27;fit&#x27; ? 12 : 8));
     let summary = &#x27;&lt;p&gt;&#x27; + opts.dayIds.length + &#x27; day(s), &#x27; + events.length + &#x27; event(s). Estimated &#x27; + sheets + &#x27; printed page(s).&lt;/p&gt;&#x27;;
     if (omitted) summary += &#x27;&lt;p&gt;&#x27; + omitted + &#x27; event note(s) will be omitted from this overview.&lt;/p&gt;&#x27;;
-    if (small.length) summary += &#x27;&lt;p class=&quot;print-review-warning&quot;&gt;Text may be as small as &#x27; + Math.min(...small.map(page =&gt; page.smallestTextPt)).toFixed(1) + &#x27; pt. Text below 8 pt can be hard to read; choose Readable pages or print fewer audiences.&lt;/p&gt;&#x27;;
+    if (banded) {
+      summary += &#x27;&lt;p&gt;Half-inch margins, a reserved notes area and bounded text sizes. Print at actual size on US Letter; duplex can put the next day on the reverse.&lt;/p&gt;&#x27;;
+      if (metrics.some(page =&gt; !page.fits)) summary += &#x27;&lt;p class=&quot;print-review-warning&quot;&gt;A selected day exceeds the readable one-page limits. Review its content before printing; no names or event details will be clipped to make it fit.&lt;/p&gt;&#x27;;
+    } else if (small.length) {
+      summary += &#x27;&lt;p class=&quot;print-review-warning&quot;&gt;Text may be as small as &#x27; + Math.min(...small.map(page =&gt; page.smallestTextPt)).toFixed(1) + &#x27; pt. &#x27;;
+      summary += opts.mode === &#x27;fit&#x27;
+        ? &#x27;Fit keeps each day on one page and may reduce text below 12 pt. Choose Readable pages for larger type.&lt;/p&gt;&#x27;
+        : &#x27;Text below 8 pt can be hard to read; choose Readable pages or print fewer audiences.&lt;/p&gt;&#x27;;
+    }
     summary += &#x27;&lt;p class=&quot;print-review-hint&quot;&gt;Check your browser’s print preview before sharing. Paper and printer settings can change pagination.&lt;/p&gt;&#x27;;
     modal.querySelector(&#x27;#printReviewSummary&#x27;).innerHTML = summary;
     const issues = getScheduleReviewIssues(fullDays, Store.getGroups());
     modal.querySelector(&#x27;#printReviewCheckCount&#x27;).textContent = issues.length ? issues.length + &#x27; schedule check(s) to review&#x27; : &#x27;No schedule checks flagged&#x27;;
     modal.querySelector(&#x27;#printReviewIssues&#x27;).innerHTML = issues.map(issue =&gt; &#x27;&lt;li&gt;&#x27; + esc(issue.message) + &#x27;&lt;/li&gt;&#x27;).join(&#x27;&#x27;);
-    modal.querySelector(&#x27;#printReviewConfirm&#x27;).disabled = opts.dayIds.length === 0;
+    modal.querySelector(&#x27;#printReviewConfirm&#x27;).disabled = opts.dayIds.length === 0 || metrics.some(page =&gt; page.fits === false);
   };
   modal.querySelectorAll(&#x27;input, select&#x27;).forEach(input =&gt; input.addEventListener(&#x27;change&#x27;, refresh));
   modal.querySelector(&#x27;#printReviewCancel&#x27;).addEventListener(&#x27;click&#x27;, () =&gt; closeModal(&#x27;printReviewModal&#x27;));
@@ -11628,9 +12218,7 @@ function printAllDays() {
   printSchedule({ mode: &#x27;fit&#x27; });
 }
 
-function printSchedule(options) {
-  const opts = normalizePrintOptions(options);
-  if (!opts.dayIds.length) { toast(&#x27;No days to print.&#x27;); return; }
+function createPrintJob(options, source) {
   let container = document.getElementById(&#x27;printContainer&#x27;);
   if (!container) {
     container = document.createElement(&#x27;div&#x27;);
@@ -11640,30 +12228,76 @@ function printSchedule(options) {
   container.className = &#x27;print-staging&#x27;;
   container.inert = true;
   container.setAttribute(&#x27;aria-hidden&#x27;, &#x27;true&#x27;);
-  container.innerHTML = buildPrintMarkup(opts);
   document.body.classList.add(&#x27;printing-schedule&#x27;);
   if (_printDocumentTitle === null) _printDocumentTitle = document.title;
-  const audience = Store.getGroup(opts.audienceId);
+  const job = { options, source, container, fileData: getCurrentScheduleFileData(), started: false };
+  _printJob = job;
+  updatePrintDocumentTitle(options);
+  return job;
+}
+
+function updatePrintDocumentTitle(options) {
+  const audience = Store.getGroup(options.audienceId);
   document.title = [Store.getTitle(), audience ? audience.name : &#x27;Everyone&#x27;,
-    opts.detail === &#x27;overview&#x27; ? &#x27;Overview&#x27; : &#x27;Full details&#x27;, opts.dayIds.length + &#x27; day(s)&#x27;].join(&#x27; — &#x27;);
+    options.detail === &#x27;overview&#x27; ? &#x27;Overview&#x27; : &#x27;Full details&#x27;, options.dayIds.length + &#x27; day(s)&#x27;].join(&#x27; — &#x27;);
+}
+
+function clearPrintJob() {
+  _printJob = null;
+  const container = document.getElementById(&#x27;printContainer&#x27;);
+  if (container) { container.innerHTML = &#x27;&#x27;; container.className = &#x27;&#x27;; }
+  document.body.classList.remove(&#x27;printing-schedule&#x27;);
+  if (_printDocumentTitle !== null) { document.title = _printDocumentTitle; _printDocumentTitle = null; }
+}
+
+function reportPrintFailure(err) {
+  clearPrintJob();
+  if (typeof logAppError === &#x27;function&#x27;) logAppError(&#x27;error&#x27;, String(err &amp;&amp; err.message || err), &#x27;print&#x27;);
+  toast(&#x27;Couldn’t open the print dialog. Try your browser’s File → Print.&#x27;, 6000);
+}
+
+function printSchedule(options) {
+  const opts = normalizePrintOptions(options);
+  if (!opts.dayIds.length) { clearPrintJob(); toast(&#x27;No days to print.&#x27;); return; }
+  const job = createPrintJob(opts, &#x27;app&#x27;);
+  let content;
+  try {
+    job.container.innerHTML = buildPrintMarkup(opts);
+    content = JSON.stringify({ state: Store.getPersistedState(), theme: job.fileData &amp;&amp; job.fileData.theme });
+  } catch (err) {
+    reportPrintFailure(err);
+    return;
+  }
   // Logos are local data URLs, but decoding is asynchronous. Wait for them
   // before measuring rather than assuming a fixed timeout is long enough.
-  const images = Array.from(container.querySelectorAll(&#x27;img&#x27;));
-  Promise.all(images.map(img =&gt; typeof img.decode === &#x27;function&#x27; ? img.decode().catch(err =&gt; {
+  const images = Array.from(job.container.querySelectorAll(&#x27;img&#x27;));
+  return Promise.all(images.map(img =&gt; typeof img.decode === &#x27;function&#x27; ? img.decode().catch(err =&gt; {
+    if (_printJob !== job || job.started) return;
     if (typeof logAppError === &#x27;function&#x27;) logAppError(&#x27;warn&#x27;, String(err &amp;&amp; err.message || err), &#x27;print logo&#x27;);
     toast(&#x27;The logo could not be read and may be missing from the printout.&#x27;, 6000);
   }) : Promise.resolve()))
     .then(() =&gt; {
+      // A completed decode must not reopen a closed print preview, print a
+      // superseded request, or print an old schedule after navigation/editing.
+      if (_printJob !== job || job.started) return;
+      const fileData = getCurrentScheduleFileData();
+      if (!job.container.isConnected || fileData !== job.fileData ||
+          content !== JSON.stringify({ state: Store.getPersistedState(), theme: fileData &amp;&amp; fileData.theme })) {
+        clearPrintJob();
+        toast(&#x27;The schedule changed while preparing print. Review and print again.&#x27;, 6000);
+        return;
+      }
       try {
-        applyPrintScaling(true);
+        layoutPrintPages(job.container);
+        if (job.container.querySelector(&#x27;.band-sheet[data-fit=&quot;false&quot;]&#x27;)) {
+          clearPrintJob();
+          toast(&#x27;A day exceeds the readable one-page limits. Review the schedule before printing.&#x27;, 6000);
+          return;
+        }
+        job.started = true;
         window.print();
       } catch (err) {
-        container.innerHTML = &#x27;&#x27;;
-        container.className = &#x27;&#x27;;
-        document.body.classList.remove(&#x27;printing-schedule&#x27;);
-        if (_printDocumentTitle !== null) { document.title = _printDocumentTitle; _printDocumentTitle = null; }
-        if (typeof logAppError === &#x27;function&#x27;) logAppError(&#x27;error&#x27;, String(err &amp;&amp; err.message || err), &#x27;print&#x27;);
-        toast(&#x27;Couldn’t open the print dialog. Try your browser’s File → Print.&#x27;, 6000);
+        if (_printJob === job) reportPrintFailure(err);
       }
     });
 }
@@ -11689,6 +12323,8 @@ function applyPrintScaling(forPrint) {
 }
 
 function applyPrintScalingToPage(page, forPrint) {
+  const bandSheet = page.querySelector(&#x27;.band-sheet&#x27;);
+  if (bandSheet) { removePrintScaling(page); BandLayout.fit(bandSheet); return; }
   // For print: usable area = 11in - 0.3in @page margins - 0.38in padding,
   // minus 48px safety margin for browser rendering differences.
   // For screen: match the .page card&#x27;s min-height (11in = 1056px).
@@ -11843,9 +12479,23 @@ function removePrintScaling(page) {
   delete page.dataset.printScaled;
 }
 
-// Auto-scale on any print trigger (Cmd+P, browser menu, etc.)
+// Browser File → Print does not go through printSchedule. Build current full
+// readable pages synchronously; beforeprint cannot wait for image decoding.
+// An app-requested print retains its deliberate day/audience/detail/Fit choices.
 window.addEventListener(&#x27;beforeprint&#x27;, () =&gt; {
-  applyPrintScaling(true);
+  try {
+    const pending = _printJob &amp;&amp; _printJob.source === &#x27;app&#x27; &amp;&amp;
+      _printJob.fileData === getCurrentScheduleFileData() &amp;&amp; _printJob.container.isConnected;
+    const options = normalizePrintOptions(pending ? _printJob.options : {});
+    if (!options.dayIds.length) { clearPrintJob(); return; }
+    const job = pending ? _printJob : createPrintJob(options, &#x27;browser&#x27;);
+    job.options = options;
+    job.started = true;
+    updatePrintDocumentTitle(options);
+    preparePrintPages(job.container, options);
+  } catch (err) {
+    reportPrintFailure(err);
+  }
 });
 
 // Clean up scaling after print so screen view is unaffected
@@ -11853,10 +12503,7 @@ window.addEventListener(&#x27;afterprint&#x27;, () =&gt; {
   // Empty the print container: the print stylesheet forces it visible
   // (display:block !important), so stale pages left here would be printed —
   // with pre-edit data — by any later browser-menu File→Print.
-  const printContainer = document.getElementById(&#x27;printContainer&#x27;);
-  if (printContainer) { printContainer.innerHTML = &#x27;&#x27;; printContainer.className = &#x27;&#x27;; }
-  document.body.classList.remove(&#x27;printing-schedule&#x27;);
-  if (_printDocumentTitle !== null) { document.title = _printDocumentTitle; _printDocumentTitle = null; }
+  clearPrintJob();
   const activeDay = Store.getActiveDay();
   if (activeDay) renderDay(activeDay);
 });
@@ -11892,7 +12539,7 @@ window.addEventListener(&#x27;afterprint&#x27;, () =&gt; {
  * ──────────────────────────────────────────────────────────────────────────── */
 
 // Selector for any clickable event element across all skins
-const EVENT_SELECTOR = &#x27;[data-event-id]&#x27;;
+const EVENT_SELECTOR = &#x27;[data-event-id], [data-event-ref], [data-main-context]&#x27;;
 
 document.addEventListener(&#x27;click&#x27;, e =&gt; {
   if (e.target.closest(&#x27;.modal-overlay&#x27;)) return;
@@ -11937,12 +12584,13 @@ document.addEventListener(&#x27;click&#x27;, e =&gt; {
   const eventEl = e.target.closest(EVENT_SELECTOR);
   if (eventEl &amp;&amp; !e.target.closest(&#x27;.inspector&#x27;)) {
     const dayId = Store.getActiveDay();
-    if (dayId) selectEntity(&#x27;event&#x27;, dayId, eventEl.getAttribute(&#x27;data-event-id&#x27;));
+    const eventId = eventEl.dataset.eventId || eventEl.dataset.eventRef || eventEl.dataset.mainContext;
+    if (dayId) selectEntity(&#x27;event&#x27;, dayId, eventId);
     return;
   }
 
   // Click on header -&gt; open settings modal (logo, title, contact, groups)
-  const hdr = e.target.closest(&#x27;.hdr&#x27;);
+  const hdr = e.target.closest(&#x27;.hdr, [data-band-customize]&#x27;);
   if (hdr &amp;&amp; !e.target.closest(&#x27;.inspector&#x27;)) {
     if (typeof isCurrentScheduleEditable === &#x27;function&#x27; &amp;&amp; !isCurrentScheduleEditable()) {
       toast(&#x27;Read-only. Click Edit.&#x27;);
@@ -11953,7 +12601,7 @@ document.addEventListener(&#x27;click&#x27;, e =&gt; {
   }
 
   // Click on note -&gt; select in inspector
-  const noteEl = e.target.closest(&#x27;.notes-list li[data-note-id]&#x27;);
+  const noteEl = e.target.closest(&#x27;.notes-list li[data-note-id], .band-sheet [data-note-id]&#x27;);
   if (noteEl &amp;&amp; !e.target.closest(&#x27;.inspector&#x27;)) {
     const dayId = Store.getActiveDay();
     if (dayId) selectEntity(&#x27;note&#x27;, dayId, noteEl.getAttribute(&#x27;data-note-id&#x27;));
@@ -11970,7 +12618,7 @@ document.addEventListener(&#x27;click&#x27;, e =&gt; {
 // Keyboard shortcuts
 document.addEventListener(&#x27;keydown&#x27;, e =&gt; {
   if (e.defaultPrevented) return;
-  if ((e.key === &#x27;Enter&#x27; || e.key === &#x27; &#x27;) &amp;&amp; e.target.matches(&#x27;.hdr[role=&quot;button&quot;]&#x27;)) {
+  if ((e.key === &#x27;Enter&#x27; || e.key === &#x27; &#x27;) &amp;&amp; e.target.matches(&#x27;.hdr[role=&quot;button&quot;], .bands-screen [role=&quot;button&quot;], .band-sheet article[data-event-id]&#x27;)) {
     e.preventDefault();
     e.target.click();
     return;
@@ -12080,13 +12728,15 @@ function syncPreviewSelection() {
   const container = document.getElementById(&#x27;scheduleContainer&#x27;);
   if (!container) return;
 
-  container.querySelectorAll(&#x27;[data-event-id].selected&#x27;).forEach(el =&gt; el.classList.remove(&#x27;selected&#x27;));
-  container.querySelectorAll(&#x27;.notes-list li.selected&#x27;).forEach(el =&gt; el.classList.remove(&#x27;selected&#x27;));
+  container.querySelectorAll(&#x27;[data-event-id].selected, [data-event-ref].selected, [data-main-context].selected&#x27;).forEach(el =&gt; el.classList.remove(&#x27;selected&#x27;));
+  container.querySelectorAll(&#x27;[data-note-id].selected&#x27;).forEach(el =&gt; el.classList.remove(&#x27;selected&#x27;));
 
   if (_selection.type === &#x27;event&#x27; &amp;&amp; _selection.entityId) {
-    container.querySelectorAll(&#x27;[data-event-id=&quot;&#x27; + _selection.entityId + &#x27;&quot;]&#x27;).forEach(el =&gt; el.classList.add(&#x27;selected&#x27;));
+    container.querySelectorAll(&#x27;[data-event-id], [data-event-ref], [data-main-context]&#x27;).forEach(el =&gt; {
+      if ((el.dataset.eventId || el.dataset.eventRef || el.dataset.mainContext) === _selection.entityId) el.classList.add(&#x27;selected&#x27;);
+    });
   } else if (_selection.type === &#x27;note&#x27; &amp;&amp; _selection.entityId) {
-    const noteEl = container.querySelector(&#x27;.notes-list li[data-note-id=&quot;&#x27; + _selection.entityId + &#x27;&quot;]&#x27;);
+    const noteEl = container.querySelector(&#x27;[data-note-id=&quot;&#x27; + _selection.entityId + &#x27;&quot;]&#x27;);
     if (noteEl) noteEl.classList.add(&#x27;selected&#x27;);
   }
 }
@@ -12295,14 +12945,23 @@ function renderSettingsModal(modal) {
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-title&quot; value=&quot;&#x27; + esc(title) + &#x27;&quot;&gt;&#x27;;
   html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-logo&quot;&gt;Unit Logo&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;file&quot; class=&quot;settings-input&quot; id=&quot;settings-logo&quot; accept=&quot;image/*&quot; style=&quot;font-size:12px;padding:5px 8px;&quot;&gt;&#x27;;
+  if (currentTheme.skin === &#x27;bands&#x27;) {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += &#x27;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;settings-band-logo&quot;&#x27; + (bandSettings.showLogo ? &#x27; checked&#x27; : &#x27;&#x27;) + &#x27;&gt; Show logo on Bands&lt;/label&gt;&#x27;;
+  }
   if (Store.getLogo()) {
     html += &#x27;&lt;div class=&quot;settings-logo-preview&quot;&gt;&lt;img alt=&quot;Current unit logo&quot; src=&quot;&#x27; + esc(Store.getLogo()) + &#x27;&quot; style=&quot;max-height:48px;border-radius:4px;&quot;&gt; &#x27;;
     html += &#x27;&lt;button class=&quot;btn&quot; id=&quot;settings-logo-remove&quot; style=&quot;font-size:10px;padding:2px 8px;&quot;&gt;Remove logo&lt;/button&gt;&lt;/div&gt;&#x27;;
   }
-  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-contact&quot;&gt;Header Line&lt;/label&gt;&#x27;;
+  html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-contact&quot;&gt;&#x27; + (currentTheme.skin === &#x27;bands&#x27; ? &#x27;Subtitle (optional)&#x27; : &#x27;Header Line&#x27;) + &#x27;&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-contact&quot; value=&quot;&#x27; + esc(footer.contact) + &#x27;&quot;&gt;&#x27;;
   html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-poc&quot;&gt;Point of Contact&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; class=&quot;settings-input&quot; id=&quot;settings-poc&quot; value=&quot;&#x27; + esc(footer.poc) + &#x27;&quot;&gt;&#x27;;
+  if (currentTheme.skin === &#x27;bands&#x27;) {
+    const bandSettings = getBandSettings(getCurrentScheduleFileData()?.theme);
+    html += &#x27;&lt;label class=&quot;settings-label&quot; for=&quot;settings-band-notes&quot;&gt;Notes &amp;amp; Reminders space&lt;/label&gt;&lt;select class=&quot;settings-input&quot; id=&quot;settings-band-notes&quot;&gt;&#x27; +
+      [[90, &#x27;1¼ inches&#x27;], [108, &#x27;1½ inches&#x27;], [144, &#x27;2 inches&#x27;]].map(([value, label]) =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + (bandSettings.notesHeight === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + label + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) + &#x27;&lt;/select&gt;&#x27;;
+  }
   html += &#x27;&lt;/div&gt;&#x27;;
   html += &#x27;&lt;/section&gt;&#x27;;
 
@@ -12441,7 +13100,9 @@ function wireSettingsModal(modal) {
       const parsed = parseHexColor(color);
       return parsed &amp;&amp; parsed.alpha &lt; 1;
     });
-    const low = [&#x27;text&#x27;, &#x27;textSecondary&#x27;, &#x27;textMuted&#x27;].some(key =&gt;
+    const skin = getScheduleTheme(getCurrentScheduleFileData()?.theme).skin;
+    const textRoles = skin === &#x27;bands&#x27; ? [&#x27;text&#x27;, &#x27;textSecondary&#x27;, &#x27;textMuted&#x27;, &#x27;accent&#x27;] : [&#x27;text&#x27;, &#x27;textSecondary&#x27;, &#x27;textMuted&#x27;];
+    const low = textRoles.some(key =&gt;
       [&#x27;bg&#x27;, &#x27;surface&#x27;].some(surface =&gt; getColorContrast(colors[key], colors[surface]) &lt; 4.5));
     warning.textContent = transparent ? &#x27;Transparent colors depend on the surface behind them. Choose opaque colors for predictable contrast.&#x27;
       : low ? &#x27;Some text has low contrast. Choose darker text on light paper, or lighter text on dark paper.&#x27; : &#x27;Text contrast meets the 4.5:1 reading target.&#x27;;
@@ -12474,6 +13135,8 @@ function wireSettingsModal(modal) {
   }
 
   // Logo upload
+  modal.querySelector(&#x27;#settings-band-logo&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; updateBandSettings({ showLogo: event.target.checked }));
+  modal.querySelector(&#x27;#settings-band-notes&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; updateBandSettings({ notesHeight: Number(event.target.value) }));
   const logoInput = modal.querySelector(&#x27;#settings-logo&#x27;);
   if (logoInput) {
     logoInput.addEventListener(&#x27;change&#x27;, (e) =&gt; {
@@ -13431,7 +14094,8 @@ function renderEventInspector(panel, dayId, eventId) {
 
   // Specific People
   html += &#x27;&lt;label for=&quot;insp-evt-attendees&quot;&gt;Specific People&lt;/label&gt;&#x27;;
-  html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-evt-attendees&quot; value=&quot;&#x27; + esc(evt.attendees) + &#x27;&quot; placeholder=&quot;Optional names&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
+  html += &#x27;&lt;textarea id=&quot;insp-evt-attendees&quot; rows=&quot;2&quot; placeholder=&quot;Optional names&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27; + esc(evt.attendees) + &#x27;&lt;/textarea&gt;&#x27;;
+  html += renderAttendeeFormatting(evt, disabledAttr);
 
   // Description
   html += &#x27;&lt;label for=&quot;insp-evt-desc&quot;&gt;Notes&lt;/label&gt;&#x27;;
@@ -13442,6 +14106,7 @@ function renderEventInspector(panel, dayId, eventId) {
   html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-evt-loc&quot; value=&quot;&#x27; + esc(evt.location) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
   html += &#x27;&lt;label for=&quot;insp-evt-poc&quot;&gt;POC&lt;/label&gt;&#x27;;
   html += &#x27;&lt;input type=&quot;text&quot; id=&quot;insp-evt-poc&quot; value=&quot;&#x27; + esc(evt.poc) + &#x27;&quot;&#x27; + textReadOnly + &#x27;&gt;&#x27;;
+  html += renderBandEventFields(evt, readOnly);
 
   // Break toggle
   html += &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&#x27;;
@@ -13475,9 +14140,6 @@ function wireEventInspector(panel, dayId, eventId) {
       else val = typeof el.value === &#x27;string&#x27; ? el.value.trim() : el.value;
       Store.updateEvent(dayId, eventId, { [field]: val });
       renderActiveDay();
-      // Re-highlight selected
-      const band = document.querySelector(&#x27;.band[data-event-id=&quot;&#x27; + eventId + &#x27;&quot;]&#x27;);
-      if (band) band.classList.add(&#x27;selected&#x27;);
       sessionSave();
       if (field === &#x27;isBreak&#x27; || field === &#x27;isMainEvent&#x27;) {
         renderInspector();
@@ -13504,6 +14166,7 @@ function wireEventInspector(panel, dayId, eventId) {
   autoCommit(&#x27;#insp-evt-loc&#x27;, &#x27;location&#x27;);
   autoCommit(&#x27;#insp-evt-poc&#x27;, &#x27;poc&#x27;);
   autoCommit(&#x27;#insp-evt-break&#x27;, &#x27;isBreak&#x27;, true);
+  wireBandEventFields(panel, dayId, eventId);
 
   // Highlight override (only present for limited-scope groups)
   const mainCheckbox = panel.querySelector(&#x27;#insp-evt-main&#x27;);
@@ -13519,8 +14182,6 @@ function wireEventInspector(panel, dayId, eventId) {
       const updates = { groupId: groupSelect.value };
       Store.updateEvent(dayId, eventId, updates);
       renderActiveDay();
-      const band = document.querySelector(&#x27;.band[data-event-id=&quot;&#x27; + eventId + &#x27;&quot;]&#x27;);
-      if (band) band.classList.add(&#x27;selected&#x27;);
       sessionSave();
       renderInspector();
       // renderInspector rebuilt the select; keep keyboard focus on it.
@@ -13984,6 +14645,94 @@ function wireTimeInput(panel, selector, field, dayId, eventId) {
 
 &lt;/script&gt;
   &lt;script&gt;
+/* Small additions to existing inspector/Customize surfaces, using normal Store
+ * edits so workbook saves, recovery, versions and Undo/Redo retain the choices.
+ */
+function renderAttendeeFormatting(event, disabled) {
+  const mode = event.attendeeFormat || &#x27;text&#x27;;
+  const options = [[&#x27;text&#x27;, &#x27;Text as entered&#x27;], [&#x27;suggested&#x27;, &#x27;Suggest from separators&#x27;], [&#x27;lines&#x27;, &#x27;One person per line&#x27;], [&#x27;spaces&#x27;, &#x27;Each space separates a surname&#x27;]];
+  return &#x27;&lt;details class=&quot;attendee-preview&quot;&gt;&lt;summary&gt;Format names for Bands&lt;/summary&gt;&lt;label for=&quot;insp-attendee-format&quot;&gt;Separate entries&lt;/label&gt;&lt;select id=&quot;insp-attendee-format&quot;&#x27; + disabled + &#x27;&gt;&#x27; +
+    options.map(([value, label]) =&gt; &#x27;&lt;option value=&quot;&#x27; + value + &#x27;&quot;&#x27; + (mode === value ? &#x27; selected&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; + label + &#x27;&lt;/option&gt;&#x27;).join(&#x27;&#x27;) +
+    &#x27;&lt;/select&gt;&lt;div id=&quot;insp-attendee-preview&quot; role=&quot;status&quot;&gt;&#x27; + attendeePreviewHTML(event) + &#x27;&lt;/div&gt;&lt;/details&gt;&#x27;;
+}
+
+function attendeePreviewHTML(event) {
+  const parsed = parsePersonnelInput(event.attendees || &#x27;&#x27;, event.attendeeFormat || &#x27;text&#x27;);
+  return &#x27;&lt;p&gt;&#x27; + esc(parsed.notice) + &#x27;&lt;/p&gt;&#x27; + (parsed.mode === &#x27;text&#x27;
+    ? &#x27;&lt;div class=&quot;attendee-preview-list&quot;&gt;&#x27; + esc(parsed.raw || &#x27;No specific people entered.&#x27;) + &#x27;&lt;/div&gt;&#x27;
+    : &#x27;&lt;p&gt;&lt;strong&gt;&#x27; + parsed.entries.length + &#x27; entries will print&lt;/strong&gt;&lt;/p&gt;&lt;div class=&quot;attendee-preview-list&quot;&gt;&#x27; + parsed.entries.map(esc).join(&#x27;; &#x27;) + &#x27;&lt;/div&gt;&#x27;) +
+    &#x27;&lt;p&gt;POCs stay separate. Complete entries print as shown; no name parts are guessed or removed.&lt;/p&gt;&#x27;;
+}
+
+function renderBandEventFields(event, readOnly) {
+  const disabled = readOnly ? &#x27; disabled&#x27; : &#x27;&#x27;;
+  const activities = event.flightActivities || [];
+  let html = &#x27;&lt;div class=&quot;insp-toggle-section&quot;&gt;&lt;label class=&quot;insp-toggle-label&quot;&gt;&lt;input type=&quot;checkbox&quot; id=&quot;insp-evt-emphasis&quot;&#x27; +
+    (event.emphasized ? &#x27; checked&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt; Emphasize in Bands&lt;/label&gt;&lt;/div&gt;&#x27;;
+  html += &#x27;&lt;details class=&quot;flight-editor&quot;&#x27; + (activities.length ? &#x27; open&#x27; : &#x27;&#x27;) + &#x27;&gt;&lt;summary&gt;Flight activities&#x27; + (activities.length ? &#x27; (&#x27; + activities.length + &#x27;)&#x27; : &#x27;&#x27;) + &#x27;&lt;/summary&gt;&#x27;;
+  html += &#x27;&lt;p class=&quot;insp-context-note&quot;&gt;Add each flight’s activity within this event. Use the same time window for shared training, or add separate timed activities.&lt;/p&gt;&#x27;;
+  activities.forEach((activity, index) =&gt; {
+    html += &#x27;&lt;div class=&quot;flight-editor-item&quot; data-flight-index=&quot;&#x27; + index + &#x27;&quot;&gt;&#x27;;
+    const field = (key, label, time) =&gt; &#x27;&lt;label for=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot;&gt;&#x27; + label + &#x27;&lt;/label&gt;&lt;input id=&quot;flight-&#x27; + index + &#x27;-&#x27; + key + &#x27;&quot; data-flight-field=&quot;&#x27; + key + &#x27;&quot; type=&quot;text&quot; value=&quot;&#x27; + esc(activity[key]) + &#x27;&quot;&#x27; + (time ? &#x27; maxlength=&quot;5&quot;&#x27; : &#x27;&#x27;) + disabled + &#x27;&gt;&#x27;;
+    html += field(&#x27;flight&#x27;, &#x27;Flight&#x27;) + field(&#x27;title&#x27;, &#x27;Activity&#x27;);
+    html += &#x27;&lt;div class=&quot;field-row&quot;&gt;&lt;div&gt;&#x27; + field(&#x27;startTime&#x27;, &#x27;Start&#x27;, true) + &#x27;&lt;/div&gt;&lt;div&gt;&#x27; + field(&#x27;endTime&#x27;, &#x27;End&#x27;, true) + &#x27;&lt;/div&gt;&lt;/div&gt;&#x27;;
+    html += field(&#x27;location&#x27;, &#x27;Location&#x27;) + field(&#x27;poc&#x27;, &#x27;POC&#x27;);
+    html += &#x27;&lt;label for=&quot;flight-&#x27; + index + &#x27;-description&quot;&gt;Instructions&lt;/label&gt;&lt;textarea id=&quot;flight-&#x27; + index + &#x27;-description&quot; data-flight-field=&quot;description&quot;&#x27; + disabled + &#x27;&gt;&#x27; + esc(activity.description) + &#x27;&lt;/textarea&gt;&#x27;;
+    html += &#x27;&lt;button class=&quot;btn&quot; type=&quot;button&quot; data-remove-flight=&quot;&#x27; + index + &#x27;&quot;&#x27; + disabled + &#x27;&gt;Remove activity&lt;/button&gt;&lt;/div&gt;&#x27;;
+  });
+  return html + &#x27;&lt;button class=&quot;btn&quot; type=&quot;button&quot; id=&quot;insp-add-flight&quot;&#x27; + disabled + &#x27;&gt;+ Flight activity&lt;/button&gt;&lt;/details&gt;&#x27;;
+}
+
+function wireBandEventFields(panel, dayId, eventId) {
+  const current = () =&gt; Store.getEvents(dayId).find(event =&gt; event.id === eventId);
+  const update = updates =&gt; {
+    saveUndoState(); Store.updateEvent(dayId, eventId, updates); renderActiveDay(); sessionSave();
+  };
+  const preview = () =&gt; {
+    const target = panel.querySelector(&#x27;#insp-attendee-preview&#x27;);
+    if (target &amp;&amp; current()) target.innerHTML = attendeePreviewHTML(current());
+  };
+  panel.querySelector(&#x27;#insp-evt-attendees&#x27;)?.addEventListener(&#x27;input&#x27;, preview);
+  panel.querySelector(&#x27;#insp-attendee-format&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; {
+    update({ attendeeFormat: normalizeAttendeeFormat(event.target.value) }); preview();
+  });
+  panel.querySelector(&#x27;#insp-evt-emphasis&#x27;)?.addEventListener(&#x27;change&#x27;, event =&gt; update({ emphasized: event.target.checked }));
+  panel.querySelector(&#x27;#insp-add-flight&#x27;)?.addEventListener(&#x27;click&#x27;, () =&gt; {
+    const event = current();
+    update({ flightActivities: [...(event.flightActivities || []), { id: generateId(&#x27;flight&#x27;), flight: &#x27;&#x27;, title: &#x27;&#x27;, startTime: event.startTime, endTime: event.endTime, location: &#x27;&#x27;, poc: &#x27;&#x27;, description: &#x27;&#x27; }] });
+    renderInspector();
+    document.querySelector(&#x27;.flight-editor-item:last-of-type input&#x27;)?.focus();
+  });
+  panel.querySelectorAll(&#x27;[data-flight-field]&#x27;).forEach(input =&gt; {
+    const field = input.dataset.flightField, isTime = field === &#x27;startTime&#x27; || field === &#x27;endTime&#x27;;
+    input.addEventListener(isTime ? &#x27;change&#x27; : &#x27;input&#x27;, () =&gt; {
+      const event = current(), activities = structuredClone(event.flightActivities || []);
+      const index = Number(input.closest(&#x27;[data-flight-index]&#x27;).dataset.flightIndex), activity = activities[index];
+      if (!activity) return;
+      const value = isTime ? normalizeTime(input.value) : input.value;
+      const next = { ...activity, [field]: value };
+      if (isTime &amp;&amp; (!isValidScheduleTime(value) || next.startTime &gt;= next.endTime || next.startTime &lt; event.startTime || next.endTime &gt; event.endTime)) {
+        input.value = activity[field]; toast(&#x27;Keep the activity’s start and end within its parent event, with the end after the start.&#x27;, 6000); return;
+      }
+      activities[index] = next; update({ flightActivities: activities });
+    });
+  });
+  panel.querySelectorAll(&#x27;[data-remove-flight]&#x27;).forEach(button =&gt; button.addEventListener(&#x27;click&#x27;, () =&gt; {
+    update({ flightActivities: current().flightActivities.filter((_, index) =&gt; index !== Number(button.dataset.removeFlight)) });
+    renderInspector(); document.querySelector(&#x27;#insp-add-flight&#x27;)?.focus();
+  }));
+}
+
+function updateBandSettings(updates) {
+  const file = getCurrentScheduleFileData();
+  if (!file) return;
+  saveUndoState();
+  file.theme = { ...file.theme, bands: { ...getBandSettings(file.theme), ...updates } };
+  renderActiveDay(); sessionSave();
+}
+
+&lt;/script&gt;
+  &lt;script&gt;
 // Schedule data stays in .schedule files; no data is bundled.
 
 &lt;/script&gt;
@@ -14038,7 +14787,9 @@ function runBootStep(name, fn) {
   }
 }
 
-(async function init() {
+// Expose completion so embedded consumers and the test harness can wait for
+// recovery before loading another workbook; load events alone are too early.
+var appReady = (async function init() {
   runBootStep(&#x27;wireToolbar&#x27;, wireToolbar);
   runBootStep(&#x27;wireLibrary&#x27;, wireLibrary);
   if (typeof wireWorkbookUi === &#x27;function&#x27;) runBootStep(&#x27;wireWorkbookUi&#x27;, wireWorkbookUi);

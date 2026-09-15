@@ -9,6 +9,7 @@
  *   summarizeDisplayList(items, limit?)          → string
  *   summarizeExceptionNote(info, itemLimit?)     → string
  *   classifyEvents(events, groups)                → {mainBands[], concurrent[]}
+ *   buildBandSections(events, groups)             → chronological main/supporting sections with continuation references
  *   buildPhaseGroups(events, groups)              → temporally contained phases and independent tasks
  *   getAudienceHandoutEvents(events, groups, id)   → selected audience plus shared events
  *   getScheduleReviewIssues(days, groups)          → advisory date, range, audience and conflict issues
@@ -64,6 +65,79 @@ function isEventEffectiveMain(evt, groupsOrMap) {
   return !!evt.isMainEvent;
 }
 
+// Readable Bands uses one full entry per event, anchored by its actual start.
+// Main sections contain strict-overlap connected components, including breaks;
+// membership in a component does not mean every main event overlaps every task.
+// Empty main-track intervals appear only when supporting activity occupies them.
+//
+// Section: {kind, startTime, endTime, mains, supporting, continuations}.
+// mains entries: {event, group, tier}; breaks have tier 'break'.
+// supporting/continuations entries: {event, group, sourceSectionIndex,
+// overlappingMain, overlappingBreaks, continuesAfter}. Overlap arrays contain
+// only actual overlaps in this section; overlappingMain excludes breaks.
+// sourceSectionIndex identifies the one canonical supporting entry. The event
+// and group references are unchanged, including all original times and fields.
+function buildBandSections(events, groups) {
+  const ordered = (events || []).slice().sort(compareBandOrder);
+  if (!ordered.length) return [];
+  const groupMap = getGroupMap(groups);
+  const mainEvents = ordered.filter(evt => isEventEffectiveMain(evt, groupMap));
+  const supportingEvents = ordered.filter(evt => !isEventEffectiveMain(evt, groupMap));
+  const makeSection = (kind, startTime, endTime) => ({
+    kind, startTime, endTime, mains: [], supporting: [], continuations: [],
+  });
+  const mainSections = [];
+
+  mainEvents.forEach(event => {
+    let section = mainSections[mainSections.length - 1];
+    if (!section || timeToMinutes(event.startTime) >= timeToMinutes(section.endTime)) {
+      section = makeSection('main', event.startTime, event.endTime);
+      mainSections.push(section);
+    } else if (timeToMinutes(event.endTime) > timeToMinutes(section.endTime)) {
+      section.endTime = event.endTime;
+    }
+    section.mains.push({ event, group: groupMap[event.groupId] || null, tier: event.isBreak ? 'break' : 'main' });
+  });
+
+  const lastEnd = ordered.reduce((endTime, event) =>
+    timeToMinutes(event.endTime) > timeToMinutes(endTime) ? event.endTime : endTime, ordered[0].endTime);
+  const candidates = [];
+  let previousEnd = ordered[0].startTime;
+  mainSections.forEach(section => {
+    if (timeToMinutes(previousEnd) < timeToMinutes(section.startTime)) {
+      candidates.push(makeSection('supporting', previousEnd, section.startTime));
+    }
+    candidates.push(section);
+    previousEnd = section.endTime;
+  });
+  if (timeToMinutes(previousEnd) < timeToMinutes(lastEnd)) {
+    candidates.push(makeSection('supporting', previousEnd, lastEnd));
+  }
+  const sections = candidates.filter(section => section.kind === 'main'
+    || supportingEvents.some(event => eventsOverlap(event, section)));
+
+  supportingEvents.forEach(event => {
+    const start = timeToMinutes(event.startTime);
+    const sourceSectionIndex = sections.findIndex(section => start >= timeToMinutes(section.startTime)
+      && start < timeToMinutes(section.endTime));
+    sections.forEach((section, index) => {
+      if (!eventsOverlap(event, section)) return;
+      const overlapping = section.mains.filter(main => eventsOverlap(event, main.event));
+      const entry = {
+        event,
+        group: groupMap[event.groupId] || null,
+        sourceSectionIndex,
+        overlappingMain: overlapping.filter(main => main.tier !== 'break').map(main => main.event),
+        overlappingBreaks: overlapping.filter(main => main.tier === 'break').map(main => main.event),
+        continuesAfter: timeToMinutes(event.endTime) > timeToMinutes(section.endTime),
+      };
+      if (index === sourceSectionIndex) section.supporting.push(entry);
+      else section.continuations.push(entry);
+    });
+  });
+  return sections;
+}
+
 // A phase may contain a task only when the complete task fits one phase.
 // Tasks outside phases or spanning their boundaries stay independent, rather
 // than inheriting a misleading parent from the order of the event array.
@@ -117,17 +191,27 @@ function getScheduleReviewIssues(days, groups) {
     if (!validRange) add(day, 'day-range', label + ': review the day’s start and end times.');
     const events = day.events || [];
     events.forEach(evt => {
+      (evt.flightActivities || []).forEach(activity => {
+        if (!activity.flight || !activity.title || !isValidScheduleTime(activity.startTime) || !isValidScheduleTime(activity.endTime) ||
+            activity.startTime >= activity.endTime || activity.startTime < evt.startTime || activity.endTime > evt.endTime) {
+          add(day, 'flight-activity', label + ': review the flight, activity and time range within ' + evt.title + '.', [evt.id]);
+        }
+      });
       if (!groupMap[evt.groupId] && !evt.isBreak) add(day, 'audience', label + ': ' + evt.title + ' has no audience recorded.', [evt.id]);
       if (validRange && (timeToMinutes(evt.startTime) < start || timeToMinutes(evt.endTime) > end))
         add(day, 'outside-day', label + ': ' + evt.title + ' is outside the day’s stated hours.', [evt.id]);
     });
     events.forEach((evt, i) => events.slice(i + 1).forEach(other => {
       if (evt.isBreak || other.isBreak || !eventsOverlap(evt, other)) return;
+      // A concurrent assignment can intentionally replace the shared main event.
+      if (isEventEffectiveMain(evt, groupMap) !== isEventEffectiveMain(other, groupMap)) return;
       const reasons = [];
       if (evt.groupId && evt.groupId === other.groupId) reasons.push('audience');
       if (evt.location && other.location && evt.location.trim().toLowerCase() === other.location.trim().toLowerCase()) reasons.push('location');
-      const people = new Set(collectAttendeeNames(evt.attendees).map(name => name.toLowerCase()));
-      if (collectAttendeeNames(other.attendees).some(name => people.has(name.toLowerCase()))) reasons.push('named people');
+      const entries = event => parsePersonnelInput(event.attendees || '', event.attendeeFormat || 'text').entries;
+      const key = value => value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+      const people = new Set(entries(evt).map(key));
+      if (entries(other).some(name => people.has(key(name)))) reasons.push('matching attendee entries (confirm identity)');
       if (reasons.length) add(day, 'overlap', label + ': ' + evt.title + ' and ' + other.title + ' overlap and share ' + reasons.join(', ') + '. Confirm this is intended.', [evt.id, other.id]);
     }));
   });
